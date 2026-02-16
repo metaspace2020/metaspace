@@ -597,7 +597,7 @@ export default defineComponent({
       <div
         ref={imageLoaderRef}
         v-loading={props.isLoading}
-        class="overflow-hidden"
+        class="overflow-hidden ion-image"
         style={{ width: props.width + 'px', height: props.height + 'px' }}
         onMousedown={handlePanStart}
         onWheel={onWheel}
@@ -613,7 +613,7 @@ export default defineComponent({
         }}
       >
         {viewBoxStyle.value && (
-          <div data-test-key="ion-image-panel" style={viewBoxStyle.value}>
+          <div data-test-key="ion-image-panel" class="image-image-panel" style={viewBoxStyle.value}>
             {renderIonImageView()}
             {renderOpticalImage()}
           </div>

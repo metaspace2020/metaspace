@@ -625,10 +625,23 @@ export const SimpleIonImageViewer = defineComponent({
       ) {
         return
       }
+
+      // Validate input intensity
+      if (!isFinite(intensity) || intensity < 0) {
+        console.warn('Invalid intensity value:', intensity)
+        return
+      }
+
       let minScale = state.menuItems[index].userScaling[0]
       let maxScale = state.menuItems[index].userScaling[1]
       const maxIntensity =
         state.imageSettings.intensities[key].max.clipped || state.imageSettings.intensities[key].max.image
+
+      // Validate maxIntensity before division
+      if (!maxIntensity || maxIntensity <= 0 || !isFinite(maxIntensity)) {
+        console.warn('Invalid max intensity:', maxIntensity)
+        return
+      }
 
       if (type === 'min') {
         minScale = intensity / maxIntensity
@@ -636,13 +649,17 @@ export const SimpleIonImageViewer = defineComponent({
         maxScale = intensity / maxIntensity
       }
 
+      // Validate calculated scales
+      if (!isFinite(minScale) || !isFinite(maxScale)) {
+        console.warn('Invalid scale values:', { minScale, maxScale })
+        return
+      }
+
       if (!ignoreBoundaries) {
-        minScale = minScale > 1 ? 1 : minScale
-        minScale = minScale > maxScale ? maxScale : minScale
-        minScale = minScale < 0 ? 0 : minScale
-        maxScale = maxScale > 1 ? 1 : maxScale
-        maxScale = maxScale < 0 ? 0 : maxScale
-        maxScale = maxScale < minScale ? minScale : maxScale
+        minScale = Math.max(0, Math.min(1, minScale))
+        minScale = Math.min(minScale, maxScale)
+        maxScale = Math.max(0, Math.min(1, maxScale))
+        maxScale = Math.max(maxScale, minScale)
       }
 
       handleUserScalingChange([minScale, maxScale], index, ignoreBoundaries)

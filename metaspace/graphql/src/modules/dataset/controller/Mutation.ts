@@ -18,7 +18,7 @@ import { metadataSchemas } from '../../../../metadataSchemas/metadataRegistry'
 import { getDatasetForEditing } from '../operation/getDatasetForEditing'
 import { deleteDataset } from '../operation/deleteDataset'
 import { checkNoPublishedProjectRemoved, checkProjectsPublicationStatus } from '../operation/publicationChecks'
-import { EngineDataset, ScoringModel } from '../../engine/model'
+import { EngineDataset, ScoringModel, Roi, DiffRoi } from '../../engine/model'
 import { addExternalLink, removeExternalLink } from '../../project/ExternalLink'
 import { esDatasetByID } from '../../../../esConnector'
 import { mapDatabaseToDatabaseId } from '../../moldb/util/mapDatabaseToDatabaseId'
@@ -32,6 +32,7 @@ import { getS3Client } from '../../../utils/awsClient'
 import config from '../../../utils/config'
 import { assertCanPerformAction, getDeviceInfo, hashIp, performAction } from '../../plan/util/canPerformAction'
 import { cleanEmptyStrings } from '../../../utils/regexSanitizer'
+import canEditEsDataset from '../operation/canEditEsDataset'
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -602,6 +603,206 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     })
 
     return await esDatasetByID(datasetId, ctx.user)
+  },
+
+  compareROIs: async(
+    source,
+    {
+      datasetId, ticNormalize = true, logTransformTic = true,
+      chunkSize = 1000, nPixelSamples = 10000,
+    },
+    ctx: Context
+  ) => {
+    try {
+      if (ctx.user.id == null) {
+        throw new UserError('Not authenticated')
+      }
+      await esDatasetByID(datasetId, ctx.user) // check if user has access
+
+      // Check if there are existing diff analysis results and if ROIs match
+      const userRoisCount = await ctx.entityManager.createQueryBuilder(Roi, 'roi')
+        .where('roi.datasetId = :datasetId', { datasetId })
+        .andWhere('roi.userId = :userId', { userId: ctx.user.id })
+        .getCount()
+
+      let qb = ctx.entityManager.createQueryBuilder(DiffRoi, 'diffRoi')
+        .leftJoin('diffRoi.roi', 'roi')
+        .select('DISTINCT diffRoi.roiId', 'roiId')
+        .where('roi.datasetId = :datasetId', { datasetId })
+
+      if (userRoisCount > 0) {
+        qb = qb.andWhere('roi.userId = :userId', { userId: ctx.user.id })
+      } else {
+        qb = qb.andWhere('roi.isDefault = true')
+      }
+
+      const existingRoiIds = await qb.getRawMany()
+
+      if (existingRoiIds.length > 0) {
+        const previousRoiIds = new Set(existingRoiIds.map(result => result.roiId))
+        let qbCurrent = ctx.entityManager.createQueryBuilder(Roi, 'roi')
+          .select('id', 'id')
+          .where('roi.datasetId = :datasetId', { datasetId })
+
+        if (userRoisCount > 0) {
+          qbCurrent = qbCurrent.andWhere('roi.userId = :userId', { userId: ctx.user.id })
+        } else {
+          qbCurrent = qbCurrent.andWhere('roi.isDefault = true')
+        }
+
+        const currentDefaultRois = await qbCurrent.getRawMany()
+        const currentRoiIds = new Set(currentDefaultRois.map((roi: any) => roi.id))
+
+        // Only skip recalculation if ROI sets match exactly
+        const roiSetsMatch = previousRoiIds.size === currentRoiIds.size
+          && [...previousRoiIds].every(id => currentRoiIds.has(id))
+
+        if (roiSetsMatch) {
+          logger.info(`ROIs for dataset '${datasetId}' haven't changed (${currentRoiIds.size} ROIs), `
+            + 'skipping diff analysis recalculation')
+          return true
+        }
+
+        logger.info(`ROIs for dataset '${datasetId}' have changed, proceeding with diff analysis recalculation`)
+      } else {
+        logger.info(`No existing diff analysis found for dataset '${datasetId}', proceeding with calculation`)
+      }
+
+      await smApiDatasetRequest('/v1/diffroi/compareROIs', {
+        ds_id: datasetId,
+        TIC_normalize: ticNormalize,
+        log_transform_tic: logTransformTic,
+        chunk_size: chunkSize,
+        n_pixel_samples: nPixelSamples,
+      })
+
+      return true
+    } catch (e) {
+      return e
+    }
+  },
+
+  createRoi: async(
+    source: any,
+    { datasetId, input }: any,
+    ctx: Context
+  ) => {
+    if (ctx.user.id == null) {
+      throw new UserError('Not authenticated')
+    }
+
+    // Check if user has access to the dataset
+    const dataset = await esDatasetByID(datasetId, ctx.user)
+    if (!dataset) {
+      throw new UserError('Dataset not found or access denied')
+    }
+
+    try {
+      const geojson = JSON.parse(input.geojson)
+      const canEdit = await canEditEsDataset(dataset, ctx)
+      const roi = ctx.entityManager.create(Roi, {
+        datasetId,
+        userId: ctx.user.id,
+        name: input.name,
+        isDefault: canEdit,
+        geojson,
+      })
+
+      const savedRoi = await ctx.entityManager.save(roi)
+
+      return {
+        id: savedRoi.id,
+        datasetId: savedRoi.datasetId,
+        userId: savedRoi.userId,
+        name: savedRoi.name,
+        isDefault: savedRoi.isDefault,
+        geojson: JSON.stringify(savedRoi.geojson),
+      }
+    } catch (e) {
+      throw new UserError('Invalid GeoJSON or other error creating ROI')
+    }
+  },
+
+  updateRoi: async(
+    source: any,
+    { id, input }: any,
+    ctx: Context
+  ) => {
+    if (ctx.user.id == null) {
+      throw new UserError('Not authenticated')
+    }
+
+    const roi = await ctx.entityManager.findOne(Roi, { where: { id } })
+    if (!roi) {
+      throw new UserError('ROI not found')
+    }
+
+    // Check if user has access to the dataset
+    const dataset = await esDatasetByID(roi.datasetId, ctx.user)
+    if (!dataset) {
+      throw new UserError('Dataset not found or access denied')
+    }
+
+    const canEdit = await canEditEsDataset(dataset, ctx)
+
+    const canEdiRoi = canEdit || ctx.user.role?.includes('admin') || roi.userId === ctx.user.id
+    // Check if user owns this ROI or is admin
+    if (!canEdiRoi) {
+      throw new UserError('You can only edit ROIs you created')
+    }
+
+    try {
+      const geojson = JSON.parse(input.geojson)
+
+      await ctx.entityManager.update(Roi, id, {
+        name: input.name,
+        userId: ctx.user.id,
+        isDefault: canEdit,
+        geojson,
+      })
+
+      const updatedRoi = await ctx.entityManager.findOne(Roi, { where: { id } })
+
+      return {
+        id: updatedRoi!.id,
+        datasetId: updatedRoi!.datasetId,
+        userId: updatedRoi!.userId,
+        name: updatedRoi!.name,
+        isDefault: updatedRoi!.isDefault,
+        geojson: JSON.stringify(updatedRoi!.geojson),
+      }
+    } catch (e) {
+      throw new UserError('Invalid GeoJSON or other error updating ROI')
+    }
+  },
+
+  deleteRoi: async(
+    source: any,
+    { id }: any,
+    ctx: Context
+  ) => {
+    if (ctx.user.id == null) {
+      throw new UserError('Not authenticated')
+    }
+
+    const roi = await ctx.entityManager.findOne(Roi, { where: { id } })
+    if (!roi) {
+      throw new UserError('ROI not found')
+    }
+
+    // Check if user has access to the dataset
+    const dataset = await esDatasetByID(roi.datasetId, ctx.user)
+    if (!dataset) {
+      throw new UserError('Dataset not found or access denied')
+    }
+
+    // Check if user owns this ROI or is admin
+    if (roi.userId !== ctx.user.id && !ctx.user.role?.includes('admin')) {
+      throw new UserError('You can only delete ROIs you created')
+    }
+
+    await ctx.entityManager.delete(Roi, id)
+    return true
   },
 }
 

@@ -50,6 +50,9 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
   term: 'term',
   opticalImage: 'opt_img',
   pValue: 'pval',
+  minAuc: 'min_auc',
+  absLfc: 'abs_lfc',
+  roiId: 'roi_id',
 }
 
 const URL_TO_FILTER = invert(FILTER_TO_URL) as Record<string, FilterKey>
@@ -60,6 +63,7 @@ const PATH_TO_LEVEL: [RegExp, Level][] = [
   [/^\/datasets\/\S+\/comparison/i, 'annotation'],
   [/^\/dataset\/\S+\/annotations/i, 'dataset-annotation'],
   [/^\/dataset\/\S+\/enrichment/i, 'enrichment'],
+  [/^\/dataset\/\S+\/diff-analysis/i, 'dataset-diff-analysis'],
   [/^\/datasets/i, 'dataset'],
   [/^\/datasets\/summary/i, 'dataset'],
   [/^\/upload/i, 'upload'],

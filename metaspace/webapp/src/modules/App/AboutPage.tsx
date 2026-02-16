@@ -241,8 +241,8 @@ const AboutPage = defineComponent({
               </p>
               <p>
                 The METASPACE Academic platform is developed by software engineers, data scientists and mass
-                spectrometrists from the <a href="https://ateam.ucsd.edu/">Alexandrov team at UCSD</a>, while METASPACE
-                Pro is offered as a subscription-based service from Metacloud Inc.
+                spectrometrists from the <a href="https://ateam.bio/">Alexandrov team at UCSD</a>, while METASPACE Pro
+                is offered as a subscription-based service from Metacloud Inc.
               </p>
               <p>
                 To learn more about the reasoning behind splitting METASPACE into separate platforms, and to understand

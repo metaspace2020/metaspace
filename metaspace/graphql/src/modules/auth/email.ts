@@ -17,11 +17,11 @@ everything you need to know to get started and make the most of your experience:
 <p>METASPACE is the cloud computing engine for annotating metabolites, lipids, and glycans in 
 imaging mass spectrometry data, and hosts a knowledgebase of over 13.000 public annotated 
 datasets from over 200 labs. METASPACE 
-is proudly maintained by the <a href="https://ateam.ucsd.edu/">Alexandrov team at UCSD</a>.</p>
+is proudly maintained by the <a href="https://ateam.bio/">Alexandrov team at UCSD</a>.</p>
 
 <h3>2. Explore How-to Video Guides</h3>
 
-<p>Along with the comprehensive <a href="https://metaspace2020.eu/help">help page</a> on 
+<p>Along with the comprehensive <a href="https://metaspace2020.org/help">help page</a> on 
 METASPACE that covers everything you need to get started, we've also 
 created a series of helpful how-to video guides. You can explore 
 the playlist 

@@ -384,6 +384,37 @@ type InitialPeak {
   y: Int!
 }
 
+type Roi {
+  id: ID!
+  datasetId: String!
+  userId: String  # Nullable for legacy ROIs
+  name: String!
+  isDefault: Boolean!
+  geojson: String!  # JSON string representation of GeoJSON
+}
+
+type DiffRoiResult {
+  roi: Roi!
+  lfc: Float!
+  auc: Float!
+  annotation: Annotation!
+}
+
+input DiffRoiFilter {
+  minAuc: Float
+  absLfc: Float
+  roiId: ID
+  roiName: String
+  topNAnnotations: Int
+}
+
+input RoiInput {
+  name: String!
+  isDefault: Boolean! = false
+  geojson: String!
+}
+
+
 type Query {
   dataset(id: String!): Dataset
 
@@ -416,6 +447,11 @@ type Query {
   pixelSpectrum(datasetId: String!, x: Int!, y: Int!): PixelSpectrum
 
   initialPeak(datasetId: String!): InitialPeak
+
+  diffRoiResults(datasetId: String!, filter: DiffRoiFilter = {}, annotationFilter: AnnotationFilter = {}): [DiffRoiResult!]!
+  
+  rois(datasetId: String!, isDefault: Boolean): [Roi!]!
+  roi(id: ID!): Roi
 }
 
 type Mutation {
@@ -470,6 +506,16 @@ type Mutation {
   removeDatasetExternalLink(datasetId: String!,
                             provider: String!,
                             link: String): Dataset!
+
+  compareROIs(datasetId: String!,
+              ticNormalize: Boolean = true,
+              logTransformTic: Boolean = true,
+              chunkSize: Int = 1000,
+              nPixelSamples: Int = 10000): Boolean!
+              
+  createRoi(datasetId: String!, input: RoiInput!): Roi!
+  updateRoi(id: ID!, input: RoiInput!): Roi!
+  deleteRoi(id: ID!): Boolean!
 }
 
 type Subscription {

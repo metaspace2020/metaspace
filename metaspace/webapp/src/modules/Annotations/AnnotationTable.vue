@@ -1007,12 +1007,16 @@ export default defineComponent({
 
           const roi = JSON.parse(resp?.data?.dataset?.roiJson)
           if (roi && Array.isArray(roi.features) && !store.state.roiInfo[datasetId]) {
-            store.commit('setRoiInfo', {
-              key: datasetId,
-              roi: roi.features.map((feature) => {
-                return feature?.properties ? { ...feature?.properties, allVisible: store.state.roiInfo?.visible } : {}
-              }),
-            })
+            // Only load ROI data if ROI settings are visible, otherwise skip to avoid showing ROIs when they shouldn't be visible
+            const isRoiVisible = store.state.roiInfo?.visible || false
+            if (isRoiVisible) {
+              store.commit('setRoiInfo', {
+                key: datasetId,
+                roi: roi.features.map((feature) => {
+                  return feature?.properties ? { ...feature?.properties, allVisible: isRoiVisible } : {}
+                }),
+              })
+            }
           }
         } catch (e) {
           // pass
