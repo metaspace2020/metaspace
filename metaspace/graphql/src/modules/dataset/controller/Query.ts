@@ -338,11 +338,8 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       if (filter.maxAuc !== undefined) {
         qb = qb.andWhere('diffRoi.auc <= :maxAuc', { maxAuc: filter.maxAuc })
       }
-      if (filter.minLfc !== undefined) {
-        qb = qb.andWhere('diffRoi.lfc >= :minLfc', { minLfc: filter.minLfc })
-      }
-      if (filter.maxLfc !== undefined) {
-        qb = qb.andWhere('diffRoi.lfc <= :maxLfc', { maxLfc: filter.maxLfc })
+      if (filter.absLfc !== undefined) {
+        qb = qb.andWhere('ABS(diffRoi.lfc) <= :absLfc', { absLfc: filter.absLfc })
       }
       if (filter.roiId) {
         qb = qb.andWhere('roi.id = :roiId', { roiId: filter.roiId })

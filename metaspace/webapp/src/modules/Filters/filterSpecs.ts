@@ -70,8 +70,7 @@ export type FilterKey =
   | 'pValue'
   | 'ontology'
   | 'minAuc'
-  | 'minLfc'
-  | 'maxLfc'
+  | 'absLfc'
   | 'roiId'
 
 export type MetadataLists = Record<string, any[]>
@@ -517,26 +516,16 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     step: 0.05,
   },
 
-  minLfc: {
+  absLfc: {
     type: NumberFilter,
-    name: 'Min LFC',
-    description: 'Set minimum LFC threshold',
+    name: 'Max abs LFC',
+    description: 'Set maximum absolute LFC threshold',
     levels: ['dataset-diff-analysis'],
     defaultInLevels: ['dataset-diff-analysis'],
     initialValue: undefined,
     encoding: 'number',
     step: 0.05,
-  },
-
-  maxLfc: {
-    type: NumberFilter,
-    name: 'Max LFC',
-    description: 'Set maximum LFC threshold',
-    levels: ['dataset-diff-analysis'],
-    defaultInLevels: ['dataset-diff-analysis'],
-    initialValue: undefined,
-    encoding: 'number',
-    step: 0.05,
+    min: 0,
   },
 
   roiId: {
