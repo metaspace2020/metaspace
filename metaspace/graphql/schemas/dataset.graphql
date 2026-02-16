@@ -378,6 +378,12 @@ type SpectrumImage {
   maxIntensity: Float!
 }
 
+type InitialPeak {
+  mz: Float!
+  x: Int!
+  y: Int!
+}
+
 type Roi {
   id: ID!
   datasetId: String!
@@ -439,6 +445,8 @@ type Query {
   browserImage(datasetId: String!, mzLow: Float!, mzHigh: Float!): SpectrumImage
 
   pixelSpectrum(datasetId: String!, x: Int!, y: Int!): PixelSpectrum
+
+  initialPeak(datasetId: String!): InitialPeak
 
   diffRoiResults(datasetId: String!, filter: DiffRoiFilter = {}, annotationFilter: AnnotationFilter = {}): [DiffRoiResult!]!
   

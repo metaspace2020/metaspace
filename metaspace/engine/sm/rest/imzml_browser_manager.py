@@ -81,12 +81,12 @@ class DatasetFiles:
 
 
 class DatasetBrowser:
-    def __init__(self, ds_id, mz_low, mz_high):
+    def __init__(self, ds_id, mz_low, mz_high, df=None):
         self.ds_id = ds_id
         self.mz_low = mz_low
         self.mz_high = mz_high
 
-        self.ds = DatasetFiles(ds_id)
+        self.ds = DatasetFiles(ds_id) if df is None else df
         self.mz_index = np.frombuffer(self.ds.read_file(self.ds.mz_index_key), dtype='f')
         self.portable_reader = deserialize(self.ds.read_file(self.ds.portable_spectrum_reader_key))
         self.coordinates = np.array(self.portable_reader.coordinates, dtype='i')[:, :2]
