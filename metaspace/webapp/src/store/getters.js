@@ -139,8 +139,7 @@ export default {
     const filter = getters.filter
     return {
       minAuc: filter.minAuc,
-      minLfc: filter.minLfc,
-      maxLfc: filter.maxLfc,
+      absLfc: filter.absLfc,
       roiId: filter.roiId || undefined,
     }
   },
