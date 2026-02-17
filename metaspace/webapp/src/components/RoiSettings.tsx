@@ -567,7 +567,9 @@ export default defineComponent({
           (diagnostic: any) => diagnostic.type === 'FDR_RESULTS'
         )
         if (diagnostics.length === 0) {
-          throw new Error('Your dataset needs to be reprocessed in order to run the differential analysis.')
+          ElNotification.warning('Your dataset needs to be reprocessed in order to run the differential analysis.')
+          state.isLoadingDA = false
+          return
         }
 
         // const roiInfo = getRoi().filter((roi: any) => !roi.removed)
@@ -578,9 +580,7 @@ export default defineComponent({
         await compareROIs({ datasetId: props.annotation?.dataset?.id })
         router.push(`/dataset/${props.annotation?.dataset?.id}/diff-analysis`)
       } catch (e) {
-        const msg =
-          (e as any).message || 'There was a problem running the differential analysis. Please contact support.'
-        ElNotification.error(msg)
+        ElNotification.error('There was a problem running the differential analysis. Please contact support.')
         reportError(new Error(`Error running differential analysis: ${JSON.stringify(e)}`), null)
       } finally {
         state.isLoadingDA = false
@@ -704,7 +704,7 @@ export default defineComponent({
                 <ElButton
                   class="button-reset roi-diff-icon"
                   onClick={handleDiffAnalysis}
-                  disabled={!isAdmin && (!currentUser.value?.id || !isPro)}
+                  disabled={isAdmin ? false : !isPro}
                 >
                   <ElIcon size={25}>
                     <DataLine />
