@@ -43,6 +43,8 @@ def create_mz_image(mz_peaks, coordinates, ref_image=None):
         raw_image /= raw_image.max()
 
     alpha = np.ones(shape=(height, width))
+    if ref_image is not None:
+        alpha = np.where(ref_image.reshape(height, width) > 0, 1.0, 0.0)
 
     return raw_image.reshape(height, width), alpha, np.max(mz_peaks[:, 1])
 
