@@ -362,9 +362,7 @@ export const DatasetDiffHeatmap = defineComponent({
       return (
         <div class="heatmap-empty-state">
           <p class="text-gray-500 text-center">No results found for the current selection</p>
-          <p class="text-gray-400 text-sm text-center">
-            Please adjust the ROIs or filters to view available differential analysis results.
-          </p>
+          <p class="text-gray-400 text-sm text-center">Please re-adjust filters or ROI selection.</p>
         </div>
       )
     }
