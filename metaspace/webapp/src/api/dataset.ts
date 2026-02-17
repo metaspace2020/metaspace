@@ -579,7 +579,13 @@ export const checkIfHasBrowserFiles = gql`
 `
 
 export const getBrowserImage = gql`
-  query gerBrowserImageQuery($datasetId: String!, $mzLow: Float!, $mzHigh: Float!, $refMzLow: Float, $refMzHigh: Float) {
+  query gerBrowserImageQuery(
+    $datasetId: String!
+    $mzLow: Float!
+    $mzHigh: Float!
+    $refMzLow: Float
+    $refMzHigh: Float
+  ) {
     browserImage(datasetId: $datasetId, mzLow: $mzLow, mzHigh: $mzHigh, refMzLow: $refMzLow, refMzHigh: $refMzHigh) {
       image
       maxIntensity

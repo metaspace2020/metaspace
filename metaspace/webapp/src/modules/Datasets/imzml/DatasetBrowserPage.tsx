@@ -1157,10 +1157,7 @@ export default defineComponent({
           </div>
           {state.mz != null && !state.showFullTIC && (
             <div class="flex items-center mt-2">
-              <ElCheckbox
-                modelValue={isRefPeakActive.value}
-                onChange={(val: boolean) => toggleReferencePeak(val)}
-              >
+              <ElCheckbox modelValue={isRefPeakActive.value} onChange={(val: boolean) => toggleReferencePeak(val)}>
                 {isRefPeakActive.value
                   ? `Normalizing to reference peak (m/z ${((state.refMzLow! + state.refMzHigh!) / 2).toFixed(4)})`
                   : `Normalize to this peak (m/z ${state.mz!.toFixed(4)})`}
