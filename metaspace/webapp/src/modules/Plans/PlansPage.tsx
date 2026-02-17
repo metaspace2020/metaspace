@@ -301,12 +301,14 @@ export default defineComponent({
       return (
         <div class="page-wrapper">
           {/* Temporary Limits Banner */}
-          <div class="limits-banner">
-            <div class="limits-banner-content">
-              <b>NOTICE:</b> All METASPACE users are granted the Medium Plan until <b>February 17th, 2026</b>, after
-              which METASPACE Pro will require a subscription (METASPACE Academic can still be used for free).
+          {new Date() < endDate && (
+            <div class="limits-banner">
+              <div class="limits-banner-content">
+                <b>NOTICE:</b> All METASPACE users are granted the Medium Plan until <b>February 17th, 2026</b>, after
+                which METASPACE Pro will require a subscription (METASPACE Academic can still be used for free).
+              </div>
             </div>
-          </div>
+          )}
           <div class="plans-container">
             <h1 class="plans-title">Choose a plan that works for you</h1>
             <p class="plans-subtitle">
