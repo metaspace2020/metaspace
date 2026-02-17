@@ -552,7 +552,7 @@ export const DatasetDiffTable = defineComponent({
     const renderAUCHeader = () => {
       return (
         <div class="auc-header">
-          Scaled AUC
+          AUC
           <ElPopover
             trigger="hover"
             placement="right"
@@ -564,8 +564,7 @@ export const DatasetDiffTable = defineComponent({
               ),
               default: () => (
                 <div class="text-sm text-justify max-w-md">
-                  Area Under the curve (AUC) scaled from −1 to 1 (0 = random; positive = enriched in ROI; negative =
-                  depleted).
+                  {'AUC (0.5 = random; >0.5 = enriched in ROI; <0.5 = depleted).'}
                 </div>
               ),
             }}
@@ -691,6 +690,10 @@ export const DatasetDiffTable = defineComponent({
             data={state.processedData.slice(dataStart, dataEnd)}
             rowClassName={getRowClass}
             size="small"
+            emptyText={
+              'No results found for the current selection. Please adjust the ' +
+              'ROIs or filters to view available differential analysis results.'
+            }
             border
             elementLoadingText="Loading results …"
             highlightCurrentRow
