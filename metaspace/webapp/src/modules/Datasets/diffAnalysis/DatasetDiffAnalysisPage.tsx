@@ -300,7 +300,7 @@ export default defineComponent({
         const newFilter = { ...currentFilter }
 
         if (newActiveItem === 'volcano-plot') {
-          // Set first ROI as default for volcano plot
+          // Set first ROI as default for LogFC x AUC plot
           const rois = store.state.filterLists?.rois
           if (rois && rois.length > 0) {
             const roiId = currentFilter.roiId || state.savedRoiId || rois[0].id
@@ -450,21 +450,21 @@ export default defineComponent({
       return (
         <ElCollapseItem
           name="volcano-plot"
-          title="Volcano plot"
+          title="LogFC x AUC plot"
           class="ds-collapse el-collapse-item--no-padding relative"
           v-slots={{
             title: () => (
               <div class="flex items-center">
-                Volcano plot
+                LogFC x AUC plot
                 <ElTooltip
                   popperClass="max-w-md text-sm text-justify"
                   content={
                     'Each dot represents an ion from the table (left), based on a ' +
                     'one-vs-all comparison for the selected ROI. The x-axis shows ' +
-                    'log2 fold change (log2FC). The y-axis shows AUC scaled from −1 ' +
-                    'to 1 (0 = random; positive = enriched in ROI; negative = depleted). ' +
+                    'log2 fold change (log2FC). The y-axis shows AUC ' +
+                    '(0.5 = random; >0.5 = enriched in ROI; <0.5 = depleted). ' +
                     'Dots are colored by direction of log2FC (up/down). For best ' +
-                    'interpretation, view one ROI at a time..'
+                    'interpretation, view one ROI at a time.'
                   }
                   placement="top"
                 >
@@ -509,7 +509,7 @@ export default defineComponent({
                     'represent ROIs. Both colors and cell labels correspond to log2 fold ' +
                     'change (log2FC). Use the interactive log2FC slider to adjust the threshold; ' +
                     'applying a minimum absolute AUC filter can further refine results. Selections ' +
-                    'and filters are reflected in the table. Unlike the volcano plot, this view ' +
+                    'and filters are reflected in the table. Unlike the LogFC x AUC plot, this view ' +
                     'highlights top ions across all ROIs simultaneously.'
                   }
                   placement="top"

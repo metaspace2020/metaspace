@@ -333,28 +333,45 @@ export const DatasetDiffHeatmap = defineComponent({
       window.removeEventListener('resize', handleWindowResize)
     })
 
-    return () => (
-      <div class="dataset-diff-heatmap">
-        {props.isLoading ? (
-          <div class="flex justify-center items-center h-96">
-            <ElIcon class="is-loading text-4xl">
-              <Loading />
-            </ElIcon>
-          </div>
-        ) : (
-          <div class="heatmap-container">
-            {/* @ts-ignore */}
-            <ECharts
-              ref={heatmapChart}
-              autoresize={true}
-              onClick={handleChartClick}
-              class="heatmap-chart"
-              style={{ height: '600px', width: '100%' }}
-              option={state.chartOptions}
-            />
-          </div>
-        )}
-      </div>
-    )
+    const renderChart = () => {
+      return (
+        <div class="dataset-diff-heatmap">
+          {props.isLoading ? (
+            <div class="flex justify-center items-center h-96">
+              <ElIcon class="is-loading text-4xl">
+                <Loading />
+              </ElIcon>
+            </div>
+          ) : (
+            <div class="heatmap-container">
+              {/* @ts-ignore */}
+              <ECharts
+                ref={heatmapChart}
+                autoresize={true}
+                onClick={handleChartClick}
+                class="heatmap-chart"
+                style={{ height: '600px', width: '100%' }}
+                option={state.chartOptions}
+              />
+            </div>
+          )}
+        </div>
+      )
+    }
+    const renderEmptyState = () => {
+      return (
+        <div class="heatmap-empty-state">
+          <p class="text-gray-500 text-center">No results found for the current selection</p>
+          <p class="text-gray-400 text-sm text-center">Please re-adjust filters or ROI selection.</p>
+        </div>
+      )
+    }
+
+    return () => {
+      const { data, isLoading } = props
+      const hasData = data && data.length > 0
+
+      return <div class="dataset-diff-heatmap">{hasData || isLoading ? renderChart() : renderEmptyState()}</div>
+    }
   },
 })

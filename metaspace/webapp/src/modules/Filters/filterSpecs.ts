@@ -505,13 +505,13 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
 
   minAuc: {
     type: NumberFilter,
-    name: 'Min scaled AUC',
+    name: 'Min AUC',
     description: 'Set minimum AUC threshold',
     levels: ['dataset-diff-analysis'],
     defaultInLevels: ['dataset-diff-analysis'],
     initialValue: undefined,
     encoding: 'number',
-    min: -1,
+    min: 0,
     max: 1,
     step: 0.05,
   },

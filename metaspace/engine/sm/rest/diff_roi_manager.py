@@ -431,7 +431,6 @@ class DiffROIManager:
             roi_df['roi_id'] = roi_id
             roi_df['log2fc'] = metrics['log2fc']
             roi_df['auc'] = metrics['auc']
-            roi_df["auc"] = 2 * roi_df["auc"] - 1
             dfs.append(roi_df)
 
         return pd.concat(dfs, ignore_index=True)

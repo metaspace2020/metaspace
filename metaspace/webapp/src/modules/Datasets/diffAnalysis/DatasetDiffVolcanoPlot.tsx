@@ -90,7 +90,7 @@ export const DatasetDiffVolcanoPlot = defineComponent({
             const roi = params.data[5]
             const annotation = params.data[6]
 
-            return `<strong>${metabolite}</strong><br/>log₂FC: ${lfc?.toFixed(3) || 'N/A'}<br/>Scaled AUC: ${
+            return `<strong>${metabolite}</strong><br/>log₂FC: ${lfc?.toFixed(3) || 'N/A'}<br/>AUC: ${
               auc?.toFixed(3) || 'N/A'
             }<br/>ROI: ${roi}<br/>m/z: ${annotation?.mz?.toFixed(4) || 'N/A'}`
           },
@@ -137,10 +137,10 @@ export const DatasetDiffVolcanoPlot = defineComponent({
           },
         },
         yAxis: {
-          name: 'Scaled AUC',
+          name: 'AUC',
           nameLocation: 'middle',
           nameGap: 60,
-          min: -1,
+          min: 0,
           max: 1,
           splitLine: {
             lineStyle: { type: 'dashed', color: '#e0e0e0' },
@@ -238,15 +238,28 @@ export const DatasetDiffVolcanoPlot = defineComponent({
         icon: 'empty' + roiShapes[index % roiShapes.length],
       }))
 
+      // Compute x-axis range from data first so reference line uses same bounds
+      if (series.length > 0) {
+        const allData = series.flatMap((s) => s.data)
+        const lfcValues = allData.map((d) => d[0]).filter((v) => v != null)
+        if (lfcValues.length > 0) {
+          const minLfc = Math.min(...lfcValues)
+          const maxLfc = Math.max(...lfcValues)
+          const padding = Math.max(Math.abs(minLfc), Math.abs(maxLfc)) * 1.2
+          options.xAxis.min = -padding
+          options.xAxis.max = padding
+        }
+      }
+
       // Update series and add reference lines
       options.series = [
         ...series,
         {
           type: 'line',
-          name: 'Scaled AUC = 0',
+          name: 'AUC = 0.5',
           data: [
-            [options.xAxis.min, 0],
-            [options.xAxis.max, 0],
+            [options.xAxis.min, 0.5],
+            [options.xAxis.max, 0.5],
           ],
           lineStyle: {
             type: 'dashed',
@@ -260,20 +273,11 @@ export const DatasetDiffVolcanoPlot = defineComponent({
         },
       ]
 
-      // Update axis ranges based on data
+      // Update y-axis range based on data
       if (series.length > 0) {
         const allData = series.flatMap((s) => s.data)
         if (allData.length > 0) {
-          const lfcValues = allData.map((d) => d[0]).filter((v) => v != null)
           const aucValues = allData.map((d) => d[1]).filter((v) => v != null)
-
-          if (lfcValues.length > 0) {
-            const minLfc = Math.min(...lfcValues)
-            const maxLfc = Math.max(...lfcValues)
-            const padding = Math.max(Math.abs(minLfc), Math.abs(maxLfc)) * 1.2
-            options.xAxis.min = -padding
-            options.xAxis.max = padding
-          }
 
           if (aucValues.length > 0) {
             const minAuc = Math.min(...aucValues)
@@ -358,10 +362,8 @@ export const DatasetDiffVolcanoPlot = defineComponent({
     const renderEmptyState = () => {
       return (
         <div class="volcano-empty-state">
-          <p class="text-gray-500 text-center">No data available for volcano plot</p>
-          <p class="text-gray-400 text-sm text-center">
-            Select ROIs and apply filters to see differential analysis results
-          </p>
+          <p class="text-gray-500 text-center">No results found for the current selection</p>
+          <p class="text-gray-400 text-sm text-center">Please re-adjust filters or ROI selection.</p>
         </div>
       )
     }

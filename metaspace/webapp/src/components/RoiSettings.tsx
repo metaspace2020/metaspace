@@ -1,6 +1,6 @@
-import { defineComponent, ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { defineComponent, ref, reactive, computed, onMounted, onUnmounted, watch, inject } from 'vue'
 import { useStore } from 'vuex'
-import { useMutation, useQuery } from '@vue/apollo-composable'
+import { useMutation, useQuery, DefaultApolloClient } from '@vue/apollo-composable'
 import { ElButton, ElIcon, ElInput, ElNotification, ElPopover, ElTooltip } from '../lib/element-plus'
 import * as FileSaver from 'file-saver'
 import ChannelSelector from '../modules/ImageViewer/ChannelSelector.vue'
@@ -12,6 +12,7 @@ import {
   updateRoiMutation,
   deleteRoiMutation,
   compareROIsMutation,
+  getDatasetDiagnosticsQuery,
 } from '../api/dataset'
 import config from '../lib/config'
 import { loadPngFromUrl, processIonImage } from '../lib/ionImageRendering'
@@ -70,6 +71,7 @@ export default defineComponent({
     annotation: { type: Object as any, default: () => {} },
   },
   setup(props: RoiSettingsProps | any) {
+    const apolloClient = inject(DefaultApolloClient)
     const store = useStore()
     const router = useRouter()
     const { mutate: createRoi } = useMutation(createRoiMutation)
@@ -556,6 +558,20 @@ export default defineComponent({
       state.isLoadingDA = true
 
       try {
+        // check if dataset needs reprocessing
+        const diagnosticsResult = await apolloClient.query({
+          query: getDatasetDiagnosticsQuery,
+          variables: { id: props.annotation?.dataset?.id },
+        })
+        const diagnostics = diagnosticsResult.data?.dataset?.diagnostics?.filter(
+          (diagnostic: any) => diagnostic.type === 'FDR_RESULTS'
+        )
+        if (diagnostics.length === 0) {
+          ElNotification.warning('Your dataset needs to be reprocessed in order to run the differential analysis.')
+          state.isLoadingDA = false
+          return
+        }
+
         // const roiInfo = getRoi().filter((roi: any) => !roi.removed)
         // const hasLegacyRois = roiInfo.some((roi: any) => roi.isLegacy)
         await handleSave(false)
@@ -564,7 +580,7 @@ export default defineComponent({
         await compareROIs({ datasetId: props.annotation?.dataset?.id })
         router.push(`/dataset/${props.annotation?.dataset?.id}/diff-analysis`)
       } catch (e) {
-        ElNotification.error('Failed to run differential analysis')
+        ElNotification.error('There was a problem running the differential analysis. Please contact support.')
         reportError(new Error(`Error running differential analysis: ${JSON.stringify(e)}`), null)
       } finally {
         state.isLoadingDA = false
@@ -677,36 +693,32 @@ export default defineComponent({
       return (
         <div class="roi-content">
           <div class="roi-options">
-            {config.features.diff_analysis && (
-              <ElTooltip
-                popperClass="roi-save-tooltip"
-                content={
-                  'Click to perform differential analysis among the ROIs. This requires being a METASPACE Pro user.'
-                }
-                placement="top"
-              >
-                {!state.isLoadingDA && (
-                  <ElButton
-                    class="button-reset roi-diff-icon"
-                    onClick={handleDiffAnalysis}
-                    disabled={!isAdmin && (!currentUser.value?.id || !isPro)}
-                  >
-                    <ElIcon size={25}>
-                      <DataLine />
-                    </ElIcon>
-                  </ElButton>
-                )}
-                {state.isLoadingDA && (
-                  <div class="button-reset roi-download-icon">
-                    <ElIcon class="is-loading">
-                      <Loading />
-                    </ElIcon>
-                  </div>
-                )}
-              </ElTooltip>
-            )}
-
-            {!config.features.diff_analysis && <div class="roi-save-tooltip " />}
+            <ElTooltip
+              popperClass="roi-save-tooltip"
+              content={
+                'Click to perform differential analysis among the ROIs. This requires being a METASPACE Pro user.'
+              }
+              placement="top"
+            >
+              {!state.isLoadingDA && (
+                <ElButton
+                  class="button-reset roi-diff-icon"
+                  onClick={handleDiffAnalysis}
+                  disabled={isAdmin ? false : !isPro}
+                >
+                  <ElIcon size={25}>
+                    <DataLine />
+                  </ElIcon>
+                </ElButton>
+              )}
+              {state.isLoadingDA && (
+                <div class="button-reset roi-download-icon">
+                  <ElIcon class="is-loading">
+                    <Loading />
+                  </ElIcon>
+                </div>
+              )}
+            </ElTooltip>
 
             <div class="flex flex-row flex-wrap justify-end items-center">
               {roiInfo.length > 0 && !state.isDownloading && (
