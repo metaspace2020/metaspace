@@ -33,6 +33,11 @@ $header-height: 64px;
       @apply mr-1;
     }
 
+    .norm-badge{
+      bottom: 5px;
+      right: 8px;
+      height: 20px;
+    }
     .av-icon-button {
       @apply self-center mb-2 mr-1 h-6;
 
