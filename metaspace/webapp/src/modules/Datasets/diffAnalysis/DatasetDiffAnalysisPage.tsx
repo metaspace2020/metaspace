@@ -570,7 +570,8 @@ export default defineComponent({
 
     return () => {
       const isPro = activeSubscription.value?.isActive
-      const isAdmin = currentUser.value?.role?.includes('admin')
+      const allowedUsers = []
+      const isAdmin = currentUser.value?.role?.includes('admin') || allowedUsers.includes(currentUser.value?.id)
 
       if (!isAdmin && (!currentUser.value?.id || !isPro)) {
         return (
