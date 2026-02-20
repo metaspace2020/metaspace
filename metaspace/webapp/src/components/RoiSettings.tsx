@@ -455,8 +455,10 @@ export default defineComponent({
 
       try {
         const roiInfo = getRoi()
-        // Delete ROIs that were marked as removed and exist on server
-        const removedRois = roiInfo.filter((roi) => roi.removed && roi.id && state.originalRoiIds.has(roi.id))
+        // Delete ROIs that were marked as removed and exist on server (skip legacy IDs - they are not in DB)
+        const removedRois = roiInfo.filter(
+          (roi) => roi.removed && roi.id && !roi.id.startsWith('legacy_') && state.originalRoiIds.has(roi.id)
+        )
         for (const removedRoi of removedRois) {
           try {
             await deleteRoi({ id: removedRoi.id })
@@ -473,7 +475,7 @@ export default defineComponent({
             .filter((id) => id)
         )
         for (const originalRoiId of state.originalRoiIds) {
-          if (!currentRoiIds.has(originalRoiId)) {
+          if (!currentRoiIds.has(originalRoiId) && !originalRoiId.startsWith('legacy_')) {
             try {
               await deleteRoi({ id: originalRoiId })
             } catch (e) {
@@ -688,7 +690,8 @@ export default defineComponent({
     const renderRoiSettings = () => {
       const roiInfo = (state.rois || []).filter((roi: any) => !roi.removed)
       const isPro = activeSubscription.value?.isActive
-      const isAdmin = currentUser.value?.role?.includes('admin')
+      const allowedUsers = []
+      const isAdmin = currentUser.value?.role?.includes('admin') || allowedUsers.includes(currentUser.value?.id)
 
       return (
         <div class="roi-content">
@@ -704,7 +707,7 @@ export default defineComponent({
                 <ElButton
                   class="button-reset roi-diff-icon"
                   onClick={handleDiffAnalysis}
-                  disabled={isAdmin ? false : !isPro}
+                  disabled={roiInfo.length === 0 || (isAdmin ? false : !isPro)}
                 >
                   <ElIcon size={25}>
                     <DataLine />
