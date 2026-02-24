@@ -38,8 +38,11 @@ def create_mz_image(mz_peaks, coordinates, ref_image=None):
     if ref_image is not None:
         safe_ref = np.where(ref_image > 0, ref_image, 1.0)
         raw_image /= safe_ref
+        ref_present = ref_image > 0
+        img_max = float(raw_image[ref_present].max()) if ref_present.any() else 0.0
+    else:
+        img_max = float(raw_image.max())
 
-    img_max = float(raw_image.max())
     if img_max > 0:
         raw_image /= img_max
 
