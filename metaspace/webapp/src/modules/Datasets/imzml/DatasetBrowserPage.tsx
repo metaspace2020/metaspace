@@ -8,6 +8,8 @@ import {
   ElInput,
   ElRadioButton,
   ElIcon,
+  ElCheckbox,
+  ElTooltip,
 } from '../../../lib/element-plus'
 import { useQuery } from '@vue/apollo-composable'
 import {
@@ -38,7 +40,7 @@ import MainImageHeader from '../../Annotations/annotation-widgets/default/MainIm
 import { get, uniq, uniqBy } from 'lodash-es'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
-import { InfoFilled, Loading } from '@element-plus/icons-vue'
+import { InfoFilled, Loading, QuestionFilled } from '@element-plus/icons-vue'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -84,6 +86,12 @@ interface DatasetBrowserState {
   mz: number | undefined
   mzLow: number | undefined
   mzHigh: number | undefined
+  normalizedRefMz: {
+    isActive: boolean
+    refMz: number | undefined
+    refMzLow: number | undefined
+    refMzHigh: number | undefined
+  }
   enableImageQuery: boolean
   noData: boolean
   globalImageSettings: GlobalImageSettings
@@ -146,6 +154,12 @@ export default defineComponent({
       mz: undefined,
       mzLow: undefined,
       mzHigh: undefined,
+      normalizedRefMz: {
+        isActive: false,
+        refMz: undefined,
+        refMzLow: undefined,
+        refMzHigh: undefined,
+      },
       enableImageQuery: false,
       globalImageSettings: {
         resetViewPort: false,
@@ -268,6 +282,8 @@ export default defineComponent({
         datasetId: datasetId.value,
         mzLow: state.mzLow,
         mzHigh: state.mzHigh,
+        refMzLow: state.normalizedRefMz.isActive ? state.normalizedRefMz.refMzLow : undefined,
+        refMzHigh: state.normalizedRefMz.isActive ? state.normalizedRefMz.refMzHigh : undefined,
       }),
       imageQueryOptions as any
     )
@@ -783,6 +799,19 @@ export default defineComponent({
       state.globalImageSettings.isNormalized = !state.showFullTIC && isNormalized
     }
 
+    const toggleReferencePeak = (checked: boolean) => {
+      state.normalizedRefMz.isActive = checked
+      if (checked) {
+        state.normalizedRefMz.refMzLow =
+          state.normalizedRefMz.refMz! - state.normalizedRefMz.refMz! * state.mzmShiftFilter! * 1e-6 // ppm
+        state.normalizedRefMz.refMzHigh =
+          state.normalizedRefMz.refMz! + state.normalizedRefMz.refMz! * state.mzmShiftFilter! * 1e-6 // ppm
+      } else {
+        state.normalizedRefMz.refMzLow = undefined
+        state.normalizedRefMz.refMzHigh = undefined
+      }
+    }
+
     const fetchDatasets = async (query: string) => {
       state.datasetName = query
     }
@@ -992,12 +1021,14 @@ export default defineComponent({
         return (
           <div class="info flex flex-col items-center">
             {renderTitle()}
-            <span class="text-2xl flex items-baseline ml-4">TIC image</span>
-            <div
-              class="flex items-baseline ml-4 w-full justify-center items-center text-xl"
-              style={{ visibility: state.x === undefined && state.y === undefined ? 'hidden' : 'visible' }}
-            >
-              {`X: ${state.x}, Y: ${state.y}`}
+            <div class="flex flex-row items-center align-center">
+              <span class="text-xl flex items-baseline ml-4">TIC image</span>
+              <div
+                class="flex items-baseline ml-4 justify-center items-center text-xl"
+                style={{ display: state.x === undefined && state.y === undefined ? 'none' : 'block' }}
+              >
+                {`X: ${state.x}, Y: ${state.y}`}
+              </div>
             </div>
           </div>
         )
@@ -1012,7 +1043,7 @@ export default defineComponent({
           isomers={annotation?.isomers}
           isobars={annotation?.isobars}
         >
-          <MolecularFormula class="sf-big text-2xl" ion={annotation?.ion || '-'} />
+          <MolecularFormula class="sf-big text-xl min-w-[50px]" ion={annotation?.ion || '-'} />
         </CandidateMoleculesPopover>
       )
 
@@ -1027,7 +1058,7 @@ export default defineComponent({
           >
             Copy ion to clipboard
           </CopyButton>
-          <span class="text-2xl flex items-baseline ml-4">
+          <span class="text-xl flex items-baseline ml-4">
             {annotation.mz.toFixed(4)}
             <span class="ml-1 text-gray-700 text-sm">m/z</span>
             <CopyButton class="self-start" text={annotation.mz.toFixed(4)}>
@@ -1035,7 +1066,7 @@ export default defineComponent({
             </CopyButton>
           </span>
           <div
-            class="flex items-baseline ml-4 w-full justify-center items-center text-xl"
+            class="flex items-baseline ml-4  justify-center items-center text-xl"
             style={{ visibility: state.x === undefined && state.y === undefined ? 'hidden' : 'visible' }}
           >
             {`X: ${state.x}, Y: ${state.y}`}
@@ -1139,6 +1170,53 @@ export default defineComponent({
       )
     }
 
+    const renderImageOptions = () => {
+      return (
+        <div class="dataset-browser-holder-filter-box pt-0 mt-0">
+          <p class="font-semibold">Image options</p>
+          <ElCheckbox
+            disabled={state.showFullTIC || !state.mz}
+            modelValue={state.normalizedRefMz.isActive}
+            onChange={(val: boolean) => toggleReferencePeak(val)}
+          >
+            <div class="flex items-center justify-center ">
+              <div class="mr-3">
+                Normalize to this peak
+                <ElTooltip
+                  popperClass="max-w-md"
+                  content={
+                    'To normalize, select an m/z in the filters, then' +
+                    ' either type the value or click the peak in the mass ' +
+                    'spectrum. Finally, check the box to apply normalization; pixels ' +
+                    'that do not contain the reference peak will be masked' +
+                    ' and appear transparent.'
+                  }
+                  placement="top"
+                >
+                  <ElIcon class="help-icon text-sm ml-1 cursor-pointer">
+                    <QuestionFilled />
+                  </ElIcon>
+                </ElTooltip>
+              </div>
+              <ElInputNumber
+                modelValue={state.normalizedRefMz.refMz}
+                onChange={(value: number) => {
+                  state.normalizedRefMz.refMz = value
+                  if (state.normalizedRefMz.isActive) {
+                    toggleReferencePeak(true)
+                  }
+                }}
+                precision={4}
+                step={0.0001}
+                size="small"
+                placeholder="174.0408"
+              />
+            </div>
+          </ElCheckbox>
+        </div>
+      )
+    }
+
     const renderEmptySpectrum = () => {
       return (
         <div class="dataset-browser-empty-spectrum">
@@ -1191,6 +1269,9 @@ export default defineComponent({
             state.showFullTIC = false
             state.normalizationData['showFullTIC'] = false
             state.mzmScoreFilter = mz
+            if (!state.normalizedRefMz.isActive) {
+              state.normalizedRefMz.refMz = mz
+            }
             requestIonImage()
           }}
           onDownload={handleDownload}
@@ -1218,6 +1299,9 @@ export default defineComponent({
             state.showFullTIC = false
             state.normalizationData['showFullTIC'] = false
             state.mzmScoreFilter = mz
+            if (!state.normalizedRefMz.isActive) {
+              state.normalizedRefMz.refMz = mz
+            }
             requestIonImage()
           }}
           annotatedLabel={`Annotated @ FDR ${(state.fdrFilter || 1) * 100}%`}
@@ -1246,15 +1330,18 @@ export default defineComponent({
             <div class="dataset-browser-holder">
               <div class="dataset-browser-holder-header">Image viewer</div>
               {renderImageFilters()}
+              {renderImageOptions()}
               {renderInfo()}
               <MainImageHeader
-                class="viewer-item-header dom-to-image-hidden"
+                class="viewer-item-header dom-to-image-hidden relative"
                 annotation={state.annotation}
                 slot="title"
                 isActive={false}
                 hideOptions={false}
                 hideTitle
                 hideNormalization
+                normalizationText="m/z normalized"
+                showNormalizedBadge={state.normalizedRefMz.isActive}
                 showOpticalImage={state.showOpticalImage}
                 toggleOpticalImage={toggleOpticalImage}
                 onColormapChange={handleColormapChange}

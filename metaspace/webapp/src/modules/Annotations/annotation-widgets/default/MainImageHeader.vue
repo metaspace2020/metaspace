@@ -51,7 +51,7 @@
       </button>
     </div>
     <fade-transition v-if="isNormalized">
-      <div class="norm-badge">TIC normalized</div>
+      <div class="norm-badge">{{ normalizationText }}</div>
     </fade-transition>
     <fade-transition v-if="multiImageFlag" class="ml-auto">
       <MenuButtons v-if="isActive" />
@@ -99,6 +99,7 @@ export default defineComponent({
     hideNormalization: { type: Boolean, default: () => !config.features.tic },
     showIntensityTemplate: { type: Boolean, default: false },
     hideTitle: { type: Boolean, default: false },
+    normalizationText: { type: String, default: 'TIC normalized' },
   },
   setup(props, { emit }) {
     const store = useStore()

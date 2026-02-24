@@ -289,13 +289,18 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       return false
     }
   },
-  async browserImage(source, { datasetId, mzLow, mzHigh }) {
+  async browserImage(source, { datasetId, mzLow, mzHigh, refMzLow, refMzHigh }) {
     try {
-      const resp = await smApiDatasetRequest('/v1/browser/intensity_by_mz', {
+      const body: Record<string, any> = {
         ds_id: datasetId,
         mz_low: mzLow,
         mz_high: mzHigh,
-      })
+      }
+      if (refMzLow != null && refMzHigh != null) {
+        body.ref_mz_low = refMzLow
+        body.ref_mz_high = refMzHigh
+      }
+      const resp = await smApiDatasetRequest('/v1/browser/intensity_by_mz', body)
       return { image: resp.image, maxIntensity: resp.max_intensity }
     } catch (e) {
       return null
