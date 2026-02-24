@@ -806,6 +806,16 @@ export default defineComponent({
           state.normalizedRefMz.refMz! - state.normalizedRefMz.refMz! * state.mzmShiftFilter! * 1e-6 // ppm
         state.normalizedRefMz.refMzHigh =
           state.normalizedRefMz.refMz! + state.normalizedRefMz.refMz! * state.mzmShiftFilter! * 1e-6 // ppm
+        // Clear TIC normalization data to prevent double normalization
+        // (refMz normalization is already applied on the backend)
+        state.normalizationData = {
+          data: null,
+          shape: null,
+          metadata: null,
+          showFullTIC: null,
+          type: 'TIC',
+          error: true,
+        }
       } else {
         state.normalizedRefMz.refMzLow = undefined
         state.normalizedRefMz.refMzHigh = undefined
@@ -1288,7 +1298,7 @@ export default defineComponent({
             height: state.currentView === VIEWS.SPECTRUM ? '' : 0,
           }}
           isEmpty={isEmpty}
-          normalization={state.globalImageSettings.isNormalized ? state.normalization : undefined}
+          normalization={state.globalImageSettings.isNormalized && !state.normalizedRefMz.isActive ? state.normalization : undefined}
           isLoading={state.chartLoading}
           isDataLoading={annotationsLoading.value}
           data={state.sampleData}
@@ -1388,7 +1398,7 @@ export default defineComponent({
                     colormap={state.globalImageSettings.colormap}
                     scaleType={state.globalImageSettings.scaleType}
                     scaleBarColor={state.globalImageSettings.scaleBarColor}
-                    isNormalized={state.showFullTIC || state.globalImageSettings.isNormalized}
+                    isNormalized={(state.showFullTIC || state.globalImageSettings.isNormalized) && !state.normalizedRefMz.isActive}
                   />
                 )}
               </div>
