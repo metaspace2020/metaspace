@@ -1187,7 +1187,9 @@ export default defineComponent({
                   content={
                     'To normalize, select an m/z in the filters, then' +
                     ' either type the value or click the peak in the mass ' +
-                    'spectrum. Finally, check the box to apply normalization.'
+                    'spectrum. Finally, check the box to apply normalization; pixels ' +
+                    'that do not contain the reference peak will be masked' +
+                    ' and appear transparent.'
                   }
                   placement="top"
                 >

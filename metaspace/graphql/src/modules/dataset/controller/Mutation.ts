@@ -290,6 +290,7 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
   if (datasetIdWasSpecified) {
     // Use getDatasetForEditing to validate users' ability to edit, but skip it if they're an admin trying to create a
     // new dataset with a specified ID.
+    action.actionType = 'reprocess'
     if (!ctx.isAdmin || await ctx.entityManager.findOne(DatasetModel, datasetId) != null) {
       dataset = await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId)
     }
