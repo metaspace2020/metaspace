@@ -135,6 +135,15 @@ export default {
     }
   },
 
+  gqlRoiFilter(state, getters) {
+    const filter = getters.filter
+    return {
+      minAuc: filter.minAuc,
+      absLfc: filter.absLfc,
+      roiId: filter.roiId || undefined,
+    }
+  },
+
   themeVariant(state) {
     return state.theme.variant
   },

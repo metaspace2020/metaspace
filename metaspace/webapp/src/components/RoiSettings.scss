@@ -1,10 +1,11 @@
 $bgColor: hsl(208, 36%, 96%);
+$pro-color: #ffab3f;
 
 .roi-content {
   @apply flex flex-col flex-wrap justify-center items-center;
 
   .roi-options {
-    @apply flex flex-row flex-wrap justify-end items-center w-full pb-1;
+    @apply flex flex-row flex-wrap justify-between items-center w-full pb-1;
     border-bottom: 1px solid lightgray;
   }
 
@@ -24,7 +25,16 @@ $bgColor: hsl(208, 36%, 96%);
   }
 
   .roi-download-icon {
-    @apply flex justify-center items-center h-6 w-6;
+    @apply flex justify-center items-center h-8 w-6;
+  }
+
+  .roi-diff-icon {
+    @apply flex justify-center items-center h-8 w-6;
+    margin-left: 3px !important;
+    margin-right: -2px;
+    &:hover {
+      color: $pro-color;
+    }
   }
 
   .roi-label {
@@ -45,7 +55,7 @@ $bgColor: hsl(208, 36%, 96%);
 
 .roi-popper {
   background: $bgColor;
-  min-width: 150px !important;
+  min-width: 250px !important;
 
   .popper__arrow::after {
     border-bottom-color: $bgColor !important;
@@ -103,6 +113,6 @@ $bgColor: hsl(208, 36%, 96%);
 }
 
 .roi-save-tooltip {
-  max-width: 220px;
+  max-width: 200px;
   text-align: justify;
 }

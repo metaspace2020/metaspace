@@ -164,13 +164,15 @@ def find_initial_peak(ds_id, ppm=3):
 
     ds = DatasetBrowser(ds_id, mz_low, mz_high, ds_files)
 
-    # mz_peaks columns: [mz, intensity, sp_idx]
+    # mz_peaks columns: [mz, intensity, sp_idx]; sp_idx is flattened pixel index (y * width + x)
     non_zero = ds.mz_peaks[ds.mz_peaks[:, 1] > 0]
     best_idx = np.argmax(non_zero[:, 1])
     sp_idx = int(non_zero[best_idx, 2])
 
     coordinates = ds.coordinates - np.min(ds.coordinates, axis=0)
-    x, y = coordinates[sp_idx]
+    width = int(np.max(coordinates[:, 0]) + 1)
+    x = sp_idx % width
+    y = sp_idx // width
 
     return {'mz': mz, 'x': int(x), 'y': int(y)}
 

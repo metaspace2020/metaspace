@@ -11,42 +11,37 @@ import fetch, { RequestInit } from 'node-fetch'
 
 // Helper function to make API requests
 export const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GET', body?: any) => {
-  try {
-    const apiUrl = config.manager_api_url
-    const token = ctx.req?.headers?.authorization || ''
+  const apiUrl = config.manager_api_url
+  const token = ctx.req?.headers?.authorization || ''
 
-    if (!apiUrl) {
-      logger.error('Manager API URL is not configured')
-      throw new Error('Manager API URL is not configured')
-    }
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    }
-
-    if (token) {
-      headers.Authorization = token
-    }
-
-    const options: RequestInit = {
-      method,
-      headers,
-    }
-
-    if (body && (method === 'POST' || method === 'PUT')) {
-      options.body = JSON.stringify(body)
-    }
-
-    const response = await fetch(`${apiUrl}${endpoint}`, options)
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.statusText}`)
-    }
-
-    return await response.json()
-  } catch (error) {
-    logger.warn(`Error making API request to ${endpoint}:`, error)
-    throw error
+  if (!apiUrl) {
+    logger.error('Manager API URL is not configured')
+    throw new Error('Manager API URL is not configured')
   }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  if (token) {
+    headers.Authorization = token
+  }
+
+  const options: RequestInit = {
+    method,
+    headers,
+  }
+
+  if (body && (method === 'POST' || method === 'PUT')) {
+    options.body = JSON.stringify(body)
+  }
+
+  const response = await fetch(`${apiUrl}${endpoint}`, options)
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.statusText}`)
+  }
+
+  return await response.json()
 }
 
 // Helper function to get pro users from API_external
@@ -79,7 +74,7 @@ const getProUsers = async(ctx: Context): Promise<string[]> => {
     const proUserIds = [...new Set(userGroups.map(ug => ug.userId))]
     return proUserIds
   } catch (error) {
-    logger.warn('Error fetching pro users:', error)
+    // logger.warn('Error fetching pro users:', error)
     return []
   }
 }

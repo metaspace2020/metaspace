@@ -16,7 +16,7 @@ exports[`Diagnostics > should match snapshot (no isobars) 1`] = `
         <div data-v-688b3dc9=\\"\\" class=\\"small-peak-image\\">100.0000
           <!--v-if--><br data-v-688b3dc9=\\"\\">
           <div data-v-688b3dc9=\\"\\" image-fit-params=\\"[object Object]\\" style=\\"overflow: hidden;\\" show-pixel-intensity=\\"\\">
-            <div class=\\"overflow-hidden el-loading-parent--relative\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\" loading-number=\\"1\\">
+            <div class=\\"overflow-hidden ion-image el-loading-parent--relative\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\" loading-number=\\"1\\">
               <!---->
               <!---->
               <!---->
@@ -36,7 +36,7 @@ exports[`Diagnostics > should match snapshot (no isobars) 1`] = `
         <div data-v-688b3dc9=\\"\\" class=\\"small-peak-image\\">101.0000
           <!--v-if--><br data-v-688b3dc9=\\"\\">
           <div data-v-688b3dc9=\\"\\" image-fit-params=\\"[object Object]\\" style=\\"overflow: hidden;\\" show-pixel-intensity=\\"\\">
-            <div class=\\"overflow-hidden el-loading-parent--relative\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\" loading-number=\\"1\\">
+            <div class=\\"overflow-hidden ion-image el-loading-parent--relative\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\" loading-number=\\"1\\">
               <!---->
               <!---->
               <!---->
@@ -109,7 +109,7 @@ exports[`Diagnostics > should match snapshot (with isobar) 1`] = `
       <div data-v-688b3dc9=\\"\\" class=\\"el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6\\">
         <div data-v-688b3dc9=\\"\\" class=\\"small-peak-image\\">100.0000 <div data-v-688b3dc9=\\"\\" class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"top\\">This peak's detection window overlaps with the other annotation's 1st peak. </div><br data-v-688b3dc9=\\"\\">
           <div data-v-688b3dc9=\\"\\" image-fit-params=\\"[object Object]\\" style=\\"overflow: hidden;\\" show-pixel-intensity=\\"\\">
-            <div class=\\"overflow-hidden\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\">
+            <div class=\\"overflow-hidden ion-image\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\">
               <!---->
               <!---->
               <!---->
@@ -122,7 +122,7 @@ exports[`Diagnostics > should match snapshot (with isobar) 1`] = `
         <div data-v-688b3dc9=\\"\\" class=\\"small-peak-image\\">101.0000
           <!--v-if--><br data-v-688b3dc9=\\"\\">
           <div data-v-688b3dc9=\\"\\" image-fit-params=\\"[object Object]\\" style=\\"overflow: hidden;\\" show-pixel-intensity=\\"\\">
-            <div class=\\"overflow-hidden\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\">
+            <div class=\\"overflow-hidden ion-image\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\">
               <!---->
               <!---->
               <!---->
@@ -159,7 +159,7 @@ exports[`Diagnostics > should match snapshot (with isobar) 1`] = `
     <div data-v-688b3dc9=\\"\\" class=\\"el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6\\">
       <div data-v-688b3dc9=\\"\\" class=\\"small-peak-image\\">100.0000 <div data-v-688b3dc9=\\"\\" class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"top\\">This peak's detection window overlaps with the other annotation's 1st peak. </div><br data-v-688b3dc9=\\"\\">
         <div data-v-688b3dc9=\\"\\" image-fit-params=\\"[object Object]\\" style=\\"overflow: hidden;\\" show-pixel-intensity=\\"\\">
-          <div class=\\"overflow-hidden el-loading-parent--relative\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\" loading-number=\\"1\\">
+          <div class=\\"overflow-hidden ion-image el-loading-parent--relative\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\" loading-number=\\"1\\">
             <!---->
             <!---->
             <!---->
@@ -179,7 +179,7 @@ exports[`Diagnostics > should match snapshot (with isobar) 1`] = `
       <div data-v-688b3dc9=\\"\\" class=\\"small-peak-image\\">101.0000
         <!--v-if--><br data-v-688b3dc9=\\"\\">
         <div data-v-688b3dc9=\\"\\" image-fit-params=\\"[object Object]\\" style=\\"overflow: hidden;\\" show-pixel-intensity=\\"\\">
-          <div class=\\"overflow-hidden el-loading-parent--relative\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\" loading-number=\\"1\\">
+          <div class=\\"overflow-hidden ion-image el-loading-parent--relative\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\" loading-number=\\"1\\">
             <!---->
             <!---->
             <!---->

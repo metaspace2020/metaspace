@@ -229,9 +229,26 @@ export const datasetListItemsQuery = gql`
 
 export const getRoisQuery = gql`
   query ($datasetId: String!) {
-    dataset(id: $datasetId) {
+    rois(datasetId: $datasetId) {
       id
-      roiJson
+      datasetId
+      userId
+      name
+      isDefault
+      geojson
+    }
+  }
+`
+
+export const getRoiQuery = gql`
+  query ($id: ID!) {
+    roi(id: $id) {
+      id
+      datasetId
+      userId
+      name
+      isDefault
+      geojson
     }
   }
 `
@@ -325,9 +342,109 @@ export const addOpticalImageQuery = gql`
   }
 `
 
+export const createRoiMutation = gql`
+  mutation ($datasetId: String!, $input: RoiInput!) {
+    createRoi(datasetId: $datasetId, input: $input) {
+      id
+      datasetId
+      userId
+      name
+      isDefault
+      geojson
+    }
+  }
+`
+
+export const updateRoiMutation = gql`
+  mutation ($id: ID!, $input: RoiInput!) {
+    updateRoi(id: $id, input: $input) {
+      id
+      datasetId
+      userId
+      name
+      isDefault
+      geojson
+    }
+  }
+`
+
+export const deleteRoiMutation = gql`
+  mutation ($id: ID!) {
+    deleteRoi(id: $id)
+  }
+`
+
+// Keep the old addRoi mutation for backward compatibility during transition
 export const addRoiMutation = gql`
   mutation ($datasetId: String!, $geoJson: GeoJson!) {
     addRoi(datasetId: $datasetId, geoJson: $geoJson)
+  }
+`
+
+export const compareROIsMutation = gql`
+  mutation (
+    $datasetId: String!
+    $ticNormalize: Boolean = true
+    $logTransformTic: Boolean = true
+    $chunkSize: Int = 1000
+    $nPixelSamples: Int = 10000
+  ) {
+    compareROIs(
+      datasetId: $datasetId
+      ticNormalize: $ticNormalize
+      logTransformTic: $logTransformTic
+      chunkSize: $chunkSize
+      nPixelSamples: $nPixelSamples
+    )
+  }
+`
+
+export const diffRoiResultsQuery = gql`
+  query ($datasetId: String!, $filter: DiffRoiFilter = {}, $annotationFilter: AnnotationFilter = {}) {
+    diffRoiResults(datasetId: $datasetId, filter: $filter, annotationFilter: $annotationFilter) {
+      roi {
+        id
+        datasetId
+        userId
+        name
+        isDefault
+        geojson
+      }
+      lfc
+      auc
+      annotation {
+        id
+        ion
+        sumFormula
+        adduct
+        neutralLoss
+        chemMod
+        fdrLevel
+        msmScore
+        mz
+        possibleCompounds {
+          name
+          information {
+            databaseId
+          }
+        }
+        isomers {
+          ion
+        }
+        isobars {
+          ion
+        }
+        isotopeImages {
+          url
+          minIntensity
+          maxIntensity
+        }
+        dataset {
+          id
+          acquisitionGeometry
+        }
+      }
+    }
   }
 `
 

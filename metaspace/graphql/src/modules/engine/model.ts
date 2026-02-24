@@ -355,6 +355,65 @@ export class ScoringModel {
   params: any;
 }
 
+@Entity({ schema: 'public' })
+@Index(['datasetId', 'userId'])
+@Index(['datasetId', 'isDefault'])
+export class Roi {
+  @PrimaryGeneratedColumn({ type: 'bigint' })
+  id: string;
+
+  @Index('roi_dataset_id_index')
+  @Column({ type: 'text' })
+  datasetId: string;
+
+  @Index('roi_user_id_index')
+  @Column({ type: 'uuid' })
+  userId: string;
+
+  @Column({ type: 'text' })
+  name: string;
+
+  @Column({ type: 'boolean', default: false })
+  isDefault: boolean;
+
+  @Column({ type: 'jsonb' })
+  geojson: any;
+
+  @OneToMany(() => DiffRoi, diffRoi => diffRoi.roi)
+  diffRois: DiffRoi[];
+}
+
+@Entity({ schema: 'public' })
+@Unique('diff_roi_annotation_roi_uindex', ['annotationId', 'roiId'])
+export class DiffRoi {
+  @PrimaryGeneratedColumn({ type: 'bigint' })
+  id: string;
+
+  @Index('diff_roi_annot_id_index')
+  @Column()
+  annotationId: number;
+
+  @Index('diff_roi_roi_id_index')
+  @Column({ type: 'bigint' })
+  roiId: string;
+
+  @Index('diff_roi_lfc_index')
+  @Column({ type: 'real' })
+  lfc: number;
+
+  @Index('diff_roi_auc_index')
+  @Column({ type: 'real' })
+  auc: number;
+
+  @ManyToOne(() => Annotation, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'annotation_id' })
+  annotation: Annotation;
+
+  @ManyToOne(() => Roi, roi => roi.diffRois, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'roi_id' })
+  roi: Roi;
+}
+
 export const ENGINE_ENTITIES = [
   EngineDataset,
   OpticalImage,
@@ -364,4 +423,6 @@ export const ENGINE_ENTITIES = [
   PerfProfile,
   PerfProfileEntry,
   ScoringModel,
+  Roi,
+  DiffRoi,
 ]
