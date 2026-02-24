@@ -1298,7 +1298,9 @@ export default defineComponent({
             height: state.currentView === VIEWS.SPECTRUM ? '' : 0,
           }}
           isEmpty={isEmpty}
-          normalization={state.globalImageSettings.isNormalized && !state.normalizedRefMz.isActive ? state.normalization : undefined}
+          normalization={
+            state.globalImageSettings.isNormalized && !state.normalizedRefMz.isActive ? state.normalization : undefined
+          }
           isLoading={state.chartLoading}
           isDataLoading={annotationsLoading.value}
           data={state.sampleData}
@@ -1398,7 +1400,9 @@ export default defineComponent({
                     colormap={state.globalImageSettings.colormap}
                     scaleType={state.globalImageSettings.scaleType}
                     scaleBarColor={state.globalImageSettings.scaleBarColor}
-                    isNormalized={(state.showFullTIC || state.globalImageSettings.isNormalized) && !state.normalizedRefMz.isActive}
+                    isNormalized={
+                      (state.showFullTIC || state.globalImageSettings.isNormalized) && !state.normalizedRefMz.isActive
+                    }
                   />
                 )}
               </div>
