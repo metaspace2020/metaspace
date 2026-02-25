@@ -38,15 +38,20 @@ def create_mz_image(mz_peaks, coordinates, ref_image=None):
     if ref_image is not None:
         safe_ref = np.where(ref_image > 0, ref_image, 1.0)
         raw_image /= safe_ref
+        ref_present = ref_image > 0
+        img_max = float(raw_image[ref_present].max()) if ref_present.any() else 0.0
+    else:
+        img_max = float(raw_image.max())
 
-    if raw_image.max() > 0:
-        raw_image /= raw_image.max()
+    if img_max > 0:
+        raw_image /= img_max
 
     alpha = np.ones(shape=(height, width))
     if ref_image is not None:
         alpha = np.where(ref_image.reshape(height, width) > 0, 1.0, 0.0)
 
-    return raw_image.reshape(height, width), alpha, np.max(mz_peaks[:, 1])
+    max_int = img_max if ref_image is not None else float(np.max(mz_peaks[:, 1]))
+    return raw_image.reshape(height, width), alpha, max_int
 
 
 def create_rgba_image(mz_image, alpha):
