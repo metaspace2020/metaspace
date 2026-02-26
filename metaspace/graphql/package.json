@@ -51,7 +51,7 @@
     "@types/sprintf-js": "^1.1.1",
     "@types/uuid": "^8.3.0",
     "@uppy/companion": "3.7.2",
-    "ajv": "4.10.0",
+    "ajv": "6.14.0",
     "amqplib": "^0.5.1",
     "apollo-server-express": "^2.15.0",
     "await-semaphore": "^0.1.3",
