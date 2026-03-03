@@ -381,6 +381,10 @@ nginx_servers:
       - path: /mol-images/
         params:
           - root /var/www;
+      - path: /docs
+        params:
+          - alias {{ sm_webapp_www }}/docs;
+          - try_files $uri $uri/ /docs/index.html;
       # Web app static content
       - path: /
         params:
