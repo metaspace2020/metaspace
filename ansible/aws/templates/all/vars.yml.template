@@ -383,7 +383,7 @@ nginx_servers:
           - root /var/www;
       - path: /docs
         params:
-          - alias {{ sm_webapp_www }}/docs;
+          - alias {{ sm_webapp_www }}/docs/;
           - try_files $uri $uri/ /docs/index.html;
       # Web app static content
       - path: /
