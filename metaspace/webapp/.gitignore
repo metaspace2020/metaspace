@@ -25,3 +25,4 @@ tests/e2e/screenshots
 # Docs build output
 /docs/dist-docs
 /docs/.vitepress/cache
+/docs/port/.vitepress/cache
