@@ -58,6 +58,17 @@ services:
     networks:
       - sm
 
+  image-segmentation:
+    build:
+      context: ..
+      dockerfile: metaspace/postprocessing/image_segmentation/docker/Dockerfile
+    environment:
+      METASPACE_API_KEY: "${METASPACE_API_KEY}"
+    ports:
+      - "9877:9877"
+    networks:
+      - sm
+
   api:
     build:
       context: ..
