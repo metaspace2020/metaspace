@@ -11,6 +11,7 @@ import {
   DiffRoi,
   Roi,
   EngineDataset,
+  ImageSegmentationJob,
 } from '../../engine/model'
 import {
   EnrichmentBootstrap,
@@ -498,6 +499,31 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     }
     return null
   },
+  async segmentationJobs(source: any, { datasetId }: any, ctx: Context) {
+    if (!await esDatasetByID(datasetId, ctx.user)) {
+      return []
+    }
+
+    const jobs = await ctx.entityManager.find(ImageSegmentationJob, {
+      where: { datasetId },
+      order: { createdAt: 'DESC' } as any,
+    })
+
+    return jobs.map(job => ({
+      id: job.id,
+      datasetId: job.datasetId,
+      status: job.status,
+      algorithm: job.algorithm,
+      params: job.params ? JSON.stringify(job.params) : null,
+      fdr: job.fdr,
+      databases: job.databases,
+      result: job.result ? JSON.stringify(job.result) : null,
+      error: job.error,
+      createdAt: job.createdAt,
+      updatedAt: job.updatedAt,
+    }))
+  },
+
   async currentUserLastSubmittedDataset(source, args, ctx): Promise<DatasetSource | null> {
     try {
       if (ctx.user.id) {

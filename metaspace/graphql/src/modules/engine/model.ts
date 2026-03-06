@@ -414,6 +414,60 @@ export class DiffRoi {
   roi: Roi;
 }
 
+@Entity({ schema: 'public', name: 'image_segmentation_job' })
+export class ImageSegmentationJob {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Index('image_segmentation_job_ds_id_index')
+  @Column({ name: 'ds_id', type: 'text' })
+  datasetId: string;
+
+  @Index('image_segmentation_job_status_index')
+  @Column({ type: 'text' })
+  status: string;
+
+  @Column({ type: 'text' })
+  algorithm: string;
+
+  @Column({ type: 'jsonb', nullable: true })
+  params: any;
+
+  @Column({ type: 'real', nullable: true })
+  fdr: number | null;
+
+  @Column({ type: 'jsonb', nullable: true })
+  databases: string[][] | null;
+
+  // TODO: move label_map and segment_profiles out of this column into S3
+  // (label_map can be 1M+ values for large datasets; store as NPY in S3, keep only the S3 key here)
+  @Column({ type: 'jsonb', nullable: true })
+  result: any;
+
+  @Column({ type: 'text', nullable: true })
+  error: string | null;
+
+  @Column({
+    name: 'created_at',
+    type: 'timestamp without time zone',
+    default: () => 'NOW()',
+    transformer: new MomentValueTransformer(),
+  })
+  createdAt: Date;
+
+  @Column({
+    name: 'updated_at',
+    type: 'timestamp without time zone',
+    default: () => 'NOW()',
+    transformer: new MomentValueTransformer(),
+  })
+  updatedAt: Date;
+
+  @ManyToOne(() => EngineDataset, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'ds_id' })
+  dataset: EngineDataset;
+}
+
 export const ENGINE_ENTITIES = [
   EngineDataset,
   OpticalImage,
@@ -425,4 +479,5 @@ export const ENGINE_ENTITIES = [
   ScoringModel,
   Roi,
   DiffRoi,
+  ImageSegmentationJob,
 ]

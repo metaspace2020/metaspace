@@ -18,7 +18,7 @@ import { metadataSchemas } from '../../../../metadataSchemas/metadataRegistry'
 import { getDatasetForEditing } from '../operation/getDatasetForEditing'
 import { deleteDataset } from '../operation/deleteDataset'
 import { checkNoPublishedProjectRemoved, checkProjectsPublicationStatus } from '../operation/publicationChecks'
-import { EngineDataset, ScoringModel, Roi, DiffRoi } from '../../engine/model'
+import { EngineDataset, ScoringModel, Roi, DiffRoi, ImageSegmentationJob } from '../../engine/model'
 import { addExternalLink, removeExternalLink } from '../../project/ExternalLink'
 import { esDatasetByID } from '../../../../esConnector'
 import { mapDatabaseToDatabaseId } from '../../moldb/util/mapDatabaseToDatabaseId'
@@ -803,6 +803,38 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     }
 
     await ctx.entityManager.delete(Roi, id)
+    return true
+  },
+
+  runSegmentation: async(
+    source: any,
+    { datasetId, algorithm = 'pca_gmm', databases = [['HMDB', 'v4']], fdr = 0.2, adducts, minMz, maxMz, offSample = false, params }: any,
+    ctx: Context
+  ) => {
+    if (ctx.user.id == null) {
+      throw new UserError('Not authenticated')
+    }
+
+    const dataset = await esDatasetByID(datasetId, ctx.user)
+    if (!dataset) {
+      throw new UserError('Dataset not found or access denied')
+    }
+
+    const body: Record<string, any> = {
+      ds_id: datasetId,
+      algorithm,
+      databases,
+      fdr,
+      params: params ? JSON.parse(params) : {},
+      email: ctx.user.email,
+    }
+    if (adducts != null) body.adducts = adducts
+    if (minMz != null) body.min_mz = minMz
+    if (maxMz != null) body.max_mz = maxMz
+    body.off_sample = offSample
+
+    await smApiDatasetRequest('/v1/segmentation/run', body)
+
     return true
   },
 }

@@ -384,6 +384,22 @@ type InitialPeak {
   y: Int!
 }
 
+type ImageSegmentationJob {
+  id: Int!
+  datasetId: String!
+  status: String!
+  algorithm: String!
+  params: String              # JSON-encoded algorithm parameters
+  fdr: Float
+  databases: [[String!]!]     # e.g. [["HMDB", "v4"], ["LipidMaps", "2021"]]
+  # TODO: result will eventually contain S3 keys for label_map and segment_profiles
+  # instead of the raw arrays, once large-result storage is moved to S3
+  result: String              # JSON-encoded SegmentationResult
+  error: String
+  createdAt: String!
+  updatedAt: String!
+}
+
 type Roi {
   id: ID!
   datasetId: String!
@@ -449,9 +465,11 @@ type Query {
   initialPeak(datasetId: String!): InitialPeak
 
   diffRoiResults(datasetId: String!, filter: DiffRoiFilter = {}, annotationFilter: AnnotationFilter = {}): [DiffRoiResult!]!
-  
+
   rois(datasetId: String!, isDefault: Boolean): [Roi!]!
   roi(id: ID!): Roi
+
+  segmentationJobs(datasetId: String!): [ImageSegmentationJob!]!
 }
 
 type Mutation {
@@ -516,6 +534,18 @@ type Mutation {
   createRoi(datasetId: String!, input: RoiInput!): Roi!
   updateRoi(id: ID!, input: RoiInput!): Roi!
   deleteRoi(id: ID!): Boolean!
+
+  runSegmentation(
+    datasetId: String!
+    algorithm: String! = "pca_gmm"
+    databases: [[String!]!]! = [["HMDB", "v4"]]
+    fdr: Float = 0.2
+    adducts: [String!]
+    minMz: Float
+    maxMz: Float
+    offSample: Boolean = false  # false = on-sample only, true = off-sample only, null = no filter
+    params: String  # JSON-encoded algorithm parameters
+  ): Boolean!
 }
 
 type Subscription {
