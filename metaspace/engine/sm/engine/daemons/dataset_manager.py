@@ -27,6 +27,7 @@ from sm.engine.postprocessing.ion_thumbnail import (
 )
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
+from sm.engine.postprocessing.segmentation_wrapper import run_segmentation_for_dataset
 from sm.engine.postprocessing.ds_size_hash import save_size_hash
 from sm.engine.optical_image import del_optical_image
 from sm.engine.config import SMConfig
@@ -242,6 +243,51 @@ class DatasetManager:
         )
         email_body = 'Dear METASPACE user,\n\n' f'{content}\n\n' 'Best regards,\n' 'METASPACE Team'
         self._send_email(msg['email'], 'METASPACE service notification (FAILED)', email_body)
+
+    def run_segmentation(self, msg):
+        """Pick up a queued segmentation job and run it via the segmentation microservice."""
+        ds_id = msg['ds_id']
+        job_id = msg['job_id']
+        algorithm = msg.get('algorithm', 'pca_gmm')
+        databases = msg.get('databases', [['HMDB', 'v4']])
+        fdr = msg.get('fdr', 0.2)
+        params = msg.get('params', {})
+        adducts = msg.get('adducts')
+        min_mz = msg.get('min_mz')
+        max_mz = msg.get('max_mz')
+        off_sample = msg.get('off_sample', False)
+
+        self.logger.info(f'Running segmentation job {job_id} for dataset {ds_id}')
+
+        # Mark job as started
+        self._db.alter(
+            "UPDATE image_segmentation_job SET status = 'STARTED', updated_at = NOW() WHERE id = %s",
+            params=(job_id,),
+        )
+
+        try:
+            run_segmentation_for_dataset(
+                ds_id=ds_id,
+                job_id=job_id,
+                algorithm=algorithm,
+                databases=databases,
+                fdr=fdr,
+                params=params,
+                db=self._db,
+                services_config=self._sm_config['services'],
+                adducts=adducts,
+                min_mz=min_mz,
+                max_mz=max_mz,
+                off_sample=off_sample,
+            )
+        except Exception as e:
+            # Don't propagate — a segmentation failure should not change the dataset status to FAILED.
+            # The job row already records the failure.
+            self.logger.error(f'Segmentation job {job_id} for dataset {ds_id} failed: {e}')
+            self._db.alter(
+                "UPDATE image_segmentation_job SET status = 'FAILED', error = %s, updated_at = NOW() WHERE id = %s",
+                params=(str(e), job_id),
+            )
 
     def ds_failure_handler(self, msg, e):
         self.logger.error(f' SM {msg["action"]} daemon: failure', exc_info=True)

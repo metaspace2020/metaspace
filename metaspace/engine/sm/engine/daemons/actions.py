@@ -4,6 +4,7 @@ class DaemonAction:
     INDEX = 'index'
     DELETE = 'delete'
     CLASSIFY_OFF_SAMPLE = 'classify_off_sample'
+    SEGMENTATION = 'segmentation'
 
 
 class DaemonActionStage:

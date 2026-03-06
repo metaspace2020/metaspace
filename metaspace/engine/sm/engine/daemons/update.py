@@ -77,6 +77,8 @@ class SMUpdateDaemon:
                 self._manager.update(ds, msg['fields'])
             elif msg['action'] == DaemonAction.DELETE:
                 self._manager.delete(ds=ds)
+            elif msg['action'] == DaemonAction.SEGMENTATION:
+                self._manager.run_segmentation(msg)
             else:
                 raise SMError(f'Wrong action: {msg["action"]}')
         except Exception as e:
