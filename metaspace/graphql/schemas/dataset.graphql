@@ -388,16 +388,39 @@ type ImageSegmentationJob {
   id: Int!
   datasetId: String!
   status: String!
-  algorithm: String!
-  params: String              # JSON-encoded algorithm parameters
-  fdr: Float
-  databases: [[String!]!]     # e.g. [["HMDB", "v4"], ["LipidMaps", "2021"]]
-  # TODO: result will eventually contain S3 keys for label_map and segment_profiles
-  # instead of the raw arrays, once large-result storage is moved to S3
-  result: String              # JSON-encoded SegmentationResult
   error: String
   createdAt: String!
   updatedAt: String!
+}
+
+type Segmentation {
+  id: ID!
+  datasetId: String!
+  jobId: Int
+  segmentIndex: Int!
+  algorithm: String!
+  status: String!
+  error: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type SegmentationIonProfile {
+  id: ID!
+  segmentationId: ID!
+  annotationId: Int!
+  enrichScore: Float!
+}
+
+type SegmentationIonProfileResult {
+  segmentation: Segmentation!
+  annotation: Annotation!
+  enrichScore: Float!
+}
+
+input SegmentationIonProfileFilter {
+  minEnrichScore: Float
+  topN: Int
 }
 
 type Roi {
@@ -470,6 +493,8 @@ type Query {
   roi(id: ID!): Roi
 
   segmentationJobs(datasetId: String!): [ImageSegmentationJob!]!
+  segmentations(datasetId: String!): [Segmentation!]!
+  segmentationIonProfiles(segmentationId: ID!, filter: SegmentationIonProfileFilter = {}): [SegmentationIonProfileResult!]!
 }
 
 type Mutation {

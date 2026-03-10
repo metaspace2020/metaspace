@@ -12,6 +12,8 @@ import {
   Roi,
   EngineDataset,
   ImageSegmentationJob,
+  Segmentation,
+  SegmentationIonProfile,
 } from '../../engine/model'
 import {
   EnrichmentBootstrap,
@@ -504,24 +506,67 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       return []
     }
 
-    const jobs = await ctx.entityManager.find(ImageSegmentationJob, {
+    return ctx.entityManager.find(ImageSegmentationJob, {
       where: { datasetId },
       order: { createdAt: 'DESC' } as any,
     })
+  },
 
-    return jobs.map(job => ({
-      id: job.id,
-      datasetId: job.datasetId,
-      status: job.status,
-      algorithm: job.algorithm,
-      params: job.params ? JSON.stringify(job.params) : null,
-      fdr: job.fdr,
-      databases: job.databases,
-      result: job.result ? JSON.stringify(job.result) : null,
-      error: job.error,
-      createdAt: job.createdAt,
-      updatedAt: job.updatedAt,
-    }))
+  async segmentations(source: any, { datasetId }: any, ctx: Context) {
+    if (!await esDatasetByID(datasetId, ctx.user)) {
+      return []
+    }
+
+    return ctx.entityManager.find(Segmentation, {
+      where: { datasetId },
+      order: { segmentIndex: 'ASC' } as any,
+    })
+  },
+
+  async segmentationIonProfiles(
+    source: any,
+    { segmentationId, filter = {} }: any,
+    ctx: Context,
+  ) {
+    const segmentation = await ctx.entityManager.findOne(Segmentation, {
+      where: { id: segmentationId },
+    })
+    if (!segmentation) {
+      return []
+    }
+    if (!await esDatasetByID(segmentation.datasetId, ctx.user)) {
+      return []
+    }
+
+    let qb = ctx.entityManager
+      .createQueryBuilder(SegmentationIonProfile, 'sip')
+      .where('sip.segmentationId = :segmentationId', { segmentationId })
+      .orderBy('sip.enrichScore', 'DESC')
+
+    if (filter.minEnrichScore !== undefined) {
+      qb = qb.andWhere('sip.enrichScore >= :minEnrichScore', { minEnrichScore: filter.minEnrichScore })
+    }
+    if (filter.topN !== undefined) {
+      qb = qb.limit(filter.topN)
+    }
+
+    const profiles = await qb.getMany()
+    if (profiles.length === 0) {
+      return []
+    }
+
+    // Fetch full annotation data from Elasticsearch
+    const ionIds = uniq(profiles.map((p: any) => `${segmentation.datasetId}_${p.annotationId}`)).join('|')
+    const annotations = await esSearchResults({ filter: { annotationId: ionIds }, limit: 10000 }, 'annotation', ctx.user)
+    const annotationMap = new Map(annotations.map((ann: any) => [ann._id, unpackAnnotation(ann)]))
+
+    return profiles
+      .map((p: any) => {
+        const annotation = annotationMap.get(`${segmentation.datasetId}_${p.annotationId}`)
+        if (!annotation) return null
+        return { segmentation, annotation, enrichScore: p.enrichScore }
+      })
+      .filter(Boolean)
   },
 
   async currentUserLastSubmittedDataset(source, args, ctx): Promise<DatasetSource | null> {
