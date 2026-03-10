@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import os
+from io import BytesIO
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import anndata as ad
+import boto3
 import numpy as np
 from anndata import AnnData
 
@@ -15,6 +19,78 @@ from metaspace_converter.to_anndata import metaspace_to_anndata
 from metaspace_converter.constants import COL
 
 logger = logging.getLogger(__name__)
+
+_CONFIG_PATH = Path(__file__).resolve().parent.parent / 'conf' / 'config.json'
+
+
+def _load_config() -> Dict:
+    """Read conf/config.json from the microservice's conf directory."""
+    with open(_CONFIG_PATH) as f:
+        return json.load(f)
+
+
+def _get_s3_client(cfg: Dict):
+    """Build an S3 client from a loaded config dict (mirrors sm.engine.storage logic)."""
+    boto_config = boto3.session.Config(signature_version='s3v4')
+    if 'aws' in cfg:
+        return boto3.client(
+            's3',
+            region_name=cfg['aws']['aws_default_region'],
+            aws_access_key_id=cfg['aws']['aws_access_key_id'],
+            aws_secret_access_key=cfg['aws']['aws_secret_access_key'],
+            config=boto_config,
+        )
+    storage = cfg['storage']
+    return boto3.client(
+        's3',
+        endpoint_url=storage['endpoint_url'],
+        aws_access_key_id=storage['access_key_id'],
+        aws_secret_access_key=storage['secret_access_key'],
+        config=boto_config,
+    )
+
+
+# ---------------------------------------------------------------------------
+# S3 loader (primary path when input has been pre-built by the engine)
+# ---------------------------------------------------------------------------
+
+def load_segmentation_input_from_s3(
+    s3_key: str,
+    bucket: Optional[str] = None,
+) -> Tuple[np.ndarray, np.ndarray, List[str], Tuple[int, int]]:
+    """Load segmentation input arrays from a .npz file stored in S3.
+
+    This is the primary loading path when the engine has pre-built the input
+    via SegmentationDataLoader.prepare_segmentation_input.
+
+    Args:
+        s3_key:  S3 key of the .npz file, e.g. 'segmentation/<ds_id>/input.npz'.
+        bucket:  S3 bucket name.  Falls back to image_storage.bucket in conf/config.json.
+
+    Returns:
+        (intensity_matrix, pixel_coordinates, ion_labels, image_shape) —
+        the same tuple produced by load_segmentation_input / anndata_to_segmentation_input.
+    """
+    cfg = _load_config()
+    if bucket is None:
+        bucket = cfg['imzml_browser_storage']['bucket']
+
+    logger.info(f'Loading segmentation input from s3://{bucket}/{s3_key}')
+    s3 = _get_s3_client(cfg)
+    obj = s3.get_object(Bucket=bucket, Key=s3_key)
+    data = np.load(BytesIO(obj['Body'].read()), allow_pickle=False)
+
+    intensity_matrix = data['intensity_matrix']
+    pixel_coordinates = data['pixel_coordinates']
+    ion_labels: List[str] = data['ion_labels'].tolist()
+    image_shape: Tuple[int, int] = tuple(int(v) for v in data['image_shape'])
+
+    logger.info(
+        f'Loaded segmentation input: '
+        f'{intensity_matrix.shape[0]} pixels × {len(ion_labels)} ions, '
+        f'image shape {image_shape}'
+    )
+    return intensity_matrix, pixel_coordinates, ion_labels, image_shape
 
 
 def anndata_to_segmentation_input(

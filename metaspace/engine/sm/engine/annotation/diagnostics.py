@@ -23,6 +23,7 @@ class DiagnosticType(str, Enum):
     TIC = 'TIC'
     IMZML_METADATA = 'IMZML_METADATA'
     FDR_RESULTS = 'FDR_RESULTS'
+    SEGMENTATION = 'SEGMENTATION'
 
 
 class DiagnosticImageKey(str, Enum):
@@ -34,6 +35,8 @@ class DiagnosticImageKey(str, Enum):
     DECOY_MAP_DF = 'DECOY_MAP_DF'
     FORMULA_MAP_DF = 'FORMULA_MAP_DF'
     METRICS_DF = 'METRICS_DF'
+    # if type == DiagnosticType.SEGMENTATION
+    LABEL_MAP = 'LABEL_MAP'
 
 
 class DiagnosticImageFormat(str, Enum):

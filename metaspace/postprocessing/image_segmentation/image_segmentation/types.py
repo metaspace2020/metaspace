@@ -58,6 +58,6 @@ class SegmentationResult:
     label_map: Union[np.ndarray, Dict[str, np.ndarray]]
     n_segments: Union[int, Dict[str, int]]
 
-    segment_profiles: Optional[pd.DataFrame]   # (n_segments x n_ions) fold enrichment
+    segment_profiles: Optional[pd.DataFrame]   # long format: segment_id, ion_label, enrich_score
     segment_summary: Optional[List[dict]]
     diagnostics: dict

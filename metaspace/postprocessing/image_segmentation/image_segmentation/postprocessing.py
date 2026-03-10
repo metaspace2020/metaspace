@@ -70,27 +70,33 @@ def _compute_enrichment_profiles(
     labels: np.ndarray,
     n_segments: int,
 ) -> pd.DataFrame:
+    """Return a long DataFrame with columns: segment_id, ion_label, enrich_score.
 
+    Each row represents the fold-enrichment of one ion in one segment relative
+    to the global mean intensity across all pixels.  Rows with NaN enrich_score
+    indicate empty segments or zero-mean ions.
+    """
     global_means = intensity_matrix.mean(axis=0)    # (n_ions,)
-    # Avoid division by zero for ions with zero global mean
     global_means_safe = np.where(global_means == 0, np.nan, global_means)
 
-    enrichment = np.zeros((n_segments, len(ion_labels)))
-
+    records: List[dict] = []
     for seg_id in range(n_segments):
         seg_mask = labels == seg_id
         if seg_mask.sum() == 0:
             logger.warning(f"Segment {seg_id} has no pixels — enrichment set to NaN")
-            enrichment[seg_id] = np.nan
-            continue
-        seg_means = intensity_matrix[seg_mask].mean(axis=0)
-        enrichment[seg_id] = seg_means / global_means_safe
+            scores = np.full(len(ion_labels), np.nan)
+        else:
+            seg_means = intensity_matrix[seg_mask].mean(axis=0)
+            scores = seg_means / global_means_safe
 
-    return pd.DataFrame(
-        enrichment,
-        index=pd.RangeIndex(n_segments, name="segment_id"),
-        columns=ion_labels,
-    )
+        for i, ion in enumerate(ion_labels):
+            records.append({
+                'segment_id': seg_id,
+                'ion_label': ion,
+                'enrich_score': float(scores[i]),
+            })
+
+    return pd.DataFrame(records, columns=['segment_id', 'ion_label', 'enrich_score'])
 
 
 def _compute_segment_summary(
@@ -99,7 +105,7 @@ def _compute_segment_summary(
     n_segments: int,
     top_n: int = 20,
 ) -> List[dict]:
-
+    """Build a per-segment summary from the long enrichment_profiles DataFrame."""
     valid_pixels = int(np.sum(~np.isnan(label_map)))
     summary = []
 
@@ -107,14 +113,12 @@ def _compute_segment_summary(
         size_px = int(np.sum(label_map == seg_id))
         coverage_fraction = size_px / valid_pixels if valid_pixels > 0 else 0.0
 
-        # Top ions by fold enrichment for this segment
-        seg_enrichment = enrichment_profiles.loc[seg_id]
+        seg_rows = enrichment_profiles[enrichment_profiles['segment_id'] == seg_id]
         top_ions = (
-            seg_enrichment
-            .dropna()
-            .sort_values(ascending=False)
-            .head(top_n)
-            .index.tolist()
+            seg_rows.dropna(subset=['enrich_score'])
+            .sort_values('enrich_score', ascending=False)
+            .head(top_n)['ion_label']
+            .tolist()
         )
 
         summary.append({

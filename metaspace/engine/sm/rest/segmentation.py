@@ -1,4 +1,3 @@
-import json
 import logging
 
 import bottle
@@ -58,20 +57,10 @@ def run_segmentation():
 
         # Insert a QUEUED job row and retrieve its id
         job_ids = db.insert_return(
-            '''INSERT INTO image_segmentation_job
-                   (ds_id, status, algorithm, params, fdr, databases)
-               VALUES (%s, %s, %s, %s::jsonb, %s, %s::jsonb)
+            '''INSERT INTO image_segmentation_job (ds_id, status)
+               VALUES (%s, %s)
                RETURNING id''',
-            rows=[
-                (
-                    ds_id,
-                    DaemonActionStage.QUEUED,
-                    algorithm,
-                    json.dumps(params),
-                    fdr,
-                    json.dumps(databases),
-                )
-            ],
+            rows=[(ds_id, DaemonActionStage.QUEUED)],
         )
         job_id = job_ids[0]
 

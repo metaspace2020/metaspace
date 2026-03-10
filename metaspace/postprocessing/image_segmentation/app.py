@@ -16,14 +16,18 @@ app = FastAPI(title='Image Segmentation Service')
 class SegmentationRequest(BaseModel):
     dataset_id: str
     algorithm: str = 'pca_gmm'
-    databases: List[List[str]] = [['HMDB', 'v4']]
-    fdr: float = 0.2
+    # S3 path to a pre-built .npz produced by the engine's SegmentationDataLoader.
+    # When provided this takes priority and all annotation-fetch fields are ignored.
+    input_s3_key: Optional[str] = None
+    # Annotation-fetch fields — only used when input_s3_key is None (Python-client fallback)
+    databases: Optional[List[List[str]]] = None
+    fdr: float = 0.1
     adducts: Optional[List[str]] = None
     min_mz: Optional[float] = None
     max_mz: Optional[float] = None
-    parameters: Dict[str, Any] = {}
     use_tic: bool = False
     off_sample: Optional[bool] = False
+    parameters: Dict[str, Any] = {}
     smoothing: bool = True
     window_size: int = 3
 
@@ -36,10 +40,9 @@ def _serialize_result(result) -> Dict[str, Any]:
     if hasattr(label_map, 'tolist'):
         label_map = label_map.tolist()
 
-    # TODO: upload segment_profiles as a parquet/NPY file to S3 and replace with its S3 key here.
     segment_profiles = None
     if result.segment_profiles is not None:
-        segment_profiles = result.segment_profiles.to_dict(orient='list')
+        segment_profiles = result.segment_profiles.to_dict(orient='records')
 
     return {
         'dataset_id': result.dataset_id,
@@ -63,6 +66,7 @@ def run(req: SegmentationRequest):
         result = run_segmentation(
             dataset_id=req.dataset_id,
             algorithm=req.algorithm,
+            input_s3_key=req.input_s3_key,
             databases=req.databases,
             parameters=req.parameters,
             fdr=req.fdr,
