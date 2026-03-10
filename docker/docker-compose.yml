@@ -62,12 +62,14 @@ services:
     build:
       context: ..
       dockerfile: metaspace/postprocessing/image_segmentation/docker/Dockerfile
-    environment:
-      METASPACE_API_KEY: "${METASPACE_API_KEY}"
+    volumes:
+      - "../metaspace/postprocessing/image_segmentation/conf/config.json:/app/conf/config.json:ro"
     ports:
       - "9877:9877"
     networks:
       - sm
+    depends_on:
+      - storage
 
   api:
     build:
@@ -110,6 +112,7 @@ services:
       - rabbitmq
       - postgres
       - elasticsearch
+      - image-segmentation
     # extra_hosts: # Uncomment if graphql is run outside of Docker
     #  - "graphql:172.17.0.1"
 

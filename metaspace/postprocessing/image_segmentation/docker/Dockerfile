@@ -11,7 +11,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY metaspace/postprocessing/image_segmentation/app.py .
 COPY metaspace/postprocessing/image_segmentation/image_segmentation ./image_segmentation
+COPY metaspace/postprocessing/image_segmentation/conf ./conf
 
 EXPOSE 9877
 
-CMD ["python", "-m", "uvicorn", "image_segmentation.app:app", "--host", "0.0.0.0", "--port", "9877"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "9877"]
