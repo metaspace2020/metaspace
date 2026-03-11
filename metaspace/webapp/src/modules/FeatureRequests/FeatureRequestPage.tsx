@@ -4,6 +4,7 @@ import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
 import './FeatureRequestPage.scss'
 import {
   ElButton,
+  ElCheckbox,
   ElTable,
   ElTableColumn,
   ElTag,
@@ -25,6 +26,7 @@ import {
   createFeatureRequestMutation,
   approveFeatureRequestMutation,
   rejectFeatureRequestMutation,
+  resolveFeatureRequestMutation,
   toggleVoteFeatureRequestMutation,
   updateFeatureRequestVisibilityMutation,
   updateFeatureRequestDisplayOrderMutation,
@@ -115,6 +117,9 @@ export default defineComponent({
 
     // Loading state for individual actions
     const loadingStates = reactive<LoadingState>({})
+
+    // Track resolved request IDs (session) until backend returns resolvedAt
+    const resolvedIds = ref(new Set<string>())
 
     // Skeleton loading state
     const skeletonLoading = ref(false)
@@ -293,8 +298,12 @@ export default defineComponent({
           await Promise.all([refetchMyRequests(), refetchPublicRequests()])
         }
       } catch (error: any) {
-        const errorMessage =
-          error.message || `Failed to ${dialogState.mode === 'create' ? 'create' : 'update'} feature request`
+        const modeToVerb: Record<string, string> = {
+          create: 'create',
+          approve: 'approve',
+          reject: 'reject',
+        }
+        const errorMessage = error.message || `Failed to ${modeToVerb[dialogState.mode] || 'update'} feature request`
         ElNotification({
           title: 'Error',
           message: errorMessage,
@@ -311,6 +320,7 @@ export default defineComponent({
         [FeatureRequestStatus.UNDER_REVIEW]: 'Under Review',
         [FeatureRequestStatus.APPROVED]: 'Approved',
         [FeatureRequestStatus.REJECTED]: 'Rejected',
+        [FeatureRequestStatus.SOLVED]: 'Solved',
       }
       return statusMap[status] || status
     }
@@ -320,9 +330,13 @@ export default defineComponent({
         [FeatureRequestStatus.UNDER_REVIEW]: 'warning',
         [FeatureRequestStatus.APPROVED]: 'success',
         [FeatureRequestStatus.REJECTED]: 'danger',
+        [FeatureRequestStatus.SOLVED]: 'success',
       }
       return statusTypeMap[status] || ''
     }
+
+    const isResolved = (request: FeatureRequest): boolean =>
+      request.status === FeatureRequestStatus.SOLVED || !!request.solvedAt || resolvedIds.value.has(request.id)
 
     const handleVote = async (request: FeatureRequest) => {
       if (!apolloClient) {
@@ -435,6 +449,48 @@ export default defineComponent({
       }
     }
 
+    const handleResolveCheck = async (request: FeatureRequest, checked: boolean) => {
+      if (!apolloClient || !checked) return
+
+      const loadingKey = `resolve-${request.id}`
+      if (loadingStates[loadingKey]) return
+
+      loadingStates[loadingKey] = true
+      skeletonLoading.value = true
+      resolvedIds.value = new Set([...resolvedIds.value, request.id])
+
+      try {
+        await apolloClient.mutate({
+          mutation: resolveFeatureRequestMutation,
+          variables: {
+            id: request.id,
+            input: {},
+          },
+        })
+        ElNotification({
+          title: 'Success',
+          message: 'Feature request marked as resolved',
+          type: 'success',
+          duration: 3000,
+        })
+        await Promise.all([refetchMyRequests(), refetchPublicRequests()])
+        if (dialogState.mode === 'detail' && dialogState.selectedRequest?.id === request.id) {
+          closeDialog()
+        }
+      } catch (error: any) {
+        resolvedIds.value = new Set([...resolvedIds.value].filter((id) => id !== request.id))
+        ElNotification({
+          title: 'Error',
+          message: error.message || 'Failed to mark as resolved',
+          type: 'error',
+          duration: 5000,
+        })
+      } finally {
+        loadingStates[loadingKey] = false
+        skeletonLoading.value = false
+      }
+    }
+
     const formatDate = (dateString: string): string => {
       if (!dateString) return '-'
       const date = new Date(dateString)
@@ -445,12 +501,7 @@ export default defineComponent({
       })
     }
 
-    const renderTable = (
-      requests: FeatureRequest[],
-      title: string,
-      showStatus: boolean = true,
-      showVoting: boolean = false
-    ) => {
+    const renderTable = (requests: FeatureRequest[], title: string, showVoting: boolean = false) => {
       if (!requests || requests.length === 0) {
         return (
           <div class="section-empty">
@@ -471,15 +522,13 @@ export default defineComponent({
               default: ({ row }: { row: FeatureRequest }) => <span class="request-description">{row.description}</span>,
             }}
           </ElTableColumn>
-          {showStatus && (
-            <ElTableColumn prop="status" label="Status" width="120">
-              {{
-                default: ({ row }: { row: FeatureRequest }) => (
-                  <ElTag type={getStatusType(row.status) as any}>{getStatusText(row.status)}</ElTag>
-                ),
-              }}
-            </ElTableColumn>
-          )}
+          <ElTableColumn prop="status" label="Status" width="120">
+            {{
+              default: ({ row }: { row: FeatureRequest }) => (
+                <ElTag type={getStatusType(row.status) as any}>{getStatusText(row.status)}</ElTag>
+              ),
+            }}
+          </ElTableColumn>
           {showVoting && (
             <ElTableColumn prop="likes" label="Votes" width="100" align="center">
               {{
@@ -533,7 +582,8 @@ export default defineComponent({
                             </ElButton>
                           </Fragment>
                         )}
-                        {row.status === FeatureRequestStatus.APPROVED && (
+                        {(row.status === FeatureRequestStatus.APPROVED ||
+                          row.status === FeatureRequestStatus.SOLVED) && (
                           <Fragment>
                             <ElSwitch
                               modelValue={row.isVisible}
@@ -591,7 +641,7 @@ export default defineComponent({
             <div class="section">
               <h2 class="section-title">Community feature requests</h2>
               <p class="section-description">Vote for the features you'd like to see implemented</p>
-              {renderTable(publicRequests.value, 'Community Requests', false, true)}
+              {renderTable(publicRequests.value, 'Community Requests', true)}
 
               {/* Public Requests Pagination */}
               {publicRequestsCount.value > publicRequestsPageSize.value || publicRequestsPage.value !== 1 ? (
@@ -620,7 +670,7 @@ export default defineComponent({
                   Request new feature
                 </ElButton>
               </div>
-              {renderTable(myRequests.value, 'My Requests', true, false)}
+              {renderTable(myRequests.value, 'My Requests', false)}
 
               {/* My Requests Pagination */}
               {myRequestsCount.value > myRequestsPageSize.value || myRequestsPage.value !== 1 ? (
@@ -797,6 +847,27 @@ export default defineComponent({
                   </div>
                 </div>
               )}
+
+              {/* Mark as Resolved - for detail mode (admin, approved or solved requests) */}
+              {dialogState.mode === 'detail' &&
+                dialogState.selectedRequest &&
+                isAdmin.value &&
+                (dialogState.selectedRequest.status === FeatureRequestStatus.APPROVED ||
+                  dialogState.selectedRequest.status === FeatureRequestStatus.SOLVED) && (
+                  <div class="form-group">
+                    <ElCheckbox
+                      modelValue={isResolved(dialogState.selectedRequest)}
+                      disabled={isResolved(dialogState.selectedRequest)}
+                      loading={loadingStates[`resolve-${dialogState.selectedRequest.id}`]}
+                      onUpdate:modelValue={(val: boolean) =>
+                        val && handleResolveCheck(dialogState.selectedRequest!, val)
+                      }
+                      class="resolve-checkbox"
+                    >
+                      Mark as resolved
+                    </ElCheckbox>
+                  </div>
+                )}
 
               {/* Admin notes field - for approve and reject modes */}
               {(dialogState.mode === 'approve' || dialogState.mode === 'reject') && (
