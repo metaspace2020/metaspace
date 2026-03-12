@@ -1,5 +1,0 @@
-**/*
-!metaspace/postprocessing/image_segmentation/requirements.txt
-!metaspace/postprocessing/image_segmentation/app.py
-!metaspace/postprocessing/image_segmentation/image_segmentation/**/*
-!metaspace/postprocessing/image_segmentation/conf/**/*
