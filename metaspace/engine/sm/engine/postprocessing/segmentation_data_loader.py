@@ -38,7 +38,7 @@ ANNOTATIONS_SEL = '''
             LIMIT 1
       )
       AND m.fdr <= %s
-      AND m.iso_image_ids[0] IS NOT NULL
+      AND m.iso_image_ids[1] IS NOT NULL
       AND (m.stats->'theo_mz'->>0) IS NOT NULL
 '''
 
@@ -213,6 +213,10 @@ class SegmentationDataLoader:
         # 1. Filtered annotations
         annotations = self._get_filtered_annotations(
             databases, fdr, adducts, off_sample, min_mz, max_mz
+        )
+        logger.info(
+            f'Dataset {self.ds_id}: _get_filtered_annotations returned {len(annotations)} rows '
+            f'(databases={databases}, fdr={fdr}, off_sample={off_sample})'
         )
 
         if ion_labels is not None:
