@@ -1,41 +1,38 @@
+import json
 import logging
-from typing import Any, Dict, List, Optional
+import math
+import threading
+from pathlib import Path
 
-import uvicorn
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+import bottle
+import requests
 
 from image_segmentation.segm_pipeline import run_segmentation
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title='Image Segmentation Service')
+app = bottle.Bottle()
 
 
-class SegmentationRequest(BaseModel):
-    dataset_id: str
-    algorithm: str = 'pca_gmm'
-    # S3 path to a pre-built .npz produced by the engine's SegmentationDataLoader.
-    # When provided this takes priority and all annotation-fetch fields are ignored.
-    input_s3_key: Optional[str] = None
-    # Annotation-fetch fields — only used when input_s3_key is None (Python-client fallback)
-    databases: Optional[List[List[str]]] = None
-    fdr: float = 0.1
-    adducts: Optional[List[str]] = None
-    min_mz: Optional[float] = None
-    max_mz: Optional[float] = None
-    use_tic: bool = False
-    off_sample: Optional[bool] = False
-    parameters: Dict[str, Any] = {}
-    smoothing: bool = True
-    window_size: int = 3
+def _load_config():
+    config_path = Path(__file__).resolve().parent / 'conf' / 'config.json'
+    with open(config_path) as f:
+        return json.load(f)
 
 
-def _serialize_result(result) -> Dict[str, Any]:
-    """Convert SegmentationResult to a JSON-serializable dict."""
-    # TODO: upload label_map as an NPY file to S3 and replace with its S3 key here.
-    # For large datasets (1M+ pixels) this can be tens of MB of JSON.
+def _sanitize(obj):
+    """Recursively replace NaN/Inf floats with None for JSON compliance."""
+    if isinstance(obj, float):
+        return None if (math.isnan(obj) or math.isinf(obj)) else obj
+    if isinstance(obj, dict):
+        return {k: _sanitize(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize(v) for v in obj]
+    return obj
+
+
+def _serialize_result(result):
     label_map = result.label_map
     if hasattr(label_map, 'tolist'):
         label_map = label_map.tolist()
@@ -57,39 +54,77 @@ def _serialize_result(result) -> Dict[str, Any]:
     }
 
 
-@app.post('/run')
-def run(req: SegmentationRequest):
-    logger.info(
-        f'Starting segmentation for dataset {req.dataset_id}, algorithm={req.algorithm}'
-    )
+def _run_and_callback(body):
+    dataset_id = body['dataset_id']
+    job_id = body['job_id']
+    callback_url = body['callback_url']
+
     try:
         result = run_segmentation(
-            dataset_id=req.dataset_id,
-            algorithm=req.algorithm,
-            input_s3_key=req.input_s3_key,
-            databases=req.databases,
-            parameters=req.parameters,
-            fdr=req.fdr,
-            adducts=req.adducts,
-            min_mz=req.min_mz,
-            max_mz=req.max_mz,
-            use_tic=req.use_tic,
-            off_sample=req.off_sample,
-            smoothing=req.smoothing,
-            window_size=req.window_size,
+            dataset_id=dataset_id,
+            algorithm=body.get('algorithm', 'pca_gmm'),
+            input_s3_key=body.get('input_s3_key'),
+            databases=body.get('databases'),
+            parameters=body.get('parameters', {}),
+            fdr=body.get('fdr', 0.1),
+            adducts=body.get('adducts'),
+            min_mz=body.get('min_mz'),
+            max_mz=body.get('max_mz'),
+            use_tic=body.get('use_tic', False),
+            off_sample=body.get('off_sample'),  # None = no filter
+            smoothing=body.get('smoothing', True),
+            window_size=body.get('window_size', 3),
         )
-        return {'status': 'ok', 'result': _serialize_result(result)}
+        payload = {
+            'job_id': job_id,
+            'ds_id': dataset_id,
+            'status': 'ok',
+            'result': _sanitize(_serialize_result(result)),
+        }
     except Exception as e:
-        logger.exception(f'Segmentation failed for dataset {req.dataset_id}: {e}')
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception(f'Segmentation failed for dataset {dataset_id} (job {job_id}): {e}')
+        payload = {
+            'job_id': job_id,
+            'ds_id': dataset_id,
+            'status': 'error',
+            'error': str(e),
+        }
+
+    try:
+        requests.post(callback_url, json=payload, timeout=30)
+    except Exception as e:
+        logger.error(f'Failed to post callback for job {job_id}: {e}')
+
+
+@app.post('/run')
+def run():
+    try:
+        body = json.loads(bottle.request.body.getvalue().decode('utf-8'))
+    except Exception:
+        bottle.response.status = 400
+        return {'status': 'error', 'error': 'invalid JSON body'}
+
+    if not body.get('dataset_id'):
+        bottle.response.status = 400
+        return {'status': 'error', 'error': 'dataset_id is required'}
+    if not body.get('job_id'):
+        bottle.response.status = 400
+        return {'status': 'error', 'error': 'job_id is required'}
+    if not body.get('callback_url'):
+        bottle.response.status = 400
+        return {'status': 'error', 'error': 'callback_url is required'}
+
+    logger.info(
+        f"Accepted segmentation job {body['job_id']} for dataset {body['dataset_id']}"
+    )
+    threading.Thread(target=_run_and_callback, args=(body,), daemon=True).start()
+
+    bottle.response.status = 202
+    return {'status': 'accepted', 'job_id': body['job_id']}
 
 
 if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser(description='Image Segmentation Service')
-    parser.add_argument('--host', default='0.0.0.0')
-    parser.add_argument('--port', type=int, default=9877)
-    args = parser.parse_args()
-
-    uvicorn.run(app, host=args.host, port=args.port)
+    config = _load_config()
+    svc = config['segmentation_service']
+    logger.info(f"Starting image segmentation service on {svc['host']}:{svc['port']}")
+    app.run(host=svc['host'], port=svc['port'], server=svc['server'])

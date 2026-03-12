@@ -27,7 +27,7 @@ from sm.engine.postprocessing.ion_thumbnail import (
 )
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
-from sm.engine.postprocessing.segmentation_wrapper import run_segmentation_for_dataset
+from sm.engine.postprocessing.segmentation_wrapper import submit_segmentation_job
 from sm.engine.postprocessing.ds_size_hash import save_size_hash
 from sm.engine.optical_image import del_optical_image
 from sm.engine.config import SMConfig
@@ -255,7 +255,7 @@ class DatasetManager:
         adducts = msg.get('adducts')
         min_mz = msg.get('min_mz')
         max_mz = msg.get('max_mz')
-        off_sample = msg.get('off_sample', False)
+        off_sample = msg.get('off_sample')  # None = no filter (off-sample classification may not exist)
 
         self.logger.info(f'Running segmentation job {job_id} for dataset {ds_id}')
 
@@ -266,7 +266,7 @@ class DatasetManager:
         )
 
         try:
-            run_segmentation_for_dataset(
+            submit_segmentation_job(
                 ds_id=ds_id,
                 job_id=job_id,
                 algorithm=algorithm,

@@ -17,27 +17,18 @@ from sm.engine.postprocessing.segmentation_data_loader import SegmentationDataLo
 logger = logging.getLogger('update-daemon')
 
 
-def run_segmentation_for_dataset(
+def submit_segmentation_job(
     ds_id, job_id, algorithm, databases, fdr, params, db, services_config,
     adducts=None, min_mz=None, max_mz=None, off_sample=False
 ):
-    """Prepare segmentation input, call the microservice, and save results to the DB.
+    """Prepare segmentation input, then fire-and-forget to the microservice.
 
-    Args:
-        ds_id:            dataset ID string
-        job_id:           image_segmentation_job.id to update
-        algorithm:        segmentation algorithm name (e.g. 'pca_gmm')
-        databases:        list of [name, version] pairs, e.g. [["HMDB", "v4"]]
-        fdr:              FDR threshold (float)
-        params:           algorithm-specific parameters dict
-        db:               DB instance
-        services_config:  services section of sm_config
-        adducts:          optional list of adduct strings to keep
-        min_mz:           optional lower m/z bound applied against theo_mz
-        max_mz:           optional upper m/z bound applied against theo_mz
-        off_sample:       False = on-sample only (default), True = off-sample only, None = all
+    Returns immediately after the service accepts the job (HTTP 202).
+    The service will POST results back to services_config['segmentation_callback']
+    when done.
     """
     segmentation_endpoint = services_config['segmentation']
+    callback_url = services_config['segmentation_callback']
 
     # 1. Load ion images from DB/S3, TIC-normalise, and upload input arrays to S3
     loader = SegmentationDataLoader(ds_id, db)
@@ -50,29 +41,38 @@ def run_segmentation_for_dataset(
         max_mz=max_mz,
     )
 
-    logger.info(f'Calling segmentation service for dataset {ds_id} (job {job_id})')
+    logger.info(f'Submitting segmentation job {job_id} for dataset {ds_id}')
 
     resp = requests.post(
         f'{segmentation_endpoint}/run',
         json={
             'dataset_id': ds_id,
+            'job_id': job_id,
             'algorithm': algorithm,
             'input_s3_key': input_s3_key,
             'parameters': params,
+            'callback_url': callback_url,
         },
-        timeout=(30, 600),  # 30 s connect, 600 s read
+        timeout=30,
     )
-    resp.raise_for_status()
+    if not resp.ok:
+        try:
+            detail = resp.json().get('error', resp.text)
+        except Exception:
+            detail = resp.text
+        raise RuntimeError(f"Segmentation service error ({resp.status_code}): {detail}")
 
-    body = resp.json()
-    if body.get('status') != 'ok':
-        raise RuntimeError(
-            f"Segmentation service returned error: {body.get('error', 'unknown error')}"
-        )
+    logger.info(f'Segmentation job {job_id} accepted by service for dataset {ds_id}')
 
-    result = body['result']
 
-    # 2. Save label_map as NPY in dataset_diagnostic
+def save_segmentation_result(ds_id, job_id, result, db):
+    """Save a completed segmentation result to the DB.
+
+    Called from the API callback endpoint when the microservice posts back.
+    """
+    algorithm = result['algorithm']
+
+    # 1. Save label_map as NPY in dataset_diagnostic
     label_map = np.array(result['label_map'], dtype=np.int32)
     label_map_image = save_diagnostic_image(
         ds_id, label_map, key=DiagnosticImageKey.LABEL_MAP, fmt=DiagnosticImageFormat.NPY
@@ -80,7 +80,7 @@ def run_segmentation_for_dataset(
 
     add_diagnostics([{
         'ds_id': ds_id,
-        'job_id': job_id,
+        'job_id': None,  # dataset_diagnostic.job_id references annotation job, not image_segmentation_job
         'type': DiagnosticType.SEGMENTATION,
         'data': {
             'algorithm': result['algorithm'],
@@ -93,7 +93,7 @@ def run_segmentation_for_dataset(
         'images': [label_map_image],
     }])
 
-    # 3. Insert one segmentation row per segment; let DB generate UUIDs
+    # 2. Insert one segmentation row per segment; let DB generate UUIDs
     n_segments = result['n_segments']
     seg_uuids = db.insert_return(
         '''INSERT INTO segmentation (dataset_id, job_id, segment_index, algorithm, status)
@@ -106,15 +106,14 @@ def run_segmentation_for_dataset(
     )
     logger.info(f'Inserted {n_segments} segmentation rows for dataset {ds_id} (job {job_id})')
 
-    # 4. Populate segmentation_ion_profile from the long segment_profiles list
+    # 3. Populate segmentation_ion_profile
     segment_profiles = result.get('segment_profiles') or []
     if segment_profiles:
-        # Build ion_label → annotation.id map for this dataset
         ann_rows = db.select_with_fields(
             '''SELECT m.id, m.formula, m.chem_mod, m.neutral_loss, m.adduct
                FROM annotation m
                JOIN job j ON j.id = m.job_id
-               WHERE j.ds_id = %s AND m.iso_image_ids[0] IS NOT NULL''',
+               WHERE j.ds_id = %s AND m.iso_image_ids[1] IS NOT NULL''',
             (ds_id,),
         )
         label_to_ann_id = {}
@@ -124,7 +123,6 @@ def run_segmentation_for_dataset(
             )
             label_to_ann_id.setdefault(label, row['id'])
 
-        # seg_uuids is ordered by segment_index (0, 1, 2, ...)
         seg_uuid_map = {seg_idx: seg_uuids[seg_idx] for seg_idx in range(n_segments)}
 
         profile_rows = []
@@ -133,7 +131,7 @@ def run_segmentation_for_dataset(
             seg_idx = rec['segment_id']
             ion = rec['ion_label']
             score = rec['enrich_score']
-            if ion not in label_to_ann_id or (isinstance(score, float) and math.isnan(score)):
+            if ion not in label_to_ann_id or score is None or (isinstance(score, float) and math.isnan(score)):
                 skipped += 1
                 continue
             profile_rows.append((
@@ -154,7 +152,7 @@ def run_segmentation_for_dataset(
             f' ({skipped} skipped — missing annotation or NaN score)'
         )
 
-    # 5. Mark job finished
+    # 4. Mark job finished
     db.alter(
         "UPDATE image_segmentation_job SET status = 'FINISHED', updated_at = NOW() WHERE id = %s",
         params=(job_id,),

@@ -6,6 +6,7 @@ from sm.engine.config import SMConfig
 from sm.engine.db import DB
 from sm.engine.daemons.actions import DaemonAction, DaemonActionStage
 from sm.engine.queue import QueuePublisher, SM_UPDATE
+from sm.engine.postprocessing.segmentation_wrapper import save_segmentation_result
 from sm.rest.utils import body_to_json, make_response, OK, INTERNAL_ERROR, WRONG_PARAMETERS
 
 logger = logging.getLogger('api')
@@ -31,7 +32,7 @@ def run_segmentation():
         "adducts":    [str] | null,
         "min_mz":     float | null,
         "max_mz":     float | null,
-        "off_sample": bool | null  (default false),
+        "off_sample": bool | null  (default null = no filter),
         "email":      str | null
     }
     """
@@ -50,7 +51,7 @@ def run_segmentation():
         adducts = body.get('adducts')
         min_mz = body.get('min_mz')
         max_mz = body.get('max_mz')
-        off_sample = body.get('off_sample', False)
+        off_sample = body.get('off_sample')  # None = no filter (off-sample classification may not exist)
         email = body.get('email')
 
         db = DB()
@@ -91,4 +92,34 @@ def run_segmentation():
 
     except Exception as e:
         logger.exception(f'Error queuing segmentation job: {e}')
+        return make_response(INTERNAL_ERROR)
+
+
+@app.post('/callback')
+def segmentation_callback():
+    """Receive async result from the segmentation microservice."""
+    try:
+        body = body_to_json(bottle.request)
+        job_id = body.get('job_id')
+        ds_id = body.get('ds_id')
+
+        if not job_id or not ds_id:
+            return make_response(WRONG_PARAMETERS)
+
+        db = DB()
+
+        if body.get('status') == 'ok':
+            save_segmentation_result(ds_id, job_id, body['result'], db)
+        else:
+            error = body.get('error', 'unknown error')
+            logger.error(f'Segmentation job {job_id} for dataset {ds_id} failed: {error}')
+            db.alter(
+                "UPDATE image_segmentation_job SET status = 'FAILED', error = %s, updated_at = NOW() WHERE id = %s",
+                params=(error, job_id),
+            )
+
+        return make_response(OK)
+
+    except Exception as e:
+        logger.exception(f'Error handling segmentation callback: {e}')
         return make_response(INTERNAL_ERROR)
