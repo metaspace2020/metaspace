@@ -9,14 +9,8 @@ from io import BytesIO
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
-import anndata as ad
 import boto3
 import numpy as np
-from anndata import AnnData
-
-from metaspace import SMInstance
-from metaspace_converter.to_anndata import metaspace_to_anndata
-from metaspace_converter.constants import COL
 
 logger = logging.getLogger(__name__)
 
@@ -94,10 +88,12 @@ def load_segmentation_input_from_s3(
 
 
 def anndata_to_segmentation_input(
-    adata: AnnData,
+    adata,
     dataset_id: str,
     ion_labels: Optional[List[str]] = None,
 ) -> Tuple[np.ndarray, np.ndarray, List[str], Tuple[int, int]]:
+    from metaspace_converter.constants import COL
+
     # Subset ions if requested
     if ion_labels is not None:
         missing = set(ion_labels) - set(adata.var_names)
@@ -160,24 +156,17 @@ def anndata_to_segmentation_input(
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _get_sm_instance() -> SMInstance:
-    """Return an authenticated SMInstance using the service-account API key.
-
-    The key is read from the METASPACE_API_KEY environment variable.
-    If the variable is absent, SMInstance falls back to ~/.metaspace.
-    """
+def _get_sm_instance():
+    from metaspace import SMInstance
     api_key = os.environ.get('METASPACE_API_KEY')
     return SMInstance(api_key=api_key)
 
 
-def _merge_adatas(adatas: List[AnnData], dataset_id: str) -> AnnData:
-    """Merge AnnDatas from multiple databases along the var (ion) axis.
+def _merge_adatas(adatas: List, dataset_id: str):
+    import anndata as ad
 
-    All inputs share the same obs (pixels). Duplicate var_names across
-    databases are dropped — the first occurrence wins.
-    """
     seen: set = set()
-    unique_slices: List[AnnData] = []
+    unique_slices = []
     for adata in adatas:
         new_vars = [v for v in adata.var_names if v not in seen]
         if new_vars:
@@ -200,8 +189,7 @@ def _merge_adatas(adatas: List[AnnData], dataset_id: str) -> AnnData:
     return merged
 
 
-def _filter_by_adducts(adata: AnnData, adducts: List[str], dataset_id: str) -> AnnData:
-    """Keep only ions whose adduct is in the requested list."""
+def _filter_by_adducts(adata, adducts: List[str], dataset_id: str):
     col = 'adduct'
     if col not in adata.var.columns:
         logger.warning(
@@ -257,6 +245,8 @@ def load_segmentation_input(
                      If the dataset has no off-sample classification, the filter
                      is silently dropped and all annotations are returned.
     """
+    from metaspace_converter.to_anndata import metaspace_to_anndata
+
     sm = _get_sm_instance()
 
     # Pre-fetch the SMDataset once — reused across all database calls
@@ -274,8 +264,8 @@ def load_segmentation_input(
     if off_sample is not None:
         annotation_filter['offSample'] = off_sample
 
-    def _fetch_adatas(ann_filter: Dict) -> List[AnnData]:
-        result: List[AnnData] = []
+    def _fetch_adatas(ann_filter: Dict) -> List:
+        result = []
         for database in databases:
             db_tuple = tuple(database)
             logger.info(

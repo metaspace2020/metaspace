@@ -1,16 +1,10 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional, Tuple
-
-from anndata import AnnData
+from typing import Dict, List, Optional
 
 from image_segmentation.dispatcher import dispatch
-from image_segmentation.loader import (
-    anndata_to_segmentation_input,
-    load_segmentation_input,
-    load_segmentation_input_from_s3,
-)
+from image_segmentation.loader import load_segmentation_input_from_s3
 from image_segmentation.postprocessing import postprocess
 from image_segmentation.preprocessing import preprocess
 from image_segmentation.types import SegmentationResult
@@ -60,6 +54,7 @@ def run_segmentation(
                 f"Dataset {dataset_id}: either 'input_s3_key' or 'databases' must be provided"
             )
         logger.info(f"Dataset {dataset_id}: loading input via Python client (databases={databases})")
+        from image_segmentation.loader import load_segmentation_input
         intensity_matrix, pixel_coordinates, ion_labels, image_shape = load_segmentation_input(
             dataset_id=dataset_id,
             databases=databases,
@@ -106,7 +101,7 @@ def run_segmentation(
 
 
 def run_segmentation_from_anndata(
-    adata: AnnData,
+    adata,
     dataset_id: str,
     algorithm: str,
     parameters: Optional[Dict] = None,
@@ -125,6 +120,7 @@ def run_segmentation_from_anndata(
     )
 
     # 1. Load from existing AnnData
+    from image_segmentation.loader import anndata_to_segmentation_input
     intensity_matrix, pixel_coordinates, ion_labels, image_shape = anndata_to_segmentation_input(
         adata=adata,
         dataset_id=dataset_id,
