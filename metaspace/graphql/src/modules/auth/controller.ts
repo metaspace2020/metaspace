@@ -89,33 +89,33 @@ export interface JwtPayload {
   exp?: number
 }
 
-const configureJwt = (router: IRouter<any>) => {
-  function mintJWT(user: User | null, expSeconds: number | null = 60) {
-    const nowSeconds = Math.floor(Date.now() / 1000)
-    let payload
-    if (user) {
-      const { id, email, role } = user
-      payload = {
-        iss: 'METASPACE2020',
-        user: {
-          id,
-          email,
-          role,
-        },
-        iat: nowSeconds,
-        exp: expSeconds == null ? undefined : nowSeconds + expSeconds,
-      }
-    } else {
-      payload = {
-        iss: 'METASPACE2020',
-        user: {
-          role: 'anonymous',
-        },
-      }
+function mintJWT(user: User | null, expSeconds: number | null = 60) {
+  const nowSeconds = Math.floor(Date.now() / 1000)
+  let payload
+  if (user) {
+    const { id, email, role } = user
+    payload = {
+      iss: 'METASPACE2020',
+      user: {
+        id,
+        email,
+        role,
+      },
+      iat: nowSeconds,
+      exp: expSeconds == null ? undefined : nowSeconds + expSeconds,
     }
-    return jsonwebtoken.sign(payload as JwtPayload, config.jwt.secret, { algorithm: config.jwt.algorithm })
+  } else {
+    payload = {
+      iss: 'METASPACE2020',
+      user: {
+        role: 'anonymous',
+      },
+    }
   }
+  return jsonwebtoken.sign(payload as JwtPayload, config.jwt.secret, { algorithm: config.jwt.algorithm })
+}
 
+const configureJwt = (router: IRouter<any>) => {
   Passport.use(new NoisyJwtStrategy({
     secretOrKey: config.jwt.secret,
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -143,6 +143,66 @@ const configureJwt = (router: IRouter<any>) => {
         res.send(mintJWT(user))
       } else {
         res.send(mintJWT(null))
+      }
+    } catch (err) {
+      next(err)
+    }
+  })
+
+  router.post('/refresh_token', preventCache, async(req, res, next) => {
+    try {
+      const authHeader = req.headers.authorization
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          error: 'invalid_token',
+          message: 'No token provided',
+        })
+      }
+      const token = authHeader.substring(7) // Remove 'Bearer ' prefix
+
+      try {
+        // Verify JWT but ignore expiration for refresh
+        const decoded = jsonwebtoken.verify(token, config.jwt.secret, {
+          algorithms: [config.jwt.algorithm],
+          ignoreExpiration: true, // This is the key change!
+        }) as JwtPayload
+        if (decoded.user && decoded.user.id) {
+          // Check if token is too old (optional security measure)
+          const now = Math.floor(Date.now() / 1000)
+          const maxAge = 2 * 60 // Allow refresh within 2 minutes of expiry
+
+          if (decoded.exp && (now - decoded.exp) > maxAge) {
+            return res.status(401).json({
+              error: 'token_too_old',
+              message: 'Token is too old to refresh. Please login again.',
+            })
+          }
+          // Find user to get fresh data and ensure they still exist
+          const user = await findUserById(decoded.user.id)
+          if (user) {
+            const newToken = mintJWT(user)
+            return res.json({
+              token: newToken,
+              expires_in: 15 * 60, // JWT expires in 15 minutes
+            })
+          } else {
+            return res.status(401).json({
+              error: 'user_not_found',
+              message: 'User no longer exists.',
+            })
+          }
+        } else {
+          return res.status(401).json({
+            error: 'invalid_token_payload',
+            message: 'Invalid token format.',
+          })
+        }
+      } catch (jwtError) {
+        // This catches signature errors, malformed tokens, etc.
+        return res.status(401).json({
+          error: 'invalid_token',
+          message: 'Token signature is invalid.',
+        })
       }
     } catch (err) {
       next(err)
@@ -233,6 +293,23 @@ const configureLocalAuth = (router: IRouter<any>, entityManager: EntityManager) 
       } else {
         action.actionType = 'login_attempt'
         await performAction({ entityManager } as any, action)
+        res.status(401).send()
+      }
+    })(req, res, next)
+  })
+
+  router.post('/signin_jwt', function(req, res, next) {
+    Passport.authenticate('local', function(err, user) {
+      if (err) {
+        next(err)
+      } else if (user) {
+        const token = mintJWT(user)
+        res.status(200).json({
+          token,
+          user: { id: user.id, email: user.email, role: user.role },
+          expires_in: 15 * 60, // JWT expires in 15 minutes
+        })
+      } else {
         res.status(401).send()
       }
     })(req, res, next)

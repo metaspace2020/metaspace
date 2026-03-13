@@ -140,6 +140,30 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     }
   },
 
+  resolveFeatureRequest: async(_, args, ctx: Context) => {
+    if (ctx.user.role !== 'admin') {
+      throw new UserError('Access denied: Admin role required')
+    }
+
+    try {
+      const { id, input } = args
+
+      const apiInput: Record<string, string> = {}
+      if (input?.adminNotes?.trim()) {
+        apiInput.adminNotes = input.adminNotes.trim()
+      }
+
+      const result = await makeApiRequest(ctx, `/api/feature-requests/${id}/solve`, 'PUT', apiInput)
+      return result.data || result
+    } catch (error) {
+      if (error instanceof UserError) {
+        throw error
+      }
+      logger.error('Error resolving feature request:', error)
+      throw new UserError('Failed to mark feature request as resolved')
+    }
+  },
+
   toggleVoteFeatureRequest: async(_, args, ctx: Context) => {
     if (!ctx.user.id) {
       throw new UserError('Authentication required')

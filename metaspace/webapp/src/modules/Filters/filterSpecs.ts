@@ -470,7 +470,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: BooleanFilter,
     name: 'Representative spatial patterns',
     description: 'Show representative spatial patterns',
-    levels: ['annotation'],
+    levels: ['annotation', 'dataset-annotation'],
     initialValue: true,
     encoding: 'bool',
     dependsOnFilters: ['fdrLevel', 'database', 'datasetIds'],
