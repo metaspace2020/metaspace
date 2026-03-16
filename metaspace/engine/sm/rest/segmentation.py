@@ -116,7 +116,8 @@ def segmentation_callback():
             error = body.get('error', 'unknown error')
             logger.error(f'Segmentation job {job_id} for dataset {ds_id} failed: {error}')
             db.alter(
-                "UPDATE image_segmentation_job SET status = 'FAILED', error = %s, updated_at = NOW() WHERE id = %s",
+                """UPDATE image_segmentation_job SET
+                 status = 'FAILED', error = %s, updated_at = NOW() WHERE id = %s""",
                 params=(error, job_id),
             )
 
