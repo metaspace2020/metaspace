@@ -51,7 +51,9 @@ def run_segmentation():
         adducts = body.get('adducts')
         min_mz = body.get('min_mz')
         max_mz = body.get('max_mz')
-        off_sample = body.get('off_sample')  # None = no filter (off-sample classification may not exist)
+        off_sample = body.get(
+            'off_sample'
+        )  # None = no filter (off-sample classification may not exist)
         email = body.get('email')
 
         db = DB()

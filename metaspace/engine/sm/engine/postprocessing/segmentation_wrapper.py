@@ -17,9 +17,19 @@ from sm.engine.postprocessing.segmentation_data_loader import SegmentationDataLo
 logger = logging.getLogger('update-daemon')
 
 
-def submit_segmentation_job(
-    ds_id, job_id, algorithm, databases, fdr, params, db, services_config,
-    adducts=None, min_mz=None, max_mz=None, off_sample=False
+def submit_segmentation_job(  # pylint: disable=too-many-arguments
+    ds_id,
+    job_id,
+    algorithm,
+    databases,
+    fdr,
+    params,
+    db,
+    services_config,
+    adducts=None,
+    min_mz=None,
+    max_mz=None,
+    off_sample=False,
 ):
     """Prepare segmentation input, then fire-and-forget to the microservice.
 
@@ -65,7 +75,7 @@ def submit_segmentation_job(
     logger.info(f'Segmentation job {job_id} accepted by service for dataset {ds_id}')
 
 
-def save_segmentation_result(ds_id, job_id, result, db):
+def save_segmentation_result(ds_id, job_id, result, db):  # pylint: disable=too-many-locals
     """Save a completed segmentation result to the DB.
 
     Called from the API callback endpoint when the microservice posts back.
@@ -78,20 +88,25 @@ def save_segmentation_result(ds_id, job_id, result, db):
         ds_id, label_map, key=DiagnosticImageKey.LABEL_MAP, fmt=DiagnosticImageFormat.NPY
     )
 
-    add_diagnostics([{
-        'ds_id': ds_id,
-        'job_id': None,  # dataset_diagnostic.job_id references annotation job, not image_segmentation_job
-        'type': DiagnosticType.SEGMENTATION,
-        'data': {
-            'algorithm': result['algorithm'],
-            'map_type': result['map_type'],
-            'n_segments': result['n_segments'],
-            'parameters_used': result['parameters_used'],
-            'segment_summary': result['segment_summary'],
-            'diagnostics': result['diagnostics'],
-        },
-        'images': [label_map_image],
-    }])
+    add_diagnostics(
+        [
+            {
+                'ds_id': ds_id,
+                # dataset_diagnostic.job_id references annotation job, not image_segmentation_job
+                'job_id': None,
+                'type': DiagnosticType.SEGMENTATION,
+                'data': {
+                    'algorithm': result['algorithm'],
+                    'map_type': result['map_type'],
+                    'n_segments': result['n_segments'],
+                    'parameters_used': result['parameters_used'],
+                    'segment_summary': result['segment_summary'],
+                    'diagnostics': result['diagnostics'],
+                },
+                'images': [label_map_image],
+            }
+        ]
+    )
 
     # 2. Insert one segmentation row per segment; let DB generate UUIDs
     n_segments = result['n_segments']
@@ -99,10 +114,7 @@ def save_segmentation_result(ds_id, job_id, result, db):
         '''INSERT INTO segmentation (dataset_id, job_id, segment_index, algorithm, status)
            VALUES (%s, %s, %s, %s, %s)
            RETURNING id''',
-        rows=[
-            (ds_id, job_id, seg_idx, algorithm, 'FINISHED')
-            for seg_idx in range(n_segments)
-        ],
+        rows=[(ds_id, job_id, seg_idx, algorithm, 'FINISHED') for seg_idx in range(n_segments)],
     )
     logger.info(f'Inserted {n_segments} segmentation rows for dataset {ds_id} (job {job_id})')
 
@@ -131,18 +143,25 @@ def save_segmentation_result(ds_id, job_id, result, db):
             seg_idx = rec['segment_id']
             ion = rec['ion_label']
             score = rec['enrich_score']
-            if ion not in label_to_ann_id or score is None or (isinstance(score, float) and math.isnan(score)):
+            if (
+                ion not in label_to_ann_id
+                or score is None
+                or (isinstance(score, float) and math.isnan(score))
+            ):
                 skipped += 1
                 continue
-            profile_rows.append((
-                seg_uuid_map[seg_idx],
-                label_to_ann_id[ion],
-                float(score),
-            ))
+            profile_rows.append(
+                (
+                    seg_uuid_map[seg_idx],
+                    label_to_ann_id[ion],
+                    float(score),
+                )
+            )
 
         if profile_rows:
             db.insert(
-                '''INSERT INTO segmentation_ion_profile (segmentation_id, annotation_id, enrich_score)
+                '''INSERT INTO segmentation_ion_profile
+                 (segmentation_id, annotation_id, enrich_score)
                    VALUES (%s, %s, %s)
                    ON CONFLICT (segmentation_id, annotation_id) DO NOTHING''',
                 profile_rows,

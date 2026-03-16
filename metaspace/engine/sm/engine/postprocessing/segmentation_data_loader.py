@@ -47,8 +47,8 @@ ANNOTATIONS_SEL = '''
 # SegmentationDataLoader
 # ---------------------------------------------------------------------------
 
-class SegmentationDataLoader:
 
+class SegmentationDataLoader:
     def __init__(self, ds_id: str, db: DB, sm_config: Optional[Dict] = None):
         self.ds_id = ds_id
         self._db = db
@@ -128,7 +128,7 @@ class SegmentationDataLoader:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def build_ion_images_chunk(
+    def build_ion_images_chunk(  # pylint: disable=too-many-arguments
         lefts: np.ndarray,
         rights: np.ndarray,
         ints: np.ndarray,
@@ -172,7 +172,7 @@ class SegmentationDataLoader:
         # TIC normalisation (no log transform)
         if tic_normalize and tic_flat is not None and tic_nonzero is not None:
             chunk[:, tic_nonzero] /= tic_flat[tic_nonzero]
-            chunk[:, ~tic_nonzero] = 0
+            chunk[:, ~tic_nonzero] = 0  # pylint: disable=invalid-unary-operand-type
 
         return chunk
 
@@ -180,7 +180,7 @@ class SegmentationDataLoader:
     # Main entry point
     # ------------------------------------------------------------------
 
-    def prepare_segmentation_input(
+    def prepare_segmentation_input(  # pylint: disable=too-many-locals
         self,
         databases: List[Union[Tuple[str, str], List[str]]],
         fdr: float = 0.1,
@@ -261,8 +261,13 @@ class SegmentationDataLoader:
         for chunk_start in range(0, n_ann, chunk_size):
             chunk_end = min(chunk_start + chunk_size, n_ann)
             intensity_full[chunk_start:chunk_end] = self.build_ion_images_chunk(
-                lefts, rights, ints, sp_idxs, n_pixels,
-                chunk_start, chunk_end,
+                lefts,
+                rights,
+                ints,
+                sp_idxs,
+                n_pixels,
+                chunk_start,
+                chunk_end,
                 tic_flat=tic_flat,
                 tic_nonzero=tic_nonzero,
             )
@@ -272,9 +277,9 @@ class SegmentationDataLoader:
         intensity_matrix = intensity_full[:, foreground_mask].T
 
         pixel_indices = np.where(foreground_mask)[0]
-        pixel_coordinates = np.column_stack(
-            [pixel_indices % width, pixel_indices // width]
-        ).astype(np.int32)
+        pixel_coordinates = np.column_stack([pixel_indices % width, pixel_indices // width]).astype(
+            np.int32
+        )
 
         ion_labels_out = np.array([r['_label'] for r in annotations])
         image_shape = np.array([width, height], dtype=np.int32)
@@ -286,7 +291,9 @@ class SegmentationDataLoader:
         )
 
         # 6. Serialise and upload to S3
-        res = self._db.select_one('SELECT input_path FROM dataset WHERE id = %s', params=(self.ds_id,))
+        res = self._db.select_one(
+            'SELECT input_path FROM dataset WHERE id = %s', params=(self.ds_id,)
+        )
         uuid = res[0].split('/')[-1]
         bucket_name = self._sm_config['imzml_browser_storage']['bucket']
         s3_key = f'{uuid}/segmentation_input.npz'
@@ -301,9 +308,7 @@ class SegmentationDataLoader:
         )
         buf.seek(0)
 
-        get_s3_resource(self._sm_config).Bucket(bucket_name).put_object(
-            Key=s3_key, Body=buf.read()
-        )
+        get_s3_resource(self._sm_config).Bucket(bucket_name).put_object(Key=s3_key, Body=buf.read())
 
         logger.info(f'Dataset {self.ds_id}: saved → s3://{bucket_name}/{s3_key}')
         return s3_key

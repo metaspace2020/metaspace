@@ -557,7 +557,12 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
     // Fetch full annotation data from Elasticsearch
     const ionIds = uniq(profiles.map((p: any) => `${segmentation.datasetId}_${p.annotationId}`)).join('|')
-    const annotations = await esSearchResults({ filter: { annotationId: ionIds }, limit: 10000 }, 'annotation', ctx.user)
+    const annotations = await esSearchResults({
+      filter:
+      { annotationId: ionIds },
+      limit:
+       10000,
+    }, 'annotation', ctx.user)
     const annotationMap = new Map(annotations.map((ann: any) => [ann._id, unpackAnnotation(ann)]))
 
     return profiles

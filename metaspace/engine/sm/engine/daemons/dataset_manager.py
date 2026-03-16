@@ -255,13 +255,15 @@ class DatasetManager:
         adducts = msg.get('adducts')
         min_mz = msg.get('min_mz')
         max_mz = msg.get('max_mz')
-        off_sample = msg.get('off_sample')  # None = no filter (off-sample classification may not exist)
+        # None = no filter (off-sample classification may not exist)
+        off_sample = msg.get('off_sample')
 
         self.logger.info(f'Running segmentation job {job_id} for dataset {ds_id}')
 
         # Mark job as started
         self._db.alter(
-            "UPDATE image_segmentation_job SET status = 'STARTED', updated_at = NOW() WHERE id = %s",
+            """UPDATE image_segmentation_job SET
+             status = 'STARTED', updated_at = NOW() WHERE id = %s""",
             params=(job_id,),
         )
 
@@ -281,11 +283,13 @@ class DatasetManager:
                 off_sample=off_sample,
             )
         except Exception as e:
-            # Don't propagate — a segmentation failure should not change the dataset status to FAILED.
+            # Don't propagate — a segmentation failure
+            # should not change the dataset status to FAILED.
             # The job row already records the failure.
             self.logger.error(f'Segmentation job {job_id} for dataset {ds_id} failed: {e}')
             self._db.alter(
-                "UPDATE image_segmentation_job SET status = 'FAILED', error = %s, updated_at = NOW() WHERE id = %s",
+                """UPDATE image_segmentation_job SET
+                status = 'FAILED', error = %s, updated_at = NOW() WHERE id = %s""",
                 params=(str(e), job_id),
             )
 

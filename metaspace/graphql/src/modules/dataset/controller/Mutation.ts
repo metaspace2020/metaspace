@@ -18,7 +18,7 @@ import { metadataSchemas } from '../../../../metadataSchemas/metadataRegistry'
 import { getDatasetForEditing } from '../operation/getDatasetForEditing'
 import { deleteDataset } from '../operation/deleteDataset'
 import { checkNoPublishedProjectRemoved, checkProjectsPublicationStatus } from '../operation/publicationChecks'
-import { EngineDataset, ScoringModel, Roi, DiffRoi, ImageSegmentationJob } from '../../engine/model'
+import { EngineDataset, ScoringModel, Roi, DiffRoi } from '../../engine/model'
 import { addExternalLink, removeExternalLink } from '../../project/ExternalLink'
 import { esDatasetByID } from '../../../../esConnector'
 import { mapDatabaseToDatabaseId } from '../../moldb/util/mapDatabaseToDatabaseId'
@@ -808,7 +808,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
   runSegmentation: async(
     source: any,
-    { datasetId, algorithm = 'pca_gmm', databases = [['HMDB', 'v4']], fdr = 0.2, adducts, minMz, maxMz, offSample = false, params }: any,
+    {
+      datasetId, algorithm = 'pca_gmm',
+      databases = [['HMDB', 'v4']],
+      fdr = 0.2, adducts, minMz, maxMz, offSample = false, params,
+    }: any,
     ctx: Context
   ) => {
     if (ctx.user.id == null) {

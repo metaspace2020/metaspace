@@ -10,10 +10,5 @@
 
 # Whitelist the build context for image-segmentation
 !metaspace/postprocessing/
-!metaspace/postprocessing/image_segmentation/
-!metaspace/postprocessing/image_segmentation/requirements-engine-path.txt
-!metaspace/postprocessing/image_segmentation/app.py
-!metaspace/postprocessing/image_segmentation/image_segmentation/
-!metaspace/postprocessing/image_segmentation/image_segmentation/**/*
-!metaspace/postprocessing/image_segmentation/conf/
-!metaspace/postprocessing/image_segmentation/conf/**/*
+!metaspace/postprocessing/*
+!metaspace/postprocessing/**/*
