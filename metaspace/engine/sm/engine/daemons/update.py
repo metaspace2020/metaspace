@@ -33,7 +33,7 @@ class SMUpdateDaemon:
                 self._manager.set_ds_status(ds, DatasetStatus.FINISHED)
             self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.FINISHED)
 
-        if msg['action'] in [DaemonAction.UPDATE, DaemonAction.INDEX]:
+        if msg['action'] in [DaemonAction.UPDATE, DaemonAction.INDEX, DaemonAction.SEGMENTATION]:
             msg['web_app_link'] = self._manager.create_web_app_link(msg)
 
         if msg['action'] == DaemonAction.DELETE:

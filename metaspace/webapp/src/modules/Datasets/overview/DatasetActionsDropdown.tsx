@@ -18,6 +18,7 @@ import {
 import reportError from '../../../lib/reportError'
 import DownloadDialog from '../list/DownloadDialog'
 import { DatasetComparisonDialog } from '../comparison/DatasetComparisonDialog'
+import { SegmentationDialog } from '../segmentation/SegmentationDialog'
 import config from '../../../lib/config'
 import NewFeatureBadge, { hideFeatureBadge } from '../../../components/NewFeatureBadge'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
@@ -36,6 +37,7 @@ interface DatasetActionsDropdownProps {
   compareActionLabel: string
   browserActionLabel: string
   enrichmentActionLabel: string
+  segmentationActionLabel: string
   dataset: DatasetDetailItem
   currentUser: CurrentUserRoleResult
   isPublishedOrUnderReview: boolean
@@ -47,6 +49,7 @@ interface DatasetActionsDropdownState {
   showCompareDialog: boolean
   showEnrichmentDialog: boolean
   showDownloadDialog: boolean
+  showSegmentationDialog: boolean
 }
 
 export const DatasetActionsDropdown = defineComponent({
@@ -56,7 +59,8 @@ export const DatasetActionsDropdown = defineComponent({
     deleteActionLabel: { type: String, default: 'Delete' },
     editActionLabel: { type: String, default: 'Edit' },
     compareActionLabel: { type: String, default: 'Compare with other datasets...' },
-    browserActionLabel: { type: String, default: 'Imzml Browser' },
+    browserActionLabel: { type: String, default: 'Imzml browser' },
+    segmentationActionLabel: { type: String, default: 'Image segmentation' },
     enrichmentActionLabel: { type: String, default: 'Ontology enrichment' },
     reprocessActionLabel: { type: String, default: 'Reprocess data' },
     downloadActionLabel: { type: String, default: 'Download' },
@@ -77,6 +81,7 @@ export const DatasetActionsDropdown = defineComponent({
       showCompareDialog: false,
       showEnrichmentDialog: false,
       showDownloadDialog: false,
+      showSegmentationDialog: false,
     })
 
     const { result: enrichmentResult, refetch: enrichmentRefetch } = useQuery<any>(
@@ -165,6 +170,14 @@ export const DatasetActionsDropdown = defineComponent({
 
     const closeCompareDialog = () => {
       state.showCompareDialog = false
+    }
+
+    const openSegmentationDialog = () => {
+      state.showSegmentationDialog = true
+    }
+
+    const closeSegmentationDialog = () => {
+      state.showSegmentationDialog = false
     }
 
     const handleEnrichmentRequest = async () => {
@@ -272,6 +285,9 @@ export const DatasetActionsDropdown = defineComponent({
         case 'compare':
           openCompareDialog()
           break
+        case 'segmentation':
+          openSegmentationDialog()
+          break
         case 'download':
           if (!props.currentUser?.id || (await confirmDownload())) {
             // const verified = await verifyRecaptcha(token.value)
@@ -302,6 +318,7 @@ export const DatasetActionsDropdown = defineComponent({
         compareActionLabel,
         enrichmentActionLabel,
         browserActionLabel,
+        segmentationActionLabel,
       } = props
       const { role } = currentUser || {}
       const { canEdit, canDelete, canDownload } = dataset || {}
@@ -317,6 +334,13 @@ export const DatasetActionsDropdown = defineComponent({
             <ElDropdownItem command="browser">
               <div class="relative actionBadge">
                 <NewFeatureBadge featureKey="imzmlBrowser">{browserActionLabel}</NewFeatureBadge>
+              </div>
+            </ElDropdownItem>
+          )}
+          {canEdit && (
+            <ElDropdownItem command="segmentation">
+              <div class="relative actionBadge">
+                <NewFeatureBadge featureKey="imageSegmentation">{segmentationActionLabel}</NewFeatureBadge>
               </div>
             </ElDropdownItem>
           )}
@@ -372,6 +396,15 @@ export const DatasetActionsDropdown = defineComponent({
                     onClose={closeDownloadDialog}
                     isPublishedOrUnderReview={props.isPublishedOrUnderReview}
                     isLogged={currentUser !== null}
+                  />
+                )}
+                {state.showSegmentationDialog && (
+                  <SegmentationDialog
+                    datasetId={id}
+                    datasetName={name}
+                    databases={props.dataset?.databases}
+                    config={JSON.parse(props.dataset?.configJson || '{}')}
+                    onClose={closeSegmentationDialog}
                   />
                 )}
                 {state.showCompareDialog && (

@@ -286,7 +286,9 @@ class DatasetManager:
             # Don't propagate — a segmentation failure
             # should not change the dataset status to FAILED.
             # The job row already records the failure.
-            self.logger.error(f'Segmentation job {job_id} for dataset {ds_id} failed: {e}')
+            self.logger.error(
+                f'Segmentation job {job_id} for dataset {ds_id} failed: {e}', exc_info=True
+            )
             self._db.alter(
                 """UPDATE image_segmentation_job SET
                 status = 'FAILED', error = %s, updated_at = NOW() WHERE id = %s""",

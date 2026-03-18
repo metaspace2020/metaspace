@@ -10,8 +10,16 @@ INTERNAL_ERROR = {'status_code': 500, 'status': 'server_error'}
 
 
 def body_to_json(request):
-    body = request.body.getvalue()
-    return json.loads(body.decode('utf-8'))
+    # Handle different Bottle versions - some have getvalue(), others need read()
+    if hasattr(request.body, 'getvalue'):
+        body = request.body.getvalue()
+    else:
+        body = request.body.read()
+
+    if isinstance(body, bytes):
+        body = body.decode('utf-8')
+
+    return json.loads(body)
 
 
 def make_response(status_doc, **kwargs):

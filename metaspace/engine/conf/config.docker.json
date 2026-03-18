@@ -35,7 +35,9 @@
     "send_email": false,
     "update_daemon_threads": 4,
     "colocalization": false,
-    "ion_thumbnail": false
+    "ion_thumbnail": false,
+    "segmentation": "http://image-segmentation:9877",
+    "segmentation_callback": "http://api:5123/v1/segmentation/callback"
   },
   "redis": {
     "host": "redis"

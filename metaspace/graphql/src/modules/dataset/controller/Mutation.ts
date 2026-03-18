@@ -837,9 +837,13 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     if (maxMz != null) body.max_mz = maxMz
     body.off_sample = offSample
 
-    await smApiDatasetRequest('/v1/segmentation/run', body)
-
-    return true
+    try {
+      await smApiDatasetRequest('/v1/segmentation/run', body)
+      return true
+    } catch (error) {
+      console.error(`Failed to submit segmentation job for dataset ${datasetId}:`, error)
+      throw new UserError('Failed to submit segmentation job. Please try again later.')
+    }
   },
 }
 

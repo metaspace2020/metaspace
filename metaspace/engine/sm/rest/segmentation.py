@@ -111,10 +111,14 @@ def segmentation_callback():
         db = DB()
 
         if body.get('status') == 'ok':
+            logger.info(
+                f'Received successful segmentation result for job {job_id}, dataset {ds_id}'
+            )
             save_segmentation_result(ds_id, job_id, body['result'], db)
         else:
             error = body.get('error', 'unknown error')
             logger.error(f'Segmentation job {job_id} for dataset {ds_id} failed: {error}')
+            logger.debug(f'Full callback body for failed job {job_id}: {body}')
             db.alter(
                 """UPDATE image_segmentation_job SET
                  status = 'FAILED', error = %s, updated_at = NOW() WHERE id = %s""",
