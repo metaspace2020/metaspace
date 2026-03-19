@@ -145,7 +145,7 @@ export const routes: any = [
   },
   { path: '/datasets/edit/:dataset_id', name: 'edit-metadata', component: asyncPages.MetadataEditPage },
   {
-    path: '/datasets/:dataset_id/add-optical-image',
+    path: '/dataset/:dataset_id/add-optical-image',
     name: 'add-optical-image',
     component: asyncPages.ImageAlignmentPage,
   },
