@@ -72,11 +72,7 @@ interface SegmentationDialogState {
   annotationCount: number | null
 }
 
-const ALGORITHM_OPTIONS = [
-  { value: 'pca_gmm', label: 'PCA + Gaussian Mixture Model' },
-  { value: 'kmeans', label: 'K-means clustering' },
-  { value: 'hierarchical', label: 'Hierarchical clustering' },
-]
+const ALGORITHM_OPTIONS = [{ value: 'pca_gmm', label: 'PCA + Gaussian Mixture Model' }]
 
 export const SegmentationDialog = defineComponent({
   name: 'SegmentationDialog',

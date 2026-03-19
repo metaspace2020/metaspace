@@ -11,13 +11,19 @@ exports[`DatasetActionsDropdown > it should match snapshot 1`] = `
       </button><sup class=\\"el-badge__content el-badge__content--danger is-fixed is-dot\\"></sup></div>
     <!---->
     <!---->
+    <!---->
   </div>
   <div class=\\"mock-el-dropdown-menu dataset-overview-menu p-2\\">
     <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Download</div>
     <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Compare with other datasets...</div>
     <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">
       <div class=\\"relative actionBadge\\">
-        <div class=\\"el-badge sm-feature-badge\\">Imzml Browser<sup class=\\"el-badge__content el-badge__content--danger is-fixed is-dot\\"></sup></div>
+        <div class=\\"el-badge sm-feature-badge\\">Imzml browser<sup class=\\"el-badge__content el-badge__content--danger is-fixed is-dot\\"></sup></div>
+      </div>
+    </div>
+    <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">
+      <div class=\\"relative actionBadge\\">
+        <div class=\\"el-badge sm-feature-badge\\">Image segmentation<sup class=\\"el-badge__content el-badge__content--danger is-fixed is-dot\\"></sup></div>
       </div>
     </div>
     <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Ontology enrichment</div>

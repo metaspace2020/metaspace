@@ -1,0 +1,259 @@
+.segmentation-visualization {
+  background: #ffffff;
+
+  .visualization-content {
+    position: relative;
+  }
+
+  .image-section {
+    .segmentation-image-container {
+      position: relative;
+      user-select: none;
+      overflow: hidden;
+      
+      .canvas-controls {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        z-index: 10;
+        pointer-events: auto;
+        
+        .reset-button {
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid #dee2e6;
+          backdrop-filter: blur(4px);
+          
+          &:hover {
+            background: rgba(255, 255, 255, 1);
+          }
+        }
+      }
+
+      .image-wrapper {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 400px;
+        overflow: hidden;
+
+        .segmentation-canvas {
+          max-width: 100%;
+          max-height: 600px;
+          height: auto;
+          border-radius: 4px;
+          image-rendering: pixelated;
+          transition: transform 0.1s ease-out;
+        }
+
+        .error-placeholder,
+        .loading-placeholder,
+        .image-placeholder {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 100%;
+          height: 400px;
+          background: #f8f9fa;
+          border: 2px dashed #dee2e6;
+          border-radius: 6px;
+
+          .placeholder-content {
+            text-align: center;
+            color: #6c757d;
+
+            .placeholder-icon {
+              font-size: 3rem;
+              margin-bottom: 1rem;
+              opacity: 0.5;
+
+              &.loading {
+                animation: spin 1s linear infinite;
+              }
+            }
+
+            p {
+              margin: 0;
+              font-size: 1rem;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .legend-section {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 20;
+    pointer-events: auto;
+
+    .segmentation-legend {
+      background: rgba(248, 249, 250, 0.95);
+      border-radius: 8px;
+      border: 1px solid #e9ecef;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+      .segments-list {
+        display: flex;
+        flex-direction: column;
+
+        .segment-item {
+          padding: 2px;
+          border: 1px solid #e9ecef;
+          transition: box-shadow 0.2s ease;
+
+          &:hover {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+          }
+
+          .segment-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            .segment-info {
+              display: flex;
+              align-items: center;
+              
+
+              .color-swatch {
+                width: 20px;
+                height: 15px;
+                border-radius: 4px;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                flex-shrink: 0;
+                margin-right: 4px;
+                margin-left: 4px;
+              }
+
+              .segment-name {
+                width: 80px;
+                font-weight: 600;
+                color: #343a40;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              }
+
+              .segment-name-input {
+                width: 80px;
+
+                .el-input__inner {
+                  font-weight: 600;
+                  font-size: 0.95rm;
+                }
+              }
+            }
+
+            .segment-stats {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin-left: 8px;
+              .segment-progress {
+                width: 60px;
+
+                .el-progress-bar {
+                  .el-progress-bar__outer {
+                    border-radius: 6px;
+                    height: 16px !important;
+                    text-align: right;
+                    background-color: rgba(0, 0, 0, 0.2);
+                    position: relative;
+                  }
+
+                  .el-progress-bar__inner {
+                    border-radius: 6px;
+                    position: static;
+                  }
+                }
+
+                .el-progress-bar__innerText {
+                  font-size: 14px !important;
+                  font-weight: 600;
+                  color: black !important;
+                  position: absolute;
+                  right: 0;
+                  top: 1px;
+                }
+              }
+            }
+
+            .segment-actions {
+              display: flex;
+              align-items: center;
+              margin-left: 8px;
+
+              .action-button {
+                min-width: auto;
+                width: 20px;
+                height: 28px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #6c757d;
+                border-radius: 4px;
+
+                &:hover {
+                  color: #495057;
+                  background: #f8f9fa;
+                }
+
+                .el-icon {
+                  font-size: 14px;
+                }
+
+                &.save-button {
+                  color: #67c23a;
+
+                  &:hover {
+                    background: #f0f9ff;
+                    color: #409eff;
+                  }
+                }
+
+                &.cancel-button {
+                  color: #f56c6c;
+
+                  &:hover {
+                    background: #fef0f0;
+                    color: #f56c6c;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .segmentation-error {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    color: #721c24;
+
+    p {
+      margin: 0;
+      font-weight: 500;
+    }
+  }
+}
+
+// Animation for loading spinner
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

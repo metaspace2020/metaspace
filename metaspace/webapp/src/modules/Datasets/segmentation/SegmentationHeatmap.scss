@@ -1,0 +1,52 @@
+.segmentation-heatmap {
+  width: calc(100% - 16px);
+  .heatmap-container {
+    background: #ffffff;
+    border-radius: 8px;
+
+    .heatmap-chart {
+      width: 100%;
+    }
+  }
+
+  .heatmap-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+
+    p {
+      margin: 0.5rem 0;
+    }
+  }
+
+  .is-loading {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .segmentation-heatmap {
+    .heatmap-container {
+      padding: 0.5rem;
+
+      .heatmap-chart {
+        height: 400px !important;
+      }
+    }
+  }
+}

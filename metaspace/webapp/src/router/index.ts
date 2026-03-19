@@ -47,6 +47,10 @@ const asyncPagesFreelyTyped = {
     import(
       /* webpackPrefetch: true, webpackChunkName: "DatasetDifferentialAnalysisPage" */ '../modules/Datasets/diffAnalysis/DatasetDiffAnalysisPage'
     ),
+  DatasetSegmentationPage: () =>
+    import(
+      /* webpackPrefetch: true, webpackChunkName: "DatasetSegmentationPage" */ '../modules/Datasets/segmentation/SegmentationPage'
+    ),
   SpottingProjectPage: () =>
     import(
       /* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/SpottingProject/DashboardPage'
@@ -157,6 +161,11 @@ export const routes: any = [
     path: '/dataset/:dataset_id/diff-analysis',
     name: 'dataset-diff-analysis',
     component: asyncPages.DatasetDifferentialAnalysisPage,
+  },
+  {
+    path: '/dataset/:dataset_id/segmentation',
+    name: 'dataset-segmentation',
+    component: asyncPages.DatasetSegmentationPage,
   },
   { path: '/upload', name: 'upload', component: asyncPages.UploadPage },
 
