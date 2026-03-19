@@ -36,6 +36,7 @@ interface DatasetActionsDropdownProps {
   compareActionLabel: string
   browserActionLabel: string
   enrichmentActionLabel: string
+  opticalImageActionLabel: string
   dataset: DatasetDetailItem
   currentUser: CurrentUserRoleResult
   isPublishedOrUnderReview: boolean
@@ -58,6 +59,7 @@ export const DatasetActionsDropdown = defineComponent({
     compareActionLabel: { type: String, default: 'Compare with other datasets...' },
     browserActionLabel: { type: String, default: 'Imzml Browser' },
     enrichmentActionLabel: { type: String, default: 'Ontology enrichment' },
+    opticalImageActionLabel: { type: String, default: 'Add optical image' },
     reprocessActionLabel: { type: String, default: 'Reprocess data' },
     downloadActionLabel: { type: String, default: 'Download' },
     recaptchaToken: { type: String, default: () => '' },
@@ -242,6 +244,12 @@ export const DatasetActionsDropdown = defineComponent({
             params: { dataset_id: props.dataset?.id },
           })
           break
+        case 'optical-image':
+          router.push({
+            name: 'add-optical-image',
+            params: { dataset_id: props.dataset?.id },
+          })
+          break
         case 'enrichment':
           await enrichmentRefetch()
           if (enrichmentRequested.value) {
@@ -302,6 +310,7 @@ export const DatasetActionsDropdown = defineComponent({
         compareActionLabel,
         enrichmentActionLabel,
         browserActionLabel,
+        opticalImageActionLabel,
       } = props
       const { role } = currentUser || {}
       const { canEdit, canDelete, canDownload } = dataset || {}
@@ -324,6 +333,7 @@ export const DatasetActionsDropdown = defineComponent({
             <ElDropdownItem command="enrichment">{enrichmentActionLabel}</ElDropdownItem>
           )}
           {canEdit && <ElDropdownItem command="edit">{editActionLabel}</ElDropdownItem>}
+          {canEdit && <ElDropdownItem command="optical-image">{opticalImageActionLabel}</ElDropdownItem>}
           {canDelete && (
             <ElDropdownItem class="text-red-500" command="delete">
               {deleteActionLabel}
