@@ -6,9 +6,10 @@ import { FilterPanel } from '../../Filters/index'
 import { ElIcon, ElButton, ElAlert, ElCollapse, ElCollapseItem, ElTag } from '../../../lib/element-plus'
 import { Loading, ArrowLeft } from '@element-plus/icons-vue'
 import './SegmentationPage.scss'
-import { getDatasetByIdQuery, getDatasetDiagnosticsQuery } from '@/api/dataset'
+import { getDatasetByIdQuery, getDatasetDiagnosticsQuery, getSegmentationsQuery } from '@/api/dataset'
 import { SegmentationVisualization } from './SegmentationVisualization'
 import { SegmentationHeatmap } from './SegmentationHeatmap'
+import { SegmentMarkers } from './SegmentMarkers'
 import AspectRatioIcon from '../../../assets/inline/material/aspect-ratio.svg'
 import { MonitorSvg } from '@/design/refactoringUIIcons'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
@@ -26,6 +27,7 @@ export default defineComponent({
     Loading,
     SegmentationVisualization,
     SegmentationHeatmap,
+    SegmentMarkers,
   },
   props: {
     className: {
@@ -38,7 +40,7 @@ export default defineComponent({
     const router = useRouter()
 
     const state = reactive({
-      activeCollapseItems: ['segmentation-map'],
+      activeCollapseItems: ['segmentation-map', 'segment-markers'],
       showLegend: true,
       resetViewTrigger: 0,
     })
@@ -49,6 +51,11 @@ export default defineComponent({
       id: datasetId.value,
     })
     const currentDataset = computed(() => datasetResult.value?.dataset)
+
+    const { result: segmentationsResult } = useQuery<any>(getSegmentationsQuery, {
+      datasetId: datasetId.value,
+    })
+    const segmentations = computed(() => segmentationsResult.value?.segmentations)
 
     const {
       result: diagnosticDataResult,
@@ -186,9 +193,7 @@ export default defineComponent({
           }}
         >
           <div class="collapse-content">
-            <div class="segment-markers-placeholder">
-              <p class="text-gray-500 text-center">Segment markers functionality coming soon</p>
-            </div>
+            <SegmentMarkers segmentationId={segmentations.value?.[0]?.id} />
           </div>
         </ElCollapseItem>
       )

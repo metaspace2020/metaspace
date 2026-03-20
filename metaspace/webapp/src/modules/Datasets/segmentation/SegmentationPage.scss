@@ -1,6 +1,5 @@
 .segmentation-page {
   padding: 2rem;
-  max-width: 1400px;
   margin: 0 auto;
 
   .page-header {
@@ -91,17 +90,15 @@
           align-items: center;
           width: 100%;
           padding-right: 1rem;
+          
+          .collapse-title {
+            font-size: 1rem;
+          }
 
           .collapse-left {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-
-            .collapse-title {
-              font-weight: 600;
-              color: #343a40;
-              font-size: 1rem;
-            }
 
             .collapse-tags {
               display: flex;

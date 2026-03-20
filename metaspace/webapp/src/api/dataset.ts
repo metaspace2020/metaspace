@@ -730,3 +730,55 @@ export const getInitialPeak = gql`
     }
   }
 `
+
+export const getSegmentationsQuery = gql`
+  query getSegmentationsQuery($datasetId: String!) {
+    segmentations(datasetId: $datasetId) {
+      id
+      datasetId
+      jobId
+      segmentIndex
+      algorithm
+      status
+      error
+    }
+  }
+`
+
+export const getSegmentationIonProfilesWithImagesQuery = gql`
+  query getSegmentationIonProfilesWithImagesQuery($segmentationId: ID!, $filter: SegmentationIonProfileFilter = {}) {
+    segmentationIonProfiles(segmentationId: $segmentationId, filter: $filter) {
+      segmentation {
+        id
+        datasetId
+        segmentIndex
+      }
+      annotation {
+        id
+        ion
+        sumFormula
+        adduct
+        mz
+        msmScore
+        fdrLevel
+        isotopeImages {
+          mz
+          url
+          minIntensity
+          maxIntensity
+          totalIntensity
+        }
+        possibleCompounds {
+          name
+        }
+        isomers {
+          ion
+        }
+        isobars {
+          shouldWarn
+        }
+      }
+      enrichScore
+    }
+  }
+`
