@@ -1,13 +1,11 @@
 .segmentation-page {
-  padding: 2rem;
   margin: 0 auto;
+  padding: 1rem 0;
 
   .page-header {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
+    margin-bottom: 0.5rem;
 
     .back-button {
       display: flex;
@@ -90,7 +88,7 @@
           align-items: center;
           width: 100%;
           padding-right: 1rem;
-          
+
           .collapse-title {
             font-size: 1rem;
           }

@@ -10,6 +10,7 @@ import { getDatasetByIdQuery, getDatasetDiagnosticsQuery, getSegmentationsQuery 
 import { SegmentationVisualization } from './SegmentationVisualization'
 import { SegmentationHeatmap } from './SegmentationHeatmap'
 import { SegmentMarkers } from './SegmentMarkers'
+import { SegmentationDiagnostics } from './SegmentationDiagnostics'
 import AspectRatioIcon from '../../../assets/inline/material/aspect-ratio.svg'
 import { MonitorSvg } from '@/design/refactoringUIIcons'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
@@ -28,6 +29,7 @@ export default defineComponent({
     SegmentationVisualization,
     SegmentationHeatmap,
     SegmentMarkers,
+    SegmentationDiagnostics,
   },
   props: {
     className: {
@@ -40,9 +42,10 @@ export default defineComponent({
     const router = useRouter()
 
     const state = reactive({
-      activeCollapseItems: ['segmentation-map', 'segment-markers'],
+      activeCollapseItems: ['segmentation-map'],
       showLegend: true,
       resetViewTrigger: 0,
+      showSegmentMarkers: false,
     })
 
     const datasetId = computed(() => route.params.dataset_id)
@@ -83,11 +86,14 @@ export default defineComponent({
     })
 
     const goBack = () => {
-      router.back()
+      router.push(`/dataset/${datasetId.value}`)
     }
 
     const handleCollapseChange = (activeNames: string[]) => {
       state.activeCollapseItems = activeNames
+      setTimeout(() => {
+        state.showSegmentMarkers = activeNames.includes('segment-markers')
+      }, 100)
     }
 
     const handleExportCSV = () => {
@@ -193,7 +199,7 @@ export default defineComponent({
           }}
         >
           <div class="collapse-content">
-            <SegmentMarkers segmentationId={segmentations.value?.[0]?.id} />
+            {state.showSegmentMarkers && <SegmentMarkers segmentationId={segmentations.value?.[0]?.id} />}
           </div>
         </ElCollapseItem>
       )
@@ -215,9 +221,7 @@ export default defineComponent({
           }}
         >
           <div class="collapse-content">
-            <div class="diagnostics-placeholder">
-              <p class="text-gray-500 text-center">Segmentation diagnostics functionality coming soon</p>
-            </div>
+            <SegmentationDiagnostics segmentationData={segmentationData.value} isLoading={loading.value} />
           </div>
         </ElCollapseItem>
       )
@@ -242,6 +246,7 @@ export default defineComponent({
     }
 
     return () => {
+      console.log('segmentationData', segmentationData.value)
       if (loading.value) {
         return (
           <div class="segmentation-page">
@@ -309,7 +314,7 @@ export default defineComponent({
               <ElIcon>
                 <ArrowLeft />
               </ElIcon>
-              Back to {currentDataset.value?.name} annotations
+              Back to {currentDataset.value?.name} overview
             </div>
           </div>
 
