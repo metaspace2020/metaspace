@@ -120,12 +120,26 @@ def _select_k_via_criterion(
 def _run_gmm(
     pc_scores: np.ndarray,
     k: int,
-) -> np.ndarray:
+    n_histogram_bins: int = 50,
+) -> Tuple[np.ndarray, dict]:
 
     gmm = GaussianMixture(n_components=k, random_state=42)
-    labels = gmm.fit_predict(pc_scores)
-    logger.info(f"GMM: fitted k={k}, unique labels={np.unique(labels)}")
-    return labels
+    gmm.fit(pc_scores)
+    labels = gmm.predict(pc_scores)
+    proba = gmm.predict_proba(pc_scores)               # (n_pixels, k)
+    confidence = proba.max(axis=1)                     # (n_pixels,)
+
+    counts, bin_edges = np.histogram(confidence, bins=n_histogram_bins, range=(0.0, 1.0))
+    confidence_histogram = {
+        "counts": counts.tolist(),
+        "bin_edges": np.round(bin_edges, 6).tolist(),
+    }
+
+    logger.info(
+        f"GMM: fitted k={k}, unique labels={np.unique(labels)}, "
+        f"mean confidence={confidence.mean():.3f}"
+    )
+    return labels, confidence_histogram
 
 
 def _reconstruct_label_map(
@@ -229,7 +243,7 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
             )
 
         # 3. GMM
-        labels = _run_gmm(pc_scores, k)
+        labels, confidence_histogram = _run_gmm(pc_scores, k)
 
         # 4. Reconstruct label map
         label_map = _reconstruct_label_map(
@@ -247,4 +261,5 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
             bic_curve=bic_curve,
             explained_variance=explained_variance,
             spatial_weights=None,
+            assignment_confidence_histogram=confidence_histogram,
         )

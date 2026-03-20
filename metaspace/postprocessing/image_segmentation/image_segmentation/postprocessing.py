@@ -209,5 +209,6 @@ def postprocess(
                 else None
             ),
             "spatial_weights": raw_output.spatial_weights,
+            "assignment_confidence_histogram": raw_output.assignment_confidence_histogram,
         },
     )

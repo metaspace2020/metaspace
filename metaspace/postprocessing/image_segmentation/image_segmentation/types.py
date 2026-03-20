@@ -46,6 +46,7 @@ class RawAlgorithmOutput:
     bic_curve: Optional[dict]
     explained_variance: Optional[np.ndarray]
     spatial_weights: Optional[np.ndarray]
+    assignment_confidence_histogram: Optional[dict] = None  # {"counts": [...], "bin_edges": [...]}
 
 
 @dataclass
