@@ -6,7 +6,12 @@ import { FilterPanel } from '../../Filters/index'
 import { ElIcon, ElButton, ElAlert, ElCollapse, ElCollapseItem, ElTag } from '../../../lib/element-plus'
 import { Loading, ArrowLeft } from '@element-plus/icons-vue'
 import './SegmentationPage.scss'
-import { getDatasetByIdQuery, getDatasetDiagnosticsQuery, getSegmentationsQuery } from '@/api/dataset'
+import {
+  getDatasetByIdQuery,
+  getDatasetDiagnosticsQuery,
+  getSegmentationsQuery,
+  opticalImagesQuery,
+} from '@/api/dataset'
 import { SegmentationVisualization } from './SegmentationVisualization'
 import { SegmentationHeatmap } from './SegmentationHeatmap'
 import { SegmentMarkers } from './SegmentMarkers'
@@ -46,6 +51,7 @@ export default defineComponent({
       showLegend: true,
       resetViewTrigger: 0,
       showSegmentMarkers: false,
+      showOpticalImage: true,
     })
 
     const datasetId = computed(() => route.params.dataset_id)
@@ -68,12 +74,20 @@ export default defineComponent({
       id: route.params.dataset_id,
     })
 
+    const { result: opticalImagesResult } = useQuery(opticalImagesQuery, {
+      datasetId: datasetId.value,
+    })
+
     const diagnosticData = computed(
       () =>
         diagnosticDataResult.value?.dataset?.diagnostics
           .filter((diagnostic: any) => diagnostic.type === 'SEGMENTATION')
           ?.at(0)
     )
+
+    const opticalImage = computed(() => {
+      return (opticalImagesResult.value as any)?.dataset?.opticalImages?.[0]
+    })
 
     const segmentationData = computed(() => {
       if (!diagnosticData.value) return null
@@ -117,6 +131,12 @@ export default defineComponent({
       state.showLegend = !state.showLegend
     }
 
+    const handleToggleOpticalImage = (e: MouseEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      state.showOpticalImage = !state.showOpticalImage
+    }
+
     const renderHeatmapWrapper = () => {
       if (!segmentationData.value) return null
 
@@ -152,11 +172,29 @@ export default defineComponent({
               <div class="collapse-header">
                 <div class="collapse-left">
                   <span class="collapse-title">Segmentation map</span>
-                </div>
-                <div class="collapse-actions">
                   <ElButton size="small" link={true} onClick={handleResetView} class="action-button" title="Reset view">
                     <AspectRatioIcon class="w-6 h-6 fill-current text-gray-900" />
                   </ElButton>
+                  {opticalImage.value && (
+                    <ElButton
+                      title="Toggle optical image"
+                      link={true}
+                      class={`${
+                        state.showOpticalImage ? 'active' : ''
+                      } button-reset flex h-6 channel-toggle !ml-0 !p-0`}
+                      onClick={handleToggleOpticalImage}
+                    >
+                      <img
+                        src="/src/assets/microscope-icon.png"
+                        class="w-6 h-6 pointer-events-none"
+                        style={{
+                          filter: state.showOpticalImage ? '' : 'opacity(60%)',
+                        }}
+                      />
+                    </ElButton>
+                  )}
+                </div>
+                <div class="collapse-actions">
                   <ElButton
                     title="Ion image controls"
                     link={true}
@@ -177,6 +215,8 @@ export default defineComponent({
               diagnosticData={diagnosticData.value}
               showLegend={state.showLegend}
               resetViewTrigger={state.resetViewTrigger}
+              opticalImage={opticalImage.value}
+              showOpticalImage={state.showOpticalImage}
             />
           </div>
         </ElCollapseItem>
@@ -246,7 +286,6 @@ export default defineComponent({
     }
 
     return () => {
-      console.log('segmentationData', segmentationData.value)
       if (loading.value) {
         return (
           <div class="segmentation-page">

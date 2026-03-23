@@ -1,4 +1,5 @@
 import { computed, defineComponent, inject, reactive } from 'vue'
+import { useStore } from 'vuex'
 import { Workflow, WorkflowStep } from '../../../components/Workflow'
 import {
   ElSelect,
@@ -10,6 +11,8 @@ import {
   ElRadioButton,
   ElAlert,
   ElInputNumber,
+  ElTooltip,
+  ElIcon,
 } from '../../../lib/element-plus'
 import { ErrorLabelText } from '../../../components/Form'
 import { DefaultApolloClient } from '@vue/apollo-composable'
@@ -17,6 +20,7 @@ import { DefaultApolloClient } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import './SegmentationDialog.scss'
 import { annotationListQuery } from '@/api/annotation'
+import { QuestionFilled } from '@element-plus/icons-vue'
 
 const runSegmentationMutation = gql`
   mutation runSegmentation(
@@ -59,10 +63,11 @@ interface SegmentationDialogState {
   maxMz: number | null
   databases: any[]
   adducts: string[]
+  offSample: boolean | null
   // Step 2: Algorithm selection
   algorithm: string
   // Step 3: Algorithm parameters
-  numSegments: number
+  numSegments: number | null
   applySmoothing: boolean
   // Error states
   firstStepError: boolean
@@ -85,6 +90,7 @@ export const SegmentationDialog = defineComponent({
   emits: ['close'],
   setup(props: SegmentationDialogProps, { emit }) {
     const apolloClient = inject(DefaultApolloClient)
+    const store = useStore()
     const state = reactive<SegmentationDialogState>({
       workflowStep: 1,
       fdrLevel: 0.2,
@@ -92,8 +98,9 @@ export const SegmentationDialog = defineComponent({
       maxMz: null,
       databases: [],
       adducts: [],
+      offSample: null,
       algorithm: 'pca_gmm',
-      numSegments: 2,
+      numSegments: null,
       applySmoothing: true,
       firstStepError: false,
       secondStepError: false,
@@ -101,6 +108,8 @@ export const SegmentationDialog = defineComponent({
       loading: false,
       annotationCount: null,
     })
+
+    const themeVariant = computed(() => store.getters.themeVariant)
 
     const databaseOptions = computed(() => {
       return (props.databases || []).map((db) => ({
@@ -143,7 +152,8 @@ export const SegmentationDialog = defineComponent({
     }
 
     const validateThirdStep = () => {
-      if (state.numSegments < 2 || state.numSegments > 10) {
+      // K is optional, but if provided, it must be between 2 and 10
+      if (state.numSegments !== null && (state.numSegments < 2 || state.numSegments > 10)) {
         state.thirdStepError = true
         return false
       }
@@ -196,9 +206,13 @@ export const SegmentationDialog = defineComponent({
 
       try {
         state.loading = true
-        const params = {
-          k: state.numSegments,
+        const params: any = {
           apply_smoothing: state.applySmoothing,
+        }
+
+        // Only include k if it's specified
+        if (state.numSegments !== null) {
+          params.k = state.numSegments
         }
 
         await apolloClient.mutate({
@@ -213,7 +227,7 @@ export const SegmentationDialog = defineComponent({
             adducts: state.adducts,
             minMz: state.minMz,
             maxMz: state.maxMz,
-            offSample: false,
+            offSample: state.offSample,
             params: JSON.stringify(params),
           },
         })
@@ -231,20 +245,22 @@ export const SegmentationDialog = defineComponent({
     }
 
     return () => {
-      console.log('databaseOptions', databaseOptions.value)
-      console.log('adductOptions', adductOptions.value)
       return (
         <ElDialog
           model-value={true}
           onClick={(e) => e.stopPropagation()}
           lockScroll={true}
           class="segmentation-dialog sm-content-page el-dialog-lean w-11/12 lg:w-1/2 xl:w-5/12"
-          onclose={() => emit('close')}
+          onClose={() => emit('close')}
         >
           <h1>Image segmentation</h1>
           <Workflow>
             {/* Step 1: Select annotation filters */}
-            <WorkflowStep active={state.workflowStep === 1} done={state.workflowStep > 1}>
+            <WorkflowStep
+              active={state.workflowStep === 1}
+              done={state.workflowStep > 1}
+              class={themeVariant.value === 'pro' ? 'pro-theme' : ''}
+            >
               <p class="sm-workflow-header">Select the annotations filters</p>
               {state.workflowStep === 1 && (
                 <form class="segmentation-step">
@@ -330,6 +346,22 @@ export const SegmentationDialog = defineComponent({
                         ))}
                       </ElSelect>
                     </div>
+
+                    <div class="filter-group">
+                      <label class="filter-label">Sample filter</label>
+                      <ElSelect
+                        class="sample-filter-select"
+                        modelValue={state.offSample}
+                        placeholder="Select filter..."
+                        clearable
+                        onChange={(value: boolean | null) => {
+                          state.offSample = value
+                        }}
+                      >
+                        <ElOption value={false} label="On-sample" />
+                        <ElOption value={true} label="Off-sample" />
+                      </ElSelect>
+                    </div>
                   </div>
 
                   {state.annotationCount !== null && state.annotationCount < 100 && (
@@ -356,7 +388,11 @@ export const SegmentationDialog = defineComponent({
             </WorkflowStep>
 
             {/* Step 2: Select algorithm */}
-            <WorkflowStep active={state.workflowStep === 2} done={state.workflowStep > 2}>
+            <WorkflowStep
+              active={state.workflowStep === 2}
+              done={state.workflowStep > 2}
+              class={themeVariant.value === 'pro' ? 'pro-theme' : ''}
+            >
               <p class="sm-workflow-header">Select the segmentation algorithm</p>
               {state.workflowStep === 2 && (
                 <form class="segmentation-step">
@@ -388,25 +424,40 @@ export const SegmentationDialog = defineComponent({
             </WorkflowStep>
 
             {/* Step 3: Set parameters */}
-            <WorkflowStep active={state.workflowStep === 3} done={state.workflowStep > 3}>
+            <WorkflowStep
+              active={state.workflowStep === 3}
+              done={state.workflowStep > 3}
+              class={themeVariant.value === 'pro' ? 'pro-theme' : ''}
+            >
               <p class="sm-workflow-header">Select the segmentation parameters</p>
               {state.workflowStep === 3 && (
                 <form class="segmentation-step">
                   <div class="parameter-group">
-                    <label class="parameter-label">K (number of segments):</label>
+                    <div class="flex items-center">
+                      <div class="text-center">K (number of segments):</div>
+                      <ElTooltip
+                        content="If left empty, we will automatically select the best number of segments"
+                        placement="top"
+                      >
+                        <ElIcon class="help-icon text-lg ml-1 cursor-pointer">
+                          <QuestionFilled />
+                        </ElIcon>
+                      </ElTooltip>
+                    </div>
                     <ElInputNumber
                       modelValue={state.numSegments}
-                      placeholder="2"
-                      onChange={(value: number) => {
+                      placeholder="Auto-select"
+                      onChange={(value: number | null) => {
                         state.numSegments = value
                       }}
                       precision={0}
                       step={1}
+                      clearable
                     />
                   </div>
 
                   <div class="parameter-group">
-                    <label class="parameter-label">Apply smoothing:</label>
+                    <label class="parameter-label">Apply spatial denoising:</label>
                     <ElRadioGroup
                       modelValue={state.applySmoothing}
                       onChange={(value: boolean) => {
@@ -419,7 +470,7 @@ export const SegmentationDialog = defineComponent({
                   </div>
 
                   <ErrorLabelText class="mt-2" style={{ visibility: state.thirdStepError ? '' : 'hidden' }}>
-                    Number of segments must be between 2 and 10.
+                    If specified, number of segments must be between 2 and 10.
                   </ErrorLabelText>
 
                   <div class="step-buttons">

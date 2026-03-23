@@ -2,6 +2,8 @@ import { computed, defineComponent, PropType, ref, onMounted, nextTick, reactive
 import { ElIcon, ElInput, ElButton, ElProgress } from '../../../lib/element-plus'
 import { View, Edit, Hide, View as Show, Check, Close } from '@element-plus/icons-vue'
 import { getOS } from '../../../lib/util'
+import OpacitySettings from '../../ImageViewer/OpacitySettings.vue'
+import FadeTransition from '../../../components/FadeTransition'
 import './SegmentationVisualization.scss'
 
 interface SegmentSummary {
@@ -43,6 +45,11 @@ interface DiagnosticData {
   updatedDT: string
   data: string
   images: DiagnosticImage[]
+}
+
+interface OpticalImage {
+  url: string
+  transform: number[][]
 }
 
 // Predefined colors for segments (matching the provided image)
@@ -120,11 +127,23 @@ export const SegmentationVisualization = defineComponent({
       type: Number,
       default: 0,
     },
+    opticalImage: {
+      type: Object as PropType<OpticalImage | null>,
+      default: null,
+    },
+    showOpticalImage: {
+      type: Boolean,
+      default: true,
+    },
   },
   setup(props) {
     const canvasRef = ref<HTMLCanvasElement | null>(null)
+    const opticalImageRef = ref<HTMLImageElement | null>(null)
+    const viewBoxRef = ref<HTMLDivElement | null>(null)
     const imageLoading = ref(false)
     const imageError = ref(false)
+    const opticalImageLoading = ref(false)
+    const opticalImageError = ref(false)
 
     const { showScrollBlock, renderScrollBlock } = useScrollBlock()
 
@@ -139,6 +158,12 @@ export const SegmentationVisualization = defineComponent({
       segmentNames: {},
       hiddenSegments: new Set(),
       tempInputValue: '',
+    })
+
+    // State for optical image controls
+    const opticalImageState = reactive({
+      opticalOpacity: 1.0,
+      segmentOpacity: 1.0,
     })
 
     // State for pan and zoom functionality
@@ -199,8 +224,16 @@ export const SegmentationVisualization = defineComponent({
       } else {
         segmentState.hiddenSegments.add(segmentId)
       }
-      // Re-render the canvas
-      loadAndRenderSegmentationImage()
+      // Re-render the segmentation canvas
+      renderSegmentationCanvas()
+    }
+
+    const handleOpticalOpacityChange = (opacity: number) => {
+      opticalImageState.opticalOpacity = opacity
+    }
+
+    const handleSegmentOpacityChange = (opacity: number) => {
+      opticalImageState.segmentOpacity = opacity
     }
 
     // Pan and zoom event handlers
@@ -263,13 +296,11 @@ export const SegmentationVisualization = defineComponent({
     }
 
     const updateCanvasTransform = () => {
-      const canvas = canvasRef.value
-      if (!canvas) return
+      const viewBox = viewBoxRef.value
+      if (!viewBox) return
 
-      const translateX = canvasState.translateX
-      const translateY = canvasState.translateY
-      const scale = canvasState.scale
-      canvas.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`
+      const { translateX, translateY, scale } = canvasState
+      viewBox.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`
     }
 
     const resetCanvasTransform = () => {
@@ -288,6 +319,37 @@ export const SegmentationVisualization = defineComponent({
             b: parseInt(result[3], 16),
           }
         : { r: 0, g: 0, b: 0 }
+    }
+
+    const getOpticalImageTransform = () => {
+      if (!props.opticalImage?.transform) return 'none'
+      const t = props.opticalImage.transform
+      return `matrix(${t[0][0]}, ${t[1][0]}, ${t[0][1]}, ${t[1][1]}, ${t[0][2]}, ${t[1][2]})`
+    }
+
+    const loadOpticalImage = async () => {
+      if (!props.opticalImage?.url || !opticalImageRef.value) return
+
+      try {
+        opticalImageLoading.value = true
+        opticalImageError.value = false
+
+        // Load optical image
+        opticalImageRef.value.src = props.opticalImage.url
+      } catch (error) {
+        console.error('Error loading optical image:', error)
+        opticalImageError.value = true
+      }
+    }
+
+    const onOpticalImageLoad = () => {
+      opticalImageLoading.value = false
+      renderSegmentationCanvas()
+    }
+
+    const onOpticalImageError = () => {
+      opticalImageLoading.value = false
+      opticalImageError.value = true
     }
 
     const loadAndRenderSegmentationImage = async () => {
@@ -364,34 +426,12 @@ export const SegmentationVisualization = defineComponent({
         canvas.width = width
         canvas.height = height
 
-        const ctx = canvas.getContext('2d')!
-        const imageData = ctx.createImageData(width, height)
+        // Store segmentation data for canvas rendering
+        ;(canvas as any).segmentData = segmentData
+        ;(canvas as any).segmentWidth = width
+        ;(canvas as any).segmentHeight = height
 
-        const segmentColors =
-          segmentationData.value?.segment_summary.map((segment) => {
-            const color = getSegmentColor(segment.id)
-            return hexToRgb(color)
-          }) || []
-
-        for (let i = 0; i < segmentData.length; i++) {
-          const segmentId = segmentData[i]
-          const pixelIndex = i * 4
-
-          if (segmentId >= 0 && segmentId < segmentColors.length && !segmentState.hiddenSegments.has(segmentId)) {
-            const color = segmentColors[segmentId]
-            imageData.data[pixelIndex] = color.r
-            imageData.data[pixelIndex + 1] = color.g
-            imageData.data[pixelIndex + 2] = color.b
-            imageData.data[pixelIndex + 3] = 255
-          } else {
-            imageData.data[pixelIndex] = 0
-            imageData.data[pixelIndex + 1] = 0
-            imageData.data[pixelIndex + 2] = 0
-            imageData.data[pixelIndex + 3] = 0
-          }
-        }
-
-        ctx.putImageData(imageData, 0, 0)
+        renderSegmentationCanvas()
       } catch (error) {
         console.error('Error loading segmentation image:', error)
         imageError.value = true
@@ -400,10 +440,52 @@ export const SegmentationVisualization = defineComponent({
       }
     }
 
+    const renderSegmentationCanvas = () => {
+      const canvas = canvasRef.value
+      if (!canvas) return
+
+      const ctx = canvas.getContext('2d')!
+      const segmentData = (canvas as any).segmentData
+      const width = (canvas as any).segmentWidth
+      const height = (canvas as any).segmentHeight
+
+      if (!segmentData) return
+
+      // Clear canvas
+      ctx.clearRect(0, 0, width, height)
+
+      const alpha = Math.round(255 * opticalImageState.segmentOpacity)
+      const imageData = ctx.createImageData(width, height)
+
+      const segmentColors =
+        segmentationData.value?.segment_summary.map((segment) => {
+          const color = getSegmentColor(segment.id)
+          return hexToRgb(color)
+        }) || []
+
+      for (let i = 0; i < segmentData.length; i++) {
+        const segmentId = segmentData[i]
+        const pixelIndex = i * 4
+
+        if (segmentId >= 0 && segmentId < segmentColors.length && !segmentState.hiddenSegments.has(segmentId)) {
+          const color = segmentColors[segmentId]
+          imageData.data[pixelIndex] = color.r
+          imageData.data[pixelIndex + 1] = color.g
+          imageData.data[pixelIndex + 2] = color.b
+          imageData.data[pixelIndex + 3] = alpha
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0)
+    }
+
     onMounted(() => {
       nextTick(() => {
         if (labelMapImage.value) {
           loadAndRenderSegmentationImage()
+        }
+        if (props.opticalImage?.url) {
+          loadOpticalImage()
         }
       })
 
@@ -427,6 +509,24 @@ export const SegmentationVisualization = defineComponent({
         if (newValue > oldValue) {
           resetCanvasTransform()
         }
+      }
+    )
+
+    // Watch for optical image changes
+    watch(
+      () => props.opticalImage?.url,
+      (newUrl, oldUrl) => {
+        if (newUrl !== oldUrl && newUrl) {
+          loadOpticalImage()
+        }
+      }
+    )
+
+    // Watch for optical image state changes to re-render
+    watch(
+      () => [props.showOpticalImage, opticalImageState.opticalOpacity, opticalImageState.segmentOpacity],
+      () => {
+        renderSegmentationCanvas()
       }
     )
 
@@ -529,6 +629,37 @@ export const SegmentationVisualization = defineComponent({
       )
     }
 
+    const renderOpacityControls = () => {
+      return (
+        <div
+          class="opacity-controls"
+          onMousedown={(e: MouseEvent) => e.stopPropagation()}
+          onWheel={(e: WheelEvent) => e.stopPropagation()}
+        >
+          <FadeTransition>
+            {props.showOpticalImage && (
+              <OpacitySettings
+                key="opticalOpacity"
+                label="Optical image visibility"
+                class="opacity-control-item"
+                opacity={opticalImageState.opticalOpacity}
+                {...{ onOpacity: handleOpticalOpacityChange }}
+              />
+            )}
+          </FadeTransition>
+          <FadeTransition>
+            <OpacitySettings
+              key="segmentOpacity"
+              label="Cluster image opacity"
+              class="opacity-control-item"
+              opacity={opticalImageState.segmentOpacity}
+              {...{ onOpacity: handleSegmentOpacityChange }}
+            />
+          </FadeTransition>
+        </div>
+      )
+    }
+
     const renderSegmentationImage = () => {
       if (!labelMapImage.value) {
         return (
@@ -564,18 +695,67 @@ export const SegmentationVisualization = defineComponent({
               </div>
             )}
 
-            <canvas
-              ref={canvasRef}
-              class="segmentation-canvas"
-              style={{
-                display: imageLoading.value || imageError.value ? 'none' : 'block',
-                maxWidth: '100%',
-                height: 'auto',
-                transformOrigin: '0 0',
-                pointerEvents: 'none',
-              }}
-            />
+            {/* Shared viewBox: pan/zoom applied here so both layers move together */}
+            <div
+              ref={viewBoxRef}
+              class="segmentation-viewbox"
+              style={{ transformOrigin: '0 0', pointerEvents: 'none' }}
+            >
+              {/* Optical image — background layer (z-index: 1) */}
+              {props.opticalImage?.url && props.showOpticalImage && (
+                <img
+                  ref={opticalImageRef}
+                  src={props.opticalImage.url}
+                  class="absolute top-0 left-0 origin-top-left"
+                  style={{
+                    display: imageLoading.value || imageError.value ? 'none' : 'block',
+                    opacity: opticalImageState.opticalOpacity,
+                    transform: getOpticalImageTransform(),
+                    zIndex: 1,
+                  }}
+                  onLoad={onOpticalImageLoad}
+                  onError={onOpticalImageError}
+                  crossorigin="anonymous"
+                />
+              )}
+
+              {/* Hidden img element to keep the ref alive when toggle is off */}
+              {props.opticalImage?.url && !props.showOpticalImage && (
+                <img
+                  ref={opticalImageRef}
+                  src={props.opticalImage.url}
+                  style={{ display: 'none' }}
+                  onLoad={onOpticalImageLoad}
+                  onError={onOpticalImageError}
+                  crossorigin="anonymous"
+                />
+              )}
+
+              {/* Segmentation canvas — overlay layer (z-index: 2, above optical) */}
+              <canvas
+                ref={canvasRef}
+                class="segmentation-canvas"
+                style={{
+                  position: 'relative',
+                  display: imageLoading.value || imageError.value ? 'none' : 'block',
+                  imageRendering: 'pixelated',
+                  zIndex: 2,
+                }}
+              />
+            </div>
           </div>
+
+          {props.opticalImage?.url && props.showOpticalImage && (
+            <div
+              class="absolute bottom-0 right-0 m-3 flex flex-col gap-2"
+              style={{ pointerEvents: 'auto' }}
+              onMousedown={(e: MouseEvent) => e.stopPropagation()}
+              onWheel={(e: WheelEvent) => e.stopPropagation()}
+            >
+              {renderOpacityControls()}
+            </div>
+          )}
+
           {renderScrollBlock()}
         </div>
       )

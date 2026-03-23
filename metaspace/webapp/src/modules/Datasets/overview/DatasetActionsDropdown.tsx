@@ -286,6 +286,7 @@ export const DatasetActionsDropdown = defineComponent({
           openCompareDialog()
           break
         case 'segmentation':
+          hideFeatureBadge('imageSegmentation')
           openSegmentationDialog()
           break
         case 'download':

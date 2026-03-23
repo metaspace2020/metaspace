@@ -37,13 +37,18 @@
         min-height: 400px;
         overflow: hidden;
 
-        .segmentation-canvas {
-          max-width: 100%;
-          max-height: 600px;
-          height: auto;
-          border-radius: 4px;
-          image-rendering: pixelated;
-          transition: transform 0.1s ease-out;
+        .segmentation-viewbox {
+          position: relative;
+          display: inline-block;
+
+          .segmentation-canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 600px;
+            height: auto;
+            border-radius: 4px;
+            image-rendering: pixelated;
+          }
         }
 
         .error-placeholder,
@@ -79,6 +84,23 @@
           }
         }
       }
+
+      .opacity-controls {
+        pointer-events: auto;
+        z-index: 30;
+            display: flex;
+    flex-wrap: wrap;
+        
+        .opacity-control-item {
+          margin: 8px;
+          min-width: 200px;
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+
     }
   }
 

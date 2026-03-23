@@ -207,7 +207,7 @@ export const SegmentationHeatmap = defineComponent({
             left: 'center',
             bottom: 5,
             style: {
-              text: 'Ion Importance in Segments',
+              text: 'Ion importance in segments',
               fill: '#666',
               fontSize: 12,
               fontWeight: 500,
