@@ -318,10 +318,12 @@ export const DatasetActionsDropdown = defineComponent({
 
       return (
         <ElDropdownMenu class="dataset-overview-menu p-2">
+          {canEdit && <ElDropdownItem command="optical-image">{opticalImageActionLabel}</ElDropdownItem>}
+          <ElDropdownItem command="compare">{compareActionLabel}</ElDropdownItem>
           {(!currentUser?.id || canDownload) && (
             <ElDropdownItem command="download">{downloadActionLabel}</ElDropdownItem>
           )}
-          <ElDropdownItem command="compare">{compareActionLabel}</ElDropdownItem>
+          {canEdit && <ElDropdownItem command="edit">{editActionLabel}</ElDropdownItem>}
           {config.features.imzml_browser && (
             <ElDropdownItem command="browser">
               <div class="relative actionBadge">
@@ -332,8 +334,6 @@ export const DatasetActionsDropdown = defineComponent({
           {config.features.enrichment && (enrichmentRequested.value || canEdit) && (
             <ElDropdownItem command="enrichment">{enrichmentActionLabel}</ElDropdownItem>
           )}
-          {canEdit && <ElDropdownItem command="edit">{editActionLabel}</ElDropdownItem>}
-          {canEdit && <ElDropdownItem command="optical-image">{opticalImageActionLabel}</ElDropdownItem>}
           {canDelete && (
             <ElDropdownItem class="text-red-500" command="delete">
               {deleteActionLabel}
