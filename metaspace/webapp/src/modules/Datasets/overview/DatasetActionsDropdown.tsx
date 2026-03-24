@@ -3,6 +3,7 @@ import {
   checkIfHasBrowserFiles,
   DatasetDetailItem,
   deleteDatasetQuery,
+  getSegmentationJobsQuery,
   reprocessDatasetQuery,
 } from '../../../api/dataset'
 import { CurrentUserRoleResult } from '../../../api/user'
@@ -93,6 +94,15 @@ export const DatasetActionsDropdown = defineComponent({
       enrichmentResult.value != null ? enrichmentResult.value.enrichmentRequested : null
     )
 
+    const { result: segmentationJobsResult, refetch: segmentationJobsRefetch } = useQuery<any>(
+      getSegmentationJobsQuery,
+      { datasetId: props.dataset?.id },
+      { fetchPolicy: 'no-cache' }
+    )
+    const segmentationJobs = computed(() =>
+      segmentationJobsResult.value != null ? segmentationJobsResult.value.segmentationJobs : null
+    )
+
     const confirmReprocessEnrichment = async () => {
       try {
         await ElMessageBox.confirm(
@@ -172,8 +182,37 @@ export const DatasetActionsDropdown = defineComponent({
       state.showCompareDialog = false
     }
 
-    const openSegmentationDialog = () => {
-      state.showSegmentationDialog = true
+    const openSegmentationDialog = async () => {
+      const hasSegementation = segmentationJobs.value.find((job: any) => job.status === 'FINISHED')
+      const jobRunning = segmentationJobs.value.find((job: any) => job.status === 'STARTED')
+
+      if (jobRunning) {
+        await ElNotification.warning(
+          'A segmentation job is already running for this dataset. Please wait for it to complete.'
+        )
+        return
+      } else if (hasSegementation) {
+        await ElMessageBox.confirm(
+          'Segmentation has already been performed for this dataset. Do you want to continue?',
+          {
+            lockScroll: false,
+            type: 'warning',
+            confirmButtonText: 'Go to segmentation',
+            cancelButtonText: 'Change  parameters',
+          }
+        )
+          .then(() => {
+            router.push({
+              name: 'dataset-segmentation',
+              params: { dataset_id: props.dataset?.id },
+            })
+          })
+          .catch(() => {
+            state.showSegmentationDialog = true
+          })
+      } else {
+        state.showSegmentationDialog = true
+      }
     }
 
     const closeSegmentationDialog = () => {
@@ -286,6 +325,7 @@ export const DatasetActionsDropdown = defineComponent({
           openCompareDialog()
           break
         case 'segmentation':
+          await segmentationJobsRefetch()
           hideFeatureBadge('imageSegmentation')
           openSegmentationDialog()
           break

@@ -17,16 +17,9 @@
         left: 8px;
         z-index: 10;
         pointer-events: auto;
-        
-        .reset-button {
-          background: rgba(255, 255, 255, 0.9);
-          border: 1px solid #dee2e6;
-          backdrop-filter: blur(4px);
-          
-          &:hover {
-            background: rgba(255, 255, 255, 1);
-          }
-        }
+        display: flex;
+        gap: 8px;
+
       }
 
       .image-wrapper {

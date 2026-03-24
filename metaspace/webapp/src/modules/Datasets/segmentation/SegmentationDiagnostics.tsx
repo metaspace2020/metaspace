@@ -3,7 +3,7 @@ import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { BarChart } from 'echarts/charts'
+import { BarChart, LineChart } from 'echarts/charts'
 import {
   GridComponent,
   TooltipComponent,
@@ -15,21 +15,16 @@ import { ElIcon } from '../../../lib/element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import './SegmentationDiagnostics.scss'
 
-// Predefined colors for segments (matching SegmentationVisualization)
-const SEGMENT_COLORS = [
-  '#5B9BD5', // Blue - Segment 0
-  '#70AD47', // Green - Segment 1
-  '#A5A5A5', // Gray - Segment 2
-  '#FFC000', // Yellow - Segment 3
-  '#C55A5A', // Red - Segment 4
-  '#9966CC', // Purple - Segment 5
-  '#FF9900', // Orange - Segment 6
-  '#00B4D8', // Cyan - Segment 7
-  '#FF6B9D', // Pink - Segment 8
-  '#8FBC8F', // Sea Green - Segment 9
-]
-
-use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent, MarkLineComponent, DataZoomComponent])
+use([
+  CanvasRenderer,
+  BarChart,
+  LineChart,
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  MarkLineComponent,
+  DataZoomComponent,
+])
 
 interface SegmentationDiagnosticsProps {
   segmentationData: any
@@ -37,7 +32,8 @@ interface SegmentationDiagnosticsProps {
 }
 
 interface SegmentationDiagnosticsState {
-  chartOptions: any
+  bicChartOptions: any
+  histogramChartOptions: any
 }
 
 export const SegmentationDiagnostics = defineComponent({
@@ -53,12 +49,13 @@ export const SegmentationDiagnostics = defineComponent({
     },
   },
   setup(props: SegmentationDiagnosticsProps) {
-    const chartRef = ref(null)
+    const bicChartRef = ref(null)
+    const histogramChartRef = ref(null)
 
     const state = reactive<SegmentationDiagnosticsState>({
-      chartOptions: {
+      bicChartOptions: {
         title: {
-          text: 'Segment Size Distribution',
+          text: 'GMM BIC Curve',
           left: 'center',
           top: 20,
           textStyle: {
@@ -75,7 +72,7 @@ export const SegmentationDiagnostics = defineComponent({
         },
         xAxis: {
           type: 'category',
-          name: 'Segment ID',
+          name: 'k',
           nameLocation: 'middle',
           nameGap: 30,
           data: [],
@@ -89,7 +86,7 @@ export const SegmentationDiagnostics = defineComponent({
         },
         yAxis: {
           type: 'value',
-          name: 'Number of Pixels',
+          name: 'BIC',
           nameLocation: 'middle',
           nameGap: 50,
           splitLine: {
@@ -102,103 +99,249 @@ export const SegmentationDiagnostics = defineComponent({
         },
         tooltip: {
           trigger: 'axis',
+          formatter: (params: any) => {
+            const data = params[0]
+            const k = data.name
+            const bic = data.value
+            return `k = ${k}<br/>BIC: ${bic.toLocaleString()}`
+          },
+        },
+        series: [
+          {
+            name: 'BIC',
+            type: 'line',
+            data: [],
+            lineStyle: {
+              color: '#5470c6',
+              width: 2,
+            },
+            symbol: 'circle',
+            symbolSize: 6,
+            itemStyle: {
+              color: '#5470c6',
+            },
+          },
+        ],
+      },
+      histogramChartOptions: {
+        title: {
+          text: 'Assignment confidence',
+          left: 'center',
+          top: 20,
+          textStyle: {
+            fontSize: 16,
+            fontWeight: 'normal',
+          },
+        },
+        grid: {
+          left: '15%',
+          right: '10%',
+          top: '25%',
+          bottom: '20%',
+          containLabel: true,
+        },
+        xAxis: {
+          type: 'category',
+          name: '',
+          nameLocation: 'middle',
+          nameGap: 30,
+          data: [],
+          splitLine: {
+            show: true,
+            lineStyle: {
+              type: 'solid',
+              color: '#e0e0e0',
+            },
+          },
+        },
+        yAxis: {
+          type: 'log',
+          name: 'Count (log scale)',
+          nameLocation: 'middle',
+          nameGap: 50,
+          min: 1, // Start from 1 to avoid log(0)
+          splitLine: {
+            show: true,
+            lineStyle: {
+              type: 'solid',
+              color: '#e0e0e0',
+            },
+          },
+          axisLabel: {
+            fontSize: 11,
+            formatter: (value: number) => {
+              if (value >= 1000) {
+                return (value / 1000).toFixed(0) + 'K'
+              }
+              return value.toString()
+            },
+          },
+        },
+        tooltip: {
+          trigger: 'axis',
           axisPointer: {
             type: 'shadow',
           },
           formatter: (params: any) => {
             const data = params[0]
-            const segmentName = data.name
-            const pixelCount = data.value
-            const segmentData = data.data?.segmentData
-
-            let tooltip = `${segmentName}<br/>Pixels: ${pixelCount.toLocaleString()}`
-            if (segmentData) {
-              tooltip += `<br/>Coverage: ${(segmentData.coverage_fraction * 100).toFixed(1)}%`
-              if (segmentData.top_ions && segmentData.top_ions.length > 0) {
-                tooltip += `<br/>Top ions: ${segmentData.top_ions.slice(0, 3).join(', ')}`
-                if (segmentData.top_ions.length > 3) {
-                  tooltip += ` (+${segmentData.top_ions.length - 3} more)`
-                }
-              }
-            }
-            return tooltip
+            const binRange = data.name
+            const count = data.value
+            return `${binRange}<br/>Count: ${count.toLocaleString()}`
           },
         },
         series: [
           {
-            name: 'Segment Size',
+            name: 'Count',
             type: 'bar',
             data: [],
-            barWidth: '60%',
+            barWidth: '80%',
+            itemStyle: {
+              color: '#5470c6',
+            },
           },
         ],
       },
     })
 
-    const getSegmentColor = (segmentId: number) => {
-      return SEGMENT_COLORS[segmentId % SEGMENT_COLORS.length]
-    }
-
-    const getSegmentName = (segmentId: number) => {
-      return `Segment ${segmentId}`
-    }
-
-    const chartOptions = computed(() => {
-      if (!props.segmentationData?.segment_summary) {
-        return state.chartOptions
+    const bicChartOptions = computed(() => {
+      if (!props.segmentationData?.diagnostics?.bic_curve) {
+        return state.bicChartOptions
       }
 
-      // Use the segment_summary data to create cluster chart
-      const segmentSummary = props.segmentationData.segment_summary
-      const totalPixels = segmentSummary.reduce((sum: number, segment: any) => sum + (segment.size_px || 0), 0)
-
-      // Prepare data for the chart
-      const segmentNames = segmentSummary.map((segment: any) => getSegmentName(segment.id))
-      const segmentData = segmentSummary.map((segment: any) => ({
-        value: segment.size_px,
-        segmentData: segment,
-        itemStyle: {
-          color: getSegmentColor(segment.id),
-        },
-      }))
-
-      // Calculate statistics
-      const nSegments = segmentSummary.length
-      const avgClusterSize = Math.round(totalPixels / nSegments)
-      const largestCluster = Math.max(...segmentSummary.map((s: any) => s.size_px))
-      const smallestCluster = Math.min(...segmentSummary.map((s: any) => s.size_px))
+      const bicCurve = props.segmentationData.diagnostics.bic_curve
+      const selectedK = bicCurve.selected_k
 
       const updatedOptions = {
-        ...state.chartOptions,
-        title: {
-          ...state.chartOptions.title,
-          text: 'Segment Size Distribution',
-          subtext:
-            `Total segments: ${nSegments} | Total pixels: ${totalPixels.toLocaleString()}\n` +
-            `Average size: ${avgClusterSize.toLocaleString()} pixels | ` +
-            `Range: ${smallestCluster.toLocaleString()} - ${largestCluster.toLocaleString()}`,
-          subtextStyle: {
+        ...state.bicChartOptions,
+        xAxis: {
+          ...state.bicChartOptions.xAxis,
+          data: bicCurve.k_values,
+        },
+        yAxis: {
+          ...state.bicChartOptions.yAxis,
+          axisLabel: {
             fontSize: 11,
-            color: '#666',
-            lineHeight: 14,
+            formatter: (value: number) => {
+              if (Math.abs(value) >= 1000000) {
+                return (value / 1000000).toFixed(1) + 'M'
+              } else if (Math.abs(value) >= 1000) {
+                return (value / 1000).toFixed(0) + 'K'
+              }
+              return value.toString()
+            },
           },
         },
+        tooltip: {
+          trigger: 'axis',
+          formatter: (params: any) => {
+            const data = params[0]
+            const k = data.name
+            const bic = data.value
+            return `k = ${k}<br/>BIC: ${bic.toLocaleString()}`
+          },
+        },
+        series: [
+          {
+            ...state.bicChartOptions.series[0],
+            data: bicCurve.scores,
+            markLine: {
+              symbol: ['none', 'none'],
+              data: [
+                {
+                  xAxis: bicCurve.k_values.indexOf(selectedK),
+                  lineStyle: {
+                    color: '#ff4757',
+                    type: 'dashed',
+                    width: 2,
+                  },
+                  label: {
+                    show: true,
+                    position: 'end',
+                    formatter: `${selectedK}`,
+                    color: '#ff4757',
+                    fontSize: 12,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }
+
+      return updatedOptions
+    })
+
+    const histogramChartOptions = computed(() => {
+      if (!props.segmentationData?.diagnostics?.assignment_confidence_histogram) {
+        return state.histogramChartOptions
+      }
+
+      const histogram = props.segmentationData.diagnostics.assignment_confidence_histogram
+      const { counts, bin_edges } = histogram
+
+      // Filter out bins with zero counts for a cleaner histogram
+      const nonZeroBins = []
+      const nonZeroLabels = []
+      let maxCount = 0
+      let maxCountOriginalIndex = -1
+      let maxCountFilteredIndex = -1
+
+      for (let i = 0; i < counts.length; i++) {
+        if (counts[i] > 0) {
+          nonZeroBins.push({
+            value: counts[i],
+            originalIndex: i,
+            binStart: bin_edges[i],
+            binEnd: bin_edges[i + 1],
+          })
+          nonZeroLabels.push(bin_edges[i].toFixed(2))
+
+          if (counts[i] > maxCount) {
+            maxCount = counts[i]
+            maxCountOriginalIndex = i
+            maxCountFilteredIndex = nonZeroBins.length - 1
+          }
+        }
+      }
+
+      // Create histogram data with colors
+      const histogramData = nonZeroBins.map((bin, index) => {
+        let color = '#0F87EF' // Default blue
+
+        // Highlight the bin with the highest count
+        if (index === maxCountFilteredIndex) {
+          color = '#F08A41' // Red for the most significant bin
+        }
+
+        return {
+          value: bin.value,
+          itemStyle: {
+            color: color,
+          },
+        }
+      })
+
+      const updatedOptions = {
+        ...state.histogramChartOptions,
         xAxis: {
-          ...state.chartOptions.xAxis,
-          data: segmentNames,
+          ...state.histogramChartOptions.xAxis,
+          data: nonZeroLabels,
           axisLabel: {
-            interval: 0,
-            rotate: 0,
-            fontSize: 11,
+            interval: 0, // Show all labels since we now have fewer bins
+            rotate: 45,
+            fontSize: 10,
           },
         },
         yAxis: {
-          ...state.chartOptions.yAxis,
+          ...state.histogramChartOptions.yAxis,
+          type: 'log',
+          name: 'Count (log scale)',
+          min: 1,
           axisLabel: {
             fontSize: 11,
             formatter: (value: number) => {
               if (value >= 1000) {
-                return (value / 1000).toFixed(1) + 'K'
+                return (value / 1000).toFixed(0) + 'K'
               }
               return value.toString()
             },
@@ -206,9 +349,31 @@ export const SegmentationDiagnostics = defineComponent({
         },
         series: [
           {
-            ...state.chartOptions.series[0],
-            data: segmentData,
-            barWidth: '60%',
+            ...state.histogramChartOptions.series[0],
+            data: histogramData,
+            markLine: {
+              symbol: ['none', 'none'],
+              data: [
+                {
+                  xAxis: maxCountFilteredIndex,
+                  lineStyle: {
+                    color: '#ff4757',
+                    type: 'dashed',
+                    width: 1,
+                  },
+                  label: {
+                    show: true,
+                    position: 'insideEndTop',
+                    formatter: `${bin_edges[maxCountOriginalIndex].toFixed(2)}`,
+                    color: '#ff4757',
+                    fontSize: 10,
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    padding: [2, 4],
+                    borderRadius: 3,
+                  },
+                },
+              ],
+            },
           },
         ],
       }
@@ -217,9 +382,14 @@ export const SegmentationDiagnostics = defineComponent({
     })
 
     const handleChartResize = () => {
-      const chart: any = chartRef.value
-      if (chart && chart.chart) {
-        chart.resize()
+      const bicChart: any = bicChartRef.value
+      const histogramChart: any = histogramChartRef.value
+
+      if (bicChart && bicChart.chart) {
+        bicChart.resize()
+      }
+      if (histogramChart && histogramChart.chart) {
+        histogramChart.resize()
       }
     }
 
@@ -243,26 +413,43 @@ export const SegmentationDiagnostics = defineComponent({
         )
       }
 
-      if (!props.segmentationData?.segment_summary) {
+      if (!props.segmentationData?.diagnostics) {
         return (
           <div class="segmentation-diagnostics-empty">
-            <p class="text-gray-500">No segmentation data available</p>
+            <p class="text-gray-500">No diagnostics data available</p>
           </div>
         )
       }
 
       return (
         <div class="segmentation-diagnostics">
-          <div class="chart-container" style={{ height: '550px', width: '100%' }}>
-            {/* @ts-ignore */}
-            <ECharts
-              ref={chartRef}
-              autoresize={true}
-              class="diagnostics-chart"
-              style={{ height: '100%', width: '100%' }}
-              option={chartOptions.value}
-            />
-          </div>
+          {/* GMM BIC Curve Chart */}
+          {props.segmentationData?.diagnostics?.bic_curve && (
+            <div class="chart-container" style={{ height: '400px', width: '100%', marginBottom: '40px' }}>
+              {/* @ts-ignore */}
+              <ECharts
+                ref={bicChartRef}
+                autoresize={true}
+                class="diagnostics-chart"
+                style={{ height: '100%', width: '100%' }}
+                option={bicChartOptions.value}
+              />
+            </div>
+          )}
+
+          {/* Assignment Confidence Histogram */}
+          {props.segmentationData?.diagnostics?.assignment_confidence_histogram && (
+            <div class="chart-container" style={{ height: '400px', width: '100%' }}>
+              {/* @ts-ignore */}
+              <ECharts
+                ref={histogramChartRef}
+                autoresize={true}
+                class="diagnostics-chart"
+                style={{ height: '100%', width: '100%' }}
+                option={histogramChartOptions.value}
+              />
+            </div>
+          )}
         </div>
       )
     }

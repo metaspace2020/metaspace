@@ -1,6 +1,6 @@
 import { computed, defineComponent, PropType, ref, onMounted, nextTick, reactive, onBeforeUnmount, watch } from 'vue'
 import { ElIcon, ElInput, ElButton, ElProgress } from '../../../lib/element-plus'
-import { View, Edit, Hide, View as Show, Check, Close } from '@element-plus/icons-vue'
+import { View, Edit, Hide, View as Show, Check, Close, Download } from '@element-plus/icons-vue'
 import { getOS } from '../../../lib/util'
 import OpacitySettings from '../../ImageViewer/OpacitySettings.vue'
 import FadeTransition from '../../../components/FadeTransition'
@@ -479,6 +479,185 @@ export const SegmentationVisualization = defineComponent({
       ctx.putImageData(imageData, 0, 0)
     }
 
+    const downloadImage = async () => {
+      const canvas = canvasRef.value
+      const opticalImg = opticalImageRef.value
+      if (!canvas || !segmentationData.value) return
+
+      try {
+        // Create a new canvas for the composite image
+        const compositeCanvas = document.createElement('canvas')
+        const ctx = compositeCanvas.getContext('2d')!
+
+        // Calculate legend dimensions first
+        const legendPadding = 16
+        const itemHeight = 32
+        const itemSpacing = 4
+        const colorSwatchSize = 16
+        const progressBarWidth = 60
+        const legendWidth = 280
+
+        // Only count visible segments for height calculation
+        const visibleSegments = segmentationData.value.segment_summary.filter(
+          (segment) => !segmentState.hiddenSegments.has(segment.id)
+        )
+
+        const legendHeight = legendPadding * 2 + visibleSegments.length * (itemHeight + itemSpacing) - itemSpacing
+
+        // Set canvas size to accommodate both image and legend side by side
+        const imageWidth = canvas.width
+        const imageHeight = canvas.height
+        const spacing = 20 // Space between image and legend
+        const canvasWidth = imageWidth + spacing + legendWidth
+        const canvasHeight = Math.max(imageHeight, legendHeight)
+
+        compositeCanvas.width = canvasWidth
+        compositeCanvas.height = canvasHeight
+
+        // Leave background transparent (no fill needed for transparency)
+
+        // Calculate vertical positioning for image centering
+        const imageY = (canvasHeight - imageHeight) / 2
+
+        // Draw optical image if present and visible
+        if (opticalImg && props.opticalImage?.url && props.showOpticalImage && !opticalImageError.value) {
+          ctx.globalAlpha = opticalImageState.opticalOpacity
+
+          // Apply transformation if needed
+          if (props.opticalImage.transform) {
+            const t = props.opticalImage.transform
+            // Adjust transformation to account for vertical centering
+            ctx.setTransform(t[0][0], t[1][0], t[0][1], t[1][1], t[0][2], t[1][2] + imageY)
+          } else {
+            // Just translate for centering if no transformation
+            ctx.setTransform(1, 0, 0, 1, 0, imageY)
+          }
+
+          ctx.drawImage(opticalImg, 0, 0)
+
+          // Reset transformation
+          ctx.setTransform(1, 0, 0, 1, 0, 0)
+          ctx.globalAlpha = 1.0
+        }
+
+        // Draw segmentation canvas (centered vertically)
+        ctx.globalAlpha = opticalImageState.segmentOpacity
+        ctx.drawImage(canvas, 0, imageY)
+        ctx.globalAlpha = 1.0
+
+        // Don't create legend if no visible segments
+        if (visibleSegments.length === 0) {
+          // Just download the image without legend
+          compositeCanvas.toBlob((blob) => {
+            if (!blob) return
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = url
+            link.download = `segmentation-visualization-${Date.now()}.png`
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            URL.revokeObjectURL(url)
+          }, 'image/png')
+          return
+        }
+
+        // Create legend canvas
+        const legendCanvas = document.createElement('canvas')
+        const legendCtx = legendCanvas.getContext('2d')!
+
+        legendCanvas.width = legendWidth
+        legendCanvas.height = legendHeight
+
+        // Draw legend background with rounded corners effect
+        legendCtx.fillStyle = 'rgba(248, 249, 250, 0.95)'
+        legendCtx.fillRect(0, 0, legendWidth, legendHeight)
+
+        // Draw legend border
+        legendCtx.strokeStyle = '#e9ecef'
+        legendCtx.lineWidth = 1
+        legendCtx.strokeRect(0.5, 0.5, legendWidth - 1, legendHeight - 1)
+
+        // Draw legend items
+        let yOffset = legendPadding
+        visibleSegments.forEach((segment) => {
+          const segmentColor = getSegmentColor(segment.id)
+          const segmentName = getSegmentName(segment.id)
+          const coverage = Math.round(segment.coverage_fraction * 100)
+
+          // Draw color swatch
+          legendCtx.fillStyle = segmentColor
+          legendCtx.fillRect(
+            legendPadding,
+            yOffset + (itemHeight - colorSwatchSize) / 2,
+            colorSwatchSize,
+            colorSwatchSize
+          )
+
+          // Draw swatch border
+          legendCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)'
+          legendCtx.lineWidth = 1
+          legendCtx.strokeRect(
+            legendPadding,
+            yOffset + (itemHeight - colorSwatchSize) / 2,
+            colorSwatchSize,
+            colorSwatchSize
+          )
+
+          // Draw segment name
+          legendCtx.fillStyle = '#343a40'
+          legendCtx.font = '600 14px Arial, sans-serif'
+          legendCtx.textAlign = 'left'
+          legendCtx.textBaseline = 'middle'
+          legendCtx.fillText(segmentName, legendPadding + colorSwatchSize + 8, yOffset + itemHeight / 2)
+
+          // Draw progress bar background
+          const progressX = legendWidth - legendPadding - progressBarWidth
+          const progressY = yOffset + (itemHeight - 16) / 2
+          const progressHeight = 16
+
+          legendCtx.fillStyle = 'rgba(0, 0, 0, 0.2)'
+          legendCtx.fillRect(progressX, progressY, progressBarWidth, progressHeight)
+
+          // Draw progress bar fill
+          const fillWidth = (progressBarWidth * coverage) / 100
+          legendCtx.fillStyle = segmentColor
+          legendCtx.fillRect(progressX, progressY, fillWidth, progressHeight)
+
+          // Draw progress text
+          legendCtx.fillStyle = '#000000'
+          legendCtx.font = '600 12px Arial, sans-serif'
+          legendCtx.textAlign = 'center'
+          legendCtx.fillText(`${coverage}%`, progressX + progressBarWidth / 2, progressY + progressHeight / 2)
+
+          yOffset += itemHeight + itemSpacing
+        })
+
+        // Position legend to the right of the image with proper spacing
+        const legendX = imageWidth + spacing
+        const legendY = (canvasHeight - legendHeight) / 2 // Center vertically
+
+        // Draw legend onto composite canvas
+        ctx.drawImage(legendCanvas, legendX, legendY)
+
+        // Convert to blob and download
+        compositeCanvas.toBlob((blob) => {
+          if (!blob) return
+
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = `segmentation-visualization-${Date.now()}.png`
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          URL.revokeObjectURL(url)
+        }, 'image/png')
+      } catch (error) {
+        console.error('Error downloading image:', error)
+      }
+    }
+
     onMounted(() => {
       nextTick(() => {
         if (labelMapImage.value) {
@@ -683,6 +862,24 @@ export const SegmentationVisualization = defineComponent({
           onMousedown={handleMouseDown}
           onWheel={handleWheel}
         >
+          {/* Canvas controls */}
+          <div
+            class="canvas-controls"
+            onMousedown={(e: MouseEvent) => e.stopPropagation()}
+            onWheel={(e: WheelEvent) => e.stopPropagation()}
+          >
+            <ElButton
+              size="small"
+              class="button-reset rounded-full bg-gray-100 shadow-xs h-8 w-8 flex items-center justify-center"
+              onClick={downloadImage}
+              title="Download as PNG"
+            >
+              <ElIcon class="el-icon-download text-xl">
+                <Download />
+              </ElIcon>
+            </ElButton>
+          </div>
+
           <div class="image-wrapper">
             {imageError.value && (
               <div class="error-placeholder">

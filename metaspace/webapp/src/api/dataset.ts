@@ -782,3 +782,14 @@ export const getSegmentationIonProfilesWithImagesQuery = gql`
     }
   }
 `
+
+export const getSegmentationJobsQuery = gql`
+  query getSegmentationJobsQuery($datasetId: String!) {
+    segmentationJobs(datasetId: $datasetId) {
+      id
+      datasetId
+      status
+      error
+    }
+  }
+`
