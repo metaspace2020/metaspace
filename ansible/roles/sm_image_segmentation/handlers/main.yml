@@ -1,0 +1,7 @@
+---
+
+- name: reload supervisorctl
+  supervisorctl:
+    name: "{{ sm_image_segmentation_app_name }}"
+    state: present
+  become: yes

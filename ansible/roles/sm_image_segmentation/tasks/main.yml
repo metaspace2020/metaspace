@@ -1,14 +1,51 @@
 ---
 
+- name: Ensure image segmentation conf directory exists
+  file:
+    path: "{{ metaspace_home }}/metaspace/postprocessing/image_segmentation/conf"
+    state: directory
+    mode: "0755"
+
 - name: Copy image segmentation config file
-  template: src=config.json.j2 dest={{ sm_home }}/metaspace/postprocessing/image_segmentation/conf/config.json
+  template: src=config.json.j2 dest={{ metaspace_home }}/metaspace/postprocessing/image_segmentation/conf/config.json
             mode=0600 owner=ubuntu group=ubuntu
+
+- name: Install image segmentation Python dependencies
+  pip:
+    requirements: "{{ metaspace_home }}/metaspace/postprocessing/image_segmentation/requirements.txt"
+    executable: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/pip"
+    extra_args: "--no-deps"  # Install exact versions without dependency resolution conflicts
+  become_user: ubuntu
+
+- name: Install image segmentation package in development mode
+  pip:
+    name: "{{ metaspace_home }}/metaspace/postprocessing/image_segmentation"
+    executable: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/pip"
+    editable: true
+    extra_args: "--no-deps"  # Package is already installed via requirements.txt
+  become_user: ubuntu
+
+- name: Ensure engine logs directory exists for segmentation service
+  file:
+    path: "{{ metaspace_home }}/metaspace/engine/logs"
+    state: directory
+    mode: "0755"
 
 - name: Copy sm-image-segmentation supervisor config file
-  template: src=sm-image-segmentation.supervisor.j2 dest=/etc/supervisor/{{ sm_image_segmentation_app_name }}.supervisor
-            mode=0600 owner=ubuntu group=ubuntu
+  template: src=sm-image-segmentation.supervisor.j2 dest=/etc/supervisor/conf.d/{{ sm_image_segmentation_app_name }}.conf
+            mode=0644 owner=root group=root
+  notify: reload supervisorctl
 
-- name: Update and restart supervisor app
+- name: Reload supervisor configuration
+  command: supervisorctl reread
+  become: yes
+
+- name: Update supervisor configuration
+  command: supervisorctl update
+  become: yes
+
+- name: Start and enable supervisor app
   supervisorctl:
     name: "{{ sm_image_segmentation_app_name }}"
-    state: restarted
+    state: started
+  become: yes

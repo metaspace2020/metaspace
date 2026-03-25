@@ -99,62 +99,62 @@ def run_segmentation(
 
     return result
 
+# python 3.9+
+# def run_segmentation_from_anndata(
+#     adata,
+#     dataset_id: str,
+#     algorithm: str,
+#     parameters: Optional[Dict] = None,
+#     ion_labels: Optional[List[str]] = None,
+#     use_tic: bool = False,
+#     smoothing: bool = True,
+#     window_size: int = 3,
+# ) -> SegmentationResult:
 
-def run_segmentation_from_anndata(
-    adata,
-    dataset_id: str,
-    algorithm: str,
-    parameters: Optional[Dict] = None,
-    ion_labels: Optional[List[str]] = None,
-    use_tic: bool = False,
-    smoothing: bool = True,
-    window_size: int = 3,
-) -> SegmentationResult:
+#     if parameters is None:
+#         parameters = {}
 
-    if parameters is None:
-        parameters = {}
+#     logger.info(
+#         f"Dataset {dataset_id}: starting segmentation from AnnData "
+#         f"(algorithm={algorithm})"
+#     )
 
-    logger.info(
-        f"Dataset {dataset_id}: starting segmentation from AnnData "
-        f"(algorithm={algorithm})"
-    )
+#     # 1. Load from existing AnnData
+#     from image_segmentation.loader import anndata_to_segmentation_input
+#     intensity_matrix, pixel_coordinates, ion_labels, image_shape = anndata_to_segmentation_input(
+#         adata=adata,
+#         dataset_id=dataset_id,
+#         ion_labels=ion_labels,
+#     )
 
-    # 1. Load from existing AnnData
-    from image_segmentation.loader import anndata_to_segmentation_input
-    intensity_matrix, pixel_coordinates, ion_labels, image_shape = anndata_to_segmentation_input(
-        adata=adata,
-        dataset_id=dataset_id,
-        ion_labels=ion_labels,
-    )
+#     # 2. Preprocess
+#     segmentation_input = preprocess(
+#         intensity_matrix=intensity_matrix,
+#         pixel_coordinates=pixel_coordinates,
+#         ion_labels=ion_labels,
+#         image_shape=image_shape,
+#         dataset_id=dataset_id,
+#         use_tic=use_tic,
+#     )
 
-    # 2. Preprocess
-    segmentation_input = preprocess(
-        intensity_matrix=intensity_matrix,
-        pixel_coordinates=pixel_coordinates,
-        ion_labels=ion_labels,
-        image_shape=image_shape,
-        dataset_id=dataset_id,
-        use_tic=use_tic,
-    )
+#     # 3. Dispatch
+#     raw_output = dispatch(
+#         segmentation_input=segmentation_input,
+#         algorithm=algorithm,
+#         parameters=parameters,
+#     )
 
-    # 3. Dispatch
-    raw_output = dispatch(
-        segmentation_input=segmentation_input,
-        algorithm=algorithm,
-        parameters=parameters,
-    )
+#     # 4. Postprocess
+#     result = postprocess(
+#         raw_output=raw_output,
+#         segmentation_input=segmentation_input,
+#         smoothing=smoothing,
+#         window_size=window_size,
+#     )
 
-    # 4. Postprocess
-    result = postprocess(
-        raw_output=raw_output,
-        segmentation_input=segmentation_input,
-        smoothing=smoothing,
-        window_size=window_size,
-    )
+#     logger.info(
+#         f"Dataset {dataset_id}: segmentation complete "
+#         f"(n_segments={result.n_segments})"
+#     )
 
-    logger.info(
-        f"Dataset {dataset_id}: segmentation complete "
-        f"(n_segments={result.n_segments})"
-    )
-
-    return result
+#     return result

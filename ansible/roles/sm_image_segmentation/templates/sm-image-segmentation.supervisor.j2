@@ -2,11 +2,14 @@
 
 [program:{{ sm_image_segmentation_app_name }}]
 process_name = {{ sm_image_segmentation_app_name }}
-environment = PATH="{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin"
-directory = {{ sm_home }}/metaspace/postprocessing/image_segmentation
+environment = PATH="{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin",PYTHONPATH="{{ metaspace_home }}/metaspace/postprocessing/image_segmentation"
+directory = {{ metaspace_home }}/metaspace/postprocessing/image_segmentation
 command = {{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python app.py
+user = ubuntu
 redirect_stderr = true
-stdout_logfile = {{ sm_home }}/logs/{{ sm_image_segmentation_app_name }}.log
+stdout_logfile = {{ metaspace_home }}/metaspace/engine/logs/{{ sm_image_segmentation_app_name }}.log
+stderr_logfile = {{ metaspace_home }}/metaspace/engine/logs/{{ sm_image_segmentation_app_name }}_error.log
 numprocs = 1
 numprocs_start = 8000
 startsecs = 10
+autorestart = true

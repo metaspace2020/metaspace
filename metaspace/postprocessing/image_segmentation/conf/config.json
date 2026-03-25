@@ -1,8 +1,9 @@
 {
-  "segmentation_service": {
+  "bottle": {
     "host": "0.0.0.0",
     "port": 9877,
-    "server": "waitress"
+    "debug": false,
+    "server": "cherrypy"
   },
   "storage": {
     "endpoint_url": "http://storage:9000",

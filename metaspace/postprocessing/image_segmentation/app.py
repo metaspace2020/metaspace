@@ -125,6 +125,6 @@ def run():
 
 if __name__ == '__main__':
     config = _load_config()
-    svc = config['segmentation_service']
-    logger.info(f"Starting image segmentation service on {svc['host']}:{svc['port']}")
-    app.run(host=svc['host'], port=svc['port'], server=svc['server'])
+    bottle_config = config['bottle']
+    logger.info(f"Starting image segmentation service on {bottle_config['host']}:{bottle_config['port']} with {bottle_config['server']}")
+    app.run(**bottle_config)
