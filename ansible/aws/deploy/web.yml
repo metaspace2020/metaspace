@@ -30,3 +30,6 @@
 
     - role: sm_lithops_daemon
       tags: [sm-lithops-daemon]
+
+    - role: sm_image_segmentation
+      tags: [sm-image-segmentation]

@@ -1,0 +1,14 @@
+---
+
+- name: Copy image segmentation config file
+  template: src=config.json.j2 dest={{ sm_home }}/metaspace/postprocessing/image_segmentation/conf/config.json
+            mode=0600 owner=ubuntu group=ubuntu
+
+- name: Copy sm-image-segmentation supervisor config file
+  template: src=sm-image-segmentation.supervisor.j2 dest=/etc/supervisor/{{ sm_image_segmentation_app_name }}.supervisor
+            mode=0600 owner=ubuntu group=ubuntu
+
+- name: Update and restart supervisor app
+  supervisorctl:
+    name: "{{ sm_image_segmentation_app_name }}"
+    state: restarted

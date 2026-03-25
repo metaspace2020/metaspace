@@ -93,7 +93,7 @@ export const SegmentMarkers = defineComponent({
       if (annotations.value.length === 0) {
         return (
           <div class="segment-markers-container">
-            <p class="empty-message">No enriched annotations found for this segment.</p>
+            <p class="empty-message">No markers found for this segment.</p>
           </div>
         )
       }

@@ -26,6 +26,7 @@
     "img_service_public_url": "{{ web_public_url }}",
     "off_sample": "{{ off_sample_api_endpoint }}",
     "segmentation": "{{ sm_image_segmentation_endpoint }}",
+    "segmentation_callback": "{{ sm_api_endpoint }}/v1/segmentation/callback",
     "web_app_url": "{{ web_public_url }}",
     "send_email": {{ sm_send_email | to_json }},
     "update_daemon_threads": 4,

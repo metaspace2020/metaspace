@@ -1,0 +1,15 @@
+{
+  "segmentation_service": {
+    "host": "0.0.0.0",
+    "port": 9877,
+    "server": "waitress"
+  },
+  "storage": {
+    "endpoint_url": "{{ sm_s3_endpoint }}",
+    "access_key_id": "{{ aws_access_key_id }}",
+    "secret_access_key": "{{ aws_secret_access_key }}"
+  },
+  "imzml_browser_storage": {
+    "bucket": "{{ sm_imzml_browser_bucket }}"
+  }
+}

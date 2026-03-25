@@ -63,13 +63,19 @@ services:
       context: ..
       dockerfile: metaspace/postprocessing/image_segmentation/docker/Dockerfile
     volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+      - "${DEV_ROOT}:/opt/dev/metaspace:z"
+      - "${DATA_ROOT}:/opt/data/metaspace:z"
       - "../metaspace/postprocessing/image_segmentation/conf/config.json:/app/conf/config.json:ro"
+    user: "$SM_USER"
     ports:
       - "9877:9877"
     networks:
       - sm
     depends_on:
       - storage
+      - redis
 
   api:
     build:
