@@ -13,11 +13,11 @@
     - role: supervisorctl
       tags: [always]
 
-    - role: sm_image_segmentation
-      tags: [sm-image-segmentation]
-
     - role: sm_api
       tags: [sm-api]
+
+    - role: sm_image_segmentation
+      tags: [sm-image-segmentation]
 
     - role: sm_graphql
       tags: [sm-graphql]
