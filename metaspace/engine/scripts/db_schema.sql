@@ -409,6 +409,7 @@ CREATE TABLE "public"."image_segmentation_job" (
   "ds_id" text NOT NULL, 
   "status" text NOT NULL, 
   "error" text, 
+  "submitter_email" text, 
   "created_at" TIMESTAMP NOT NULL DEFAULT NOW(), 
   "updated_at" TIMESTAMP NOT NULL DEFAULT NOW(), 
   CONSTRAINT "PK_02b755530fe45b2070cf66f93b7" PRIMARY KEY ("id")
@@ -430,6 +431,7 @@ CREATE TABLE "public"."segmentation" (
   "algorithm" text NOT NULL, 
   "status" text NOT NULL, 
   "error" text, 
+  "name" text, 
   "created_at" TIMESTAMP NOT NULL DEFAULT NOW(), 
   "updated_at" TIMESTAMP NOT NULL DEFAULT NOW(), 
   CONSTRAINT "PK_4bc2a01449d339b58b557792a86" PRIMARY KEY ("id")
