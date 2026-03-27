@@ -1,9 +1,22 @@
-import { computed, defineComponent, PropType, ref, onMounted, nextTick, reactive, onBeforeUnmount, watch } from 'vue'
-import { ElIcon, ElInput, ElButton, ElProgress } from '../../../lib/element-plus'
+import {
+  computed,
+  defineComponent,
+  PropType,
+  ref,
+  onMounted,
+  nextTick,
+  reactive,
+  onBeforeUnmount,
+  watch,
+  inject,
+} from 'vue'
+import { ElIcon, ElInput, ElButton, ElProgress, ElMessage } from '../../../lib/element-plus'
 import { View, Edit, Hide, View as Show, Check, Close, Download } from '@element-plus/icons-vue'
+import { updateSegmentationMutation } from '@/api/dataset'
 import { getOS } from '../../../lib/util'
 import OpacitySettings from '../../ImageViewer/OpacitySettings.vue'
 import FadeTransition from '../../../components/FadeTransition'
+import { DefaultApolloClient } from '@vue/apollo-composable'
 import './SegmentationVisualization.scss'
 
 interface SegmentSummary {
@@ -135,8 +148,13 @@ export const SegmentationVisualization = defineComponent({
       type: Boolean,
       default: true,
     },
+    segmentations: {
+      type: Array as PropType<any[]>,
+      default: () => [],
+    },
   },
   setup(props) {
+    const apolloClient = inject(DefaultApolloClient)
     const canvasRef = ref<HTMLCanvasElement | null>(null)
     const opticalImageRef = ref<HTMLImageElement | null>(null)
     const viewBoxRef = ref<HTMLDivElement | null>(null)
@@ -146,6 +164,9 @@ export const SegmentationVisualization = defineComponent({
     const opticalImageError = ref(false)
 
     const { showScrollBlock, renderScrollBlock } = useScrollBlock()
+
+    // Apollo client for mutations
+    const updateSegmentationLoading = ref(false)
 
     // State for segment editing and visibility
     const segmentState = reactive<{
@@ -195,7 +216,19 @@ export const SegmentationVisualization = defineComponent({
     }
 
     const getSegmentName = (segmentId: number) => {
-      return segmentState.segmentNames[segmentId] || `Cluster ${segmentId}`
+      // First check local state (for unsaved changes)
+      if (segmentState.segmentNames[segmentId] && segmentState.segmentNames[segmentId].trim()) {
+        return segmentState.segmentNames[segmentId]
+      }
+
+      // Then check database data
+      const segmentation = props.segmentations.find((s: any) => s.segmentIndex === segmentId)
+      if (segmentation?.name && segmentation.name.trim()) {
+        return segmentation.name
+      }
+
+      // Fallback to default name
+      return `Cluster ${segmentId}`
     }
 
     const handleEditSegment = (segmentId: number) => {
@@ -203,10 +236,44 @@ export const SegmentationVisualization = defineComponent({
       segmentState.tempInputValue = segmentState.segmentNames[segmentId] || `Cluster ${segmentId}`
     }
 
-    const handleSaveSegmentName = (segmentId: number) => {
-      segmentState.segmentNames[segmentId] = segmentState.tempInputValue.trim() || `Cluster ${segmentId}`
-      segmentState.editingSegment = null
-      segmentState.tempInputValue = ''
+    const handleSaveSegmentName = async (segmentId: number) => {
+      const newName = segmentState.tempInputValue.trim()
+      if (!newName) {
+        ElMessage.error('Segment name cannot be empty')
+        return
+      }
+
+      // Find the segmentation record by segmentIndex
+      const segmentation = props.segmentations.find((s: any) => s.segmentIndex === segmentId)
+      if (!segmentation) {
+        ElMessage.error('Segmentation not found')
+        return
+      }
+
+      try {
+        updateSegmentationLoading.value = true
+
+        // Update in database
+        await apolloClient.mutate({
+          mutation: updateSegmentationMutation,
+          variables: {
+            id: segmentation.id,
+            name: newName,
+          },
+        })
+
+        // Update local state
+        segmentState.segmentNames[segmentId] = newName
+        segmentState.editingSegment = null
+        segmentState.tempInputValue = ''
+
+        ElMessage.success('Segment name updated successfully')
+      } catch (error) {
+        console.error('Failed to update segment name:', error)
+        ElMessage.error('Failed to update segment name')
+      } finally {
+        updateSegmentationLoading.value = false
+      }
     }
 
     const handleCancelEdit = () => {
@@ -759,6 +826,8 @@ export const SegmentationVisualization = defineComponent({
                           link={true}
                           onClick={() => handleSaveSegmentName(segment.id)}
                           class="action-button save-button"
+                          loading={updateSegmentationLoading.value}
+                          disabled={updateSegmentationLoading.value}
                         >
                           <ElIcon>
                             <Check />

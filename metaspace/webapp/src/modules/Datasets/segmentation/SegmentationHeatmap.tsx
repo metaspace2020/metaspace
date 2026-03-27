@@ -56,6 +56,7 @@ interface SegmentationHeatmapProps {
   segmentationData: SegmentationData
   isLoading: boolean
   isVisible?: boolean
+  segmentations?: any[]
 }
 
 interface SegmentationHeatmapState {
@@ -78,10 +79,20 @@ export const SegmentationHeatmap = defineComponent({
       type: Boolean,
       default: false,
     },
+    segmentations: {
+      type: Array as () => any[],
+      default: () => [],
+    },
   },
   emits: ['ionSelected'],
   setup(props: SegmentationHeatmapProps, { emit }) {
     const heatmapChart = ref(null)
+
+    // Helper function to get segment name
+    const getSegmentName = (segmentId: number) => {
+      // const segmentation = props.segmentations.find((s: any) => s.segmentIndex === segmentId)
+      return `Cluster ${segmentId}`
+    }
 
     // Process segmentation data to create heatmap
     const processSegmentationData = (data: SegmentationData) => {
@@ -96,7 +107,7 @@ export const SegmentationHeatmap = defineComponent({
       })
 
       const ions = Array.from(allIons)
-      const segments = data.segment_summary.map((s) => `Cluster ${s.id}`)
+      const segments = data.segment_summary.map((s) => getSegmentName(s.id))
 
       // Create heatmap data matrix:
       // [segmentIndex, ionIndex, coverageFraction, ionRank]
@@ -242,7 +253,7 @@ export const SegmentationHeatmap = defineComponent({
 
     // Update chart options when data changes
     watch(
-      () => props.segmentationData,
+      () => [props.segmentationData, props.segmentations],
       () => {
         const { segments, ions, heatmapData } = processedData.value
         const coverageValues = heatmapData.map((d) => d[2])

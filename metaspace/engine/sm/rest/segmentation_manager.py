@@ -71,10 +71,10 @@ class SegmentationManager:
 
         # Insert a QUEUED job row and retrieve its id
         job_ids = self._db.insert_return(
-            '''INSERT INTO image_segmentation_job (ds_id, status)
-               VALUES (%s, %s)
+            '''INSERT INTO image_segmentation_job (ds_id, status, submitter_email)
+               VALUES (%s, %s, %s)
                RETURNING id''',
-            rows=[(ds_id, DaemonActionStage.QUEUED)],
+            rows=[(ds_id, DaemonActionStage.QUEUED, email)],
         )
         job_id = job_ids[0]
 
@@ -120,11 +120,22 @@ class SegmentationManager:
             status: Job status ('ok' or 'failed')
             result: Segmentation result data (if successful)
             error: Error message (if failed)
-            email: Email address for notifications
+            email: Email address for notifications (will be retrieved from DB if not provided)
 
         Returns:
             dict: Status information
         """
+        # If email is not provided, retrieve it from the database
+        if not email:
+            try:
+                result_email = self._db.select_one(
+                    'SELECT submitter_email FROM image_segmentation_job WHERE id = %s',
+                    params=(job_id,),
+                )
+                if result_email:
+                    email = result_email[0]
+            except Exception as e:
+                logger.warning(f'Failed to retrieve submitter email for job {job_id}: {e}')
         if status == 'ok':
             logger.info(
                 f'Received successful segmentation result for job {job_id}, dataset {ds_id}'

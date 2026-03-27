@@ -90,7 +90,6 @@ class DatasetManager:
     def create_segmentation_web_app_link(self, msg):
         link = None
         try:
-            _, ds_meta = self.fetch_ds_metadata(msg['ds_id'])
             base_url = self._sm_config['services']['web_app_url']
             link = f"{base_url}/dataset/{msg['ds_id']}/segmentation"
         except Exception as e:

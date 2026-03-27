@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from io import BytesIO
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional
 
 import numpy as np
 
@@ -100,7 +100,7 @@ class SegmentationDataLoader:
                 if not filtered:
                     logger.warning(
                         f'Dataset {self.ds_id}: off_sample={off_sample} filter returned no '
-                        f'annotations for {moldb.name}-{moldb.version}. Retrying without off-sample filter.'
+                        f'annotations for {moldb.name}. Retrying without off-sample filter.'
                     )
                 else:
                     rows = filtered

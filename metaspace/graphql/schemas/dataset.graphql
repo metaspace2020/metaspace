@@ -389,6 +389,7 @@ type ImageSegmentationJob {
   datasetId: String!
   status: String!
   error: String
+  submitterEmail: String
   createdAt: String!
   updatedAt: String!
 }
@@ -401,6 +402,7 @@ type Segmentation {
   algorithm: String!
   status: String!
   error: String
+  name: String
   createdAt: String!
   updatedAt: String!
 }
@@ -571,6 +573,11 @@ type Mutation {
     offSample: Boolean = false  # false = on-sample only, true = off-sample only, null = no filter
     params: String  # JSON-encoded algorithm parameters
   ): Boolean!
+
+  updateSegmentation(
+    id: ID!
+    name: String!
+  ): Segmentation!
 }
 
 type Subscription {

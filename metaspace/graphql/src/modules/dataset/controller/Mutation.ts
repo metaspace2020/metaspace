@@ -18,7 +18,7 @@ import { metadataSchemas } from '../../../../metadataSchemas/metadataRegistry'
 import { getDatasetForEditing } from '../operation/getDatasetForEditing'
 import { deleteDataset } from '../operation/deleteDataset'
 import { checkNoPublishedProjectRemoved, checkProjectsPublicationStatus } from '../operation/publicationChecks'
-import { EngineDataset, ScoringModel, Roi, DiffRoi } from '../../engine/model'
+import { EngineDataset, ScoringModel, Roi, DiffRoi, Segmentation } from '../../engine/model'
 import { addExternalLink, removeExternalLink } from '../../project/ExternalLink'
 import { esDatasetByID } from '../../../../esConnector'
 import { mapDatabaseToDatabaseId } from '../../moldb/util/mapDatabaseToDatabaseId'
@@ -844,6 +844,43 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       console.error(`Failed to submit segmentation job for dataset ${datasetId}:`, error)
       throw new UserError('Failed to submit segmentation job. Please try again later.')
     }
+  },
+
+  updateSegmentation: async(
+    source: any,
+    { id, name }: { id: string, name: string },
+    ctx: Context
+  ) => {
+    if (ctx.user.id == null) {
+      throw new UserError('Not authenticated')
+    }
+
+    const segmentation = await ctx.entityManager.findOne(Segmentation, { where: { id } })
+    if (!segmentation) {
+      throw new UserError('Segmentation not found')
+    }
+
+    // Check if user has access to the dataset
+    const dataset = await esDatasetByID(segmentation.datasetId, ctx.user)
+    if (!dataset) {
+      throw new UserError('Dataset not found or access denied')
+    }
+
+    // Check if user can edit the dataset
+    const canEdit = await canEditEsDataset(dataset, ctx)
+    if (!canEdit) {
+      throw new UserError('You do not have permission to edit this segmentation')
+    }
+
+    // Update the segmentation name
+    await ctx.entityManager.update(Segmentation, id, {
+      name: name.trim(),
+      updatedAt: moment.utc(moment.utc().toDate()),
+    })
+
+    // Return the updated segmentation
+    const updatedSegmentation = await ctx.entityManager.findOne(Segmentation, { where: { id } })
+    return updatedSegmentation
   },
 }
 

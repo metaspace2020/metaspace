@@ -431,6 +431,9 @@ export class ImageSegmentationJob {
   @Column({ type: 'text', nullable: true })
   error: string | null;
 
+  @Column({ name: 'submitter_email', type: 'text', nullable: true })
+  submitterEmail: string | null;
+
   @Column({
     name: 'created_at',
     type: 'timestamp without time zone',
@@ -475,6 +478,9 @@ export class Segmentation {
 
   @Column({ type: 'text', nullable: true })
   error: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  name: string | null;
 
   @Column({
     name: 'created_at',

@@ -160,6 +160,10 @@ export default defineComponent({
       state.showOpticalImage = !state.showOpticalImage
     }
 
+    const getSegmentDisplayName = (segmentation: any) => {
+      return (segmentation.name && segmentation.name.trim()) || `Cluster ${segmentation.segmentIndex + 1}`
+    }
+
     const renderHeatmapWrapper = () => {
       if (!segmentationData.value) return null
 
@@ -172,6 +176,7 @@ export default defineComponent({
             segmentationData={segmentationData.value}
             isLoading={loading.value}
             isVisible={true}
+            segmentations={segmentations.value || []}
             onIonSelected={handleIonSelected}
           />
           <div class="w-full flex justify-end">
@@ -240,6 +245,7 @@ export default defineComponent({
               resetViewTrigger={state.resetViewTrigger}
               opticalImage={opticalImage.value}
               showOpticalImage={state.showOpticalImage}
+              segmentations={segmentations.value || []}
             />
           </div>
         </ElCollapseItem>
@@ -282,7 +288,7 @@ export default defineComponent({
                           }}
                         >
                           {segmentations.value?.map((s: any) => (
-                            <ElOption key={s.id} label={`Cluster ${s.segmentIndex + 1}`} value={s.id} />
+                            <ElOption key={s.id} label={getSegmentDisplayName(s)} value={s.id} />
                           ))}
                         </ElSelect>
                       </div>

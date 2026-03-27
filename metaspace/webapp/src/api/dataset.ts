@@ -399,6 +399,16 @@ export const compareROIsMutation = gql`
   }
 `
 
+export const updateSegmentationMutation = gql`
+  mutation updateSegmentationMutation($id: ID!, $name: String!) {
+    updateSegmentation(id: $id, name: $name) {
+      id
+      name
+      updatedAt
+    }
+  }
+`
+
 export const diffRoiResultsQuery = gql`
   query ($datasetId: String!, $filter: DiffRoiFilter = {}, $annotationFilter: AnnotationFilter = {}) {
     diffRoiResults(datasetId: $datasetId, filter: $filter, annotationFilter: $annotationFilter) {
@@ -741,6 +751,9 @@ export const getSegmentationsQuery = gql`
       algorithm
       status
       error
+      name
+      createdAt
+      updatedAt
     }
   }
 `
