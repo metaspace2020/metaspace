@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def run_segmentation(
     dataset_id: str,
     algorithm: str,
-    databases: Optional[List] = None,
+    database_ids: Optional[List[int]] = None,
     parameters: Optional[Dict] = None,
     fdr: float = 0.1,
     adducts: Optional[List[str]] = None,
@@ -49,15 +49,15 @@ def run_segmentation(
             load_segmentation_input_from_s3(s3_key=input_s3_key)
         )
     else:
-        if not databases:
+        if not database_ids:
             raise ValueError(
-                f"Dataset {dataset_id}: either 'input_s3_key' or 'databases' must be provided"
+                f"Dataset {dataset_id}: either 'input_s3_key' or 'database_ids' must be provided"
             )
-        logger.info(f"Dataset {dataset_id}: loading input via Python client (databases={databases})")
+        logger.info(f"Dataset {dataset_id}: loading input via Python client (database_ids={database_ids})")
         from image_segmentation.loader import load_segmentation_input
         intensity_matrix, pixel_coordinates, ion_labels, image_shape = load_segmentation_input(
             dataset_id=dataset_id,
-            databases=databases,
+            database_ids=database_ids,
             fdr=fdr,
             adducts=adducts,
             min_mz=min_mz,

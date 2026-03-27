@@ -96,7 +96,7 @@ export const SegmentationHeatmap = defineComponent({
       })
 
       const ions = Array.from(allIons)
-      const segments = data.segment_summary.map((s) => `Segment ${s.id}`)
+      const segments = data.segment_summary.map((s) => `Cluster ${s.id}`)
 
       // Create heatmap data matrix:
       // [segmentIndex, ionIndex, coverageFraction, ionRank]
@@ -145,7 +145,6 @@ export const SegmentationHeatmap = defineComponent({
             if (!params || !params.data || params.data.length < 4) return 'No data'
             const segmentIndex = params.data[0]
             const ionIndex = params.data[1]
-            const coverageFraction = params.data[2]
             const ionRank = params.data[3]
             const segments = processedData.value?.segments
             const ions = processedData.value?.ions
@@ -154,7 +153,6 @@ export const SegmentationHeatmap = defineComponent({
               <strong>${ions[ionIndex] || 'Unknown'}</strong><br/>
               ${segments[segmentIndex] || 'Unknown'}<br/>
               Rank: #${ionRank}<br/>
-              Coverage: ${(coverageFraction * 100).toFixed(2)}%
             `
           },
         },
@@ -196,7 +194,7 @@ export const SegmentationHeatmap = defineComponent({
           outOfRange: {
             color: '#f0f0f0',
           },
-          text: ['High coverage', 'Low coverage'],
+          text: ['High', 'Low'],
           textStyle: {
             fontSize: 12,
           },
@@ -207,7 +205,7 @@ export const SegmentationHeatmap = defineComponent({
             left: 'center',
             bottom: 5,
             style: {
-              text: 'Ion importance in segments',
+              text: 'Fold change',
               fill: '#666',
               fontSize: 12,
               fontWeight: 500,
@@ -230,9 +228,8 @@ export const SegmentationHeatmap = defineComponent({
             },
             label: {
               show: true,
-              formatter: (params: any) => {
-                const ionRank = params.value[3]
-                return ionRank ? `#${ionRank}` : ''
+              formatter: () => {
+                return ''
               },
               color: '#fff',
               fontWeight: 'bold',

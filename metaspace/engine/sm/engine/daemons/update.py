@@ -33,16 +33,20 @@ class SMUpdateDaemon:
                 self._manager.set_ds_status(ds, DatasetStatus.FINISHED)
             self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.FINISHED)
 
-        if msg['action'] in [DaemonAction.UPDATE, DaemonAction.INDEX, DaemonAction.SEGMENTATION]:
+        if msg['action'] in [DaemonAction.UPDATE, DaemonAction.INDEX]:
             msg['web_app_link'] = self._manager.create_web_app_link(msg)
+        elif msg['action'] == DaemonAction.SEGMENTATION:
+            msg['web_app_link'] = self._manager.create_segmentation_web_app_link(msg)
 
         if msg['action'] == DaemonAction.DELETE:
             self._manager.post_to_slack(
                 'dart', f' [v] Succeeded to {msg["action"]}: {json.dumps(msg)}'
             )
 
-        if msg.get('email'):
+        if msg.get('email') and msg['action'] not in [DaemonAction.SEGMENTATION]:
             self._manager.send_success_email(msg)
+        elif msg.get('email') and msg['action'] == DaemonAction.SEGMENTATION:
+            self._manager.send_segmentation_success_email(msg)
 
     def _on_failure(self, msg, e):
         self._manager.ds_failure_handler(msg, e)

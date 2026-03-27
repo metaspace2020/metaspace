@@ -114,8 +114,8 @@ export const SegmentMarkers = defineComponent({
                   opacityMode: 'linear',
                   imagePosition: { zoom: 1, xOffset: 0, yOffset: 0 },
                   pixelAspectRatio: 1,
-                  opticalSrc: opticalImage.value.url,
-                  opticalTransform: opticalImage.value.transform,
+                  opticalSrc: opticalImage.value?.url,
+                  opticalTransform: opticalImage.value?.transform,
                 }}
                 width={300}
                 height={300}

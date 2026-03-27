@@ -1,32 +1,60 @@
 import logging
+from typing import Dict
 
 import bottle
 
-from sm.engine.config import SMConfig
 from sm.engine.db import DB
-from sm.engine.daemons.actions import DaemonAction, DaemonActionStage
-from sm.engine.queue import QueuePublisher, SM_UPDATE
-from sm.engine.postprocessing.segmentation_wrapper import save_segmentation_result
-from sm.rest.utils import body_to_json, make_response, OK, INTERNAL_ERROR, WRONG_PARAMETERS
+from sm.rest.segmentation_manager import SegmentationManager
+from sm.rest.utils import body_to_json, make_response, OK, INTERNAL_ERROR
 
+sm_config: Dict
 logger = logging.getLogger('api')
 app = bottle.Bottle()
 
 
-def _create_update_queue_publisher():
-    config = SMConfig.get_conf()
-    return QueuePublisher(config['rabbitmq'], SM_UPDATE, logger)
+def init(sm_config_):
+    global sm_config  # pylint: disable=global-statement
+    sm_config = sm_config_
+
+
+def _create_segmentation_manager(db):
+    return SegmentationManager(db=db)
+
+
+def sm_modify_segmentation(request_name):
+    def _modify(handler):
+        def _func():
+            try:
+                params = body_to_json(bottle.request)
+                logger.info(
+                    f'Received {request_name}: {params if request_name != "CALLBACK" else ""}'
+                )
+                segmentation_man = _create_segmentation_manager(DB())
+                res = handler(segmentation_man, params)
+                return {
+                    'status': OK['status'],
+                    'job_id': res.get('job_id', None),
+                    'ds_id': res.get('ds_id', None),
+                }
+            except Exception as e:
+                logger.exception(f'{bottle.request} - {e}')
+                return make_response(INTERNAL_ERROR)
+
+        return _func
+
+    return _modify
 
 
 @app.post('/run')
-def run_segmentation():
+@sm_modify_segmentation('RUN')
+def run_segmentation(segmentation_man, params):
     """Accept a segmentation request, persist a QUEUED job, and enqueue it.
 
     Expected JSON body:
     {
         "ds_id":      str,
         "algorithm":  str           (default "pca_gmm"),
-        "databases":  [[str, str]]  (default [["HMDB", "v4"]]),
+        "database_ids":  [int]  (default []),
         "fdr":        float         (default 0.2),
         "params":     dict          (default {}),
         "adducts":    [str] | null,
@@ -36,97 +64,58 @@ def run_segmentation():
         "email":      str | null
     }
     """
-    try:
-        body = body_to_json(bottle.request)
-        logger.info(f'Received segmentation request: {body}')
+    ds_id = params.get('ds_id')
+    if not ds_id:
+        raise Exception('Missing required parameter: ds_id')
 
-        ds_id = body.get('ds_id')
-        if not ds_id:
-            return make_response(WRONG_PARAMETERS)
+    algorithm = params.get('algorithm', 'pca_gmm')
+    database_ids = params.get('database_ids', [])
+    fdr = float(params.get('fdr', 0.2))
+    seg_params = params.get('params', {})
+    adducts = params.get('adducts')
+    min_mz = params.get('min_mz')
+    max_mz = params.get('max_mz')
+    off_sample = params.get('off_sample')
+    email = params.get('email')
 
-        algorithm = body.get('algorithm', 'pca_gmm')
-        databases = body.get('databases', [['HMDB', 'v4']])
-        fdr = float(body.get('fdr', 0.2))
-        params = body.get('params', {})
-        adducts = body.get('adducts')
-        min_mz = body.get('min_mz')
-        max_mz = body.get('max_mz')
-        off_sample = body.get(
-            'off_sample'
-        )  # None = no filter (off-sample classification may not exist)
-        email = body.get('email')
+    result = segmentation_man.run_segmentation(
+        ds_id=ds_id,
+        algorithm=algorithm,
+        database_ids=database_ids,
+        fdr=fdr,
+        params=seg_params,
+        adducts=adducts,
+        min_mz=min_mz,
+        max_mz=max_mz,
+        off_sample=off_sample,
+        email=email,
+    )
 
-        db = DB()
-
-        # Insert a QUEUED job row and retrieve its id
-        job_ids = db.insert_return(
-            '''INSERT INTO image_segmentation_job (ds_id, status)
-               VALUES (%s, %s)
-               RETURNING id''',
-            rows=[(ds_id, DaemonActionStage.QUEUED)],
-        )
-        job_id = job_ids[0]
-
-        # Publish the job to the SM_UPDATE queue for the daemon to pick up
-        queue_publisher = _create_update_queue_publisher()
-        msg = {
-            'action': DaemonAction.SEGMENTATION,
-            'ds_id': ds_id,
-            'job_id': job_id,
-            'algorithm': algorithm,
-            'databases': databases,
-            'fdr': fdr,
-            'params': params,
-        }
-        if adducts is not None:
-            msg['adducts'] = adducts
-        if min_mz is not None:
-            msg['min_mz'] = min_mz
-        if max_mz is not None:
-            msg['max_mz'] = max_mz
-        msg['off_sample'] = off_sample
-        if email:
-            msg['email'] = email
-        queue_publisher.publish(msg)
-
-        logger.info(f'Segmentation job {job_id} queued for dataset {ds_id}')
-        return make_response(OK, job_id=job_id)
-
-    except Exception as e:
-        logger.exception(f'Error queuing segmentation job: {e}')
-        return make_response(INTERNAL_ERROR)
+    return result
 
 
 @app.post('/callback')
-def segmentation_callback():
+@sm_modify_segmentation('CALLBACK')
+def segmentation_callback(segmentation_man, params):
     """Receive async result from the segmentation microservice."""
-    try:
-        body = body_to_json(bottle.request)
-        job_id = body.get('job_id')
-        ds_id = body.get('ds_id')
+    job_id = params.get('job_id')
+    ds_id = params.get('ds_id')
 
-        if not job_id or not ds_id:
-            return make_response(WRONG_PARAMETERS)
+    if not job_id or not ds_id:
+        raise Exception('Missing required parameters: job_id and ds_id')
 
-        db = DB()
+    status = params.get('status')
+    result = params.get('result')
+    error = params.get('error')
+    email = params.get('email')
 
-        if body.get('status') == 'ok':
-            logger.info(
-                f'Received successful segmentation result for job {job_id}, dataset {ds_id}'
-            )
-            save_segmentation_result(ds_id, job_id, body['result'], db)
-        else:
-            error = body.get('error', 'unknown error')
-            logger.error(f'Segmentation job {job_id} for dataset {ds_id} failed: {error}')
-            logger.debug(f'Full callback body for failed job {job_id}: {body}')
-            db.alter(
-                """UPDATE image_segmentation_job SET
-                 status = 'FAILED', error = %s, updated_at = NOW() WHERE id = %s""",
-                params=(error, job_id),
-            )
+    result = segmentation_man.handle_segmentation_callback(
+        job_id=job_id,
+        ds_id=ds_id,
+        status=status,
+        result=result,
+        error=error,
+        email=email,
+    )
 
-        return make_response(OK)
-
-    except Exception as e:
-        logger.exception(f'Error handling segmentation callback: {e}')
-        return make_response(INTERNAL_ERROR)
+    return result

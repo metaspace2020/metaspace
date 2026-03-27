@@ -195,16 +195,16 @@ export const SegmentationVisualization = defineComponent({
     }
 
     const getSegmentName = (segmentId: number) => {
-      return segmentState.segmentNames[segmentId] || `Segment ${segmentId}`
+      return segmentState.segmentNames[segmentId] || `Cluster ${segmentId}`
     }
 
     const handleEditSegment = (segmentId: number) => {
       segmentState.editingSegment = segmentId
-      segmentState.tempInputValue = segmentState.segmentNames[segmentId] || `Segment ${segmentId}`
+      segmentState.tempInputValue = segmentState.segmentNames[segmentId] || `Cluster ${segmentId}`
     }
 
     const handleSaveSegmentName = (segmentId: number) => {
-      segmentState.segmentNames[segmentId] = segmentState.tempInputValue.trim() || `Segment ${segmentId}`
+      segmentState.segmentNames[segmentId] = segmentState.tempInputValue.trim() || `Cluster ${segmentId}`
       segmentState.editingSegment = null
       segmentState.tempInputValue = ''
     }

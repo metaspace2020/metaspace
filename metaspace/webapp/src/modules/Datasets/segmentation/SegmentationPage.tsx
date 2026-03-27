@@ -3,7 +3,17 @@ import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@vue/apollo-composable'
 import { FilterPanel } from '../../Filters/index'
 
-import { ElIcon, ElButton, ElAlert, ElCollapse, ElCollapseItem, ElTag } from '../../../lib/element-plus'
+import {
+  ElIcon,
+  ElButton,
+  ElAlert,
+  ElCollapse,
+  ElCollapseItem,
+  ElTag,
+  ElSelect,
+  ElOption,
+  ElPopover,
+} from '../../../lib/element-plus'
 import { Loading, ArrowLeft } from '@element-plus/icons-vue'
 import './SegmentationPage.scss'
 import {
@@ -19,6 +29,7 @@ import { SegmentationDiagnostics } from './SegmentationDiagnostics'
 import AspectRatioIcon from '../../../assets/inline/material/aspect-ratio.svg'
 import { MonitorSvg } from '@/design/refactoringUIIcons'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
+import { Setting } from '@element-plus/icons-vue'
 
 export default defineComponent({
   name: 'DatasetSegmentationPage',
@@ -30,6 +41,8 @@ export default defineComponent({
     ElCollapse,
     ElCollapseItem,
     ElTag,
+    ElSelect,
+    ElOption,
     Loading,
     SegmentationVisualization,
     SegmentationHeatmap,
@@ -52,6 +65,7 @@ export default defineComponent({
       resetViewTrigger: 0,
       showSegmentMarkers: false,
       showOpticalImage: true,
+      selectedSegmentMarkersSegmentationId: null as string | null,
     })
 
     const datasetId = computed(() => route.params.dataset_id)
@@ -61,10 +75,19 @@ export default defineComponent({
     })
     const currentDataset = computed(() => datasetResult.value?.dataset)
 
-    const { result: segmentationsResult } = useQuery<any>(getSegmentationsQuery, {
+    const {
+      result: segmentationsResult,
+      loading: segmentationsLoading,
+      onResult: handleSegmentationsLoad,
+    } = useQuery<any>(getSegmentationsQuery, {
       datasetId: datasetId.value,
     })
     const segmentations = computed(() => segmentationsResult.value?.segmentations)
+
+    handleSegmentationsLoad((result) => {
+      console.log('segmentations', result)
+      state.selectedSegmentMarkersSegmentationId = result.data?.segmentations?.[0]?.id
+    })
 
     const {
       result: diagnosticDataResult,
@@ -232,14 +255,63 @@ export default defineComponent({
           class="ds-collapse el-collapse-item--no-padding relative"
           v-slots={{
             title: () => (
-              <div class="collapse-header">
+              <div class="collapse-header !justify-start">
                 <span class="collapse-title">Segment markers</span>
+                <ElPopover
+                  trigger="click"
+                  placement="bottom"
+                  v-slots={{
+                    reference: () => (
+                      <div class="flex ml-1" onClick={(e) => e.stopPropagation()}>
+                        <ElIcon class="text-xl pointer-events-none">
+                          <Setting class="" />
+                        </ElIcon>
+                      </div>
+                    ),
+                    default: () => (
+                      <div class="collapse-actions flex flex-col">
+                        <span>Select cluster:</span>
+                        <ElSelect
+                          modelValue={state.selectedSegmentMarkersSegmentationId}
+                          placeholder="Cluster segment"
+                          size="small"
+                          class="segment-markers-cluster-select my-2"
+                          style={{ width: '220px' }}
+                          onChange={(id: string) => {
+                            state.selectedSegmentMarkersSegmentationId = id
+                          }}
+                        >
+                          {segmentations.value?.map((s: any) => (
+                            <ElOption key={s.id} label={`Cluster ${s.segmentIndex + 1}`} value={s.id} />
+                          ))}
+                        </ElSelect>
+                      </div>
+                    ),
+                  }}
+                />
               </div>
             ),
           }}
         >
           <div class="collapse-content">
-            {state.showSegmentMarkers && <SegmentMarkers segmentationId={segmentations.value?.[0]?.id} />}
+            {state.showSegmentMarkers &&
+              (segmentationsLoading.value && segmentations.value.length === 0 ? (
+                <div class="segment-markers-loading flex items-center justify-center gap-2 p-6 text-gray-600">
+                  <ElIcon class="loading-icon">
+                    <Loading />
+                  </ElIcon>
+                  <span>Loading segmentations…</span>
+                </div>
+              ) : state.selectedSegmentMarkersSegmentationId ? (
+                <SegmentMarkers
+                  key={state.selectedSegmentMarkersSegmentationId}
+                  segmentationId={state.selectedSegmentMarkersSegmentationId}
+                />
+              ) : (
+                <p class="empty-message p-4 text-center text-gray-600">
+                  No cluster segmentations available for markers.
+                </p>
+              ))}
           </div>
         </ElCollapseItem>
       )

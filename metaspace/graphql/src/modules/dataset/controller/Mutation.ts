@@ -810,7 +810,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     source: any,
     {
       datasetId, algorithm = 'pca_gmm',
-      databases = [['HMDB', 'v4']],
+      databaseIds = [],
       fdr = 0.2, adducts, minMz, maxMz, offSample = false, params,
     }: any,
     ctx: Context
@@ -827,7 +827,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const body: Record<string, any> = {
       ds_id: datasetId,
       algorithm,
-      databases,
+      database_ids: databaseIds,
       fdr,
       params: params ? JSON.parse(params) : {},
       email: ctx.user.email,

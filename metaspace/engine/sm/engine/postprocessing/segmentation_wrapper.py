@@ -21,7 +21,7 @@ def submit_segmentation_job(  # pylint: disable=too-many-arguments
     ds_id,
     job_id,
     algorithm,
-    databases,
+    database_ids,
     fdr,
     params,
     db,
@@ -45,7 +45,7 @@ def submit_segmentation_job(  # pylint: disable=too-many-arguments
     try:
         loader = SegmentationDataLoader(ds_id, db)
         input_s3_key = loader.prepare_segmentation_input(
-            databases=databases,
+            database_ids=database_ids,
             fdr=fdr,
             adducts=adducts,
             off_sample=off_sample,

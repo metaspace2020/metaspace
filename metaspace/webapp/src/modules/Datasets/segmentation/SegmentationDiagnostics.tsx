@@ -88,7 +88,7 @@ export const SegmentationDiagnostics = defineComponent({
           type: 'value',
           name: 'BIC',
           nameLocation: 'middle',
-          nameGap: 50,
+          nameGap: 5,
           splitLine: {
             show: true,
             lineStyle: {
@@ -221,14 +221,7 @@ export const SegmentationDiagnostics = defineComponent({
           ...state.bicChartOptions.yAxis,
           axisLabel: {
             fontSize: 11,
-            formatter: (value: number) => {
-              if (Math.abs(value) >= 1000000) {
-                return (value / 1000000).toFixed(1) + 'M'
-              } else if (Math.abs(value) >= 1000) {
-                return (value / 1000).toFixed(0) + 'K'
-              }
-              return value.toString()
-            },
+            show: false,
           },
         },
         tooltip: {
@@ -236,8 +229,7 @@ export const SegmentationDiagnostics = defineComponent({
           formatter: (params: any) => {
             const data = params[0]
             const k = data.name
-            const bic = data.value
-            return `k = ${k}<br/>BIC: ${bic.toLocaleString()}`
+            return `k = ${k}`
           },
         },
         series: [

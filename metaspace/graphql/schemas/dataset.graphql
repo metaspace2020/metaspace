@@ -563,7 +563,7 @@ type Mutation {
   runSegmentation(
     datasetId: String!
     algorithm: String! = "pca_gmm"
-    databases: [[String!]!]! = [["HMDB", "v4"]]
+    databaseIds: [Int!]! = []
     fdr: Float = 0.2
     adducts: [String!]
     minMz: Float

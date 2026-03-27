@@ -61,7 +61,7 @@ class SegmentationDataLoader:
 
     def _get_filtered_annotations(
         self,
-        databases: List[Union[Tuple[str, str], List[str]]],
+        database_ids: List[int],
         fdr: float,
         adducts: Optional[List[str]],
         off_sample: Optional[bool],
@@ -79,12 +79,11 @@ class SegmentationDataLoader:
         seen_labels: set = set()
         merged: List[Dict] = []
 
-        for db_pair in databases:
-            name, version = db_pair
-            moldb_id = molecular_db.find_by_name_version(name, version).id
+        for db_id in database_ids:
+            moldb = molecular_db.find_by_id(db_id)
 
             rows = self._db.select_with_fields(
-                ANNOTATIONS_SEL, (self.ds_id, moldb_id, self.ds_id, moldb_id, fdr)
+                ANNOTATIONS_SEL, (self.ds_id, db_id, self.ds_id, db_id, fdr)
             )
 
             if adducts is not None:
@@ -101,7 +100,7 @@ class SegmentationDataLoader:
                 if not filtered:
                     logger.warning(
                         f'Dataset {self.ds_id}: off_sample={off_sample} filter returned no '
-                        f'annotations for {name}-{version}. Retrying without off-sample filter.'
+                        f'annotations for {moldb.name}-{moldb.version}. Retrying without off-sample filter.'
                     )
                 else:
                     rows = filtered
@@ -182,7 +181,7 @@ class SegmentationDataLoader:
 
     def prepare_segmentation_input(  # pylint: disable=too-many-locals
         self,
-        databases: List[Union[Tuple[str, str], List[str]]],
+        database_ids: List[int],
         fdr: float = 0.1,
         adducts: Optional[List[str]] = None,
         ion_labels: Optional[List[str]] = None,
@@ -212,11 +211,11 @@ class SegmentationDataLoader:
         """
         # 1. Filtered annotations
         annotations = self._get_filtered_annotations(
-            databases, fdr, adducts, off_sample, min_mz, max_mz
+            database_ids, fdr, adducts, off_sample, min_mz, max_mz
         )
         logger.info(
             f'Dataset {self.ds_id}: _get_filtered_annotations returned {len(annotations)} rows '
-            f'(databases={databases}, fdr={fdr}, off_sample={off_sample})'
+            f'(database_ids={database_ids}, fdr={fdr}, off_sample={off_sample})'
         )
 
         if ion_labels is not None:
@@ -231,7 +230,7 @@ class SegmentationDataLoader:
         if not annotations:
             raise ValueError(
                 f'Dataset {self.ds_id}: no annotations found across databases '
-                f'{databases} at fdr={fdr}'
+                f'{database_ids} at fdr={fdr}'
             )
 
         # 2. Shared data — reuse DiffROIData methods

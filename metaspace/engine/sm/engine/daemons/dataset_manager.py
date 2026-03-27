@@ -87,6 +87,16 @@ class DatasetManager:
             self.logger.error(e)
         return link
 
+    def create_segmentation_web_app_link(self, msg):
+        link = None
+        try:
+            _, ds_meta = self.fetch_ds_metadata(msg['ds_id'])
+            base_url = self._sm_config['services']['web_app_url']
+            link = f"{base_url}/dataset/{msg['ds_id']}/segmentation"
+        except Exception as e:
+            self.logger.error(e)
+        return link
+
     def load_ds(self, ds_id):
         return Dataset.load(self._db, ds_id)
 
@@ -224,6 +234,18 @@ class DatasetManager:
         )
         self._send_email(msg['email'], 'METASPACE service notification (SUCCESS)', email_body)
 
+    def send_segmentation_success_email(self, msg):
+        ds_name, _ = self.fetch_ds_metadata(msg['ds_id'])
+        email_body = (
+            'Dear METASPACE user,\n\n'
+            f'Thank you for submitting the segmentation job for the "{ds_name}" dataset. '
+            'We are pleased to inform you that the segmentation job has been been queued and '
+            f"it will be processed shortly. You will receive an email when it is completed.\n\n"
+            'Best regards,\n'
+            'METASPACE Team'
+        )
+        self._send_email(msg['email'], 'METASPACE service notification (QUEUED)', email_body)
+
     def send_failed_email(self, msg, traceback=None):
         ds_name, _ = self.fetch_ds_metadata(msg['ds_id'])
         content = (
@@ -249,7 +271,7 @@ class DatasetManager:
         ds_id = msg['ds_id']
         job_id = msg['job_id']
         algorithm = msg.get('algorithm', 'pca_gmm')
-        databases = msg.get('databases', [['HMDB', 'v4']])
+        database_ids = msg.get('database_ids', [])
         fdr = msg.get('fdr', 0.2)
         params = msg.get('params', {})
         adducts = msg.get('adducts')
@@ -272,7 +294,7 @@ class DatasetManager:
                 ds_id=ds_id,
                 job_id=job_id,
                 algorithm=algorithm,
-                databases=databases,
+                database_ids=database_ids,
                 fdr=fdr,
                 params=params,
                 db=self._db,

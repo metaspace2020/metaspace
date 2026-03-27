@@ -26,7 +26,7 @@ const runSegmentationMutation = gql`
   mutation runSegmentation(
     $datasetId: String!
     $algorithm: String!
-    $databases: [[String!]!]!
+    $databaseIds: [Int!]!
     $fdr: Float!
     $adducts: [String!]
     $minMz: Float
@@ -37,7 +37,7 @@ const runSegmentationMutation = gql`
     runSegmentation(
       datasetId: $datasetId
       algorithm: $algorithm
-      databases: $databases
+      databaseIds: $databaseIds
       fdr: $fdr
       adducts: $adducts
       minMz: $minMz
@@ -172,8 +172,8 @@ export const SegmentationDialog = defineComponent({
               mzFilter:
                 state.minMz || state.maxMz
                   ? {
-                      min: state.minMz || undefined,
-                      max: state.maxMz || undefined,
+                      min: state.minMz || 0,
+                      max: state.maxMz || Number.MAX_SAFE_INTEGER,
                     }
                   : undefined,
               fdrLevel: state.fdrLevel,
@@ -185,8 +185,13 @@ export const SegmentationDialog = defineComponent({
         })
         state.annotationCount = data.countAnnotations
 
-        if (state.annotationCount > 100) {
-          state.workflowStep = 2
+        if (state.annotationCount > 50) {
+          setTimeout(
+            () => {
+              state.workflowStep = 2
+            },
+            state.annotationCount < 100 ? 2000 : 0
+          )
         }
       } else if (state.workflowStep === 2 && validateSecondStep()) {
         state.workflowStep = 3
@@ -220,9 +225,7 @@ export const SegmentationDialog = defineComponent({
           variables: {
             datasetId: props.datasetId,
             algorithm: state.algorithm,
-            databases: databaseOptions.value
-              .filter((db) => state.databases.includes(db.value))
-              .map((db) => db.sourceValue),
+            databaseIds: state.databases,
             fdr: state.fdrLevel,
             adducts: state.adducts,
             minMz: state.minMz,
@@ -245,6 +248,9 @@ export const SegmentationDialog = defineComponent({
     }
 
     return () => {
+      const isLowCoverage = state.annotationCount !== null && state.annotationCount < 50
+      const isMediumCoverage =
+        state.annotationCount !== null && state.annotationCount >= 50 && state.annotationCount < 100
       return (
         <ElDialog
           model-value={true}
@@ -365,13 +371,18 @@ export const SegmentationDialog = defineComponent({
                   </div>
 
                   {state.annotationCount !== null && state.annotationCount < 100 && (
-                    <ElAlert type="warning" show-icon closable={false} class="annotation-warning md:max-w-[450px]">
+                    <ElAlert
+                      type={isLowCoverage ? 'error' : 'warning'}
+                      show-icon
+                      closable={false}
+                      class="annotation-warning md:max-w-[450px]"
+                    >
                       <div class="annotation-count leading-[22px]">
-                        <p>
-                          Low annotation coverage. Segmentation may produce coarse or unstable segments. Please adjust
-                          your filters before proceeding.
+                        <p class={isMediumCoverage ? '' : 'text-red-700'}>
+                          Low annotation coverage. Segmentation may produce coarse or unstable segments. Please{' '}
+                          {isMediumCoverage ? 'consider' : 'adjust'} your filters before proceeding.
                         </p>
-                        <p>Annotations count: {state.annotationCount}</p>
+                        <p class={isMediumCoverage ? '' : 'text-red-700'}>Annotations count: {state.annotationCount}</p>
                       </div>
                     </ElAlert>
                   )}

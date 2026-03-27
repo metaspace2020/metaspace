@@ -64,7 +64,7 @@ def _run_and_callback(body):
             dataset_id=dataset_id,
             algorithm=body.get('algorithm', 'pca_gmm'),
             input_s3_key=body.get('input_s3_key'),
-            databases=body.get('databases'),
+            database_ids=body.get('database_ids'),
             parameters=body.get('parameters', {}),
             fdr=body.get('fdr', 0.1),
             adducts=body.get('adducts'),
