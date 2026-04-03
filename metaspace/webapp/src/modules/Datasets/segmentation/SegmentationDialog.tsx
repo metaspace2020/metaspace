@@ -230,7 +230,7 @@ export const SegmentationDialog = defineComponent({
             adducts: state.adducts,
             minMz: state.minMz,
             maxMz: state.maxMz,
-            offSample: state.offSample,
+            offSample: (state.offSample as any) === '' ? null : state.offSample,
             params: JSON.stringify(params),
           },
         })

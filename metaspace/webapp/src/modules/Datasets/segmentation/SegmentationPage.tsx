@@ -1,6 +1,6 @@
-import { computed, defineComponent, reactive } from 'vue'
+import { computed, defineComponent, reactive, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useQuery } from '@vue/apollo-composable'
+import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { FilterPanel } from '../../Filters/index'
 
 import {
@@ -21,11 +21,13 @@ import {
   getDatasetDiagnosticsQuery,
   getSegmentationsQuery,
   opticalImagesQuery,
+  getSegmentationIonProfilesWithImagesQuery,
 } from '@/api/dataset'
 import { SegmentationVisualization } from './SegmentationVisualization'
 import { SegmentationHeatmap } from './SegmentationHeatmap'
 import { SegmentMarkers } from './SegmentMarkers'
 import { SegmentationDiagnostics } from './SegmentationDiagnostics'
+import { SegmentationTable } from './SegmentationTable'
 import AspectRatioIcon from '../../../assets/inline/material/aspect-ratio.svg'
 import { MonitorSvg } from '@/design/refactoringUIIcons'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
@@ -48,6 +50,7 @@ export default defineComponent({
     SegmentationHeatmap,
     SegmentMarkers,
     SegmentationDiagnostics,
+    SegmentationTable,
   },
   props: {
     className: {
@@ -58,6 +61,7 @@ export default defineComponent({
   setup() {
     const route = useRoute()
     const router = useRouter()
+    const apolloClient = inject(DefaultApolloClient)
 
     const state = reactive({
       activeCollapseItems: ['segmentation-map'],
@@ -66,6 +70,8 @@ export default defineComponent({
       showSegmentMarkers: false,
       showOpticalImage: true,
       selectedSegmentMarkersSegmentationId: null as string | null,
+      annotations: [] as any[],
+      isLoading: false,
     })
 
     const datasetId = computed(() => route.params.dataset_id)
@@ -84,9 +90,35 @@ export default defineComponent({
     })
     const segmentations = computed(() => segmentationsResult.value?.segmentations)
 
-    handleSegmentationsLoad((result) => {
-      console.log('segmentations', result)
-      state.selectedSegmentMarkersSegmentationId = result.data?.segmentations?.[0]?.id
+    handleSegmentationsLoad(async (result) => {
+      if (result.data?.segmentations?.length > 0 && !state.selectedSegmentMarkersSegmentationId) {
+        state.isLoading = true
+        try {
+          state.selectedSegmentMarkersSegmentationId = result.data?.segmentations?.[0]?.id
+          const aggAnnotations = []
+          for (const segmentation of result.data.segmentations) {
+            const profilesResult = await apolloClient.query({
+              query: getSegmentationIonProfilesWithImagesQuery,
+              variables: {
+                segmentationId: segmentation.id,
+              },
+            })
+            const annotations = profilesResult.data?.segmentationIonProfiles.map((p: any) => {
+              return {
+                ...p.annotation,
+                enrichmentScore: p.enrichScore,
+                segmentationId: segmentation.id,
+                segmentIndex: segmentation.segmentIndex,
+              }
+            })
+            aggAnnotations.push(...annotations)
+          }
+          state.annotations = aggAnnotations
+        } catch (error) {
+          // pass
+        }
+        state.isLoading = false
+      }
     })
 
     const {
@@ -122,6 +154,23 @@ export default defineComponent({
       }
     })
 
+    // const { result } = useQuery(getSegmentationIonProfilesWithImagesQuery, queryVariables, {
+    //   skip: computed(() => !segmentations.value),
+    // })
+
+    // // Transform segmentation ion profiles into annotation format
+    // const annotations = computed(() => {
+    //   if (!result.value || !(result.value as any).segmentationIonProfiles) return []
+
+    //   return (result.value as any).segmentationIonProfiles
+    //     .filter((profile: any) => profile.annotation?.isotopeImages?.length > 0)
+    //     .sort((a: any, b: any) => b.enrichScore - a.enrichScore)
+    //     .map((profile: any) => ({
+    //       ...profile.annotation,
+    //       enrichmentScore: profile.enrichScore,
+    //     }))
+    // })
+
     const goBack = () => {
       router.push(`/dataset/${datasetId.value}`)
     }
@@ -131,11 +180,6 @@ export default defineComponent({
       setTimeout(() => {
         state.showSegmentMarkers = activeNames.includes('segment-markers')
       }, 100)
-    }
-
-    const handleExportCSV = () => {
-      // TODO: Implement CSV export
-      console.log('Export CSV clicked')
     }
 
     const handleIonSelected = (ion: string) => {
@@ -164,26 +208,12 @@ export default defineComponent({
       return (segmentation.name && segmentation.name.trim()) || `Cluster ${segmentation.segmentIndex + 1}`
     }
 
-    const renderHeatmapWrapper = () => {
+    const renderTableWrapper = () => {
       if (!segmentationData.value) return null
 
       return (
-        <div class="segmentation-heatmap-wrapper w-full md:w-6/12">
-          <div class="heatmap-header">
-            <h2 class="heatmap-title">Top segmentation results</h2>
-          </div>
-          <SegmentationHeatmap
-            segmentationData={segmentationData.value}
-            isLoading={loading.value}
-            isVisible={true}
-            segmentations={segmentations.value || []}
-            onIonSelected={handleIonSelected}
-          />
-          <div class="w-full flex justify-end">
-            <ElButton class="export-btn mr-8" onClick={handleExportCSV}>
-              Export to CSV
-            </ElButton>
-          </div>
+        <div class="segmentation-table-wrapper w-full md:w-6/12">
+          <SegmentationTable annotations={state.annotations} isLoading={state.isLoading} onRowChange={() => {}} />
         </div>
       )
     }
@@ -252,6 +282,34 @@ export default defineComponent({
       )
     }
 
+    const renderSegmentationHeaptmap = () => {
+      if (!segmentationData.value) return null
+
+      return (
+        <ElCollapseItem
+          name="segmentation-heatmap"
+          class="ds-collapse el-collapse-item--no-padding relative"
+          v-slots={{
+            title: () => (
+              <div class="collapse-header">
+                <span class="collapse-title">Segmentation heatmap</span>
+              </div>
+            ),
+          }}
+        >
+          <div class="collapse-content">
+            <SegmentationHeatmap
+              segmentationData={segmentationData.value}
+              isLoading={loading.value}
+              isVisible={true}
+              segmentations={segmentations.value || []}
+              onIonSelected={handleIonSelected}
+            />
+          </div>
+        </ElCollapseItem>
+      )
+    }
+
     const renderSegmentMarkersSection = () => {
       if (!segmentationData.value) return null
 
@@ -312,6 +370,10 @@ export default defineComponent({
                 <SegmentMarkers
                   key={state.selectedSegmentMarkersSegmentationId}
                   segmentationId={state.selectedSegmentMarkersSegmentationId}
+                  annotations={state.annotations.filter(
+                    (ann: any) => ann.segmentationId === state.selectedSegmentMarkersSegmentationId
+                  )}
+                  segmentations={segmentations.value || []}
                 />
               ) : (
                 <p class="empty-message p-4 text-center text-gray-600">
@@ -356,6 +418,7 @@ export default defineComponent({
         <div class="segmentation-info-wrapper w-full md:w-6/12">
           <ElCollapse modelValue={[...activeNames]} class="segmentation-info-collapse" onChange={handleCollapseChange}>
             {renderSegmentationMapSection()}
+            {renderSegmentationHeaptmap()}
             {renderSegmentMarkersSection()}
             {renderSegmentationDiagnosticsSection()}
           </ElCollapse>
@@ -436,7 +499,7 @@ export default defineComponent({
           </div>
 
           <div class="flex w-full flex-wrap flex-row">
-            {renderHeatmapWrapper()}
+            {renderTableWrapper()}
             {renderSegmentationInfoWrapper()}
           </div>
         </div>

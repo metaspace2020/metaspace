@@ -23,7 +23,7 @@
         />
       </span>
     </candidate-molecules-popover>
-    <filter-icon v-if="!hasCompoundNameFilter" class="cell-filter-button" @click="handleFilter">
+    <filter-icon v-if="!hasCompoundNameFilter && !hideFilter" class="cell-filter-button" @click="handleFilter">
       <title>Limit results to this molecular formula</title>
     </filter-icon>
   </div>
@@ -54,7 +54,7 @@ export default defineComponent({
     MolecularFormula,
     FilterIcon,
   },
-  props: ['annotation', 'highlightByIon'],
+  props: ['annotation', 'highlightByIon', 'hideFilter'],
   setup(props) {
     const store = useStore()
     const compoundNameFilter = useFilter(store, 'compoundName')

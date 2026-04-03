@@ -265,8 +265,9 @@ class DatasetManager:
         email_body = 'Dear METASPACE user,\n\n' f'{content}\n\n' 'Best regards,\n' 'METASPACE Team'
         self._send_email(msg['email'], 'METASPACE service notification (FAILED)', email_body)
 
-    def run_segmentation(self, msg):
+    def run_segmentation(self, msg):  # pylint: disable=too-many-locals
         """Pick up a queued segmentation job and run it via the segmentation microservice."""
+
         ds_id = msg['ds_id']
         job_id = msg['job_id']
         algorithm = msg.get('algorithm', 'pca_gmm')
@@ -279,16 +280,26 @@ class DatasetManager:
         # None = no filter (off-sample classification may not exist)
         off_sample = msg.get('off_sample')
 
+        daemon_start_time = time.time()
+        self.logger.info(
+            f'[SEGMENTATION_PERF] Daemon run_segmentation started for job {job_id}, dataset {ds_id}'
+        )
         self.logger.info(f'Running segmentation job {job_id} for dataset {ds_id}')
 
         # Mark job as started
+        db_update_start = time.time()
         self._db.alter(
             """UPDATE image_segmentation_job SET
              status = 'STARTED', updated_at = NOW() WHERE id = %s""",
             params=(job_id,),
         )
+        db_update_time = time.time() - db_update_start
+        self.logger.info(
+            f'[SEGMENTATION_PERF] Job {job_id} marked as STARTED in {db_update_time:.3f}s'
+        )
 
         try:
+            submit_start_time = time.time()
             submit_segmentation_job(
                 ds_id=ds_id,
                 job_id=job_id,
@@ -303,12 +314,25 @@ class DatasetManager:
                 max_mz=max_mz,
                 off_sample=off_sample,
             )
+            submit_time = time.time() - submit_start_time
+            total_daemon_time = time.time() - daemon_start_time
+            self.logger.info(
+                f"""[SEGMENTATION_PERF] Segmentation
+                 job {job_id} submitted successfully"""
+            )
+            self.logger.info(
+                f"""[SEGMENTATION_PERF] Submit time: {submit_time:.3f}s,
+                 Total daemon time: {total_daemon_time:.3f}s"""
+            )
         except Exception as e:
             # Don't propagate — a segmentation failure
             # should not change the dataset status to FAILED.
             # The job row already records the failure.
+            failed_time = time.time() - daemon_start_time
             self.logger.error(
-                f'Segmentation job {job_id} for dataset {ds_id} failed: {e}', exc_info=True
+                f"""[SEGMENTATION_PERF] Segmentation job {job_id} for dataset {ds_id}
+                 failed after {failed_time:.3f}s: {e}""",
+                exc_info=True,
             )
             self._db.alter(
                 """UPDATE image_segmentation_job SET

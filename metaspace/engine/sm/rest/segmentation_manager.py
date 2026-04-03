@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Optional
 
 import boto3
@@ -23,9 +24,9 @@ class SegmentationManager:
         if 'aws' in self._sm_config:
             self.ses = boto3.client(
                 'ses',
-                'eu-west-1',
-                aws_access_key_id=self._sm_config['aws']['access_key_id'],
-                aws_secret_access_key=self._sm_config['aws']['secret_access_key'],
+                region_name=self._sm_config['aws']['aws_default_region'],
+                aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
+                aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'],
             )
         else:
             self.ses = None
@@ -69,6 +70,12 @@ class SegmentationManager:
         if params is None:
             params = {}
 
+        start_time = time.time()
+        logger.info(
+            f"""[SEGMENTATION_PERF] SegmentationManager.run_segmentation started
+             for dataset {ds_id} with algorithm {algorithm}"""
+        )
+
         # Insert a QUEUED job row and retrieve its id
         job_ids = self._db.insert_return(
             '''INSERT INTO image_segmentation_job (ds_id, status, submitter_email)
@@ -77,6 +84,12 @@ class SegmentationManager:
             rows=[(ds_id, DaemonActionStage.QUEUED, email)],
         )
         job_id = job_ids[0]
+
+        db_insert_time = time.time() - start_time
+        logger.info(
+            f"""[SEGMENTATION_PERF] Job {job_id} inserted in DB for dataset {ds_id}
+             in {db_insert_time:.3f}s"""
+        )
 
         # Publish the job to the SM_UPDATE queue for the daemon to pick up
         queue_publisher = self._create_update_queue_publisher()
@@ -98,9 +111,17 @@ class SegmentationManager:
         msg['off_sample'] = off_sample
         if email:
             msg['email'] = email
+        queue_publish_start = time.time()
         queue_publisher.publish(msg)
+        queue_publish_time = time.time() - queue_publish_start
 
-        logger.info(f'Segmentation job {job_id} queued for dataset {ds_id}')
+        total_time = time.time() - start_time
+        logger.info(f'[SEGMENTATION_PERF] Segmentation job {job_id} queued for dataset {ds_id}')
+        logger.info(
+            f"""[SEGMENTATION_PERF] Queue publish
+             time: {queue_publish_time:.3f}s, Total manager time: {total_time:.3f}s"""
+        )
+
         return {'job_id': job_id, 'ds_id': ds_id}
 
     def handle_segmentation_callback(
@@ -125,6 +146,12 @@ class SegmentationManager:
         Returns:
             dict: Status information
         """
+        callback_start_time = time.time()
+        logger.info(
+            f"""[SEGMENTATION_PERF] Callback received for job {job_id},
+             dataset {ds_id}, status: {status}"""
+        )
+
         # If email is not provided, retrieve it from the database
         if not email:
             try:
@@ -145,7 +172,7 @@ class SegmentationManager:
             # Send success email notification if email is provided
             if email:
                 try:
-                    self._send_success_email(ds_id, job_id, email)
+                    self._send_success_email(ds_id, email)
                 except Exception as e:
                     logger.warning(f'Failed to send success email for job {job_id}: {e}')
         else:
@@ -160,9 +187,15 @@ class SegmentationManager:
             # Send failure email notification if email is provided
             if email:
                 try:
-                    self._send_failure_email(ds_id, job_id, email, error_msg)
+                    self._send_failure_email(ds_id, email, error_msg)
                 except Exception as e:
                     logger.warning(f'Failed to send failure email for job {job_id}: {e}')
+
+        callback_total_time = time.time() - callback_start_time
+        logger.info(
+            f"""[SEGMENTATION_PERF] Callback processing completed
+             for job {job_id} in {callback_total_time:.3f}s"""
+        )
 
         return {'status': 'processed', 'job_id': job_id, 'ds_id': ds_id}
 
@@ -197,35 +230,33 @@ class SegmentationManager:
         except Exception:
             return ds_id
 
-    def _send_success_email(self, ds_id: str, job_id: int, email: str):
+    def _send_success_email(self, ds_id: str, email: str):
         """Send success email notification."""
         ds_name = self._get_dataset_name(ds_id)
+        base_url = self._sm_config['services']['web_app_url']
+        link = f"{base_url}/dataset/{ds_id}/segmentation"
         subject = 'METASPACE service notification (SEGMENTATION SUCCESS)'
         body = (
             'Dear METASPACE user,\n\n'
             f'Thank you for submitting the segmentation job for the "{ds_name}" dataset. '
             'We are pleased to inform you that the segmentation analysis '
-            f'for dataset {ds_id} and job {job_id} '
+            f'for dataset {ds_id} '
             f'has been completed successfully. '
-            f'You can view the results in the METASPACE web interface.\n\n'
-            f'Dataset ID: {ds_id}\n'
-            f'Job ID: {job_id}\n\n'
+            f'You can view the results at {link}.\n\n'
             'Best regards,\n'
             'METASPACE Team'
         )
         self._send_email(email, subject, body)
 
-    def _send_failure_email(self, ds_id: str, job_id: int, email: str, error: str):
+    def _send_failure_email(self, ds_id: str, email: str, error: str):
         """Send failure email notification."""
         ds_name = self._get_dataset_name(ds_id)
         subject = 'METASPACE service notification (SEGMENTATION FAILED)'
         body = (
             'Dear METASPACE user,\n\n'
             f'We regret to inform you that the segmentation job for '
-            f'the "{ds_name}" dataset and job {job_id} has failed. '
+            f'the "{ds_name}" dataset has failed. '
             f'Error details: {error}\n\n'
-            f'Dataset ID: {ds_id}\n'
-            f'Job ID: {job_id}\n\n'
             'Please check your input parameters and try again. If the problem persists, '
             'please contact our support team.\n\n'
             'Best regards,\n'

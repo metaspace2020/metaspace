@@ -108,7 +108,6 @@ export const SegmentationHeatmap = defineComponent({
 
       const ions = Array.from(allIons)
       const segments = data.segment_summary.map((s) => getSegmentName(s.id))
-
       // Create heatmap data matrix:
       // [segmentIndex, ionIndex, coverageFraction, ionRank]
       const heatmapData: [number, number, number, number][] = []

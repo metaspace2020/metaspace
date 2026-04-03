@@ -1,5 +1,6 @@
 import logging
 import math
+import time
 
 import numpy as np
 import requests
@@ -17,7 +18,7 @@ from sm.engine.postprocessing.segmentation_data_loader import SegmentationDataLo
 logger = logging.getLogger('update-daemon')
 
 
-def submit_segmentation_job(  # pylint: disable=too-many-arguments
+def submit_segmentation_job(  # pylint: disable=too-many-arguments, too-many-locals
     ds_id,
     job_id,
     algorithm,
@@ -37,10 +38,16 @@ def submit_segmentation_job(  # pylint: disable=too-many-arguments
     The service will POST results back to services_config['segmentation_callback']
     when done.
     """
+    submit_start_time = time.time()
+    logger.info(
+        f'[SEGMENTATION_PERF] submit_segmentation_job started for dataset {ds_id}, job {job_id}'
+    )
+
     segmentation_endpoint = services_config['segmentation']
     callback_url = services_config['segmentation_callback']
 
     # 1. Load ion images from DB/S3, TIC-normalise, and upload input arrays to S3
+    data_load_start = time.time()
     logger.info(f'Loading segmentation data for dataset {ds_id}, job {job_id}')
     try:
         loader = SegmentationDataLoader(ds_id, db)
@@ -51,6 +58,11 @@ def submit_segmentation_job(  # pylint: disable=too-many-arguments
             off_sample=off_sample,
             min_mz=min_mz,
             max_mz=max_mz,
+        )
+        data_load_time = time.time() - data_load_start
+        logger.info(
+            f"""[SEGMENTATION_PERF] Data loading completed
+             in {data_load_time:.3f}s for dataset {ds_id}"""
         )
         logger.info(
             f'Successfully prepared segmentation input for dataset {ds_id}, S3 key: {input_s3_key}'
@@ -76,10 +88,16 @@ def submit_segmentation_job(  # pylint: disable=too-many-arguments
     logger.debug(f'Segmentation request payload: {payload}')
 
     try:
+        service_call_start = time.time()
         resp = requests.post(
             f'{segmentation_endpoint}/run',
             json=payload,
             timeout=30,
+        )
+        service_call_time = time.time() - service_call_start
+        logger.info(
+            f"""[SEGMENTATION_PERF] Service call completed
+             in {service_call_time:.3f}s for job {job_id}"""
         )
         logger.info(
             f'Segmentation service responded with status {resp.status_code} for job {job_id}'
@@ -98,14 +116,26 @@ def submit_segmentation_job(  # pylint: disable=too-many-arguments
         )
         raise RuntimeError(f"Failed to connect to segmentation service: {e}") from e
 
+    total_submit_time = time.time() - submit_start_time
+    logger.info(
+        f"""[SEGMENTATION_PERF] submit_segmentation_job completed
+         in {total_submit_time:.3f}s for job {job_id}"""
+    )
     logger.info(f'Segmentation job {job_id} accepted by service for dataset {ds_id}')
 
 
-def save_segmentation_result(ds_id, job_id, result, db):  # pylint: disable=too-many-locals
+def save_segmentation_result(
+    ds_id, job_id, result, db
+):  # pylint: disable=too-many-locals, too-many-statements
     """Save a completed segmentation result to the DB.
 
     Called from the API callback endpoint when the microservice posts back.
     """
+    save_start_time = time.time()
+    logger.info(
+        f"""[SEGMENTATION_PERF] save_segmentation_result started
+         for dataset {ds_id}, job {job_id}"""
+    )
     logger.info(f'Saving segmentation result for dataset {ds_id}, job {job_id}')
     logger.debug(f'Result keys: {list(result.keys())}')
 
@@ -140,8 +170,15 @@ def save_segmentation_result(ds_id, job_id, result, db):  # pylint: disable=too-
         processed_label_map = process_element(raw_label_map)
         label_map = np.array(processed_label_map, dtype=np.int32)
         logger.debug(f'Label map processed element-wise, final shape: {label_map.shape}')
+
+    label_map_save_start = time.time()
     label_map_image = save_diagnostic_image(
         ds_id, label_map, key=DiagnosticImageKey.LABEL_MAP, fmt=DiagnosticImageFormat.NPY
+    )
+    label_map_save_time = time.time() - label_map_save_start
+    logger.info(
+        f"""[SEGMENTATION_PERF] Label map saved in {label_map_save_time:.3f}s
+         for dataset {ds_id}"""
     )
 
     add_diagnostics(
@@ -166,11 +203,17 @@ def save_segmentation_result(ds_id, job_id, result, db):  # pylint: disable=too-
 
     # 2. Insert one segmentation row per segment; let DB generate UUIDs
     n_segments = result['n_segments']
+    segmentation_insert_start = time.time()
     seg_uuids = db.insert_return(
         '''INSERT INTO segmentation (dataset_id, job_id, segment_index, algorithm, status)
            VALUES (%s, %s, %s, %s, %s)
            RETURNING id''',
         rows=[(ds_id, job_id, seg_idx, algorithm, 'FINISHED') for seg_idx in range(n_segments)],
+    )
+    segmentation_insert_time = time.time() - segmentation_insert_start
+    logger.info(
+        f"""[SEGMENTATION_PERF] Inserted {n_segments} segmentation rows
+         in {segmentation_insert_time:.3f}s"""
     )
     logger.info(f'Inserted {n_segments} segmentation rows for dataset {ds_id} (job {job_id})')
 
@@ -215,6 +258,7 @@ def save_segmentation_result(ds_id, job_id, result, db):  # pylint: disable=too-
             )
 
         if profile_rows:
+            profile_insert_start = time.time()
             db.insert(
                 '''INSERT INTO segmentation_ion_profile
                  (segmentation_id, annotation_id, enrich_score)
@@ -222,15 +266,28 @@ def save_segmentation_result(ds_id, job_id, result, db):  # pylint: disable=too-
                    ON CONFLICT (segmentation_id, annotation_id) DO NOTHING''',
                 profile_rows,
             )
+            profile_insert_time = time.time() - profile_insert_start
+            logger.info(
+                f"""[SEGMENTATION_PERF] Inserted {len(profile_rows)}
+                 ion profiles in {profile_insert_time:.3f}s"""
+            )
         logger.info(
             f'Inserted {len(profile_rows)} segmentation_ion_profile rows for dataset {ds_id}'
             f' ({skipped} skipped — missing annotation or NaN score)'
         )
 
     # 4. Mark job finished
+    job_finish_start = time.time()
     db.alter(
         "UPDATE image_segmentation_job SET status = 'FINISHED', updated_at = NOW() WHERE id = %s",
         params=(job_id,),
     )
+    job_finish_time = time.time() - job_finish_start
 
+    total_save_time = time.time() - save_start_time
+    logger.info(f'[SEGMENTATION_PERF] Job marked as FINISHED in {job_finish_time:.3f}s')
+    logger.info(
+        f"""[SEGMENTATION_PERF] save_segmentation_result completed
+         in {total_save_time:.3f}s for dataset {ds_id}"""
+    )
     logger.info(f'Segmentation result saved for dataset {ds_id} (job {job_id})')

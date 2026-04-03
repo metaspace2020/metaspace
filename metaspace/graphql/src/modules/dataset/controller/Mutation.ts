@@ -18,7 +18,16 @@ import { metadataSchemas } from '../../../../metadataSchemas/metadataRegistry'
 import { getDatasetForEditing } from '../operation/getDatasetForEditing'
 import { deleteDataset } from '../operation/deleteDataset'
 import { checkNoPublishedProjectRemoved, checkProjectsPublicationStatus } from '../operation/publicationChecks'
-import { EngineDataset, ScoringModel, Roi, DiffRoi, Segmentation } from '../../engine/model'
+import {
+  EngineDataset,
+  ScoringModel,
+  Roi,
+  DiffRoi,
+  Segmentation,
+  ImageSegmentationJob,
+  DatasetDiagnostic,
+  DiagnosticTypeOptions,
+} from '../../engine/model'
 import { addExternalLink, removeExternalLink } from '../../project/ExternalLink'
 import { esDatasetByID } from '../../../../esConnector'
 import { mapDatabaseToDatabaseId } from '../../moldb/util/mapDatabaseToDatabaseId'
@@ -815,6 +824,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     }: any,
     ctx: Context
   ) => {
+    const startTime = Date.now()
+    console.log(`[SEGMENTATION_PERF] GraphQL runSegmentation started
+       for dataset ${datasetId} at ${new Date().toISOString()}`)
+
     if (ctx.user.id == null) {
       throw new UserError('Not authenticated')
     }
@@ -837,11 +850,35 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     if (maxMz != null) body.max_mz = maxMz
     body.off_sample = offSample
 
+    console.log(`[SEGMENTATION_PERF] GraphQL parameters prepared
+       for dataset ${datasetId}, algorithm: ${algorithm}, databases: ${databaseIds.length}, fdr: ${fdr}`)
+
     try {
+      // Scoped to datasetId; ion_profile rows cascade from segmentation. Delete before enqueue
+      // so the new image_segmentation_job inserted by the API is not removed.
+      await ctx.entityManager.transaction(async(em) => {
+        await em.delete(Segmentation, { datasetId })
+        await em.delete(ImageSegmentationJob, { datasetId })
+        await em.delete(DatasetDiagnostic, {
+          datasetId,
+          type: DiagnosticTypeOptions.SEGMENTATION,
+        })
+      })
+
+      const apiCallStart = Date.now()
       await smApiDatasetRequest('/v1/segmentation/run', body)
+      const apiCallEnd = Date.now()
+
+      const totalTime = Date.now() - startTime
+      console.log(`[SEGMENTATION_PERF] GraphQL runSegmentation completed for dataset ${datasetId}`)
+      console.log(`[SEGMENTATION_PERF] Total GraphQL
+         time: ${totalTime}ms, API call time: ${apiCallEnd - apiCallStart}ms`)
+
       return true
     } catch (error) {
-      console.error(`Failed to submit segmentation job for dataset ${datasetId}:`, error)
+      const totalTime = Date.now() - startTime
+      console.error(`[SEGMENTATION_PERF] GraphQL
+         runSegmentation failed for dataset ${datasetId} after ${totalTime}ms:`, error)
       throw new UserError('Failed to submit segmentation job. Please try again later.')
     }
   },

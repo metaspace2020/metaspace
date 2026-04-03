@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 from io import BytesIO
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
@@ -65,20 +66,32 @@ def load_segmentation_input_from_s3(
         (intensity_matrix, pixel_coordinates, ion_labels, image_shape) —
         the same tuple produced by load_segmentation_input / anndata_to_segmentation_input.
     """
+    s3_load_start_time = time.time()
     cfg = _load_config()
     if bucket is None:
         bucket = cfg['imzml_browser_storage']['bucket']
 
+    logger.info(f'[SEGMENTATION_PERF] Loading segmentation input from s3://{bucket}/{s3_key}')
     logger.info(f'Loading segmentation input from s3://{bucket}/{s3_key}')
+    
+    s3_client_start = time.time()
     s3 = _get_s3_client(cfg)
+    s3_client_time = time.time() - s3_client_start
+    
+    s3_download_start = time.time()
     obj = s3.get_object(Bucket=bucket, Key=s3_key)
     data = np.load(BytesIO(obj['Body'].read()), allow_pickle=False)
+    s3_download_time = time.time() - s3_download_start
 
+    data_processing_start = time.time()
     intensity_matrix = data['intensity_matrix']
     pixel_coordinates = data['pixel_coordinates']
     ion_labels: List[str] = data['ion_labels'].tolist()
     image_shape: Tuple[int, int] = tuple(int(v) for v in data['image_shape'])
-
+    data_processing_time = time.time() - data_processing_start
+    
+    total_s3_load_time = time.time() - s3_load_start_time
+    logger.info(f'[SEGMENTATION_PERF] S3 load completed in {total_s3_load_time:.3f}s (client: {s3_client_time:.3f}s, download: {s3_download_time:.3f}s, processing: {data_processing_time:.3f}s)')
     logger.info(
         f'Loaded segmentation input: '
         f'{intensity_matrix.shape[0]} pixels × {len(ion_labels)} ions, '
