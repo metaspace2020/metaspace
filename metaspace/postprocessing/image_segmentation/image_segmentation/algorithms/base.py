@@ -1,4 +1,4 @@
-# metaspace/segmentation/algorithms/base.py
+"""Abstract base for image segmentation algorithm implementations."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from ..types import RawAlgorithmOutput, SegmentationInput
 
 
 class BaseSegmentationAlgorithm(ABC):
+    """Contract for a named segmentation algorithm: validation and execution."""
 
     @property
     @abstractmethod

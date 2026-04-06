@@ -1,9 +1,9 @@
-# metaspace/segmentation/postprocessor.py
+"""Smooth label maps, compute enrichment profiles, and build segment summaries."""
 
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -57,11 +57,7 @@ def _smooth_label_maps(
 
     if map_type == "unified":
         return _majority_vote(label_map, window_size)
-    else:
-        return {
-            ion: _majority_vote(ion_map, window_size)
-            for ion, ion_map in label_map.items()
-        }
+    return {ion: _majority_vote(ion_map, window_size) for ion, ion_map in label_map.items()}
 
 
 def _compute_enrichment_profiles(
@@ -76,25 +72,27 @@ def _compute_enrichment_profiles(
     to the global mean intensity across all pixels.  Rows with NaN enrich_score
     indicate empty segments or zero-mean ions.
     """
-    global_means = intensity_matrix.mean(axis=0)    # (n_ions,)
+    global_means = intensity_matrix.mean(axis=0)  # (n_ions,)
     global_means_safe = np.where(global_means == 0, np.nan, global_means)
 
     records: List[dict] = []
     for seg_id in range(n_segments):
         seg_mask = labels == seg_id
         if seg_mask.sum() == 0:
-            logger.warning(f"Segment {seg_id} has no pixels — enrichment set to NaN")
+            logger.warning("Segment %s has no pixels — enrichment set to NaN", seg_id)
             scores = np.full(len(ion_labels), np.nan)
         else:
             seg_means = intensity_matrix[seg_mask].mean(axis=0)
             scores = seg_means / global_means_safe
 
         for i, ion in enumerate(ion_labels):
-            records.append({
-                'segment_id': seg_id,
-                'ion_label': ion,
-                'enrich_score': float(scores[i]),
-            })
+            records.append(
+                {
+                    'segment_id': seg_id,
+                    'ion_label': ion,
+                    'enrich_score': float(scores[i]),
+                }
+            )
 
     return pd.DataFrame(records, columns=['segment_id', 'ion_label', 'enrich_score'])
 
@@ -121,12 +119,14 @@ def _compute_segment_summary(
             .tolist()
         )
 
-        summary.append({
-            "id": seg_id,
-            "size_px": size_px,
-            "coverage_fraction": round(coverage_fraction, 4),
-            "top_ions": top_ions,
-        })
+        summary.append(
+            {
+                "id": seg_id,
+                "size_px": size_px,
+                "coverage_fraction": round(coverage_fraction, 4),
+                "top_ions": top_ions,
+            }
+        )
 
     return summary
 
@@ -135,10 +135,10 @@ def _extract_flat_labels(
     label_map: np.ndarray,
     pixel_coordinates: np.ndarray,
 ) -> np.ndarray:
-
-    xs = pixel_coordinates[:, 0]
-    ys = pixel_coordinates[:, 1]
-    return label_map[ys, xs].astype(int)
+    """Return per-pixel segment labels using (x, y) indices into ``label_map``."""
+    x_idx = pixel_coordinates[:, 0]
+    y_idx = pixel_coordinates[:, 1]
+    return label_map[y_idx, x_idx].astype(int)
 
 
 # --- Top-level postprocessor ---
@@ -151,11 +151,12 @@ def postprocess(
     window_size: int = 3,
     top_n_ions: int = 20,
 ) -> SegmentationResult:
-
+    """Apply optional smoothing and derive enrichment tables for unified maps."""
     logger.info(
-        f"Dataset {segmentation_input.dataset_id}: "
-        f"postprocessing {raw_output.algorithm} output "
-        f"(map_type={raw_output.map_type})"
+        "Dataset %s: postprocessing %s output (map_type=%s)",
+        segmentation_input.dataset_id,
+        raw_output.algorithm,
+        raw_output.map_type,
     )
 
     # 1. Smoothing
@@ -166,7 +167,11 @@ def postprocess(
             map_type=raw_output.map_type,
             window_size=window_size,
         )
-        logger.info(f"Applied majority vote smoothing (window={window_size}x{window_size})")
+        logger.info(
+            "Applied majority vote smoothing (window=%sx%s)",
+            window_size,
+            window_size,
+        )
 
     # 2 & 3. Enrichment profiles and segment summary — unified maps only
     segment_profiles: Optional[pd.DataFrame] = None

@@ -1,4 +1,4 @@
-# metaspace/segmentation/types.py
+"""Shared dataclasses for segmentation pipeline inputs and outputs."""
 
 from __future__ import annotations
 
@@ -12,30 +12,38 @@ import pandas as pd
 @dataclass
 class SegmentationInput:
     """Read-only after construction. Do not modify fields directly."""
-    intensity_matrix: np.ndarray            # (n_pixels, n_ions), float, no NaNs
-    pixel_coordinates: np.ndarray           # (n_pixels, 2), int — (x, y) pairs
-    ion_labels: List[str]                   # length n_ions
-    image_shape: Tuple[int, int]            # (width, height)
+
+    intensity_matrix: np.ndarray  # (n_pixels, n_ions), float, no NaNs
+    pixel_coordinates: np.ndarray  # (n_pixels, 2), int — (x, y) pairs
+    ion_labels: List[str]  # length n_ions
+    image_shape: Tuple[int, int]  # (width, height)
     dataset_id: str
 
     def __post_init__(self):
         n_pixels, n_ions = self.intensity_matrix.shape
-        assert self.pixel_coordinates.shape == (n_pixels, 2), \
-            f"Coordinates shape {self.pixel_coordinates.shape} inconsistent with matrix"
-        assert len(self.ion_labels) == n_ions, \
-            f"ion_labels length {len(self.ion_labels)} != n_ions={n_ions}"
+        assert self.pixel_coordinates.shape == (
+            n_pixels,
+            2,
+        ), f"Coordinates shape {self.pixel_coordinates.shape} inconsistent with matrix"
+        assert (
+            len(self.ion_labels) == n_ions
+        ), f"ion_labels length {len(self.ion_labels)} != n_ions={n_ions}"
 
     @property
     def n_pixels(self) -> int:
+        """Number of rows in the intensity matrix (pixels)."""
         return self.intensity_matrix.shape[0]
 
     @property
     def n_ions(self) -> int:
+        """Number of columns in the intensity matrix (ions)."""
         return self.intensity_matrix.shape[1]
 
 
 @dataclass
-class RawAlgorithmOutput:
+class RawAlgorithmOutput:  # pylint: disable=too-many-instance-attributes
+    """Unsmoothed algorithm result: label map, segment count, and optional diagnostics."""
+
     map_type: Literal["unified", "per_ion"]
     label_map: Union[np.ndarray, Dict[str, np.ndarray]]
     n_segments: Union[int, Dict[str, int]]
@@ -50,7 +58,9 @@ class RawAlgorithmOutput:
 
 
 @dataclass
-class SegmentationResult:
+class SegmentationResult:  # pylint: disable=too-many-instance-attributes
+    """Final API payload: maps, enrichment tables, and diagnostic metadata."""
+
     dataset_id: str
     algorithm: str
     parameters_used: dict
@@ -59,6 +69,6 @@ class SegmentationResult:
     label_map: Union[np.ndarray, Dict[str, np.ndarray]]
     n_segments: Union[int, Dict[str, int]]
 
-    segment_profiles: Optional[pd.DataFrame]   # long format: segment_id, ion_label, enrich_score
+    segment_profiles: Optional[pd.DataFrame]  # long format: segment_id, ion_label, enrich_score
     segment_summary: Optional[List[dict]]
     diagnostics: dict

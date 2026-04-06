@@ -1,3 +1,5 @@
+"""Route segmentation requests to registered algorithms and log timing."""
+
 from __future__ import annotations
 
 import logging
@@ -23,7 +25,19 @@ def dispatch(
     algorithm: str,
     parameters: dict,
 ) -> RawAlgorithmOutput:
+    """Validate parameters and run the named algorithm on ``segmentation_input``.
 
+    Args:
+        segmentation_input: Preprocessed input for the job.
+        algorithm: Registry key (e.g. ``pca_gmm``).
+        parameters: Algorithm-specific parameters; defaults filled by ``validate_parameters``.
+
+    Returns:
+        Raw algorithm output.
+
+    Raises:
+        ValueError: If ``algorithm`` is not registered.
+    """
     if algorithm not in ALGORITHM_REGISTRY:
         raise ValueError(
             f"Unknown algorithm '{algorithm}'. "
@@ -33,15 +47,20 @@ def dispatch(
     algo = ALGORITHM_REGISTRY[algorithm]
 
     logger.info(
-        f"Dataset {segmentation_input.dataset_id}: "
-        f"dispatching to algorithm '{algorithm}'"
+        "Dataset %s: dispatching to algorithm '%s'",
+        segmentation_input.dataset_id,
+        algorithm,
     )
 
     # validate_parameters fills defaults and raises on bad inputs
     param_validation_start = time.time()
     validated_parameters = algo.validate_parameters(parameters)
     param_validation_time = time.time() - param_validation_start
-    logger.info(f'[SEGMENTATION_PERF] Parameter validation completed in {param_validation_time:.3f}s for {algorithm}')
+    logger.info(
+        "[SEGMENTATION_PERF] Parameter validation completed in %.3fs for %s",
+        param_validation_time,
+        algorithm,
+    )
 
     algorithm_start_time = time.time()
     result = algo.run(
@@ -49,6 +68,10 @@ def dispatch(
         parameters=validated_parameters,
     )
     algorithm_time = time.time() - algorithm_start_time
-    logger.info(f'[SEGMENTATION_PERF] Algorithm {algorithm} execution completed in {algorithm_time:.3f}s')
-    
+    logger.info(
+        "[SEGMENTATION_PERF] Algorithm %s execution completed in %.3fs",
+        algorithm,
+        algorithm_time,
+    )
+
     return result

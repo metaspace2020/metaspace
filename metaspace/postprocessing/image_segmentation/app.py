@@ -59,9 +59,11 @@ def _run_and_callback(body):
     dataset_id = body['dataset_id']
     job_id = body['job_id']
     callback_url = body['callback_url']
-    
+
     microservice_start_time = time.time()
-    logger.info(f'[SEGMENTATION_PERF] Microservice processing started for job {job_id}, dataset {dataset_id}')
+    logger.info(
+        f'[SEGMENTATION_PERF] Microservice processing started for job {job_id}, dataset {dataset_id}'
+    )
 
     try:
         segmentation_start_time = time.time()
@@ -81,8 +83,10 @@ def _run_and_callback(body):
             window_size=body.get('window_size', 3),
         )
         segmentation_time = time.time() - segmentation_start_time
-        logger.info(f'[SEGMENTATION_PERF] Core segmentation completed in {segmentation_time:.3f}s for job {job_id}')
-        
+        logger.info(
+            f'[SEGMENTATION_PERF] Core segmentation completed in {segmentation_time:.3f}s for job {job_id}'
+        )
+
         serialization_start_time = time.time()
         payload = {
             'job_id': job_id,
@@ -91,10 +95,14 @@ def _run_and_callback(body):
             'result': _sanitize(_serialize_result(result)),
         }
         serialization_time = time.time() - serialization_start_time
-        logger.info(f'[SEGMENTATION_PERF] Result serialization completed in {serialization_time:.3f}s for job {job_id}')
+        logger.info(
+            f'[SEGMENTATION_PERF] Result serialization completed in {serialization_time:.3f}s for job {job_id}'
+        )
     except Exception as e:
         failed_time = time.time() - microservice_start_time
-        logger.error(f'[SEGMENTATION_PERF] Segmentation failed for dataset {dataset_id} (job {job_id}) after {failed_time:.3f}s: {e}')
+        logger.error(
+            f'[SEGMENTATION_PERF] Segmentation failed for dataset {dataset_id} (job {job_id}) after {failed_time:.3f}s: {e}'
+        )
         payload = {
             'job_id': job_id,
             'ds_id': dataset_id,
@@ -106,10 +114,12 @@ def _run_and_callback(body):
         callback_start_time = time.time()
         requests.post(callback_url, json=payload, timeout=30)
         callback_time = time.time() - callback_start_time
-        
+
         total_microservice_time = time.time() - microservice_start_time
         logger.info(f'[SEGMENTATION_PERF] Callback posted in {callback_time:.3f}s for job {job_id}')
-        logger.info(f'[SEGMENTATION_PERF] Total microservice time: {total_microservice_time:.3f}s for job {job_id}')
+        logger.info(
+            f'[SEGMENTATION_PERF] Total microservice time: {total_microservice_time:.3f}s for job {job_id}'
+        )
     except Exception as e:
         logger.error(f'Failed to post callback for job {job_id}: {e}')
 
@@ -132,9 +142,7 @@ def run():
         bottle.response.status = 400
         return {'status': 'error', 'error': 'callback_url is required'}
 
-    logger.info(
-        f"Accepted segmentation job {body['job_id']} for dataset {body['dataset_id']}"
-    )
+    logger.info(f"Accepted segmentation job {body['job_id']} for dataset {body['dataset_id']}")
     threading.Thread(target=_run_and_callback, args=(body,), daemon=True).start()
 
     bottle.response.status = 202
@@ -144,5 +152,7 @@ def run():
 if __name__ == '__main__':
     config = _load_config()
     bottle_config = config['bottle']
-    logger.info(f"Starting image segmentation service on {bottle_config['host']}:{bottle_config['port']} with {bottle_config['server']}")
+    logger.info(
+        f"Starting image segmentation service on {bottle_config['host']}:{bottle_config['port']} with {bottle_config['server']}"
+    )
     app.run(**bottle_config)
