@@ -32,6 +32,7 @@ import AspectRatioIcon from '../../../assets/inline/material/aspect-ratio.svg'
 import { MonitorSvg } from '@/design/refactoringUIIcons'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
 import { Setting } from '@element-plus/icons-vue'
+import { getActiveUserSubscriptionQuery } from '@/api/subscription'
 
 export default defineComponent({
   name: 'DatasetSegmentationPage',
@@ -80,6 +81,16 @@ export default defineComponent({
       id: datasetId.value,
     })
     const currentDataset = computed(() => datasetResult.value?.dataset)
+
+    const { result: subscriptionResult, loading: subscriptionLoading } = useQuery<any>(
+      getActiveUserSubscriptionQuery,
+      null,
+      {
+        fetchPolicy: 'network-only',
+      }
+    )
+
+    const activeSubscription = computed(() => subscriptionResult.value?.activeUserSubscription)
 
     const {
       result: segmentationsResult,
@@ -427,6 +438,8 @@ export default defineComponent({
     }
 
     return () => {
+      const isPro = activeSubscription.value?.isActive
+
       if (loading.value) {
         return (
           <div class="segmentation-page">
@@ -435,6 +448,28 @@ export default defineComponent({
                 <Loading />
               </ElIcon>
               <p>Loading segmentation data...</p>
+            </div>
+          </div>
+        )
+      }
+
+      if (!isPro && !subscriptionLoading.value) {
+        return (
+          <div class="segmentation-page">
+            <div class="no-data-container">
+              <ElAlert
+                title="METASPACE Pro feature"
+                type="info"
+                description="You need to be a METASPACE Pro user to access image segmentation."
+                show-icon
+                closable={false}
+              />
+              <ElButton onClick={goBack} class="back-button">
+                <ElIcon>
+                  <ArrowLeft />
+                </ElIcon>
+                Go Back
+              </ElButton>
             </div>
           </div>
         )

@@ -16,6 +16,7 @@ import NewFeatureBadge from '../../../components/NewFeatureBadge'
 import './DatasetOverviewPage.scss'
 import { useRoute, useRouter } from 'vue-router'
 import CopyButton from '../../../components/CopyButton.vue'
+import { getActiveUserSubscriptionQuery } from '@/api/subscription'
 // import { RecaptchaV2, useRecaptcha } from 'vue3-recaptcha-v2'
 
 const DatasetOverviewPage = defineComponent({
@@ -61,6 +62,12 @@ const DatasetOverviewPage = defineComponent({
     )
     const currentUser = computed(() => (currentUserResult.value != null ? currentUserResult.value.currentUser : null))
 
+    const { result: subscriptionResult } = useQuery<any>(getActiveUserSubscriptionQuery, null, {
+      fetchPolicy: 'network-only',
+    })
+
+    const activeSubscription = computed(() => subscriptionResult.value?.activeUserSubscription)
+
     const projectLink = (projectIdOrSlug: string) => {
       return {
         name: 'project',
@@ -93,6 +100,7 @@ const DatasetOverviewPage = defineComponent({
       const config = safeJsonParse(configJson) || {}
       const acqGeo = safeJsonParse(acquisitionGeometry) || {}
       const fileSize = safeJsonParse(sizeHash) || {}
+      const isPro = activeSubscription.value?.isActive
 
       // hide deprecated fields
       // eslint-disable-next-line camelcase
@@ -151,6 +159,7 @@ const DatasetOverviewPage = defineComponent({
                   dataset={dataset?.value}
                   currentUser={currentUser?.value}
                   isPublishedOrUnderReview={!!isPublishedOrUnderReview.value}
+                  isPro={isPro}
                   recaptchaToken={recaptchaToken?.value}
                 />
               </NewFeatureBadge>

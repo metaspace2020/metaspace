@@ -8,6 +8,7 @@ import fileConfig from '../clientConfig.json'
 interface Features {
   coloc: boolean
   ignore_ibd_size: boolean
+  segmentation: boolean
   diff_analysis: boolean
   enrichment: boolean
   show_dataset_overview: boolean
@@ -85,6 +86,7 @@ const defaultConfig: ClientConfig = {
   features: {
     coloc: true,
     ignore_ibd_size: false,
+    segmentation: false,
     diff_analysis: false,
     enrichment: true,
     show_dataset_overview: true,

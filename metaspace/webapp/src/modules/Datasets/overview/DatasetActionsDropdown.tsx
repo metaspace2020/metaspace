@@ -42,6 +42,7 @@ interface DatasetActionsDropdownProps {
   dataset: DatasetDetailItem
   currentUser: CurrentUserRoleResult
   isPublishedOrUnderReview: boolean
+  isPro: boolean
 }
 
 interface DatasetActionsDropdownState {
@@ -69,6 +70,7 @@ export const DatasetActionsDropdown = defineComponent({
     isPublishedOrUnderReview: { type: Boolean, default: () => false },
     dataset: { type: Object as () => DatasetDetailItem, required: true },
     currentUser: { type: Object as () => CurrentUserRoleResult },
+    isPro: { type: Boolean, default: () => false },
   },
   setup(props: DatasetActionsDropdownProps, ctx) {
     const { emit } = ctx
@@ -327,7 +329,19 @@ export const DatasetActionsDropdown = defineComponent({
         case 'segmentation':
           await segmentationJobsRefetch()
           hideFeatureBadge('imageSegmentation')
-          openSegmentationDialog()
+          if (props.isPro) {
+            openSegmentationDialog()
+          } else {
+            ElNotification.warning({
+              title: '',
+              message: `
+                You need to be a METASPACE Pro user to perform image
+                 segmentation. Check 
+                 <a href="/plans" target="_blank" rel="noopener">our plans</a> and get an upgrade.
+              `,
+              dangerouslyUseHTMLString: true,
+            })
+          }
           break
         case 'download':
           if (!props.currentUser?.id || (await confirmDownload())) {
@@ -378,7 +392,7 @@ export const DatasetActionsDropdown = defineComponent({
               </div>
             </ElDropdownItem>
           )}
-          {canEdit && (
+          {canEdit && config.features.segmentation && (
             <ElDropdownItem command="segmentation">
               <div class="relative actionBadge">
                 <NewFeatureBadge featureKey="imageSegmentation">{segmentationActionLabel}</NewFeatureBadge>
