@@ -245,6 +245,23 @@ class DatasetManager:
         )
         self._send_email(msg['email'], 'METASPACE service notification (QUEUED)', email_body)
 
+    def send_segmentation_failed_email(self, ds_id, email, error_msg):
+        """Send failure email notification for segmentation jobs."""
+        ds_name, _ = self.fetch_ds_metadata(ds_id)
+        email_body = (
+            'Dear METASPACE user,\n\n'
+            f'We regret to inform you that the segmentation job for '
+            f'the "{ds_name}" dataset has failed during data preparation. '
+            f'Error details: {error_msg}\n\n'
+            'This error occurred while preparing the data for segmentation analysis. '
+            'Please check that your dataset has the required data (annotations, TIC image, etc.) '
+            'and try again. If the problem persists, please contact our support team '
+            'at contact@metaspace2020.org.\n\n'
+            'Best regards,\n'
+            'METASPACE Team'
+        )
+        self._send_email(email, 'METASPACE service notification (SEGMENTATION FAILED)', email_body)
+
     def send_failed_email(self, msg, traceback=None):
         ds_name, _ = self.fetch_ds_metadata(msg['ds_id'])
         content = (
@@ -334,11 +351,38 @@ class DatasetManager:
                  failed after {failed_time:.3f}s: {e}""",
                 exc_info=True,
             )
+
+            # Get submitter email for failure notification
+            try:
+                email_result = self._db.select_one(
+                    'SELECT submitter_email FROM image_segmentation_job WHERE id = %s',
+                    params=(job_id,),
+                )
+                submitter_email = email_result[0] if email_result and email_result[0] else None
+            except Exception as email_err:
+                self.logger.warning(
+                    f'Failed to retrieve submitter email for job {job_id}: {email_err}'
+                )
+                submitter_email = None
+
+            # Update job status in database
             self._db.alter(
                 """UPDATE image_segmentation_job SET
                 status = 'FAILED', error = %s, updated_at = NOW() WHERE id = %s""",
                 params=(str(e), job_id),
             )
+
+            # Send failure email notification if email is available
+            if submitter_email:
+                try:
+                    self.send_segmentation_failed_email(ds_id, submitter_email, str(e))
+                    self.logger.info(
+                        f'Sent segmentation failure email to {submitter_email} for job {job_id}'
+                    )
+                except Exception as email_err:
+                    self.logger.warning(
+                        f'Failed to send failure email for job {job_id}: {email_err}'
+                    )
 
     def ds_failure_handler(self, msg, e):
         self.logger.error(f' SM {msg["action"]} daemon: failure', exc_info=True)
