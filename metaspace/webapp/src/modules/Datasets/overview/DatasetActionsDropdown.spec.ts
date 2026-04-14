@@ -152,7 +152,7 @@ describe('DatasetActionsDropdown', () => {
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.findAll('.mock-el-dropdown-item').length).toBe(7)
+    expect(wrapper.findAll('.mock-el-dropdown-item').length).toBe(8)
   })
 
   it('it show all options except reprocess if user is the ds owner, but not admin', async () => {
@@ -169,7 +169,7 @@ describe('DatasetActionsDropdown', () => {
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.findAll('.mock-el-dropdown-item').length).toBe(6)
+    expect(wrapper.findAll('.mock-el-dropdown-item').length).toBe(7)
   })
 
   it('it show only canDownload option for normalUser', async () => {

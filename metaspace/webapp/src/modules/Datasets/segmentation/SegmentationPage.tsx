@@ -33,6 +33,7 @@ import { MonitorSvg } from '@/design/refactoringUIIcons'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
 import { Setting } from '@element-plus/icons-vue'
 import { getActiveUserSubscriptionQuery } from '@/api/subscription'
+import { userProfileQuery } from '@/api/user'
 
 export default defineComponent({
   name: 'DatasetSegmentationPage',
@@ -91,6 +92,12 @@ export default defineComponent({
     )
 
     const activeSubscription = computed(() => subscriptionResult.value?.activeUserSubscription)
+
+    const { result: currentUserResult } = useQuery<any>(userProfileQuery, null, {
+      fetchPolicy: 'cache-first',
+    })
+
+    const currentUser = computed(() => (currentUserResult.value != null ? currentUserResult.value.currentUser : null))
 
     const {
       result: segmentationsResult,
@@ -438,8 +445,7 @@ export default defineComponent({
     }
 
     return () => {
-      const isPro = activeSubscription.value?.isActive
-
+      const isPro = activeSubscription.value?.isActive || currentUser.value?.role === 'admin'
       if (loading.value) {
         return (
           <div class="segmentation-page">

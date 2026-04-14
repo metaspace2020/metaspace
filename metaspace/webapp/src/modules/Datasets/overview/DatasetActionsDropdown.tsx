@@ -329,7 +329,7 @@ export const DatasetActionsDropdown = defineComponent({
         case 'segmentation':
           await segmentationJobsRefetch()
           hideFeatureBadge('imageSegmentation')
-          if (props.isPro) {
+          if (props.isPro || props.currentUser?.role === 'admin') {
             openSegmentationDialog()
           } else {
             ElNotification.warning({
