@@ -133,6 +133,7 @@ def run_segmentation(  # pylint: disable=too-many-arguments,too-many-locals
     result = postprocess(
         raw_output=raw_output,
         segmentation_input=segmentation_input,
+        raw_intensity_matrix=intensity_matrix,
         smoothing=smoothing,
         window_size=window_size,
     )

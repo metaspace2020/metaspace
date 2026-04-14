@@ -1,4 +1,4 @@
-"""Smooth label maps, compute enrichment profiles, and build segment summaries."""
+"""Smooth label maps, compute segment profiles, and build segment summaries."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from typing import Dict, List, Optional
 import numpy as np
 import pandas as pd
 from scipy.ndimage import generic_filter
+from scipy.stats import mannwhitneyu
 
 from .types import RawAlgorithmOutput, SegmentationInput, SegmentationResult
 
@@ -61,36 +62,48 @@ def _smooth_label_maps(
 
 
 def _compute_enrichment_profiles(
-    intensity_matrix: np.ndarray,
+    raw_intensity_matrix: np.ndarray,
     ion_labels: List[str],
     labels: np.ndarray,
     n_segments: int,
+    min_presence_fraction: float = 0.05,
 ) -> pd.DataFrame:
     """Return a long DataFrame with columns: segment_id, ion_label, enrich_score.
 
-    Each row represents the fold-enrichment of one ion in one segment relative
-    to the global mean intensity across all pixels.  Rows with NaN enrich_score
-    indicate empty segments or zero-mean ions.
+    enrich_score is AUC = P(intensity inside segment > intensity outside segment),
+    computed via Mann-Whitney U on raw (un-preprocessed) intensities.
+    AUC = 0.5 → no enrichment; AUC = 1.0 → ion perfectly identifies the segment.
+
+    Ions present in fewer than ``min_presence_fraction`` of all pixels are excluded
+    to avoid inflated scores from near-absent ions with a few bright pixels.
     """
-    global_means = intensity_matrix.mean(axis=0)  # (n_ions,)
-    global_means_safe = np.where(global_means == 0, np.nan, global_means)
+    presence = (raw_intensity_matrix > 0).mean(axis=0)
+    valid_indices = np.where(presence >= min_presence_fraction)[0]
+    logger.info(
+        "Segment profiles: %d/%d ions pass min_presence_fraction=%.0f%%",
+        len(valid_indices), len(ion_labels), min_presence_fraction * 100,
+    )
 
     records: List[dict] = []
     for seg_id in range(n_segments):
-        seg_mask = labels == seg_id
-        if seg_mask.sum() == 0:
-            logger.warning("Segment %s has no pixels — enrichment set to NaN", seg_id)
-            scores = np.full(len(ion_labels), np.nan)
-        else:
-            seg_means = intensity_matrix[seg_mask].mean(axis=0)
-            scores = seg_means / global_means_safe
+        inside = labels == seg_id
+        n_inside = int(inside.sum())
+        if n_inside == 0:
+            logger.warning("Segment %s has no pixels — skipping", seg_id)
+            continue
+        outside = ~inside
+        n_outside = int(outside.sum())
 
-        for i, ion in enumerate(ion_labels):
+        for ion_idx in valid_indices:
+            ion_vals = raw_intensity_matrix[:, ion_idx]
+            u_stat, _ = mannwhitneyu(
+                ion_vals[inside], ion_vals[outside], alternative="greater"
+            )
             records.append(
                 {
                     'segment_id': seg_id,
-                    'ion_label': ion,
-                    'enrich_score': float(scores[i]),
+                    'ion_label': ion_labels[ion_idx],
+                    'enrich_score': u_stat / (n_inside * n_outside),
                 }
             )
 
@@ -147,11 +160,25 @@ def _extract_flat_labels(
 def postprocess(
     raw_output: RawAlgorithmOutput,
     segmentation_input: SegmentationInput,
+    raw_intensity_matrix: np.ndarray,
     smoothing: bool = True,
     window_size: int = 3,
     top_n_ions: int = 20,
+    min_presence_fraction: float = 0.05,
 ) -> SegmentationResult:
-    """Apply optional smoothing and derive enrichment tables for unified maps."""
+    """Apply optional smoothing and derive segment profiles for unified maps.
+
+    Args:
+        raw_output:             Algorithm output from dispatch().
+        segmentation_input:     Preprocessed segmentation input.
+        raw_intensity_matrix:   Raw (un-preprocessed) intensity matrix, (n_pixels, n_ions).
+                                Used to compute AUC-based segment profiles.
+        smoothing:              Apply majority-vote smoothing to label map.
+        window_size:            Smoothing window size (must be odd).
+        top_n_ions:             Top N ions per segment stored in segment_summary.
+        min_presence_fraction:  Ion must be non-zero in at least this fraction of pixels
+                                to be included in AUC computation.
+    """
     logger.info(
         "Dataset %s: postprocessing %s output (map_type=%s)",
         segmentation_input.dataset_id,
@@ -184,10 +211,11 @@ def postprocess(
         )
 
         segment_profiles = _compute_enrichment_profiles(
-            intensity_matrix=segmentation_input.intensity_matrix,
+            raw_intensity_matrix=raw_intensity_matrix,
             ion_labels=segmentation_input.ion_labels,
             labels=flat_labels,
             n_segments=raw_output.n_segments,
+            min_presence_fraction=min_presence_fraction,
         )
 
         segment_summary = _compute_segment_summary(
