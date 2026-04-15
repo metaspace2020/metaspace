@@ -96,7 +96,7 @@ def run_segmentation(segmentation_man, params):
 
 @app.post('/restart_pending')
 @sm_modify_segmentation('RESTART_PENDING_JOBS')
-def restart_pending_jobs(segmentation_man, params):
+def restart_pending_jobs(segmentation_man, params):  # pylint: disable=unused-argument
     """Restart all pending segmentation jobs after service restart."""
     result = segmentation_man.restart_pending_jobs()
     return result
