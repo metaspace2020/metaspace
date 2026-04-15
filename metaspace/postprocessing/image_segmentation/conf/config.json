@@ -10,6 +10,7 @@
     "access_key_id": "minioadmin",
     "secret_access_key": "minioadmin"
   },
+  "engine_url": "http://api:5123",
   "imzml_browser_storage": {
     "bucket": "sm-imzml-browser-dev"
   }

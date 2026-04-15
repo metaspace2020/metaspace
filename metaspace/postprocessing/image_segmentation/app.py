@@ -10,7 +10,11 @@ import requests
 
 from image_segmentation.segm_pipeline import run_segmentation
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+)
 logger = logging.getLogger(__name__)
 
 app = bottle.Bottle()
@@ -20,6 +24,36 @@ def _load_config():
     config_path = Path(__file__).resolve().parent / 'conf' / 'config.json'
     with open(config_path) as f:
         return json.load(f)
+
+
+def _restart_pending_jobs(config):
+    """Restart pending jobs from engine on startup."""
+    logger.info("=== Starting pending jobs restart process ===")
+    try:
+        engine_url = config.get('engine_url', 'http://localhost:5000')
+        restart_url = f"{engine_url}/v1/segmentation/restart_pending"
+
+        logger.info("Requesting engine to restart pending segmentation jobs...")
+
+        response = requests.post(restart_url, json={}, timeout=30)
+
+        logger.info(f"Received response: HTTP {response.status_code}")
+
+        if response.status_code != 200:
+            logger.error(f"Failed to restart pending jobs: HTTP {response.status_code}")
+            logger.error(f"Response body: {response.text}")
+            return
+
+    except requests.exceptions.ConnectTimeout as e:
+        logger.error(f"Connection timeout to engine at {engine_url}: {e}")
+    except requests.exceptions.ConnectionError as e:
+        logger.error(f"Connection error to engine at {engine_url}: {e}")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request error when calling engine: {e}")
+    except Exception as e:
+        logger.error(f"Failed to restart pending jobs: {e}", exc_info=True)
+    finally:
+        logger.info("=== Pending jobs restart process completed ===")
 
 
 def _sanitize(obj):
@@ -61,9 +95,7 @@ def _run_and_callback(body):
     callback_url = body['callback_url']
 
     microservice_start_time = time.time()
-    logger.info(
-        f'[SEGMENTATION_PERF] Microservice processing started for job {job_id}, dataset {dataset_id}'
-    )
+    logger.info(f'[SEGMENTATION_PERF] Processing started for job {job_id}, dataset {dataset_id}')
 
     try:
         segmentation_start_time = time.time()
@@ -83,9 +115,7 @@ def _run_and_callback(body):
             window_size=body.get('window_size', 3),
         )
         segmentation_time = time.time() - segmentation_start_time
-        logger.info(
-            f'[SEGMENTATION_PERF] Core segmentation completed in {segmentation_time:.3f}s for job {job_id}'
-        )
+        logger.info(f'[SEGMENTATION_PERF] Core segmentation completed in {segmentation_time:.3f}')
 
         serialization_start_time = time.time()
         payload = {
@@ -96,12 +126,12 @@ def _run_and_callback(body):
         }
         serialization_time = time.time() - serialization_start_time
         logger.info(
-            f'[SEGMENTATION_PERF] Result serialization completed in {serialization_time:.3f}s for job {job_id}'
+            f'[SEGMENTATION_PERF] Serialization in {serialization_time:.3f}s for job {job_id}'
         )
     except Exception as e:
         failed_time = time.time() - microservice_start_time
         logger.error(
-            f'[SEGMENTATION_PERF] Segmentation failed for dataset {dataset_id} (job {job_id}) after {failed_time:.3f}s: {e}'
+            f'[SEGMENTATION_PERF] Seg failed for {dataset_id} after {failed_time:.3f}s: {e}'
         )
         payload = {
             'job_id': job_id,
@@ -117,9 +147,7 @@ def _run_and_callback(body):
 
         total_microservice_time = time.time() - microservice_start_time
         logger.info(f'[SEGMENTATION_PERF] Callback posted in {callback_time:.3f}s for job {job_id}')
-        logger.info(
-            f'[SEGMENTATION_PERF] Total microservice time: {total_microservice_time:.3f}s for job {job_id}'
-        )
+        logger.info(f'[SEGMENTATION_PERF] Total time: {total_microservice_time:.3f}s')
     except Exception as e:
         logger.error(f'Failed to post callback for job {job_id}: {e}')
 
@@ -150,9 +178,16 @@ def run():
 
 
 if __name__ == '__main__':
+    logger.info("=== Image Segmentation Service Starting ===")
     config = _load_config()
+    logger.info(f"Configuration loaded successfully: {config.keys()}")
+
     bottle_config = config['bottle']
     logger.info(
-        f"Starting image segmentation service on {bottle_config['host']}:{bottle_config['port']} with {bottle_config['server']}"
+        f"Starting on {bottle_config['host']}:{bottle_config['port']} {bottle_config['server']}"
     )
+
+    _restart_pending_jobs(config)
+
+    logger.info("About to start bottle server...")
     app.run(**bottle_config)

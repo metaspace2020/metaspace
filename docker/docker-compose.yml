@@ -76,6 +76,7 @@ services:
     depends_on:
       - storage
       - redis
+      - api
 
   api:
     build:

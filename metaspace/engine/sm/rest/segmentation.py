@@ -94,6 +94,14 @@ def run_segmentation(segmentation_man, params):
     return result
 
 
+@app.post('/restart_pending')
+@sm_modify_segmentation('RESTART_PENDING_JOBS')
+def restart_pending_jobs(segmentation_man, params):
+    """Restart all pending segmentation jobs after service restart."""
+    result = segmentation_man.restart_pending_jobs()
+    return result
+
+
 @app.post('/callback')
 @sm_modify_segmentation('CALLBACK')
 def segmentation_callback(segmentation_man, params):

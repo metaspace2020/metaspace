@@ -1,3 +1,4 @@
+import json
 import logging
 import time
 from typing import Optional
@@ -35,7 +36,7 @@ class SegmentationManager:
         """Create queue publisher for SM_UPDATE."""
         return QueuePublisher(self._sm_config['rabbitmq'], SM_UPDATE, logger)
 
-    def run_segmentation(  # pylint: disable=too-many-arguments
+    def run_segmentation(  # pylint: disable=too-many-arguments,too-many-locals
         self,
         ds_id: str,
         algorithm: str = 'pca_gmm',
@@ -76,12 +77,24 @@ class SegmentationManager:
              for dataset {ds_id} with algorithm {algorithm}"""
         )
 
+        # Store all job parameters for restart functionality
+        job_parameters = {
+            'algorithm': algorithm,
+            'database_ids': database_ids,
+            'fdr': fdr,
+            'params': params,
+            'adducts': adducts,
+            'min_mz': min_mz,
+            'max_mz': max_mz,
+            'off_sample': off_sample,
+        }
+
         # Insert a QUEUED job row and retrieve its id
         job_ids = self._db.insert_return(
-            '''INSERT INTO image_segmentation_job (ds_id, status, submitter_email)
-               VALUES (%s, %s, %s)
+            '''INSERT INTO image_segmentation_job (ds_id, status, submitter_email, parameters)
+               VALUES (%s, %s, %s, %s)
                RETURNING id''',
-            rows=[(ds_id, DaemonActionStage.QUEUED, email)],
+            rows=[(ds_id, DaemonActionStage.QUEUED, email, json.dumps(job_parameters))],
         )
         job_id = job_ids[0]
 
@@ -198,6 +211,80 @@ class SegmentationManager:
         )
 
         return {'status': 'processed', 'job_id': job_id, 'ds_id': ds_id}
+
+    def restart_pending_jobs(self):
+        """Restart all pending segmentation jobs by republishing them to the queue.
+
+        This allows the segmentation daemon to pick them up and reprocess them.
+        This is typically called when the segmentation service restarts and needs to
+        continue processing jobs that were queued but not yet completed.
+
+        Returns:
+            dict: Number of jobs restarted
+        """
+        try:
+            # Get all QUEUED jobs from database
+            pending_jobs_data = self._db.select(
+                """SELECT id, ds_id, submitter_email, parameters
+                   FROM image_segmentation_job
+                   WHERE status in ('QUEUED', 'STARTED')
+                   ORDER BY created_at ASC""",
+            )
+
+            if not pending_jobs_data:
+                logger.info('No pending segmentation jobs found to restart')
+                return {'restarted_count': 0}
+
+            # Republish jobs to the queue with stored parameters
+            queue_publisher = self._create_update_queue_publisher()
+            restarted_count = len(pending_jobs_data)
+
+            for job_row in pending_jobs_data:
+                job_id, ds_id, email, params_dict = job_row
+
+                # Create message with stored or default parameters
+                msg = {
+                    'action': DaemonAction.SEGMENTATION,
+                    'ds_id': ds_id,
+                    'job_id': job_id,
+                    'algorithm': params_dict.get('algorithm', 'pca_gmm'),
+                    'database_ids': params_dict.get('database_ids', []),
+                    'fdr': params_dict.get('fdr', 0.2),
+                    'params': params_dict.get('params', {}),
+                    'off_sample': params_dict.get('off_sample'),
+                }
+
+                # Add optional parameters if they exist
+                if params_dict.get('adducts') is not None:
+                    msg['adducts'] = params_dict['adducts']
+                if params_dict.get('min_mz') is not None:
+                    msg['min_mz'] = params_dict['min_mz']
+                if params_dict.get('max_mz') is not None:
+                    msg['max_mz'] = params_dict['max_mz']
+
+                if email:
+                    msg['email'] = email
+
+                try:
+                    queue_publisher.publish(msg)
+                    logger.info(
+                        f'Republished segmentation job {job_id} for dataset {ds_id} to queue'
+                    )
+                except Exception as e:
+                    logger.error(f'Failed to republish job {job_id}: {e}')
+
+            logger.info(f'Successfully restarted {restarted_count} pending segmentation jobs')
+            return {'restarted_count': restarted_count}
+
+        except Exception as e:
+            logger.error(f'Failed to restart pending segmentation jobs: {e}', exc_info=True)
+            raise
+
+    def _get_callback_url(self):
+        """Get callback URL for segmentation service."""
+        engine_config = self._sm_config['services']
+        callback_url = f"{engine_config['sm_engine_url']}/segmentation/callback"
+        return callback_url
 
     def _send_email(self, email: str, subject: str, body: str):
         """Send email using SES."""
