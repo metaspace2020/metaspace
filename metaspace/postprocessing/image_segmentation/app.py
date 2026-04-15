@@ -56,6 +56,51 @@ def _restart_pending_jobs(config):
         logger.info("=== Pending jobs restart process completed ===")
 
 
+def _wait_for_api_ready(engine_url, max_wait_seconds=300, check_interval=5):
+    """Wait for the API service to be ready by checking its health."""
+    logger.info(f"Waiting for API at {engine_url} to become ready...")
+    start_time = time.time()
+
+    while time.time() - start_time < max_wait_seconds:
+        try:
+            # Try a simple GET request to check if the service is responding
+            health_url = (
+                f"{engine_url}/health" if engine_url.endswith('/') else f"{engine_url}/health"
+            )
+            response = requests.get(health_url, timeout=5)
+
+            if response.status_code in [
+                200,
+                404,
+            ]:  # 404 is ok if /health doesn't exist but service is up
+                logger.info(f"API service is ready at {engine_url}")
+                return True
+
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+            # Service not ready yet, continue waiting
+            pass
+        except Exception as e:
+            logger.debug(f"Health check attempt failed: {e}")
+
+        elapsed = time.time() - start_time
+        logger.info(f"API not ready yet, waiting... ({elapsed:.1f}s elapsed)")
+        time.sleep(check_interval)
+
+    logger.warning(f"API service did not become ready within {max_wait_seconds} seconds")
+    return False
+
+
+def _delayed_restart_pending_jobs(config):
+    """Wait for API to be ready, then restart pending jobs."""
+    engine_url = config.get('engine_url', 'http://localhost:5123')
+
+    if _wait_for_api_ready(engine_url):
+        logger.info("API is ready, proceeding with pending jobs restart...")
+        _restart_pending_jobs(config)
+    else:
+        logger.error("API service did not become ready, skipping pending jobs restart")
+
+
 def _sanitize(obj):
     """Recursively replace NaN/Inf floats with None for JSON compliance."""
     if isinstance(obj, float):
@@ -187,7 +232,8 @@ if __name__ == '__main__':
         f"Starting on {bottle_config['host']}:{bottle_config['port']} {bottle_config['server']}"
     )
 
-    _restart_pending_jobs(config)
+    # Start pending jobs restart in background thread after API is ready
+    threading.Thread(target=_delayed_restart_pending_jobs, args=(config,), daemon=True).start()
 
     logger.info("About to start bottle server...")
     app.run(**bottle_config)

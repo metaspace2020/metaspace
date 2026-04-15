@@ -10,6 +10,7 @@ import { getLocalStorage, setLocalStorage } from '../../../lib/localStorage'
 import { useStore } from 'vuex'
 import { useRoute } from 'vue-router'
 import { ArrowDown, Check, QuestionFilled, Loading } from '@element-plus/icons-vue'
+import { uniqBy } from 'lodash-es'
 import moment from 'moment'
 
 interface SegmentationTableState {
@@ -584,10 +585,9 @@ export const SegmentationTable = defineComponent({
 
     const formatSegments = (row: any) => {
       if (!row.segments || row.segments.length === 0) return '—'
-
       return (
         <div class="segments-container">
-          {row.segments.map((segment: any, index: number) => (
+          {uniqBy(row.segments, 'segmentIndex').map((segment: any, index: number) => (
             <ElTooltip
               key={`${segment.segmentIndex}-${index}`}
               content={`Cluster ${segment.segmentIndex + 1} (Score: ${segment.enrichmentScore?.toFixed(3) || 'N/A'})`}

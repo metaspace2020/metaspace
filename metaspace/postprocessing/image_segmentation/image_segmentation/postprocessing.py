@@ -81,7 +81,9 @@ def _compute_enrichment_profiles(
     valid_indices = np.where(presence >= min_presence_fraction)[0]
     logger.info(
         "Segment profiles: %d/%d ions pass min_presence_fraction=%.0f%%",
-        len(valid_indices), len(ion_labels), min_presence_fraction * 100,
+        len(valid_indices),
+        len(ion_labels),
+        min_presence_fraction * 100,
     )
 
     records: List[dict] = []
@@ -96,9 +98,7 @@ def _compute_enrichment_profiles(
 
         for ion_idx in valid_indices:
             ion_vals = raw_intensity_matrix[:, ion_idx]
-            u_stat, _ = mannwhitneyu(
-                ion_vals[inside], ion_vals[outside], alternative="greater"
-            )
+            u_stat, _ = mannwhitneyu(ion_vals[inside], ion_vals[outside], alternative="greater")
             records.append(
                 {
                     'segment_id': seg_id,
