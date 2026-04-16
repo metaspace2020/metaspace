@@ -8,8 +8,8 @@ Spatial segmentation partitions the tissue section into molecularly distinct reg
 
 Segmentation results are displayed as an interactive overlay directly on the dataset viewer, replacing the standard ion image view. The segment map appears once processing completes, with each colour representing a distinct molecular region.
 
-![Segment map on tissue](/screenshots/segmentation-map-tissue.png)
-_Segment map overlaid on the tissue section, with a color legend identifying each molecular region. Source: [dataset](#)_
+<!-- ![Segment map on tissue](/screenshots/segmentation-map-tissue.png) -->
+<!-- _Segment map overlaid on the tissue section, with a color legend identifying each molecular region. Source: [dataset](#)_ -->
 
 ## How to Read It
 
@@ -17,8 +17,8 @@ _Segment map overlaid on the tissue section, with a color legend identifying eac
 
 Each colour on the map corresponds to one molecularly distinct region. The boundaries between colours reflect where the chemical composition of the tissue shifts meaningfully — not where it merely looks different visually. Clicking any segment on the map selects it and updates the collapsible panel below.
 
-![Selected segment with marker ions](/screenshots/segmentation-selected-segment.png)
-_A selected segment with the marker ion panel open, showing the top ions that define that region. Source: [dataset](#)_
+<!-- ![Selected segment with marker ions](/screenshots/segmentation-selected-segment.png) -->
+<!-- _A selected segment with the marker ion panel open, showing the top ions that define that region. Source: [dataset](#)_ -->
 
 The collapsible panel shows the top marker ions for the selected segment — the annotated metabolites and lipids most strongly associated with that region. These are the ions whose intensities best distinguish this segment from the rest of the tissue. Browsing the marker ions is the primary way to assign biological meaning to each segment.
 
@@ -28,8 +28,8 @@ The BIC curve is only shown in the diagnostics panel when the number of segments
 
 When shown, the BIC curve scores each candidate k by balancing model fit against complexity — lower BIC is better.
 
-![BIC curve with callouts](/screenshots/segmentation-bic-curve.png)
-_BIC curve: ① the selected k at the lowest BIC, ② the point where the curve levels off. Source: [dataset](#)_
+<!-- ![BIC curve with callouts](/screenshots/segmentation-bic-curve.png) -->
+<!-- _BIC curve: ① the selected k at the lowest BIC, ② the point where the curve levels off. Source: [dataset](#)_ -->
 
 A curve that drops sharply and then levels off indicates a clean separation. A curve that continues declining gradually suggests more subtle sub-regional chemistry. The selected k is the best automatic estimate, but you can override it on re-run if the biology suggests otherwise.
 
@@ -37,8 +37,8 @@ A curve that drops sharply and then levels off indicates a clean separation. A c
 
 Each pixel is assigned a confidence score reflecting how clearly it belongs to its assigned segment versus neighbouring ones. Rather than displaying this per pixel, the diagnostics panel shows a **histogram of confidence scores across all pixels** in the dataset.
 
-![Confidence score histogram](/screenshots/segmentation-confidence-histogram.png)
-_Confidence score histogram: ① high-confidence peak near 1.0, ② low-confidence tail near 0. Source: [dataset](#)_
+<!-- ![Confidence score histogram](/screenshots/segmentation-confidence-histogram.png)
+_Confidence score histogram: ① high-confidence peak near 1.0, ② low-confidence tail near 0. Source: [dataset](#)_ -->
 
 A histogram skewed toward 1 indicates that most pixels sit clearly within a single segment — the segmentation has found well-separated regions. A broad or bimodal distribution suggests many pixels near boundaries between segments, which is expected in tissues with gradual chemical transitions rather than sharp anatomical boundaries.
 

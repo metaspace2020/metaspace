@@ -78,7 +78,7 @@ example, including the sample type, date, or experimental condition.
 Select the database(s) that best match the metabolite classes expected in your
 sample. Different databases vary in their compound coverage. Choosing a database
 that is poorly matched to your sample type increases the risk of spurious
-annotations. See the [Database Help Page](../features/annotation-databases) for a full comparison.
+annotations. <!-- See the [Database Help Page](../features/annotation-databases) for a full comparison. -->
 
 ### Adducts
 
@@ -150,4 +150,4 @@ Select a metabolite set to enable enrichment analysis after annotation.
 METASPACE currently supports the **LION ontology** for lipid class enrichment.
 Compatible databases include HMDB, CoreMetabolome, SwissLipids, and LipidMaps.
 
-For more information, see [Enrichment (LION)](../features/enrichment-lion).
+<!-- For more information, see [Enrichment (LION)](../features/enrichment-lion). -->

@@ -8,8 +8,8 @@ For each annotated ion, METASPACE computes two metrics that together quantify ho
 
 Once the analysis completes, you are redirected to a dedicated results page. The page contains four interconnected components: a ranked results table, a scatter plot, a heatmap, and an ion image viewer.
 
-![Differential analysis results layout](/screenshots/diff-analysis-layout.png)
-_Results page layout: ① ranked table, ② scatter plot, ③ heatmap, ④ ion image viewer. Source: [dataset](#)_
+<!-- ![Differential analysis results layout](/screenshots/diff-analysis-layout.png) -->
+<!-- _Results page layout: ① ranked table, ② scatter plot, ③ heatmap, ④ ion image viewer. Source: [dataset](#)_ -->
 
 ## How to Read It
 
@@ -17,8 +17,8 @@ _Results page layout: ① ranked table, ② scatter plot, ③ heatmap, ④ ion i
 
 The table lists all annotated ions sorted by log₂ fold change and AUC by default. Each row shows the ion's formula, adduct, and both metrics for each ROI.
 
-![Results table](/screenshots/diff-analysis-table.png)
-_Results table with ① the log₂ fold change column and ② the AUC column highlighted. Source: [dataset](#)_
+<!-- ![Results table](/screenshots/diff-analysis-table.png) -->
+<!-- _Results table with ① the log₂ fold change column and ② the AUC column highlighted. Source: [dataset](#)_ -->
 
 The two metrics measure different things and can sometimes point in different directions:
 
@@ -31,8 +31,8 @@ For a confident hit, you want both to agree — high fold change and high AUC. W
 
 The scatter plot shows log₂ fold change on the x-axis and AUC on the y-axis, with one point per ion per ROI. Ions in the top-right quadrant are both strongly enriched and highly discriminative — these are your strongest candidates for region-specific markers.
 
-![Fold change vs. AUC scatter plot](/screenshots/diff-analysis-scatter.png)
-_Scatter plot: ① top-right quadrant (strong enrichment, high AUC), ② ions near the x-axis (fold change without consistent discriminability), ③ selected ion highlighted. Source: [dataset](#)_
+<!-- ![Fold change vs. AUC scatter plot](/screenshots/diff-analysis-scatter.png) -->
+<!-- _Scatter plot: ① top-right quadrant (strong enrichment, high AUC), ② ions near the x-axis (fold change without consistent discriminability), ③ selected ion highlighted. Source: [dataset](#)_ -->
 
 Clicking any point in the scatter plot highlights the corresponding ion in the results table and loads its ion image in the viewer.
 
@@ -40,15 +40,15 @@ Clicking any point in the scatter plot highlights the corresponding ion in the r
 
 The heatmap shows the top differentially abundant ions across all ROIs simultaneously. Each row is an ion, each column is an ROI, and the colour encodes the metric value. This view is most useful when you have three or more ROIs and want to see which ions are co-regulated across regions and which are specific to just one.
 
-![Differential analysis heatmap](/screenshots/diff-analysis-heatmap.png)
-_Heatmap: ① ions specific to one ROI, ② ions enriched across multiple ROIs, ③ depleted ions. Source: [dataset](#)_
+<!-- ![Differential analysis heatmap](/screenshots/diff-analysis-heatmap.png) -->
+<!-- _Heatmap: ① ions specific to one ROI, ② ions enriched across multiple ROIs, ③ depleted ions. Source: [dataset](#)_ -->
 
 ### The Ion Image Viewer
 
 Selecting any ion from the table, scatter plot, or heatmap loads its ion image in the viewer with the ROI boundaries superimposed. This is the ground truth check — always visually confirm that the spatial pattern behind the numbers matches what you expect biologically before drawing conclusions.
 
-![Ion image with ROI boundaries](/screenshots/diff-analysis-ion-image.png)
-_Ion image viewer with ROI boundaries overlaid on the selected ion — the ground truth check before drawing conclusions. Source: [dataset](#)_
+<!-- ![Ion image with ROI boundaries](/screenshots/diff-analysis-ion-image.png) -->
+<!-- _Ion image viewer with ROI boundaries overlaid on the selected ion — the ground truth check before drawing conclusions. Source: [dataset](#)_ -->
 
 ## Common Patterns and Pitfalls
 

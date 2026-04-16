@@ -22,22 +22,22 @@ Follow the steps in this video:
 
 Once processing completes, the results are displayed as an interactive overlay on the dataset viewer. Each color in the segment map represents a distinct molecular region identified from the data.
 
-![Segment map overlay](/screenshots/spatial-seg-map-overlay.png)
-_Spatial segmentation map overlaid on the tissue section, with each color representing a distinct molecular region. Source: [dataset](#)_
+<!-- ![Segment map overlay](/screenshots/spatial-seg-map-overlay.png) -->
+<!-- _Spatial segmentation map overlaid on the tissue section, with each color representing a distinct molecular region. Source: [dataset](#)_ -->
 
 Clicking any segment on the map opens a collapsible panel listing the top marker ions for that segment — the annotated metabolites and lipids most strongly associated with that region — along with their ion images.
 
-![Marker ion images panel](/screenshots/spatial-seg-marker-ions.png)
-_Collapsible panel showing the top marker ion images for the selected segment. Source: [dataset](#)_
+<!-- ![Marker ion images panel](/screenshots/spatial-seg-marker-ions.png) -->
+<!-- _Collapsible panel showing the top marker ion images for the selected segment. Source: [dataset](#)_ -->
 
 The diagnostics panel shows the BIC curve used to determine the optimal number of segments. The curve drops steeply and then levels off, with the optimal segment count selected at the point of diminishing returns.
 
-![BIC curve](/screenshots/spatial-seg-bic-curve.png)
-_BIC curve used to determine the optimal number of segments (k), with the selected value at the point of diminishing returns. Source: [dataset](#)_
+<!-- ![BIC curve](/screenshots/spatial-seg-bic-curve.png) -->
+<!-- _BIC curve used to determine the optimal number of segments (k), with the selected value at the point of diminishing returns. Source: [dataset](#)_ -->
 
 Each pixel is assigned a confidence score reflecting how clearly it belongs to its segment versus neighboring ones. The confidence map highlights well-defined regions in stronger colors and ambiguous boundary pixels in lighter tones.
 
-![Confidence map overlay](/screenshots/spatial-seg-confidence-map.png)
-_Confidence map overlay showing per-pixel assignment certainty — stronger colors for well-defined regions, lighter tones near segment boundaries. Source: [dataset](#)_
+<!-- ![Confidence map overlay](/screenshots/spatial-seg-confidence-map.png) -->
+<!-- _Confidence map overlay showing per-pixel assignment certainty — stronger colors for well-defined regions, lighter tones near segment boundaries. Source: [dataset](#)_ -->
 
-For an in-depth understanding of the results, see the [interpretation guide](link).
+<!-- For an in-depth understanding of the results, see the [interpretation guide](link). -->
