@@ -26,7 +26,7 @@ def _test_compute_metrics():
         isotope_generation=None,
         fdr=None,
     )
-    imzml_reader = make_imzml_reader_mock(list(product(range(2), range(3))))
+    imzml_reader = make_imzml_reader_mock(list(product(range(3), range(2))))
     compute_metrics = make_compute_image_metrics(imzml_reader, ds_config)
     return compute_metrics
 
