@@ -57,6 +57,13 @@ class ImzMLReader:
         sample_area_mask[self.pixel_indexes] = True
         self.mask = sample_area_mask.reshape(self.h, self.w)
 
+        # pixel_to_flat_idx: maps flat pixel coord (Y*W+X) → position in the masked-flat array.
+        # Positions are assigned in ascending pixel_index order to match the semantics of
+        # mask.flatten()[sample_area_mask_flat] used elsewhere in the pipeline.
+        # -1 for pixels that have no spectrum.
+        self.pixel_to_flat_idx = np.full(self.h * self.w, -1, dtype=np.intp)
+        self.pixel_to_flat_idx[sample_area_mask] = np.arange(self.n_spectra)
+
         # raw_coord_bounds is the RAW min/max coordinates, purely for diagnostics
         self.raw_coord_bounds = (
             np.min(imzml_parser.coordinates, axis=0),
