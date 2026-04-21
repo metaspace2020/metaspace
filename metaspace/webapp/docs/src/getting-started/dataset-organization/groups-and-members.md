@@ -35,7 +35,7 @@ Once a group is created, its page is organized into six tabs:
 | **Datasets** | All datasets shared with the group |
 | **Members** | Current members and their roles. Admins can invite and remove members from here |
 | **Databases** | Custom metabolite databases available to the group. See [Custom Databases](/features/tools-and-integrations/custom-databases) |
-| **Subscription** | The group's METASPACE Pro subscription status and management |
+| **Subscription** | The group's [METASPACE Pro](https://metaspace2020.org/plans) subscription status and management |
 | **Settings** | Group name, URL slug, and other admin settings |
 
 ## How to Invite Members

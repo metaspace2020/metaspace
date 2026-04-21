@@ -10,7 +10,7 @@ This tool is useful when you have a complementary image of the same tissue secti
 
 ## How to use it
 
-Instructions for using the mouse to align your ion and optical images are available directly on the tool page. Here's a step-by-step video showing how to access and use the optical image overlay tool:
+Instructions for aligning your ion and optical images are available directly on the tool page. Here's a step-by-step video showing how to access and use the optical image overlay tool:
 
 <YouTubeEmbed id="yFrTYabxsTw" />
 

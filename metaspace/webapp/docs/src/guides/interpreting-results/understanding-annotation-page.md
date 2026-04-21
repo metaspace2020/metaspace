@@ -1,6 +1,6 @@
-# Understanding Annotation page
+# Understanding annotation page
 
-## What Was Computed
+## How it works
 
 During annotation, METASPACE scores each candidate ion : defined as a combination of a
 molecular formula from the selected annotation database and an ion adduct — against the submitted imaging MS dataset.
@@ -21,16 +21,16 @@ threshold (default 10%), meaning that on average no more than 1 in 10 reported a
 a false positive. Annotations are at the level of molecular sum formulas. For full methodological details, see the [MSM paper](https://www.nature.com/articles/nmeth.4072)
 and the [METASPACE-ML paper](https://www.nature.com/articles/s41467-024-52213-9).
 
-## Where to Find It
+## Where to find it
 
 The annotation page is the main results view for any dataset in METASPACE. It consists of an annotation table on the left, an ion image viewer on the right, and a series of collapsible diagnostic panels below the viewer. The screenshot below shows the full layout.
 
 ![Annotation page layout](/screenshots/annotation-page-layout.png)
 _The annotation page: ① annotation table (left), ② ion image viewer (center), ③ diagnostic panels (below the viewer). Source: [dataset](https://metaspace2020.org/dataset/2021-12-09_20h48m20s)_
 
-## How to Read It
+## How to read it
 
-### MSM Score and Diagnostics
+### MSM score and diagnostics
 
 The MSM score appears in the annotation table and summarizes confidence in a given annotation. It is composed of three sub-scores:
 
@@ -48,7 +48,7 @@ If METASPACE-ML is enabled, two additional measures are shown alongside the MSM 
 
 You can also follow the corresponding interactive tour on [Diagnostic plots](https://metaspace2020.org/learn) for a hands-on walkthrough.
 
-### Ion Images of Each Isotope Peak
+### Ion images of each isotope peak
 
 The diagnostic panel displays ion images for the first four most intense isotope peaks. These serve as a visual check of spatial correlation between peaks and whether peaks are above the noise threshold.
 
@@ -57,7 +57,7 @@ _Ion image strip showing the first four isotope peaks for the selected annotatio
 
 Note that intensities are scaled independently per image — if they weren't, all images beyond the first would appear very dim.
 
-### Isotope Pattern Match
+### Isotope pattern match
 
 The isotope pattern plot shows the theoretical pattern alongside the observed total intensities. You can zoom using the mouse, reset the view by double-clicking, and toggle between relative and absolute intensity by clicking the y-axis label.
 
@@ -66,7 +66,7 @@ _Isotope pattern plot comparing observed intensities (bars) against the theoreti
 
 Observed intensities that are somewhat lower than theoretical are common, due to zero-filling of pixels below the detection limit. Intensities substantially higher than expected often indicate overlap with another ion.
 
-### Isomeric and Isobaric Ambiguity
+### Isomeric and isobaric ambiguity
 
 Below the ion image viewer, METASPACE displays the possible compounds corresponding to the selected annotation, based on the chosen database. There are two distinct types of ambiguity to be aware of:
 
@@ -99,9 +99,8 @@ The annotation table can be filtered in several ways:
 
 The second collapsible panel — after Molecules and before Diagnostics — shows the top co-localized annotations for the currently selected annotation, along with their ion images. See the [colocalization guide](/guides/interpreting-results/colocalization) for a full explanation of how colocalization is computed and how to interpret and filter the results.
 
-## Common Patterns and Pitfalls
+## Common patterns and pitfalls
 
-- **Low ρ spatial with high ρ spectral** — the spectral match looks good but the isotope peaks don't spatially correlate. This often indicates a noisy or low-abundance signal rather than a true biological annotation.
 - **Observed intensities well above theoretical** — a likely sign of isobaric overlap with another ion. Check the isobaric ions column.
 - **Same annotation appearing multiple times in the table** — you're viewing annotations across multiple databases without the database filter applied. Enable the database column to see the source.
 - **High number of isomeric molecules** — common in MS1 data and not a reflection of annotation quality. A custom database is the most effective way to manage this.

@@ -12,7 +12,7 @@ ROI Selection lets you draw and label regions of interest directly on the ion im
 
 ## How to use it
 
-Follow the steps in this video:
+Here's a short video showing how to manually select and define ROIs:
 
 <YouTubeEmbed id="DhvorRuxqC4" />
 

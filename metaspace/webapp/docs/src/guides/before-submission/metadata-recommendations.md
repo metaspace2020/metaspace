@@ -6,8 +6,6 @@ The METASPACE team is actively working on metadata standardization to align with
 
 This guide focuses on the fields that have the greatest impact on reproducibility and are most commonly incomplete: **Sample Information**, **Sample Preparation**, and **Dataset Description**.
 
----
-
 ## General Rules
 
 - Complete as many fields as possible, even optional ones.
@@ -15,8 +13,6 @@ This guide focuses on the fields that have the greatest impact on reproducibilit
 - Be specific. Vague entries are harder to interpret and impossible to use
   for grouping or comparison.
 - For inspiration on standardized terminology, consult the [Experimental Factor Ontology (EFO)](https://www.ebi.ac.uk/efo/),[BRENDA Tissue Ontology (BTO)](https://www.ebi.ac.uk/ols/ontologies/bto)  or [NCBI Taxonomy](https://www.ncbi.nlm.nih.gov/taxonomy) when filling in organism, tissue, and condition fields. Using controlled vocabulary makes your data easier to find and compare.
-
----
 
 ## Sample Information
 
@@ -80,8 +76,6 @@ collection. Examples by sample type:
 This field is especially important for in vitro experiments, where culture
 conditions can substantially affect the metabolome.
 
----
-
 ## Sample Preparation
 
 These fields are primarily relevant for MALDI-based tissue experiments.
@@ -138,8 +132,6 @@ Enter the full solvent composition used to prepare the matrix solution,
 including concentrations and any additives (e.g., 30 mM DHB in 70%
 methanol / 30% water with 0.1% TFA). Solvent composition affects matrix
 crystallization and ionization efficiency and is necessary for replication.
-
----
 
 ## Dataset Description
 

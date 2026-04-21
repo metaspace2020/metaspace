@@ -12,7 +12,7 @@ The imzML Browser lets you interactively explore the raw spectral data of your d
 
 ## How to use it
 
-Follow the steps in this video:
+Here's a short video showing how to use the imzml browser:
 
 <YouTubeEmbed id="k-H_HcXY-Uo" />
 

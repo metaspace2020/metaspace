@@ -14,8 +14,7 @@ share publicly.
 Projects and groups are independent — a project does not need to belong to
 a group, and a group does not need to contain projects. However, they work
 well together: a group provides the trusted membership layer, while a
-project provides the organisational and sharing layer for a specific body
-of work.
+project provides the organisational and sharing layer for datasets.
 
 ## Roles
 

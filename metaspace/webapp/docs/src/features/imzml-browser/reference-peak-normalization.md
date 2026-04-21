@@ -11,7 +11,7 @@ Reference Peak Normalization rescales ion intensities across all pixels relative
 
 ## How to use it
 
-Follow the steps in the following video:
+Here's a short video showing how to apply reference peak normalization:
 
 <YouTubeEmbed id="vL-2kyTWj2U" />
 

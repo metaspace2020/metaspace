@@ -22,7 +22,7 @@ technologies, including MALDI, DESI, and IR-MALDESI.
 
 ## How to use it
 
-Follow the steps in this video:
+Here's a short video showing how to access and use the detectability app:
 
 <YouTubeEmbed id="gNz1PbDIxBQ" />
 

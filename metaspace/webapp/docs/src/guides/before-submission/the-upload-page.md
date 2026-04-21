@@ -68,11 +68,6 @@ These fields directly control what METASPACE searches for and how it scores
 annotations. Review them carefully, as they have the largest impact on your
 results.
 
-### Dataset Name
-
-Choose a descriptive name that will help you identify the dataset later — for
-example, including the sample type, date, or experimental condition.
-
 ### Metabolite Database
 
 Select the database(s) that best match the metabolite classes expected in your
@@ -110,7 +105,7 @@ This setting determines the scoring model used to evaluate annotations.
 | **Plant_v2.2023-12-14** | ML-based model trained on plant datasets. |
 
 When comparing multiple datasets, process all of them with the same analysis
-version to ensure consistent scoring.
+version to ensure consistent scoring. Check out the [METASPACE-ML paper](https://www.nature.com/articles/s41467-024-52213-9) for more detailed information on the ML models.
 
 ### m/z Tolerance (ppm)
 
@@ -143,11 +138,10 @@ modified ones, each with its own independent FDR ranking.
 > chemical modification. If the derivatization agent introduces a permanent
 > charge, either select `[M]⁺` / `[M]⁻` as the adduct, or adjust the hydrogen
 > count in the modification formula to ensure the correct mass is calculated.
-
-### Enrichment Ontology *(optional)*
+<!-- ### Enrichment Ontology *(optional)*
 
 Select a metabolite set to enable enrichment analysis after annotation.
 METASPACE currently supports the **LION ontology** for lipid class enrichment.
-Compatible databases include HMDB, CoreMetabolome, SwissLipids, and LipidMaps.
+Compatible databases include HMDB, CoreMetabolome, SwissLipids, and LipidMaps. -->
 
 <!-- For more information, see [Enrichment (LION)](../features/enrichment-lion). -->

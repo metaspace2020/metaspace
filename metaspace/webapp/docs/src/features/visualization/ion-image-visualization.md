@@ -8,9 +8,9 @@ Three scaling methods are available: **linear**, **logarithmic**, and **equalize
 
 ## When to use it
 
-**TIC normalization** is the most commonly used and should be enabled by default for most datasets, as it corrects for pixel-to-pixel variation in total ion count unrelated to the biology.
+**TIC normalization** is the most commonly used and should be enabled by default for most datasets, as it corrects for pixel-to-pixel variation in total ion count.
 
-**Intensity scaling** should be used with caution. Unless there is a specific reason to apply logarithmic or equalized histogram scaling, it is recommended to keep linear scaling and enable hotspot clipping instead. Aggressive scaling can obscure real intensity differences across the tissue.
+**Intensity scaling** should be used with caution. Unless there is a specific reason to apply *logarithmic* or *equalized histogram* scaling, it is recommended to keep *linear scaling* and *enable hotspot clipping* instead. Aggressive scaling can obscure real intensity differences across the tissue.
 
 **Color maps** can be changed freely based on preference or to improve contrast for a specific ion image.
 
