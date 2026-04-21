@@ -14,6 +14,7 @@ export default defineConfig({
       { text: 'Getting Started', link: '/getting-started/overview' },
       { text: 'Features', link: '/features/visualization/ion-image-visualization' },
       { text: 'Guides', link: '/guides/before-submission/exporting-to-imzml' },
+      { text: "What's new", link: '/whats-new' },
     ],
 
     sidebar: [
