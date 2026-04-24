@@ -217,6 +217,7 @@ export default defineComponent({
       faq: { type: 'route', route: 'faq' },
       'feature-requests': { type: 'route', route: 'feature-requests' },
       learn: { type: 'route', route: 'learn' },
+      docs: { type: 'external', url: '/docs' },
       detectability: { type: 'route', route: 'detectability' },
       profile: { type: 'route', route: 'profile' },
       'my-groups': { type: 'route', route: 'group-list', query: { f: 'my-groups' } },
@@ -515,6 +516,7 @@ export default defineComponent({
 
           {renderTab('Support', 'contact', [
             { command: 'contact', label: 'Contact' },
+            { command: 'docs', label: 'Docs' },
             { command: 'faq', label: 'FAQ' },
             { command: 'feature-requests', label: 'Feature requests' },
             { command: 'learn', label: 'Learn' },
@@ -552,6 +554,7 @@ export default defineComponent({
 
           {renderMobileDropdown('Support', 'support-mobile', [
             { command: 'contact', label: 'Contact' },
+            { command: 'docs', label: 'Docs' },
             { command: 'faq', label: 'FAQ' },
             { command: 'feature-requests', label: 'Feature requests' },
             { command: 'learn', label: 'Learn' },
