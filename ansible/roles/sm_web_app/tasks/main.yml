@@ -35,6 +35,18 @@
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash
 
+- name: Install docs dependencies
+  shell: "{{ sm_activate_nvm }} && yarn install"
+  args:
+    chdir: "{{ sm_webapp_home }}/docs"
+    executable: /bin/bash
+
+- name: Run build docs (VitePress)
+  shell: "{{ sm_activate_nvm }} && yarn run docs:build"
+  args:
+    chdir: "{{ sm_webapp_home }}/docs"
+    executable: /bin/bash
+
 - name: Copy build output
   become: true
   shell: >
@@ -44,4 +56,18 @@
     cp --preserve --recursive "{{ sm_webapp_home }}/dist" "{{ sm_webapp_www }}";
   args:
     chdir: "{{ sm_webapp_home }}"
+    executable: /bin/bash
+
+- name: Remove old docs output
+  become: true
+  file:
+    path: "{{ sm_webapp_www }}/docs"
+    state: absent
+
+- name: Copy docs build output (VitePress)
+  become: true
+  shell: >
+    mkdir -p "{{ sm_webapp_www }}/docs"
+    && cp --preserve --recursive "{{ sm_webapp_home }}/dist-docs/"* "{{ sm_webapp_www }}/docs/"
+  args:
     executable: /bin/bash

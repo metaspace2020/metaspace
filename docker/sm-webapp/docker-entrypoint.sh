@@ -19,4 +19,6 @@ yarn install
 npm rebuild node-sass # Ensure the musl version is installed
 yarn run deref-schema
 
+cd docs && yarn install && yarn run  docs:dev --port 8083 --host 0.0.0.0 & 
+
 exec yarn run dev
