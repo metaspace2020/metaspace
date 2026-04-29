@@ -12,7 +12,8 @@ import {
 } from 'vue'
 import { ElIcon, ElInput, ElButton, ElProgress, ElMessage } from '../../../lib/element-plus'
 import { View, Edit, Hide, View as Show, Check, Close, Download } from '@element-plus/icons-vue'
-import { updateSegmentationMutation } from '@/api/dataset'
+import { updateSegmentationMutation, getSegmentationsQuery } from '@/api/dataset'
+import { useRoute } from 'vue-router'
 import { getOS } from '../../../lib/util'
 import OpacitySettings from '../../ImageViewer/OpacitySettings.vue'
 import FadeTransition from '../../../components/FadeTransition'
@@ -155,6 +156,7 @@ export const SegmentationVisualization = defineComponent({
   },
   setup(props) {
     const apolloClient = inject(DefaultApolloClient)
+    const route = useRoute()
     const canvasRef = ref<HTMLCanvasElement | null>(null)
     const opticalImageRef = ref<HTMLImageElement | null>(null)
     const viewBoxRef = ref<HTMLDivElement | null>(null)
@@ -228,12 +230,12 @@ export const SegmentationVisualization = defineComponent({
       }
 
       // Fallback to default name
-      return `Cluster ${segmentId}`
+      return `Cluster ${segmentId + 1}`
     }
 
     const handleEditSegment = (segmentId: number) => {
       segmentState.editingSegment = segmentId
-      segmentState.tempInputValue = segmentState.segmentNames[segmentId] || `Cluster ${segmentId}`
+      segmentState.tempInputValue = segmentState.segmentNames[segmentId] || `Cluster ${segmentId + 1}`
     }
 
     const handleSaveSegmentName = async (segmentId: number) => {
@@ -253,13 +255,21 @@ export const SegmentationVisualization = defineComponent({
       try {
         updateSegmentationLoading.value = true
 
-        // Update in database
+        // Update in database and refetch segmentations so renames propagate
+        // to the table, heatmap, and segment markers selector.
         await apolloClient.mutate({
           mutation: updateSegmentationMutation,
           variables: {
             id: segmentation.id,
             name: newName,
           },
+          refetchQueries: [
+            {
+              query: getSegmentationsQuery,
+              variables: { datasetId: route.params.dataset_id },
+            },
+          ],
+          awaitRefetchQueries: true,
         })
 
         // Update local state

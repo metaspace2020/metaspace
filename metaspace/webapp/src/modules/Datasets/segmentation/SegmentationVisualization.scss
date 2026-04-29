@@ -103,6 +103,8 @@
     right: 8px;
     z-index: 20;
     pointer-events: auto;
+    max-height: calc(100% - 16px);
+    display: flex;
 
     .segmentation-legend {
       background: rgba(248, 249, 250, 0.95);
@@ -110,10 +112,16 @@
       border: 1px solid #e9ecef;
       backdrop-filter: blur(4px);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
 
       .segments-list {
         display: flex;
         flex-direction: column;
+        overflow-y: auto;
+        min-height: 0;
 
         .segment-item {
           padding: 2px;

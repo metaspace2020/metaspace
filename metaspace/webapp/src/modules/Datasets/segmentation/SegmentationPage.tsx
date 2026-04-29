@@ -231,7 +231,12 @@ export default defineComponent({
 
       return (
         <div class="segmentation-table-wrapper w-full md:w-6/12">
-          <SegmentationTable annotations={state.annotations} isLoading={state.isLoading} onRowChange={() => {}} />
+          <SegmentationTable
+            annotations={state.annotations}
+            segmentations={segmentations.value || []}
+            isLoading={state.isLoading}
+            onRowChange={() => {}}
+          />
         </div>
       )
     }

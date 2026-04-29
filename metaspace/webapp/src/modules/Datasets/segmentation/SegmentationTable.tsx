@@ -49,7 +49,7 @@ const SEGMENTATION_TABLE_COLUMNS = {
     selected: true,
   },
   segments: {
-    label: 'Clusters',
+    label: 'Cluster',
     src: 'segments',
     selected: true,
   },
@@ -145,6 +145,10 @@ export const SegmentationTable = defineComponent({
   name: 'SegmentationTable',
   props: {
     annotations: {
+      type: Array,
+      default: () => [],
+    },
+    segmentations: {
       type: Array,
       default: () => [],
     },
@@ -330,11 +334,20 @@ export const SegmentationTable = defineComponent({
       )
     }
 
+    const getDisplayedSegmentIndex = (row: any): number => {
+      if (!row?.segments?.length) return Number.POSITIVE_INFINITY
+      const maxScore = Math.max(...row.segments.map((s: any) => s.enrichmentScore))
+      const topSegments = row.segments.filter((s: any) => s.enrichmentScore === maxScore)
+      return Math.min(...topSegments.map((s: any) => s.segmentIndex))
+    }
+
     const handleSortSegments = (order: string) => {
       state.processedData = computed(() =>
         aggregatedAnnotations.value
           .slice()
-          .sort((a, b) => (order === 'ascending' ? 1 : -1) * (a.segments.length - b.segments.length))
+          .sort(
+            (a, b) => (order === 'ascending' ? 1 : -1) * (getDisplayedSegmentIndex(a) - getDisplayedSegmentIndex(b))
+          )
       )
     }
 
@@ -583,24 +596,42 @@ export const SegmentationTable = defineComponent({
       return <AnnotationTableMolName annotation={row} hideFilter />
     }
 
+    const getSegmentDisplayName = (segmentIndex: number): string => {
+      const segmentation = props.segmentations?.find((s: any) => s.segmentIndex === segmentIndex)
+      if (segmentation?.name && segmentation.name.trim()) {
+        return segmentation.name
+      }
+      return `Cluster ${segmentIndex + 1}`
+    }
+
     const formatSegments = (row: any) => {
       if (!row.segments || row.segments.length === 0) return '—'
+
+      const maxEnrichmentScore = Math.max(...row.segments.map((segment: any) => segment.enrichmentScore))
+
       return (
         <div class="segments-container">
-          {uniqBy(row.segments, 'segmentIndex').map((segment: any, index: number) => (
-            <ElTooltip
-              key={`${segment.segmentIndex}-${index}`}
-              content={`Cluster ${segment.segmentIndex + 1} (Score: ${segment.enrichmentScore?.toFixed(3) || 'N/A'})`}
-              placement="top"
-            >
-              <div
-                class="segment-square"
-                style={{
-                  backgroundColor: getSegmentColor(segment.segmentIndex),
-                }}
-              />
-            </ElTooltip>
-          ))}
+          {uniqBy(row.segments, 'segmentIndex')
+            .filter((segment: any) => segment.enrichmentScore === maxEnrichmentScore)
+            .map((segment: any, index: number) => (
+              <ElTooltip
+                key={`${segment.segmentIndex}-${index}`}
+                content={`${getSegmentDisplayName(segment.segmentIndex)} (Score: ${
+                  segment.enrichmentScore?.toFixed(3) || 'N/A'
+                })`}
+                placement="top"
+              >
+                <div class="flex items-center gap-2">
+                  <div
+                    class="segment-square"
+                    style={{
+                      backgroundColor: getSegmentColor(segment.segmentIndex),
+                    }}
+                  />
+                  {getSegmentDisplayName(segment.segmentIndex)}
+                </div>
+              </ElTooltip>
+            ))}
         </div>
       )
     }
@@ -650,15 +681,20 @@ export const SegmentationTable = defineComponent({
       const dateStr = moment().format('YYYY-MM-DD HH:mm:ss')
       let csv = `# Generated at ${dateStr}.\n` + `# URL: ${window.location.href}\n`
 
-      const columns = ['Annotation', 'Segments', 'Max Enrichment Score', 'm/z', 'Adduct', 'FDR', 'MSM', 'Molecules']
+      const columns = ['Annotation', 'Cluster', 'Max Enrichment Score', 'm/z', 'Adduct', 'FDR', 'MSM', 'Molecules']
 
       csv += formatCsvRow(columns)
 
       function formatRow(row: any) {
-        const segmentNames = row.segments?.map((s: any) => `Cluster ${s.segmentIndex + 1}`).join(', ') || ''
+        const maxEnrichmentScore = Math.max(...row.segments.map((segment: any) => segment.enrichmentScore))
+        const segmentName =
+          row.segments
+            ?.filter((segment: any) => segment.enrichmentScore === maxEnrichmentScore)
+            .map((s: any) => getSegmentDisplayName(s.segmentIndex))
+            .join(', ') || ''
         const cells = [
           row?.sumFormula || '',
-          segmentNames,
+          segmentName,
           row?.maxEnrichmentScore || '',
           row?.mz || '',
           row?.adduct || '',
@@ -743,7 +779,7 @@ export const SegmentationTable = defineComponent({
                 property="segments"
                 label={state.columns.segments?.label}
                 sortable={'custom'}
-                minWidth="120"
+                minWidth="60"
                 formatter={(row: any) => formatSegments(row)}
               />
             )}

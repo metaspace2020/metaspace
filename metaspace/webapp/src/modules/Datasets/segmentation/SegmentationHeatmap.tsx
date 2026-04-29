@@ -90,8 +90,11 @@ export const SegmentationHeatmap = defineComponent({
 
     // Helper function to get segment name
     const getSegmentName = (segmentId: number) => {
-      // const segmentation = props.segmentations.find((s: any) => s.segmentIndex === segmentId)
-      return `Cluster ${segmentId}`
+      const segmentation = props.segmentations?.find((s: any) => s.segmentIndex === segmentId)
+      if (segmentation?.name && segmentation.name.trim()) {
+        return segmentation.name
+      }
+      return `Cluster ${segmentId + 1}`
     }
 
     // Process segmentation data to create heatmap
@@ -215,7 +218,7 @@ export const SegmentationHeatmap = defineComponent({
             left: 'center',
             bottom: 5,
             style: {
-              text: 'Fold change',
+              text: 'AUC',
               fill: '#666',
               fontSize: 12,
               fontWeight: 500,

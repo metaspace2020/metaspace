@@ -153,7 +153,7 @@ export const SegmentationDialog = defineComponent({
 
     const validateThirdStep = () => {
       // K is optional, but if provided, it must be between 2 and 10
-      if (state.numSegments !== null && (state.numSegments < 2 || state.numSegments > 10)) {
+      if (state.numSegments !== null && (state.numSegments < 2 || state.numSegments > 50)) {
         state.thirdStepError = true
         return false
       }
