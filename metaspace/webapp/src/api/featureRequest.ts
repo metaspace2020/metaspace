@@ -11,6 +11,8 @@ export interface FeatureRequest {
   approvedAt?: string
   rejectedBy?: string
   rejectedAt?: string
+  solvedBy?: string
+  solvedAt?: string
   displayOrder: number
   isVisible: boolean
   likes: number
@@ -25,6 +27,7 @@ export enum FeatureRequestStatus {
   UNDER_REVIEW = 'under_review',
   APPROVED = 'approved',
   REJECTED = 'rejected',
+  SOLVED = 'solved',
 }
 
 export interface CreateFeatureRequestInput {
@@ -38,6 +41,10 @@ export interface ApproveFeatureRequestInput {
 
 export interface RejectFeatureRequestInput {
   adminNotes: string
+}
+
+export interface ResolveFeatureRequestInput {
+  adminNotes?: string
 }
 
 export interface UpdateVisibilityInput {
@@ -62,6 +69,8 @@ export const myFeatureRequestsQuery = gql`
       approvedAt
       rejectedBy
       rejectedAt
+      solvedBy
+      solvedAt
       displayOrder
       isVisible
       likes
@@ -86,6 +95,8 @@ export const publicFeatureRequestsQuery = gql`
       approvedAt
       rejectedBy
       rejectedAt
+      solvedBy
+      solvedAt
       displayOrder
       isVisible
       likes
@@ -110,6 +121,8 @@ export const featureRequestQuery = gql`
       approvedAt
       rejectedBy
       rejectedAt
+      solvedBy
+      solvedAt
       displayOrder
       isVisible
       likes
@@ -169,6 +182,27 @@ export const rejectFeatureRequestMutation = gql`
       adminNotes
       rejectedBy
       rejectedAt
+      displayOrder
+      isVisible
+      likes
+      isPro
+      updatedAt
+    }
+  }
+`
+
+export const resolveFeatureRequestMutation = gql`
+  mutation ResolveFeatureRequest($id: ID!, $input: ResolveFeatureRequestInput!) {
+    resolveFeatureRequest(id: $id, input: $input) {
+      id
+      title
+      description
+      status
+      adminNotes
+      approvedBy
+      approvedAt
+      solvedBy
+      solvedAt
       displayOrder
       isVisible
       likes

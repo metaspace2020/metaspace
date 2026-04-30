@@ -75,6 +75,10 @@ export const performAction = async(ctx: Context, action: any) : Promise<any|null
       return {}
     }
 
+    if (ctx.isAdmin) {
+      return {}
+    }
+
     const response = await fetch(`${apiUrl}/api/api-usages/`, {
       method: 'POST',
       headers: {

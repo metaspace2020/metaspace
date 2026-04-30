@@ -38,6 +38,7 @@ interface DatasetActionsDropdownProps {
   compareActionLabel: string
   browserActionLabel: string
   enrichmentActionLabel: string
+  opticalImageActionLabel: string
   segmentationActionLabel: string
   dataset: DatasetDetailItem
   currentUser: CurrentUserRoleResult
@@ -64,6 +65,7 @@ export const DatasetActionsDropdown = defineComponent({
     browserActionLabel: { type: String, default: 'Imzml browser' },
     segmentationActionLabel: { type: String, default: 'Image segmentation' },
     enrichmentActionLabel: { type: String, default: 'Ontology enrichment' },
+    opticalImageActionLabel: { type: String, default: 'Add optical image' },
     reprocessActionLabel: { type: String, default: 'Reprocess data' },
     downloadActionLabel: { type: String, default: 'Download' },
     recaptchaToken: { type: String, default: () => '' },
@@ -296,6 +298,12 @@ export const DatasetActionsDropdown = defineComponent({
             params: { dataset_id: props.dataset?.id },
           })
           break
+        case 'optical-image':
+          router.push({
+            name: 'add-optical-image',
+            params: { dataset_id: props.dataset?.id },
+          })
+          break
         case 'enrichment':
           await enrichmentRefetch()
           if (enrichmentRequested.value) {
@@ -373,6 +381,7 @@ export const DatasetActionsDropdown = defineComponent({
         compareActionLabel,
         enrichmentActionLabel,
         browserActionLabel,
+        opticalImageActionLabel,
         segmentationActionLabel,
       } = props
       const { role } = currentUser || {}
@@ -381,10 +390,12 @@ export const DatasetActionsDropdown = defineComponent({
 
       return (
         <ElDropdownMenu class="dataset-overview-menu p-2">
+          {canEdit && <ElDropdownItem command="optical-image">{opticalImageActionLabel}</ElDropdownItem>}
+          <ElDropdownItem command="compare">{compareActionLabel}</ElDropdownItem>
           {(!currentUser?.id || canDownload) && (
             <ElDropdownItem command="download">{downloadActionLabel}</ElDropdownItem>
           )}
-          <ElDropdownItem command="compare">{compareActionLabel}</ElDropdownItem>
+          {canEdit && <ElDropdownItem command="edit">{editActionLabel}</ElDropdownItem>}
           {config.features.imzml_browser && (
             <ElDropdownItem command="browser">
               <div class="relative actionBadge">
@@ -402,7 +413,6 @@ export const DatasetActionsDropdown = defineComponent({
           {config.features.enrichment && (enrichmentRequested.value || canEdit) && (
             <ElDropdownItem command="enrichment">{enrichmentActionLabel}</ElDropdownItem>
           )}
-          {canEdit && <ElDropdownItem command="edit">{editActionLabel}</ElDropdownItem>}
           {canDelete && (
             <ElDropdownItem class="text-red-500" command="delete">
               {deleteActionLabel}

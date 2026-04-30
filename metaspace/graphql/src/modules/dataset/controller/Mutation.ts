@@ -455,9 +455,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       updateEnrichment: performEnrichment && !isEnriched,
     })
     const reprocessingNeeded = newDB || procSettingsUpd || enrichmentUpd
+    const countAsPrivate = engineDataset.isPublic === true && update.isPublic === false
 
     const action: any = {
-      actionType: reprocessingNeeded ? 'reprocess' : 'update',
+      actionType: countAsPrivate ? 'create' : (reprocessingNeeded ? 'reprocess' : 'update'),
       userId: ctx.user.id,
       datasetId: datasetId,
       type: 'dataset',

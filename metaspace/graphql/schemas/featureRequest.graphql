@@ -9,6 +9,8 @@ type FeatureRequest {
   approvedAt: String
   rejectedBy: ID
   rejectedAt: String
+  solvedBy: ID
+  solvedAt: String
   displayOrder: Int!
   isVisible: Boolean!
   likes: Int!
@@ -23,6 +25,7 @@ enum FeatureRequestStatus {
   under_review
   approved
   rejected
+  solved
 }
 
 input FeatureRequestFilter {
@@ -51,6 +54,10 @@ input ApproveFeatureRequestInput {
 
 input RejectFeatureRequestInput {
   adminNotes: String!
+}
+
+input ResolveFeatureRequestInput {
+  adminNotes: String
 }
 
 input UpdateVisibilityInput {
@@ -86,6 +93,7 @@ type Mutation {
   # Admin mutations
   approveFeatureRequest(id: ID!, input: ApproveFeatureRequestInput): FeatureRequest
   rejectFeatureRequest(id: ID!, input: RejectFeatureRequestInput!): FeatureRequest
+  resolveFeatureRequest(id: ID!, input: ResolveFeatureRequestInput!): FeatureRequest
   updateFeatureRequestVisibility(id: ID!, input: UpdateVisibilityInput!): FeatureRequest
   updateFeatureRequestDisplayOrder(id: ID!, input: UpdateDisplayOrderInput!): FeatureRequest
   deleteFeatureRequest(id: ID!): Boolean
