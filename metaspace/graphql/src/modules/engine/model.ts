@@ -137,11 +137,12 @@ export class Job {
 }
 
 // Should match the literal in metaspace/engine/sm/engine/annotation/diagnostics.py
-export type DiagnosticType = 'TIC' | 'IMZML_METADATA' | 'FDR_RESULTS'
+export type DiagnosticType = 'TIC' | 'IMZML_METADATA' | 'FDR_RESULTS' | 'SEGMENTATION'
 export const DiagnosticTypeOptions: {[k in DiagnosticType]: k} = {
   TIC: 'TIC',
   IMZML_METADATA: 'IMZML_METADATA',
   FDR_RESULTS: 'FDR_RESULTS',
+  SEGMENTATION: 'SEGMENTATION',
 }
 
 export type DiagnosticImageFormat = 'PNG' | 'NPY' | 'JSON' | 'PARQUET'
@@ -414,6 +415,127 @@ export class DiffRoi {
   roi: Roi;
 }
 
+@Entity({ schema: 'public', name: 'image_segmentation_job' })
+export class ImageSegmentationJob {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Index('image_segmentation_job_ds_id_index')
+  @Column({ name: 'ds_id', type: 'text' })
+  datasetId: string;
+
+  @Index('image_segmentation_job_status_index')
+  @Column({ type: 'text' })
+  status: string;
+
+  @Column({ type: 'text', nullable: true })
+  error: string | null;
+
+  @Column({ name: 'submitter_email', type: 'text', nullable: true })
+  submitterEmail: string | null;
+
+  @Column({
+    name: 'created_at',
+    type: 'timestamp without time zone',
+    default: () => 'NOW()',
+    transformer: new MomentValueTransformer(),
+  })
+  createdAt: Date;
+
+  @Column({
+    name: 'updated_at',
+    type: 'timestamp without time zone',
+    default: () => 'NOW()',
+    transformer: new MomentValueTransformer(),
+  })
+  updatedAt: Date;
+
+  @ManyToOne(() => EngineDataset, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'ds_id' })
+  dataset: EngineDataset;
+}
+
+@Entity({ schema: 'public', name: 'segmentation' })
+export class Segmentation {
+  @PrimaryColumn({ type: 'uuid', default: () => 'uuid_generate_v1mc()' })
+  id: string;
+
+  @Index('segmentation_dataset_id_index')
+  @Column({ name: 'dataset_id', type: 'text' })
+  datasetId: string;
+
+  @Column({ name: 'job_id', type: 'integer', nullable: true })
+  jobId: number | null;
+
+  @Column({ name: 'segment_index', type: 'integer' })
+  segmentIndex: number;
+
+  @Column({ type: 'text' })
+  algorithm: string;
+
+  @Column({ type: 'text' })
+  status: string;
+
+  @Column({ type: 'text', nullable: true })
+  error: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  name: string | null;
+
+  @Column({
+    name: 'created_at',
+    type: 'timestamp without time zone',
+    default: () => 'NOW()',
+    transformer: new MomentValueTransformer(),
+  })
+  createdAt: Date;
+
+  @Column({
+    name: 'updated_at',
+    type: 'timestamp without time zone',
+    default: () => 'NOW()',
+    transformer: new MomentValueTransformer(),
+  })
+  updatedAt: Date;
+
+  @ManyToOne(() => EngineDataset, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'dataset_id' })
+  dataset: EngineDataset;
+
+  @ManyToOne(() => ImageSegmentationJob, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'job_id' })
+  job: ImageSegmentationJob | null;
+
+  @OneToMany(() => SegmentationIonProfile, sip => sip.segmentation)
+  ionProfiles: SegmentationIonProfile[];
+}
+
+@Entity({ schema: 'public', name: 'segmentation_ion_profile' })
+@Unique('UQ_segmentation_ion_profile', ['segmentationId', 'annotationId'])
+export class SegmentationIonProfile {
+  @PrimaryGeneratedColumn({ type: 'bigint' })
+  id: string;
+
+  @Index('segmentation_ion_profile_segmentation_id_index')
+  @Column({ name: 'segmentation_id', type: 'uuid' })
+  segmentationId: string;
+
+  @Index('segmentation_ion_profile_annotation_id_index')
+  @Column({ name: 'annotation_id', type: 'integer' })
+  annotationId: number;
+
+  @Column({ name: 'enrich_score', type: 'real' })
+  enrichScore: number;
+
+  @ManyToOne(() => Segmentation, seg => seg.ionProfiles, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'segmentation_id' })
+  segmentation: Segmentation;
+
+  @ManyToOne(() => Annotation, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'annotation_id' })
+  annotation: Annotation;
+}
+
 export const ENGINE_ENTITIES = [
   EngineDataset,
   OpticalImage,
@@ -425,4 +547,7 @@ export const ENGINE_ENTITIES = [
   ScoringModel,
   Roi,
   DiffRoi,
+  ImageSegmentationJob,
+  Segmentation,
+  SegmentationIonProfile,
 ]

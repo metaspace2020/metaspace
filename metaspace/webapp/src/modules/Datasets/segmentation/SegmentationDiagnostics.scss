@@ -1,0 +1,36 @@
+.segmentation-diagnostics {
+  padding: 16px;
+  
+
+}
+
+.segmentation-diagnostics-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #666;
+  
+  .el-icon {
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+  
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+.segmentation-diagnostics-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}

@@ -48,3 +48,8 @@ dist
 .ipynb_checkpoints
 
 ansible/aws/env
+
+
+.claude/*
+CLAUDE.md
+**/CLAUDE.md

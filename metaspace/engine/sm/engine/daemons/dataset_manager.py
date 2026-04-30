@@ -27,6 +27,7 @@ from sm.engine.postprocessing.ion_thumbnail import (
 )
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
+from sm.engine.postprocessing.segmentation_wrapper import submit_segmentation_job
 from sm.engine.postprocessing.ds_size_hash import save_size_hash
 from sm.engine.optical_image import del_optical_image
 from sm.engine.config import SMConfig
@@ -82,6 +83,15 @@ class DatasetManager:
             base_url = self._sm_config['services']['web_app_url']
             ds_id_quoted = urllib.parse.quote(msg['ds_id'])
             link = f'{base_url}/annotations?mdtype={md_type_quoted}&ds={ds_id_quoted}'
+        except Exception as e:
+            self.logger.error(e)
+        return link
+
+    def create_segmentation_web_app_link(self, msg):
+        link = None
+        try:
+            base_url = self._sm_config['services']['web_app_url']
+            link = f"{base_url}/dataset/{msg['ds_id']}/segmentation"
         except Exception as e:
             self.logger.error(e)
         return link
@@ -223,6 +233,35 @@ class DatasetManager:
         )
         self._send_email(msg['email'], 'METASPACE service notification (SUCCESS)', email_body)
 
+    def send_segmentation_success_email(self, msg):
+        ds_name, _ = self.fetch_ds_metadata(msg['ds_id'])
+        email_body = (
+            'Dear METASPACE user,\n\n'
+            f'Thank you for submitting the segmentation job for the "{ds_name}" dataset. '
+            'We are pleased to inform you that the segmentation job has been been queued and '
+            f"it will be processed shortly. You will receive an email when it is completed.\n\n"
+            'Best regards,\n'
+            'METASPACE Team'
+        )
+        self._send_email(msg['email'], 'METASPACE service notification (QUEUED)', email_body)
+
+    def send_segmentation_failed_email(self, ds_id, email, error_msg):
+        """Send failure email notification for segmentation jobs."""
+        ds_name, _ = self.fetch_ds_metadata(ds_id)
+        email_body = (
+            'Dear METASPACE user,\n\n'
+            f'We regret to inform you that the segmentation job for '
+            f'the "{ds_name}" dataset has failed during data preparation. '
+            f'Error details: {error_msg}\n\n'
+            'This error occurred while preparing the data for segmentation analysis. '
+            'Please check that your dataset has the required data (annotations, TIC image, etc.) '
+            'and try again. If the problem persists, please contact our support team '
+            'at contact@metaspace2020.org.\n\n'
+            'Best regards,\n'
+            'METASPACE Team'
+        )
+        self._send_email(email, 'METASPACE service notification (SEGMENTATION FAILED)', email_body)
+
     def send_failed_email(self, msg, traceback=None):
         ds_name, _ = self.fetch_ds_metadata(msg['ds_id'])
         content = (
@@ -242,6 +281,108 @@ class DatasetManager:
         )
         email_body = 'Dear METASPACE user,\n\n' f'{content}\n\n' 'Best regards,\n' 'METASPACE Team'
         self._send_email(msg['email'], 'METASPACE service notification (FAILED)', email_body)
+
+    def run_segmentation(self, msg):  # pylint: disable=too-many-locals
+        """Pick up a queued segmentation job and run it via the segmentation microservice."""
+
+        ds_id = msg['ds_id']
+        job_id = msg['job_id']
+        algorithm = msg.get('algorithm', 'pca_gmm')
+        database_ids = msg.get('database_ids', [])
+        fdr = msg.get('fdr', 0.2)
+        params = msg.get('params', {})
+        adducts = msg.get('adducts')
+        min_mz = msg.get('min_mz')
+        max_mz = msg.get('max_mz')
+        # None = no filter (off-sample classification may not exist)
+        off_sample = msg.get('off_sample')
+
+        daemon_start_time = time.time()
+        self.logger.info(
+            f'[SEGMENTATION_PERF] Daemon run_segmentation started for job {job_id}, dataset {ds_id}'
+        )
+        self.logger.info(f'Running segmentation job {job_id} for dataset {ds_id}')
+
+        # Mark job as started
+        db_update_start = time.time()
+        self._db.alter(
+            """UPDATE image_segmentation_job SET
+             status = 'STARTED', updated_at = NOW() WHERE id = %s""",
+            params=(job_id,),
+        )
+        db_update_time = time.time() - db_update_start
+        self.logger.info(
+            f'[SEGMENTATION_PERF] Job {job_id} marked as STARTED in {db_update_time:.3f}s'
+        )
+
+        try:
+            submit_start_time = time.time()
+            submit_segmentation_job(
+                ds_id=ds_id,
+                job_id=job_id,
+                algorithm=algorithm,
+                database_ids=database_ids,
+                fdr=fdr,
+                params=params,
+                db=self._db,
+                services_config=self._sm_config['services'],
+                adducts=adducts,
+                min_mz=min_mz,
+                max_mz=max_mz,
+                off_sample=off_sample,
+            )
+            submit_time = time.time() - submit_start_time
+            total_daemon_time = time.time() - daemon_start_time
+            self.logger.info(
+                f"""[SEGMENTATION_PERF] Segmentation
+                 job {job_id} submitted successfully"""
+            )
+            self.logger.info(
+                f"""[SEGMENTATION_PERF] Submit time: {submit_time:.3f}s,
+                 Total daemon time: {total_daemon_time:.3f}s"""
+            )
+        except Exception as e:
+            # Don't propagate — a segmentation failure
+            # should not change the dataset status to FAILED.
+            # The job row already records the failure.
+            failed_time = time.time() - daemon_start_time
+            self.logger.error(
+                f"""[SEGMENTATION_PERF] Segmentation job {job_id} for dataset {ds_id}
+                 failed after {failed_time:.3f}s: {e}""",
+                exc_info=True,
+            )
+
+            # Get submitter email for failure notification
+            try:
+                email_result = self._db.select_one(
+                    'SELECT submitter_email FROM image_segmentation_job WHERE id = %s',
+                    params=(job_id,),
+                )
+                submitter_email = email_result[0] if email_result and email_result[0] else None
+            except Exception as email_err:
+                self.logger.warning(
+                    f'Failed to retrieve submitter email for job {job_id}: {email_err}'
+                )
+                submitter_email = None
+
+            # Update job status in database
+            self._db.alter(
+                """UPDATE image_segmentation_job SET
+                status = 'FAILED', error = %s, updated_at = NOW() WHERE id = %s""",
+                params=(str(e), job_id),
+            )
+
+            # Send failure email notification if email is available
+            if submitter_email:
+                try:
+                    self.send_segmentation_failed_email(ds_id, submitter_email, str(e))
+                    self.logger.info(
+                        f'Sent segmentation failure email to {submitter_email} for job {job_id}'
+                    )
+                except Exception as email_err:
+                    self.logger.warning(
+                        f'Failed to send failure email for job {job_id}: {email_err}'
+                    )
 
     def ds_failure_handler(self, msg, e):
         self.logger.error(f' SM {msg["action"]} daemon: failure', exc_info=True)

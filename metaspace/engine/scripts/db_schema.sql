@@ -404,6 +404,61 @@ CREATE INDEX "diff_roi_auc_index" ON "public"."diff_roi" (
   "auc"
 ) ;
 
+CREATE TABLE "public"."image_segmentation_job" (
+  "id" SERIAL NOT NULL, 
+  "ds_id" text NOT NULL, 
+  "status" text NOT NULL, 
+  "error" text, 
+  "submitter_email" text, 
+  "created_at" TIMESTAMP NOT NULL DEFAULT NOW(), 
+  "updated_at" TIMESTAMP NOT NULL DEFAULT NOW(), 
+  CONSTRAINT "PK_02b755530fe45b2070cf66f93b7" PRIMARY KEY ("id")
+);
+
+CREATE INDEX "image_segmentation_job_ds_id_index" ON "public"."image_segmentation_job" (
+  "ds_id"
+) ;
+
+CREATE INDEX "image_segmentation_job_status_index" ON "public"."image_segmentation_job" (
+  "status"
+) ;
+
+CREATE TABLE "public"."segmentation" (
+  "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
+  "dataset_id" text NOT NULL, 
+  "job_id" integer, 
+  "segment_index" integer NOT NULL, 
+  "algorithm" text NOT NULL, 
+  "status" text NOT NULL, 
+  "error" text, 
+  "name" text, 
+  "created_at" TIMESTAMP NOT NULL DEFAULT NOW(), 
+  "updated_at" TIMESTAMP NOT NULL DEFAULT NOW(), 
+  CONSTRAINT "PK_4bc2a01449d339b58b557792a86" PRIMARY KEY ("id")
+);
+
+CREATE INDEX "segmentation_dataset_id_index" ON "public"."segmentation" (
+  "dataset_id"
+) ;
+
+CREATE TABLE "public"."segmentation_ion_profile" (
+  "id" BIGSERIAL NOT NULL, 
+  "segmentation_id" uuid NOT NULL, 
+  "annotation_id" integer NOT NULL, 
+  "enrich_score" real NOT NULL, 
+  CONSTRAINT "UQ_segmentation_ion_profile" UNIQUE ("segmentation_id", 
+  "annotation_id"), 
+  CONSTRAINT "PK_2d0f64828235aa002b67dc4928d" PRIMARY KEY ("id")
+);
+
+CREATE INDEX "segmentation_ion_profile_segmentation_id_index" ON "public"."segmentation_ion_profile" (
+  "segmentation_id"
+) ;
+
+CREATE INDEX "segmentation_ion_profile_annotation_id_index" ON "public"."segmentation_ion_profile" (
+  "annotation_id"
+) ;
+
 CREATE TABLE "graphql"."dataset" (
   "id" text NOT NULL, 
   "user_id" uuid NOT NULL, 
@@ -605,6 +660,26 @@ ALTER TABLE "public"."diff_roi" ADD CONSTRAINT "FK_00cab624e3493055836af1f50be" 
 
 ALTER TABLE "public"."diff_roi" ADD CONSTRAINT "FK_483b703f6f7daa54977c79a9d2b" FOREIGN KEY (
   "roi_id") REFERENCES "public"."roi"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."image_segmentation_job" ADD CONSTRAINT "FK_5bcd68b2b4aca24cc5edfc9daeb" FOREIGN KEY (
+  "ds_id") REFERENCES "public"."dataset"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."segmentation" ADD CONSTRAINT "FK_1edf03796c0b5d6c554a33de50f" FOREIGN KEY (
+  "dataset_id") REFERENCES "public"."dataset"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."segmentation" ADD CONSTRAINT "FK_0c6a7c2a1459e2678ed1702496c" FOREIGN KEY (
+  "job_id") REFERENCES "public"."image_segmentation_job"("id"
+) ON DELETE SET NULL ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."segmentation_ion_profile" ADD CONSTRAINT "FK_dc8d93ce0234e49a86b7c4547e5" FOREIGN KEY (
+  "segmentation_id") REFERENCES "public"."segmentation"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."segmentation_ion_profile" ADD CONSTRAINT "FK_1fa2c4eb5941c1fd8057ab00c36" FOREIGN KEY (
+  "annotation_id") REFERENCES "public"."annotation"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE "graphql"."dataset" ADD CONSTRAINT "FK_d890658f7d5c8961e0a0cbdbe41" FOREIGN KEY (

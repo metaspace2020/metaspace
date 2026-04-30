@@ -1,0 +1,352 @@
+import json
+import logging
+import time
+from typing import Optional
+
+import boto3
+from botocore.exceptions import ClientError
+
+from sm.engine.config import SMConfig
+from sm.engine.daemons.actions import DaemonAction, DaemonActionStage
+from sm.engine.queue import QueuePublisher, SM_UPDATE
+from sm.engine.postprocessing.segmentation_wrapper import save_segmentation_result
+
+logger = logging.getLogger(__name__)
+
+
+class SegmentationManager:
+    """Class for managing segmentation operations."""
+
+    def __init__(self, db):
+        self._db = db
+        self._sm_config = SMConfig.get_conf()
+
+        # Initialize SES client for email notifications
+        if 'aws' in self._sm_config:
+            self.ses = boto3.client(
+                'ses',
+                region_name=self._sm_config['aws']['aws_default_region'],
+                aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
+                aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'],
+            )
+        else:
+            self.ses = None
+
+    def _create_update_queue_publisher(self):
+        """Create queue publisher for SM_UPDATE."""
+        return QueuePublisher(self._sm_config['rabbitmq'], SM_UPDATE, logger)
+
+    def run_segmentation(  # pylint: disable=too-many-arguments,too-many-locals
+        self,
+        ds_id: str,
+        algorithm: str = 'pca_gmm',
+        database_ids: list = None,
+        fdr: float = 0.2,
+        params: dict = None,
+        adducts: Optional[list] = None,
+        min_mz: Optional[float] = None,
+        max_mz: Optional[float] = None,
+        off_sample: Optional[bool] = None,
+        email: Optional[str] = None,
+    ):
+        """Run segmentation analysis.
+
+        Args:
+            ds_id: Dataset ID
+            algorithm: Segmentation algorithm (default 'pca_gmm')
+            database_ids: List of database IDs (default [])
+            fdr: False discovery rate (default 0.2)
+            params: Algorithm parameters (default {})
+            adducts: List of adducts to filter by
+            min_mz: Minimum m/z value
+            max_mz: Maximum m/z value
+            off_sample: Off-sample filter
+            email: Email for notifications
+
+        Returns:
+            dict: Job information with job_id
+        """
+        if database_ids is None:
+            database_ids = []
+        if params is None:
+            params = {}
+
+        start_time = time.time()
+        logger.info(
+            f"""[SEGMENTATION_PERF] SegmentationManager.run_segmentation started
+             for dataset {ds_id} with algorithm {algorithm}"""
+        )
+
+        # Store all job parameters for restart functionality
+        job_parameters = {
+            'algorithm': algorithm,
+            'database_ids': database_ids,
+            'fdr': fdr,
+            'params': params,
+            'adducts': adducts,
+            'min_mz': min_mz,
+            'max_mz': max_mz,
+            'off_sample': off_sample,
+        }
+
+        # Insert a QUEUED job row and retrieve its id
+        job_ids = self._db.insert_return(
+            '''INSERT INTO image_segmentation_job (ds_id, status, submitter_email, parameters)
+               VALUES (%s, %s, %s, %s)
+               RETURNING id''',
+            rows=[(ds_id, DaemonActionStage.QUEUED, email, json.dumps(job_parameters))],
+        )
+        job_id = job_ids[0]
+
+        db_insert_time = time.time() - start_time
+        logger.info(
+            f"""[SEGMENTATION_PERF] Job {job_id} inserted in DB for dataset {ds_id}
+             in {db_insert_time:.3f}s"""
+        )
+
+        # Publish the job to the SM_UPDATE queue for the daemon to pick up
+        queue_publisher = self._create_update_queue_publisher()
+        msg = {
+            'action': DaemonAction.SEGMENTATION,
+            'ds_id': ds_id,
+            'job_id': job_id,
+            'algorithm': algorithm,
+            'database_ids': database_ids,
+            'fdr': fdr,
+            'params': params,
+        }
+        if adducts is not None:
+            msg['adducts'] = adducts
+        if min_mz is not None:
+            msg['min_mz'] = min_mz
+        if max_mz is not None:
+            msg['max_mz'] = max_mz
+        msg['off_sample'] = off_sample
+        if email:
+            msg['email'] = email
+        queue_publish_start = time.time()
+        queue_publisher.publish(msg)
+        queue_publish_time = time.time() - queue_publish_start
+
+        total_time = time.time() - start_time
+        logger.info(f'[SEGMENTATION_PERF] Segmentation job {job_id} queued for dataset {ds_id}')
+        logger.info(
+            f"""[SEGMENTATION_PERF] Queue publish
+             time: {queue_publish_time:.3f}s, Total manager time: {total_time:.3f}s"""
+        )
+
+        return {'job_id': job_id, 'ds_id': ds_id}
+
+    def handle_segmentation_callback(
+        self,
+        job_id: int,
+        ds_id: str,
+        status: str,
+        result: dict = None,
+        error: str = None,
+        email: Optional[str] = None,
+    ):
+        """Handle segmentation callback results.
+
+        Args:
+            job_id: Segmentation job ID
+            ds_id: Dataset ID
+            status: Job status ('ok' or 'failed')
+            result: Segmentation result data (if successful)
+            error: Error message (if failed)
+            email: Email address for notifications (will be retrieved from DB if not provided)
+
+        Returns:
+            dict: Status information
+        """
+        callback_start_time = time.time()
+        logger.info(
+            f"""[SEGMENTATION_PERF] Callback received for job {job_id},
+             dataset {ds_id}, status: {status}"""
+        )
+
+        # If email is not provided, retrieve it from the database
+        if not email:
+            try:
+                result_email = self._db.select_one(
+                    'SELECT submitter_email FROM image_segmentation_job WHERE id = %s',
+                    params=(job_id,),
+                )
+                if result_email:
+                    email = result_email[0]
+            except Exception as e:
+                logger.warning(f'Failed to retrieve submitter email for job {job_id}: {e}')
+        if status == 'ok':
+            logger.info(
+                f'Received successful segmentation result for job {job_id}, dataset {ds_id}'
+            )
+            save_segmentation_result(ds_id, job_id, result, self._db)
+
+            # Send success email notification if email is provided
+            if email:
+                try:
+                    self._send_success_email(ds_id, email)
+                except Exception as e:
+                    logger.warning(f'Failed to send success email for job {job_id}: {e}')
+        else:
+            error_msg = error or 'unknown error'
+            logger.error(f'Segmentation job {job_id} for dataset {ds_id} failed: {error_msg}')
+            self._db.alter(
+                """UPDATE image_segmentation_job SET
+                 status = 'FAILED', error = %s, updated_at = NOW() WHERE id = %s""",
+                params=(error_msg, job_id),
+            )
+
+            # Send failure email notification if email is provided
+            if email:
+                try:
+                    self._send_failure_email(ds_id, email, error_msg)
+                except Exception as e:
+                    logger.warning(f'Failed to send failure email for job {job_id}: {e}')
+
+        callback_total_time = time.time() - callback_start_time
+        logger.info(
+            f"""[SEGMENTATION_PERF] Callback processing completed
+             for job {job_id} in {callback_total_time:.3f}s"""
+        )
+
+        return {'status': 'processed', 'job_id': job_id, 'ds_id': ds_id}
+
+    def restart_pending_jobs(self):
+        """Restart all pending segmentation jobs by republishing them to the queue.
+
+        This allows the segmentation daemon to pick them up and reprocess them.
+        This is typically called when the segmentation service restarts and needs to
+        continue processing jobs that were queued but not yet completed.
+
+        Returns:
+            dict: Number of jobs restarted
+        """
+        try:
+            # Get all QUEUED jobs from database
+            pending_jobs_data = self._db.select(
+                """SELECT id, ds_id, submitter_email, parameters
+                   FROM image_segmentation_job
+                   WHERE status in ('QUEUED', 'STARTED')
+                   ORDER BY created_at ASC""",
+            )
+
+            if not pending_jobs_data:
+                logger.info('No pending segmentation jobs found to restart')
+                return {'restarted_count': 0}
+
+            # Republish jobs to the queue with stored parameters
+            queue_publisher = self._create_update_queue_publisher()
+            restarted_count = len(pending_jobs_data)
+
+            for job_row in pending_jobs_data:
+                job_id, ds_id, email, params_dict = job_row
+
+                # Create message with stored or default parameters
+                msg = {
+                    'action': DaemonAction.SEGMENTATION,
+                    'ds_id': ds_id,
+                    'job_id': job_id,
+                    'algorithm': params_dict.get('algorithm', 'pca_gmm'),
+                    'database_ids': params_dict.get('database_ids', []),
+                    'fdr': params_dict.get('fdr', 0.2),
+                    'params': params_dict.get('params', {}),
+                    'off_sample': params_dict.get('off_sample'),
+                }
+
+                # Add optional parameters if they exist
+                if params_dict.get('adducts') is not None:
+                    msg['adducts'] = params_dict['adducts']
+                if params_dict.get('min_mz') is not None:
+                    msg['min_mz'] = params_dict['min_mz']
+                if params_dict.get('max_mz') is not None:
+                    msg['max_mz'] = params_dict['max_mz']
+
+                if email:
+                    msg['email'] = email
+
+                try:
+                    queue_publisher.publish(msg)
+                    logger.info(
+                        f'Republished segmentation job {job_id} for dataset {ds_id} to queue'
+                    )
+                except Exception as e:
+                    logger.error(f'Failed to republish job {job_id}: {e}')
+
+            logger.info(f'Successfully restarted {restarted_count} pending segmentation jobs')
+            return {'restarted_count': restarted_count}
+
+        except Exception as e:
+            logger.error(f'Failed to restart pending segmentation jobs: {e}', exc_info=True)
+            raise
+
+    def _get_callback_url(self):
+        """Get callback URL for segmentation service."""
+        engine_config = self._sm_config['services']
+        callback_url = f"{engine_config['sm_engine_url']}/segmentation/callback"
+        return callback_url
+
+    def _send_email(self, email: str, subject: str, body: str):
+        """Send email using SES."""
+        if not self._sm_config['services'].get('send_email', True):
+            return
+
+        if not self.ses:
+            logger.warning('SES client not configured, cannot send email')
+            return
+
+        try:
+            resp = self.ses.send_email(
+                Source='contact@metaspace2020.org',
+                Destination={'ToAddresses': [email]},
+                Message={'Subject': {'Data': subject}, 'Body': {'Text': {'Data': body}}},
+            )
+        except ClientError as e:
+            logger.warning(f'Send email exception {e} for {email}')
+        else:
+            if resp['ResponseMetadata']['HTTPStatusCode'] == 200:
+                logger.info(f'Email with "{subject}" subject was sent to {email}')
+            else:
+                logger.warning(f'SES failed to send email to {email}')
+
+    def _get_dataset_name(self, ds_id: str):
+        """Get dataset name from database."""
+        try:
+            result = self._db.select_one('SELECT name FROM dataset WHERE id = %s', params=(ds_id,))
+            return result[0] if result else ds_id
+        except Exception:
+            return ds_id
+
+    def _send_success_email(self, ds_id: str, email: str):
+        """Send success email notification."""
+        ds_name = self._get_dataset_name(ds_id)
+        base_url = self._sm_config['services']['web_app_url']
+        link = f"{base_url}/dataset/{ds_id}/segmentation"
+        subject = 'METASPACE service notification (SEGMENTATION SUCCESS)'
+        body = (
+            'Dear METASPACE user,\n\n'
+            f'Thank you for submitting the segmentation job for the "{ds_name}" dataset. '
+            'We are pleased to inform you that the segmentation analysis '
+            f'for dataset {ds_id} '
+            f'has been completed successfully. '
+            f'You can view the results at {link}.\n\n'
+            'Best regards,\n'
+            'METASPACE Team'
+        )
+        self._send_email(email, subject, body)
+
+    def _send_failure_email(self, ds_id: str, email: str, error: str):
+        """Send failure email notification."""
+        ds_name = self._get_dataset_name(ds_id)
+        subject = 'METASPACE service notification (SEGMENTATION FAILED)'
+        body = (
+            'Dear METASPACE user,\n\n'
+            f'We regret to inform you that the segmentation job for '
+            f'the "{ds_name}" dataset has failed. '
+            f'Error details: {error}\n\n'
+            'Please check your input parameters and try again. If the problem persists, '
+            'please contact our support team.\n\n'
+            'Best regards,\n'
+            'METASPACE Team'
+        )
+        self._send_email(email, subject, body)

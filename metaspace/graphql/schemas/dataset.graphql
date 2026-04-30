@@ -384,6 +384,47 @@ type InitialPeak {
   y: Int!
 }
 
+type ImageSegmentationJob {
+  id: Int!
+  datasetId: String!
+  status: String!
+  error: String
+  submitterEmail: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Segmentation {
+  id: ID!
+  datasetId: String!
+  jobId: Int
+  segmentIndex: Int!
+  algorithm: String!
+  status: String!
+  error: String
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type SegmentationIonProfile {
+  id: ID!
+  segmentationId: ID!
+  annotationId: Int!
+  enrichScore: Float!
+}
+
+type SegmentationIonProfileResult {
+  segmentation: Segmentation!
+  annotation: Annotation!
+  enrichScore: Float!
+}
+
+input SegmentationIonProfileFilter {
+  minEnrichScore: Float
+  topN: Int
+}
+
 type Roi {
   id: ID!
   datasetId: String!
@@ -449,9 +490,13 @@ type Query {
   initialPeak(datasetId: String!): InitialPeak
 
   diffRoiResults(datasetId: String!, filter: DiffRoiFilter = {}, annotationFilter: AnnotationFilter = {}): [DiffRoiResult!]!
-  
+
   rois(datasetId: String!, isDefault: Boolean): [Roi!]!
   roi(id: ID!): Roi
+
+  segmentationJobs(datasetId: String!): [ImageSegmentationJob!]!
+  segmentations(datasetId: String!): [Segmentation!]!
+  segmentationIonProfiles(segmentationId: ID!, filter: SegmentationIonProfileFilter = {}): [SegmentationIonProfileResult!]!
 }
 
 type Mutation {
@@ -516,6 +561,23 @@ type Mutation {
   createRoi(datasetId: String!, input: RoiInput!): Roi!
   updateRoi(id: ID!, input: RoiInput!): Roi!
   deleteRoi(id: ID!): Boolean!
+
+  runSegmentation(
+    datasetId: String!
+    algorithm: String! = "pca_gmm"
+    databaseIds: [Int!]! = []
+    fdr: Float = 0.2
+    adducts: [String!]
+    minMz: Float
+    maxMz: Float
+    offSample: Boolean = false  # false = on-sample only, true = off-sample only, null = no filter
+    params: String  # JSON-encoded algorithm parameters
+  ): Boolean!
+
+  updateSegmentation(
+    id: ID!
+    name: String!
+  ): Segmentation!
 }
 
 type Subscription {

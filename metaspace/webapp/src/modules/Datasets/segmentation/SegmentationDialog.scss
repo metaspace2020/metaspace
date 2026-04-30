@@ -1,0 +1,125 @@
+.segmentation-dialog {
+  .segmentation-step {
+    margin: 1rem 0;
+    
+    .filter-grid {
+      display: flex;
+      flex-wrap: wrap;
+      flex-direction: row;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .filter-group {
+
+      border-radius: 10px;
+      background: #f5f7fa;
+      padding: 1rem;
+      width: 180px;
+
+      .filter-label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+      }
+      
+      .fdr-slider {
+        margin: 0.5rem 0 1.5rem 0;
+      }
+      
+      .mz-inputs {
+        display: flex;
+        gap: 0.75rem;
+      }
+      
+      .database-select,
+      .adduct-select,
+      .sample-filter-select {
+        width: 100%;
+        
+        .el-select__tags {
+          max-height: 100px;
+          overflow-y: auto;
+        }
+      }
+    }
+    
+    .annotation-warning {
+      margin: 1rem 0;
+      
+      .annotation-count {
+        margin: 0.5rem 0 0 0;
+        font-weight: 500;
+        color: #e6a23c;
+      }
+    }
+    
+    .algorithm-select {
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+    
+    .parameter-group {
+      margin-bottom: 1.5rem;
+      
+      .parameter-label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 0.75rem;
+        color: #333;
+      }
+      
+      .number-input-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        
+        .number-btn {
+          width: 2rem;
+          height: 2rem;
+          padding: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: bold;
+        }
+        
+        .number-display {
+          min-width: 2rem;
+          text-align: center;
+          font-weight: 500;
+          font-size: 1.1rem;
+        }
+      }
+    }
+    
+    .step-buttons {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    
+    .next-btn {
+      margin-top: 1rem;
+    }
+  }
+}
+
+.segmentation-dialog {
+  .el-alert {
+    
+    &.el-alert--warning {
+      background-color: #fdf6ec;
+      border-color: #f5dab1;
+      
+      .el-alert__icon {
+        color: #e6a23c;
+      }
+      
+      .el-alert__title {
+        color: #cf711f;
+        font-weight: 500;
+      }
+    }
+  }
+}

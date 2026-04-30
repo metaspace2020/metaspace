@@ -7,3 +7,8 @@
 !metaspace/engine/requirements*
 # Whitelist the build context for engine
 !docker/sm-engine/**/*
+
+# Whitelist the build context for image-segmentation
+!metaspace/postprocessing/
+!metaspace/postprocessing/*
+!metaspace/postprocessing/**/*

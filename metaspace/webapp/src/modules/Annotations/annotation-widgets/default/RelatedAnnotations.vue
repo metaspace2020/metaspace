@@ -28,6 +28,8 @@
           :colormap="colormap"
           :min-intensity="other.isotopeImages[0].minIntensity"
           :max-intensity="other.isotopeImages[0].maxIntensity"
+          :width="width"
+          :height="height"
           show-pixel-intensity
         />
         <el-popover trigger="hover" class="rel-annot-details" placement="top" :open-delay="100">
@@ -77,7 +79,7 @@ import MolecularFormula from '../../../../components/MolecularFormula'
 
 export default defineComponent({
   components: { ImageLoader, CandidateMoleculesPopover, MolecularFormula },
-  props: ['query', 'annotation', 'databaseId', 'imageLoaderSettings'],
+  props: ['query', 'annotation', 'databaseId', 'imageLoaderSettings', 'width', 'height'],
   setup(props) {
     const store = useStore()
     const route = useRoute()

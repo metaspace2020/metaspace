@@ -399,6 +399,16 @@ export const compareROIsMutation = gql`
   }
 `
 
+export const updateSegmentationMutation = gql`
+  mutation updateSegmentationMutation($id: ID!, $name: String!) {
+    updateSegmentation(id: $id, name: $name) {
+      id
+      name
+      updatedAt
+    }
+  }
+`
+
 export const diffRoiResultsQuery = gql`
   query ($datasetId: String!, $filter: DiffRoiFilter = {}, $annotationFilter: AnnotationFilter = {}) {
     diffRoiResults(datasetId: $datasetId, filter: $filter, annotationFilter: $annotationFilter) {
@@ -727,6 +737,72 @@ export const getInitialPeak = gql`
       mz
       x
       y
+    }
+  }
+`
+
+export const getSegmentationsQuery = gql`
+  query getSegmentationsQuery($datasetId: String!) {
+    segmentations(datasetId: $datasetId) {
+      id
+      datasetId
+      jobId
+      segmentIndex
+      algorithm
+      status
+      error
+      name
+      createdAt
+      updatedAt
+    }
+  }
+`
+
+export const getSegmentationIonProfilesWithImagesQuery = gql`
+  query getSegmentationIonProfilesWithImagesQuery($segmentationId: ID!, $filter: SegmentationIonProfileFilter = {}) {
+    segmentationIonProfiles(segmentationId: $segmentationId, filter: $filter) {
+      segmentation {
+        id
+        datasetId
+        segmentIndex
+      }
+      annotation {
+        id
+        ion
+        sumFormula
+        adduct
+        mz
+        msmScore
+        fdrLevel
+        isotopeImages {
+          mz
+          url
+          minIntensity
+          maxIntensity
+          totalIntensity
+        }
+        possibleCompounds {
+          name
+        }
+        isomers {
+          ion
+        }
+        isobars {
+          shouldWarn
+        }
+      }
+      enrichScore
+    }
+  }
+`
+
+export const getSegmentationJobsQuery = gql`
+  query getSegmentationJobsQuery($datasetId: String!) {
+    segmentationJobs(datasetId: $datasetId) {
+      id
+      datasetId
+      status
+      error
     }
   }
 `

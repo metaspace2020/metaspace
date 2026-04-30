@@ -1,0 +1,12 @@
+# -*- conf -*-
+
+[program:{{ sm_image_segmentation_app_name }}]
+process_name = {{ sm_image_segmentation_app_name }}
+environment = PATH="{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin"
+directory = {{ metaspace_home }}/metaspace/postprocessing/image_segmentation
+command = {{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python app.py
+redirect_stderr = true
+stdout_logfile = {{ sm_home }}/logs/{{ sm_image_segmentation_app_name }}.log
+numprocs = 1
+numprocs_start = 8000
+startsecs = 10

@@ -47,14 +47,16 @@ export default defineComponent({
     opacityMode: String,
     annotImageOpacity: Number,
     normalizationData: Object,
+    width: { type: Number, default: 500 },
+    height: { type: Number, default: 500 },
   },
   setup(props, { emit, attrs }) {
     const container = ref(null)
     const imageLoader = ref(null)
     const ionImage = ref<IonImage | null>(null)
     const ionImageIsLoading = ref(false)
-    const containerWidth = ref(500)
-    const containerHeight = ref(500)
+    const containerWidth = ref(props.width)
+    const containerHeight = ref(props.height)
 
     const listeners = computed(() => {
       return Object.fromEntries(Object.entries(attrs).filter(([, value]) => typeof value === 'function'))

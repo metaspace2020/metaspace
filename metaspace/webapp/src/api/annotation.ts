@@ -371,3 +371,9 @@ export const isobarsQuery = gql`
     }
   }
 `
+
+export const countAnnotationsQuery = gql`
+  query CountAnnotations($filter: AnnotationFilter!, $dFilter: DatasetFilter!, $query: String) {
+    countAnnotations(filter: $filter, datasetFilter: $dFilter, simpleQuery: $query)
+  }
+`

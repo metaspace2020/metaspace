@@ -18,7 +18,16 @@ import { metadataSchemas } from '../../../../metadataSchemas/metadataRegistry'
 import { getDatasetForEditing } from '../operation/getDatasetForEditing'
 import { deleteDataset } from '../operation/deleteDataset'
 import { checkNoPublishedProjectRemoved, checkProjectsPublicationStatus } from '../operation/publicationChecks'
-import { EngineDataset, ScoringModel, Roi, DiffRoi } from '../../engine/model'
+import {
+  EngineDataset,
+  ScoringModel,
+  Roi,
+  DiffRoi,
+  Segmentation,
+  ImageSegmentationJob,
+  DatasetDiagnostic,
+  DiagnosticTypeOptions,
+} from '../../engine/model'
 import { addExternalLink, removeExternalLink } from '../../project/ExternalLink'
 import { esDatasetByID } from '../../../../esConnector'
 import { mapDatabaseToDatabaseId } from '../../moldb/util/mapDatabaseToDatabaseId'
@@ -805,6 +814,111 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     await ctx.entityManager.delete(Roi, id)
     return true
+  },
+
+  runSegmentation: async(
+    source: any,
+    {
+      datasetId, algorithm = 'pca_gmm',
+      databaseIds = [],
+      fdr = 0.2, adducts, minMz, maxMz, offSample = false, params,
+    }: any,
+    ctx: Context
+  ) => {
+    const startTime = Date.now()
+    console.log(`[SEGMENTATION_PERF] GraphQL runSegmentation started
+       for dataset ${datasetId} at ${new Date().toISOString()}`)
+
+    if (ctx.user.id == null) {
+      throw new UserError('Not authenticated')
+    }
+
+    const dataset = await esDatasetByID(datasetId, ctx.user)
+    if (!dataset) {
+      throw new UserError('Dataset not found or access denied')
+    }
+
+    const body: Record<string, any> = {
+      ds_id: datasetId,
+      algorithm,
+      database_ids: databaseIds,
+      fdr,
+      params: params ? JSON.parse(params) : {},
+      email: ctx.user.email,
+    }
+    if (adducts != null) body.adducts = adducts
+    if (minMz != null) body.min_mz = minMz
+    if (maxMz != null) body.max_mz = maxMz
+    body.off_sample = offSample
+
+    console.log(`[SEGMENTATION_PERF] GraphQL parameters prepared
+       for dataset ${datasetId}, algorithm: ${algorithm}, databases: ${databaseIds.length}, fdr: ${fdr}`)
+
+    try {
+      // Scoped to datasetId; ion_profile rows cascade from segmentation. Delete before enqueue
+      // so the new image_segmentation_job inserted by the API is not removed.
+      await ctx.entityManager.transaction(async(em) => {
+        await em.delete(Segmentation, { datasetId })
+        await em.delete(ImageSegmentationJob, { datasetId })
+        await em.delete(DatasetDiagnostic, {
+          datasetId,
+          type: DiagnosticTypeOptions.SEGMENTATION,
+        })
+      })
+
+      const apiCallStart = Date.now()
+      await smApiDatasetRequest('/v1/segmentation/run', body)
+      const apiCallEnd = Date.now()
+
+      const totalTime = Date.now() - startTime
+      console.log(`[SEGMENTATION_PERF] GraphQL runSegmentation completed for dataset ${datasetId}`)
+      console.log(`[SEGMENTATION_PERF] Total GraphQL
+         time: ${totalTime}ms, API call time: ${apiCallEnd - apiCallStart}ms`)
+
+      return true
+    } catch (error) {
+      const totalTime = Date.now() - startTime
+      console.error(`[SEGMENTATION_PERF] GraphQL
+         runSegmentation failed for dataset ${datasetId} after ${totalTime}ms:`, error)
+      throw new UserError('Failed to submit segmentation job. Please try again later.')
+    }
+  },
+
+  updateSegmentation: async(
+    source: any,
+    { id, name }: { id: string, name: string },
+    ctx: Context
+  ) => {
+    if (ctx.user.id == null) {
+      throw new UserError('Not authenticated')
+    }
+
+    const segmentation = await ctx.entityManager.findOne(Segmentation, { where: { id } })
+    if (!segmentation) {
+      throw new UserError('Segmentation not found')
+    }
+
+    // Check if user has access to the dataset
+    const dataset = await esDatasetByID(segmentation.datasetId, ctx.user)
+    if (!dataset) {
+      throw new UserError('Dataset not found or access denied')
+    }
+
+    // Check if user can edit the dataset
+    const canEdit = await canEditEsDataset(dataset, ctx)
+    if (!canEdit) {
+      throw new UserError('You do not have permission to edit this segmentation')
+    }
+
+    // Update the segmentation name
+    await ctx.entityManager.update(Segmentation, id, {
+      name: name.trim(),
+      updatedAt: moment.utc(moment.utc().toDate()),
+    })
+
+    // Return the updated segmentation
+    const updatedSegmentation = await ctx.entityManager.findOne(Segmentation, { where: { id } })
+    return updatedSegmentation
   },
 }
 

@@ -35,14 +35,18 @@ class SMUpdateDaemon:
 
         if msg['action'] in [DaemonAction.UPDATE, DaemonAction.INDEX]:
             msg['web_app_link'] = self._manager.create_web_app_link(msg)
+        elif msg['action'] == DaemonAction.SEGMENTATION:
+            msg['web_app_link'] = self._manager.create_segmentation_web_app_link(msg)
 
         if msg['action'] == DaemonAction.DELETE:
             self._manager.post_to_slack(
                 'dart', f' [v] Succeeded to {msg["action"]}: {json.dumps(msg)}'
             )
 
-        if msg.get('email'):
+        if msg.get('email') and msg['action'] not in [DaemonAction.SEGMENTATION]:
             self._manager.send_success_email(msg)
+        elif msg.get('email') and msg['action'] == DaemonAction.SEGMENTATION:
+            self._manager.send_segmentation_success_email(msg)
 
     def _on_failure(self, msg, e):
         self._manager.ds_failure_handler(msg, e)
@@ -77,6 +81,8 @@ class SMUpdateDaemon:
                 self._manager.update(ds, msg['fields'])
             elif msg['action'] == DaemonAction.DELETE:
                 self._manager.delete(ds=ds)
+            elif msg['action'] == DaemonAction.SEGMENTATION:
+                self._manager.run_segmentation(msg)
             else:
                 raise SMError(f'Wrong action: {msg["action"]}')
         except Exception as e:

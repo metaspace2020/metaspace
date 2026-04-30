@@ -1,0 +1,17 @@
+{
+  "bottle": {
+    "host": "0.0.0.0",
+    "port": 9877,
+    "debug": false,
+    "server": "cherrypy"
+  },
+  "engine_url": "http://localhost:5123",
+  "aws": {
+    "aws_default_region": "{{ aws_region }}",
+    "aws_access_key_id": "{{ aws_access_key_id }}",
+    "aws_secret_access_key": "{{ aws_secret_access_key }}"
+  },
+  "imzml_browser_storage": {
+    "bucket": "{{ sm_imzml_browser_bucket }}"
+  }
+}

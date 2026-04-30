@@ -1,0 +1,17 @@
+{
+  "bottle": {
+    "host": "0.0.0.0",
+    "port": 9877,
+    "debug": false,
+    "server": "cherrypy"
+  },
+  "storage": {
+    "endpoint_url": "http://storage:9000",
+    "access_key_id": "minioadmin",
+    "secret_access_key": "minioadmin"
+  },
+  "engine_url": "http://api:5123",
+  "imzml_browser_storage": {
+    "bucket": "sm-imzml-browser-dev"
+  }
+}
