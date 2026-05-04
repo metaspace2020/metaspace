@@ -28,7 +28,7 @@ METADATA_FIELDS = [TIC_ACCESSION, MIN_MZ_ACCESSION, MAX_MZ_ACCESSION]
 _process_spectrum_lock = Lock()
 
 
-class ImzMLReader:
+class ImzMLReader:  # pylint: disable=too-many-instance-attributes
     """This class bundles the ability to somehow access ImzML data (implemented in subclasses)
     with some commonly-used pre-computed data such as the mask image and the mapping between
     spectrum index and pixel index.  Additionally, it provides a central place to efficiently
