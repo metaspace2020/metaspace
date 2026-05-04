@@ -123,8 +123,23 @@ def make_compute_image_metrics(
 
     sample_area_mask = imzml_reader.mask
     n_spectra = np.count_nonzero(sample_area_mask)
-    empty_matrix = np.zeros(sample_area_mask.shape, dtype=np.float32)
-    sample_area_mask_flat = sample_area_mask.flatten()
+    pixel_to_flat_idx = imzml_reader.pixel_to_flat_idx
+    img_w = imzml_reader.w
+    empty_flat = np.zeros(n_spectra, dtype=np.float32)
+
+    def _coo_to_flat(img):
+        """Scatter a coo_matrix directly into a 1D masked-flat array of size n_spectra.
+
+        Equivalent to img.toarray().flatten()[sample_area_mask_flat] but without ever
+        allocating the full h×w bounding box. np.add.at correctly sums duplicate coordinates
+        that arise from concat_coo_matrices for split formulas.
+        """
+        if img is None or img.nnz == 0:
+            return empty_flat
+        flat = np.zeros(n_spectra, dtype=np.float32)
+        flat_positions = pixel_to_flat_idx[img.row * img_w + img.col]
+        np.add.at(flat, flat_positions, img.data)
+        return flat
 
     def compute_metrics(image_set: FormulaImageSet):
         # pylint: disable=unused-variable  # benchmark is used in commented-out dev code
@@ -136,8 +151,7 @@ def make_compute_image_metrics(
 
         # with benchmark('overall'):
 
-        iso_imgs = [img.toarray() if img is not None else empty_matrix for img in image_set.images]
-        iso_imgs_flat = np.array([img.flatten()[sample_area_mask_flat] for img in iso_imgs])
+        iso_imgs_flat = np.array([_coo_to_flat(img) for img in image_set.images])
 
         doc = Metrics(formula_i=image_set.formula_i)
 
@@ -178,7 +192,7 @@ def make_compute_image_metrics(
                 )
                 if (doc.spatial or 0.0) > 0.0 or calc_all:
                     # with benchmark('chaos'):
-                    doc.chaos = chaos_metric(iso_imgs[0], n_levels)
+                    doc.chaos = chaos_metric(image_set.images[0], n_levels)
 
         doc.msm = (doc.chaos or 0.0) * (doc.spatial or 0.0) * (doc.spectral or 0.0)
 

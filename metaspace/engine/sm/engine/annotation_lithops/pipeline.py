@@ -106,7 +106,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
 
         # Check pixel limits
         nz_pixel_limit = 700000
-        pixel_limit = 1000000
+        # pixel_limit = 1000000
         nz_pixels = self.imzml_reader.n_spectra
         n_pixels = self.imzml_reader.h * self.imzml_reader.w
 
@@ -115,10 +115,18 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
                 f'Pixel limit ({nz_pixel_limit}) exceeded. Contact contact@metaspace2020.org.'
             )
 
-        if n_pixels > pixel_limit:
-            # pylint: disable=line-too-long
-            raise LimitError(
-                f'The bounding box area exceeds the maximum allowed pixel count of ({pixel_limit}). Contact contact@metaspace2020.org.'
+        # if n_pixels > pixel_limit:
+        #     raise LimitError(
+        #         f'The bounding box area exceeds the maximum allowed pixel count of ({pixel_limit}). Contact contact@metaspace2020.org.'
+        #     )
+
+        sparsity_ratio = nz_pixels / n_pixels
+        if sparsity_ratio < 0.05:
+            logger.warning(
+                f'Low pixel density detected: {nz_pixels} spectra in a '
+                f'{self.imzml_reader.h}×{self.imzml_reader.w} bounding box '
+                f'(density={sparsity_ratio:.3f}). This dataset may have isolated blobs '
+                f'with large empty areas.'
             )
 
         self.segment_centroids(use_cache=use_cache)

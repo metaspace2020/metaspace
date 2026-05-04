@@ -98,14 +98,64 @@ def _chaos_dilate(arr):
         return arr
 
 
-def chaos_metric(iso_img, n_levels):
-    # Shrink image if possible, as chaos performance is highly resolution-dependent
-    iso_img = iso_img[_chaos_dilate(np.any(iso_img, axis=1)), :]
-    iso_img = iso_img[:, _chaos_dilate(np.any(iso_img, axis=0))]
+def chaos_metric(coo_img, n_levels):
+    """Compute the chaos metric directly from a sparse coo_matrix.
+
+    Builds the same compact 2D dense array that the previous implementation produced after
+    toarray() + _chaos_dilate cropping, but without ever allocating the full h×w bounding box.
+    Results are bit-for-bit identical to the old path for any given dataset.
+
+    Args:
+        coo_img: First-isotope image as a scipy coo_matrix (or None / empty).
+        n_levels: Number of intensity thresholds for measure_of_chaos.
+    """
+    if coo_img is None or coo_img.nnz == 0:
+        return 0
+
+    nrows, ncols = coo_img.shape
+
+    # Build row/col occupancy masks directly from sparse indices — O(nnz), no h×w allocation
+    row_mask = np.zeros(nrows, dtype=bool)
+    col_mask = np.zeros(ncols, dtype=bool)
+    row_mask[coo_img.row] = True
+    col_mask[coo_img.col] = True
+
+    # Apply the same dilation as before so measure_of_chaos sees the same spatial context
+    row_sel = _chaos_dilate(row_mask)
+    col_sel = _chaos_dilate(col_mask)
+
+    if isinstance(row_sel, slice) and isinstance(col_sel, slice):
+        # Image is already dense (>90% non-empty in both dimensions); toarray() is cheap here
+        iso_img = coo_img.toarray()
+    else:
+        # Build compact index remaps: original row/col index → position in compact array
+        if isinstance(row_sel, slice):
+            n_rows_compact = nrows
+            row_remap = np.arange(nrows, dtype=np.intp)
+        else:
+            selected_rows = np.where(row_sel)[0]
+            n_rows_compact = len(selected_rows)
+            row_remap = np.full(nrows, -1, dtype=np.intp)
+            row_remap[selected_rows] = np.arange(n_rows_compact)
+
+        if isinstance(col_sel, slice):
+            n_cols_compact = ncols
+            col_remap = np.arange(ncols, dtype=np.intp)
+        else:
+            selected_cols = np.where(col_sel)[0]
+            n_cols_compact = len(selected_cols)
+            col_remap = np.full(ncols, -1, dtype=np.intp)
+            col_remap[selected_cols] = np.arange(n_cols_compact)
+
+        # Scatter sparse values into compact array.
+        # np.add.at handles duplicate coordinates (e.g. from concat_coo_matrices for split
+        # formulas) the same way toarray() does — by summing them.
+        iso_img = np.zeros((n_rows_compact, n_cols_compact), dtype=coo_img.dtype)
+        compact_rows = row_remap[coo_img.row]
+        compact_cols = col_remap[coo_img.col]
+        np.add.at(iso_img, (compact_rows, compact_cols), coo_img.data)
 
     if iso_img.size == 0:
-        # measure_of_chaos segfaults if the image has no elements - in Lithops this appears as a
-        # MemoryError. Skip empty images.
         return 0
 
     # measure_of_chaos behaves weirdly on Fortran-ordered arrays, which happen sometimes due to the

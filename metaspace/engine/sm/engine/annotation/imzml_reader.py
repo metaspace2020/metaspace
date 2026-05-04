@@ -28,7 +28,7 @@ METADATA_FIELDS = [TIC_ACCESSION, MIN_MZ_ACCESSION, MAX_MZ_ACCESSION]
 _process_spectrum_lock = Lock()
 
 
-class ImzMLReader:
+class ImzMLReader:  # pylint: disable=too-many-instance-attributes
     """This class bundles the ability to somehow access ImzML data (implemented in subclasses)
     with some commonly-used pre-computed data such as the mask image and the mapping between
     spectrum index and pixel index.  Additionally, it provides a central place to efficiently
@@ -56,6 +56,13 @@ class ImzMLReader:
         sample_area_mask = np.zeros(self.h * self.w, dtype=bool)
         sample_area_mask[self.pixel_indexes] = True
         self.mask = sample_area_mask.reshape(self.h, self.w)
+
+        # pixel_to_flat_idx: maps flat pixel coord (Y*W+X) → position in the masked-flat array.
+        # Positions are assigned in ascending pixel_index order to match the semantics of
+        # mask.flatten()[sample_area_mask_flat] used elsewhere in the pipeline.
+        # -1 for pixels that have no spectrum.
+        self.pixel_to_flat_idx = np.full(self.h * self.w, -1, dtype=np.intp)
+        self.pixel_to_flat_idx[sample_area_mask] = np.arange(self.n_spectra)
 
         # raw_coord_bounds is the RAW min/max coordinates, purely for diagnostics
         self.raw_coord_bounds = (
