@@ -132,12 +132,12 @@ const QueryResolvers: FieldResolversFor<Query, any> = {
     if (!exp) return []
     await assertCanAccessProject(ctx, exp.projectId, { write: false })
 
-    const apiHost = config.services?.sm_engine_api_host
-    if (!apiHost) {
-      logger.error('sm_engine_api_host is not configured')
-      throw new Error('Engine API host is not configured')
+    const apiUrl = config.manager_api_url
+    if (!apiUrl) {
+      logger.error('manager_api_url is not configured')
+      throw new Error('Engine API URL is not configured')
     }
-    const url = `http://${apiHost}/v1/experiment/${experimentId}/ion/${ionId}/intensities`
+    const url = `${apiUrl}/v1/experiment/${experimentId}/ion/${ionId}/intensities`
     const res = await fetch(url)
     if (!res.ok) {
       if (res.status === 404) return []

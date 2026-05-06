@@ -53,3 +53,7 @@ ansible/aws/env
 .claude/*
 CLAUDE.md
 **/CLAUDE.md
+
+.mcp.json
+docs/superpowers/*
+.playwright-mcp/*

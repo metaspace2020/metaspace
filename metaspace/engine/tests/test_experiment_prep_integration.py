@@ -16,7 +16,7 @@ from sm.engine.postprocessing.experiment_prep import build_prep_block
 
 from .utils import create_test_molecular_db
 
-
+# pylint: disable=unused-argument
 @pytest.fixture()
 def fixture_experiment(test_db, metadata, ds_config):
     db = DB()
@@ -163,7 +163,7 @@ def test_build_prep_block_filters_and_resolves_intensities_against_real_db(fixtu
     )
 
     assert out['ions_total'] == 1
-    assert out['intensities'] == {'s0': {901: 10.0}, 's1': {901: 20.0}}
+    assert out['intensities'] == {'r0': {901: 10.0}, 'r1': {901: 20.0}}
     assert [s['sampleId'] for s in out['samples']] == ['s0', 's1']
     assert out['filterChain'][0]['count'] == 2
     # FDR filter dropped one ion.
