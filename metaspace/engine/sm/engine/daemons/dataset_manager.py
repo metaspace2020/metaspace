@@ -26,6 +26,7 @@ from sm.engine.postprocessing.ion_thumbnail import (
     delete_ion_thumbnail,
 )
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
+from sm.engine.postprocessing.experiment_wrapper import submit_experiment_job
 from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
 from sm.engine.postprocessing.segmentation_wrapper import submit_segmentation_job
 from sm.engine.postprocessing.ds_size_hash import save_size_hash
@@ -391,9 +392,6 @@ class DatasetManager:
             msg: Dict with keys ``experiment_id`` and ``run_generation``,
                 plus optional ``email``.
         """
-        # Lazy import to keep the segmentation/experiment wrappers decoupled.
-        from sm.engine.postprocessing.experiment_wrapper import submit_experiment_job
-
         experiment_id = msg['experiment_id']
         run_generation = msg['run_generation']
         self.logger.info(

@@ -1,8 +1,24 @@
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, defineComponent } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import { vi } from 'vitest'
 import { DefaultApolloClient, useQuery, useMutation } from '@vue/apollo-composable'
 import { initMockGraphqlClient } from '../../tests/utils/mockGraphqlClient'
+
+vi.mock('vue-echarts', () => ({
+  default: defineComponent({ name: 'echarts', props: ['option'], render: () => null }),
+}))
+vi.mock('echarts/core', () => ({ use: vi.fn() }))
+vi.mock('echarts/renderers', () => ({ CanvasRenderer: {} }))
+vi.mock('echarts/charts', () => ({ BarChart: {}, BoxplotChart: {}, ScatterChart: {} }))
+vi.mock('echarts/components', () => ({
+  GridComponent: {},
+  TooltipComponent: {},
+  LegendComponent: {},
+  TitleComponent: {},
+  MarkLineComponent: {},
+  MarkAreaComponent: {},
+}))
+
 import ExperimentResultsPage from './ExperimentResultsPage'
 
 vi.mock('@vue/apollo-composable', () => ({
