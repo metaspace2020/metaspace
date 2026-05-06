@@ -23,6 +23,9 @@ class SMUpdateDaemon:
     def _on_success(self, msg):
         self.logger.info(' SM update daemon: success')
 
+        if msg['action'] == DaemonAction.EXPERIMENT_STATS:
+            return
+
         if msg['action'] == DaemonAction.DELETE:
             self._manager.notify_update(
                 msg['ds_id'], action=DaemonAction.DELETE, stage=DaemonActionStage.FINISHED
@@ -57,6 +60,10 @@ class SMUpdateDaemon:
     def _callback(self, msg):
         try:
             self.logger.info(f' SM update daemon received a message: {msg}')
+
+            if msg['action'] == DaemonAction.EXPERIMENT_STATS:
+                self._manager.run_experiment_stats(msg)
+                return
 
             ds = self._manager.load_ds(msg['ds_id'])
             self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.STARTED)

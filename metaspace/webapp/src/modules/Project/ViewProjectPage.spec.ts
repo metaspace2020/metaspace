@@ -154,7 +154,11 @@ describe('ViewProjectPage', () => {
       expect(wrapper.html()).toMatchSnapshot()
 
       expect(wrapper.findAll('button').map((w) => w.text())).toEqual(expect.arrayContaining(['Request access']))
-      expect(wrapper.findAll('[role="tab"]').map((w) => w.text())).toEqual(['Datasets (4)', 'Members (2)'])
+      expect(wrapper.findAll('[role="tab"]').map((w) => w.text())).toEqual([
+        'Datasets (4)',
+        'Members (2)',
+        'Experiments',
+      ])
       expect(wrapper.findAll('.dataset-list > *')).toHaveLength(maxVisibleDatasets.value)
     })
   })

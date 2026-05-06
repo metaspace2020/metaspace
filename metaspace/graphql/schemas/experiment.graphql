@@ -1,0 +1,153 @@
+scalar DateTime
+
+type Ion {
+  id: Int!
+  ion: String!
+  formula: String!
+  adduct: String!
+  chemMod: String!
+  neutralLoss: String!
+  ionFormula: String!
+  charge: Int!
+}
+
+type Experiment {
+  id: ID!
+  project: Project!
+  name: String!
+  description: String
+  matchMode: ExperimentMatchMode!
+  datasets: [ExperimentDataset!]!
+  labelGroups: [ExperimentLabelGroup!]!
+  run: ExperimentRun
+  createdBy: User!
+  createdAt: DateTime!
+}
+
+enum ExperimentMatchMode { NAME MANUAL }
+
+type ExperimentDataset {
+  id: ID!
+  dataset: Dataset!
+  regionSource: ExperimentRegionSource!
+  regions: [ExperimentRegion!]!
+}
+
+enum ExperimentRegionSource { ROI SEGMENTATION WHOLE }
+
+type ExperimentRegion {
+  regionKey: String!
+  sourceKind: String!
+  roi: Roi
+  segmentation: Segmentation
+  labelGroupName: String
+  metadata: ExperimentSampleMetadata!
+}
+
+type ExperimentLabelGroup { name: String! color: String! }
+
+type ExperimentSampleMetadata {
+  condition: String!
+  biologicalReplicateId: String!
+  sampleId: String!
+  technicalReplicateId: String
+  batchId: String
+}
+
+type ExperimentRun {
+  status: String!
+  stage: String!
+  inferredTest: String
+  filters: JSON
+  excludedSamples: [String!]!
+  generation: Int!
+  error: String
+  startedAt: DateTime
+  finishedAt: DateTime
+}
+
+type ExperimentResultRow {
+  ion: Ion!
+  labelGroupName: String!
+  lfc: Float!
+  pValue: Float
+  fdr: Float
+  detectionRateA: Float!
+  detectionRateB: Float!
+  nA: Int!
+  nB: Int!
+}
+
+input ExperimentInput {
+  name: String!
+  description: String
+  matchMode: ExperimentMatchMode!
+  datasets: [ExperimentDatasetInput!]!
+  labelGroups: [ExperimentLabelGroupInput!]!
+}
+
+input ExperimentDatasetInput {
+  datasetId: ID!
+  regionSource: ExperimentRegionSource!
+  regions: [ExperimentRegionInput!]!
+}
+
+input ExperimentRegionInput {
+  regionKey: String!
+  sourceKind: String!
+  roiId: Int
+  segmentationId: ID
+  labelGroupName: String
+  metadata: ExperimentSampleMetadataInput!
+}
+
+input ExperimentSampleMetadataInput {
+  condition: String!
+  biologicalReplicateId: String!
+  sampleId: String!
+  technicalReplicateId: String
+  batchId: String
+}
+
+input ExperimentLabelGroupInput { name: String! color: String! }
+
+input ExperimentResultsFilter {
+  databases: [Int!]
+  adducts: [String!]
+  fdrMax: Float
+  minDetectionRate: Float
+  labelGroupName: String
+}
+
+extend type Query {
+  experiment(id: ID!): Experiment
+  experimentsByProject(projectId: ID!): [Experiment!]!
+  experimentResults(
+    experimentId: ID!
+    filter: ExperimentResultsFilter
+    orderBy: String
+    limit: Int
+    offset: Int
+  ): [ExperimentResultRow!]!
+  experimentRunQc(experimentId: ID!): JSON
+  experimentIonIntensities(experimentId: ID!, ionId: Int!): [ExperimentIonIntensity!]!
+}
+
+type ExperimentIonIntensity {
+  regionKey: String!
+  intensity: Float!
+  condition: String
+  sampleId: String
+  biologicalReplicateId: String
+}
+
+extend type Mutation {
+  createExperiment(projectId: ID!, input: ExperimentInput!): Experiment!
+  updateExperiment(id: ID!, input: ExperimentInput!): Experiment!
+  deleteExperiment(id: ID!): Boolean!
+  runExperiment(id: ID!): Experiment!
+  updateExperimentExcludedSamples(
+    experimentId: ID!
+    excludedSamples: [String!]!
+  ): Experiment!
+}

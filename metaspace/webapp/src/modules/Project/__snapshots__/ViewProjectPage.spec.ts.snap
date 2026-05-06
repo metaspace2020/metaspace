@@ -75,6 +75,9 @@ exports[`ViewProjectPage > datasets tab > should match snapshot (non-member) 1`]
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-members\\" aria-controls=\\"pane-members\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\"><span data-v-4e241df4=\\"\\">Members (2) <!--v-if--></span>
                 <!---->
               </div>
+              <div class=\\"el-tabs__item is-top\\" id=\\"tab-experiments\\" aria-controls=\\"pane-experiments\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Experiments
+                <!---->
+              </div>
             </div>
           </div>
         </div>
@@ -92,6 +95,7 @@ exports[`ViewProjectPage > datasets tab > should match snapshot (non-member) 1`]
             <div data-v-4e241df4=\\"\\"> See all datasets </div>
           </div>
         </div>
+        <!--v-if-->
         <!--v-if-->
         <!--v-if-->
         <!--v-if-->
@@ -194,6 +198,9 @@ exports[`ViewProjectPage > members tab > should match snapshot (invited) 1`] = `
               <div class=\\"el-tabs__item is-top is-active\\" id=\\"tab-members\\" aria-controls=\\"pane-members\\" role=\\"tab\\" aria-selected=\\"true\\" tabindex=\\"0\\"><span data-v-4e241df4=\\"\\">Members (2) <!--v-if--></span>
                 <!---->
               </div>
+              <div class=\\"el-tabs__item is-top\\" id=\\"tab-experiments\\" aria-controls=\\"pane-experiments\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Experiments
+                <!---->
+              </div>
             </div>
           </div>
         </div>
@@ -207,6 +214,7 @@ exports[`ViewProjectPage > members tab > should match snapshot (invited) 1`] = `
             <p data-v-4e241df4=\\"\\" class=\\"hidden-members-text\\"> + 1 hidden member. </p>
           </div>
         </div>
+        <!--v-if-->
         <!--v-if-->
         <!--v-if-->
       </div>
@@ -293,6 +301,9 @@ exports[`ViewProjectPage > members tab > should match snapshot (manager, includi
               <div class=\\"el-tabs__item is-top is-active\\" id=\\"tab-members\\" aria-controls=\\"pane-members\\" role=\\"tab\\" aria-selected=\\"true\\" tabindex=\\"0\\"><span data-v-4e241df4=\\"\\">Members (2) <span data-v-6bf8fbbe=\\"\\" data-v-4e241df4=\\"\\" class=\\"notification\\"></span></span>
                 <!---->
               </div>
+              <div class=\\"el-tabs__item is-top\\" id=\\"tab-experiments\\" aria-controls=\\"pane-experiments\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Experiments
+                <!---->
+              </div>
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-publishing\\" aria-controls=\\"pane-publishing\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\"><span data-v-4e241df4=\\"\\"><div data-v-4e241df4=\\"\\" class=\\"el-badge sm-feature-badge\\"> Publishing <sup class=\\"el-badge__content el-badge__content--danger is-fixed is-dot\\"></sup></div></span>
                 <!---->
               </div>
@@ -343,6 +354,7 @@ exports[`ViewProjectPage > members tab > should match snapshot (manager, includi
             <!--v-if-->
           </div>
         </div>
+        <!--v-if-->
         <!--v-if-->
         <!--v-if-->
       </div>
@@ -426,6 +438,9 @@ exports[`ViewProjectPage > members tab > should match snapshot (member) 1`] = `
               <div class=\\"el-tabs__item is-top is-active\\" id=\\"tab-members\\" aria-controls=\\"pane-members\\" role=\\"tab\\" aria-selected=\\"true\\" tabindex=\\"0\\"><span data-v-4e241df4=\\"\\">Members (2) <span data-v-6bf8fbbe=\\"\\" data-v-4e241df4=\\"\\" class=\\"notification\\"></span></span>
                 <!---->
               </div>
+              <div class=\\"el-tabs__item is-top\\" id=\\"tab-experiments\\" aria-controls=\\"pane-experiments\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Experiments
+                <!---->
+              </div>
             </div>
           </div>
         </div>
@@ -439,6 +454,7 @@ exports[`ViewProjectPage > members tab > should match snapshot (member) 1`] = `
             <!--v-if-->
           </div>
         </div>
+        <!--v-if-->
         <!--v-if-->
         <!--v-if-->
       </div>
@@ -523,6 +539,9 @@ exports[`ViewProjectPage > members tab > should match snapshot (non-member) 1`] 
               <div class=\\"el-tabs__item is-top is-active\\" id=\\"tab-members\\" aria-controls=\\"pane-members\\" role=\\"tab\\" aria-selected=\\"true\\" tabindex=\\"0\\"><span data-v-4e241df4=\\"\\">Members (2) <!--v-if--></span>
                 <!---->
               </div>
+              <div class=\\"el-tabs__item is-top\\" id=\\"tab-experiments\\" aria-controls=\\"pane-experiments\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Experiments
+                <!---->
+              </div>
             </div>
           </div>
         </div>
@@ -536,6 +555,7 @@ exports[`ViewProjectPage > members tab > should match snapshot (non-member) 1`] 
             <p data-v-4e241df4=\\"\\" class=\\"hidden-members-text\\"> + 1 hidden member. </p>
           </div>
         </div>
+        <!--v-if-->
         <!--v-if-->
         <!--v-if-->
       </div>
@@ -622,6 +642,9 @@ exports[`ViewProjectPage > publishing tab > should match snapshot (published) 1`
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-members\\" aria-controls=\\"pane-members\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\"><span data-v-4e241df4=\\"\\">Members (2) <!--v-if--></span>
                 <!---->
               </div>
+              <div class=\\"el-tabs__item is-top\\" id=\\"tab-experiments\\" aria-controls=\\"pane-experiments\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Experiments
+                <!---->
+              </div>
               <div class=\\"el-tabs__item is-top is-active\\" id=\\"tab-publishing\\" aria-controls=\\"pane-publishing\\" role=\\"tab\\" aria-selected=\\"true\\" tabindex=\\"0\\"><span data-v-4e241df4=\\"\\"> Publishing </span>
                 <!---->
               </div>
@@ -633,6 +656,7 @@ exports[`ViewProjectPage > publishing tab > should match snapshot (published) 1`
         </div>
       </div>
       <div class=\\"el-tabs__content\\">
+        <!--v-if-->
         <!--v-if-->
         <!--v-if-->
         <!--v-if-->
@@ -729,6 +753,9 @@ exports[`ViewProjectPage > publishing tab > should match snapshot (under review)
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-members\\" aria-controls=\\"pane-members\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\"><span data-v-4e241df4=\\"\\">Members (2) <!--v-if--></span>
                 <!---->
               </div>
+              <div class=\\"el-tabs__item is-top\\" id=\\"tab-experiments\\" aria-controls=\\"pane-experiments\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Experiments
+                <!---->
+              </div>
               <div class=\\"el-tabs__item is-top is-active\\" id=\\"tab-publishing\\" aria-controls=\\"pane-publishing\\" role=\\"tab\\" aria-selected=\\"true\\" tabindex=\\"0\\"><span data-v-4e241df4=\\"\\"> Publishing </span>
                 <!---->
               </div>
@@ -740,6 +767,7 @@ exports[`ViewProjectPage > publishing tab > should match snapshot (under review)
         </div>
       </div>
       <div class=\\"el-tabs__content\\">
+        <!--v-if-->
         <!--v-if-->
         <!--v-if-->
         <!--v-if-->
@@ -913,6 +941,9 @@ exports[`ViewProjectPage > publishing tab > should match snapshot (unpublished) 
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-members\\" aria-controls=\\"pane-members\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\"><span data-v-4e241df4=\\"\\">Members (2) <!--v-if--></span>
                 <!---->
               </div>
+              <div class=\\"el-tabs__item is-top\\" id=\\"tab-experiments\\" aria-controls=\\"pane-experiments\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Experiments
+                <!---->
+              </div>
               <div class=\\"el-tabs__item is-top is-active\\" id=\\"tab-publishing\\" aria-controls=\\"pane-publishing\\" role=\\"tab\\" aria-selected=\\"true\\" tabindex=\\"0\\"><span data-v-4e241df4=\\"\\"> Publishing </span>
                 <!---->
               </div>
@@ -924,6 +955,7 @@ exports[`ViewProjectPage > publishing tab > should match snapshot (unpublished) 
         </div>
       </div>
       <div class=\\"el-tabs__content\\">
+        <!--v-if-->
         <!--v-if-->
         <!--v-if-->
         <!--v-if-->
@@ -1080,6 +1112,9 @@ exports[`ViewProjectPage > settings tab > should disable actions when under publ
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-members\\" aria-controls=\\"pane-members\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\"><span data-v-4e241df4=\\"\\">Members (2) <!--v-if--></span>
                 <!---->
               </div>
+              <div class=\\"el-tabs__item is-top\\" id=\\"tab-experiments\\" aria-controls=\\"pane-experiments\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Experiments
+                <!---->
+              </div>
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-publishing\\" aria-controls=\\"pane-publishing\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\"><span data-v-4e241df4=\\"\\"><div data-v-4e241df4=\\"\\" class=\\"el-badge sm-feature-badge\\"> Publishing <sup class=\\"el-badge__content el-badge__content--danger is-fixed is-dot\\"></sup></div></span>
                 <!---->
               </div>
@@ -1091,6 +1126,7 @@ exports[`ViewProjectPage > settings tab > should disable actions when under publ
         </div>
       </div>
       <div class=\\"el-tabs__content\\">
+        <!--v-if-->
         <!--v-if-->
         <!--v-if-->
         <!--v-if-->
@@ -1260,6 +1296,9 @@ exports[`ViewProjectPage > settings tab > should disable actions when under revi
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-members\\" aria-controls=\\"pane-members\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\"><span data-v-4e241df4=\\"\\">Members (2) <!--v-if--></span>
                 <!---->
               </div>
+              <div class=\\"el-tabs__item is-top\\" id=\\"tab-experiments\\" aria-controls=\\"pane-experiments\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Experiments
+                <!---->
+              </div>
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-publishing\\" aria-controls=\\"pane-publishing\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\"><span data-v-4e241df4=\\"\\"><div data-v-4e241df4=\\"\\" class=\\"el-badge sm-feature-badge\\"> Publishing <sup class=\\"el-badge__content el-badge__content--danger is-fixed is-dot\\"></sup></div></span>
                 <!---->
               </div>
@@ -1271,6 +1310,7 @@ exports[`ViewProjectPage > settings tab > should disable actions when under revi
         </div>
       </div>
       <div class=\\"el-tabs__content\\">
+        <!--v-if-->
         <!--v-if-->
         <!--v-if-->
         <!--v-if-->
@@ -1432,6 +1472,9 @@ exports[`ViewProjectPage > settings tab > should match snapshot 1`] = `
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-members\\" aria-controls=\\"pane-members\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\"><span data-v-4e241df4=\\"\\">Members (2) <!--v-if--></span>
                 <!---->
               </div>
+              <div class=\\"el-tabs__item is-top\\" id=\\"tab-experiments\\" aria-controls=\\"pane-experiments\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Experiments
+                <!---->
+              </div>
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-publishing\\" aria-controls=\\"pane-publishing\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\"><span data-v-4e241df4=\\"\\"><div data-v-4e241df4=\\"\\" class=\\"el-badge sm-feature-badge\\"> Publishing <sup class=\\"el-badge__content el-badge__content--danger is-fixed is-dot\\"></sup></div></span>
                 <!---->
               </div>
@@ -1443,6 +1486,7 @@ exports[`ViewProjectPage > settings tab > should match snapshot 1`] = `
         </div>
       </div>
       <div class=\\"el-tabs__content\\">
+        <!--v-if-->
         <!--v-if-->
         <!--v-if-->
         <!--v-if-->

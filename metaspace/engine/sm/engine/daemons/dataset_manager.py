@@ -384,6 +384,42 @@ class DatasetManager:
                         f'Failed to send failure email for job {job_id}: {email_err}'
                     )
 
+    def run_experiment_stats(self, msg):
+        """Submit a cross-dataset experiment statistical analysis job.
+
+        Args:
+            msg: Dict with keys ``experiment_id`` and ``run_generation``,
+                plus optional ``email``.
+        """
+        # Lazy import to keep the segmentation/experiment wrappers decoupled.
+        from sm.engine.postprocessing.experiment_wrapper import submit_experiment_job
+
+        experiment_id = msg['experiment_id']
+        run_generation = msg['run_generation']
+        self.logger.info(
+            f'Running experiment stats for experiment {experiment_id} '
+            f'run_generation={run_generation}'
+        )
+        try:
+            submit_experiment_job(
+                experiment_id=experiment_id,
+                run_generation=run_generation,
+                email=msg.get('email'),
+                db=self._db,
+            )
+            self._db.alter(
+                "UPDATE experiment SET run_status='RUNNING', run_stage='PREP' "
+                "WHERE id=%s AND run_generation=%s",
+                params=(experiment_id, run_generation),
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            self.logger.exception('Failed to submit experiment job')
+            self._db.alter(
+                "UPDATE experiment SET run_status='FAILED', run_error=%s, "
+                "run_finished_at=NOW() WHERE id=%s AND run_generation=%s",
+                params=(str(e), experiment_id, run_generation),
+            )
+
     def ds_failure_handler(self, msg, e):
         self.logger.error(f' SM {msg["action"]} daemon: failure', exc_info=True)
         ds = self.load_ds(msg['ds_id'])

@@ -61,13 +61,19 @@ services:
   image-segmentation:
     build:
       context: ..
-      dockerfile: metaspace/postprocessing/image_segmentation/docker/Dockerfile
+      dockerfile: metaspace/postprocessing/docker/Dockerfile
     volumes:
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
       - "${DEV_ROOT}:/opt/dev/metaspace:z"
       - "${DATA_ROOT}:/opt/data/metaspace:z"
-      - "../metaspace/postprocessing/image_segmentation/conf/config.json:/app/conf/config.json:ro"
+      - "../metaspace/postprocessing/conf:/app/conf:ro"
+      # Live source mounts: paths match where pip -e installed each package,
+      # so edits don't require a rebuild.
+      - "../metaspace/postprocessing/shared:/app/shared_pkg:ro"
+      - "../metaspace/postprocessing/image_segmentation:/app/image_segmentation_pkg:ro"
+      - "../metaspace/postprocessing/stats_analysis:/app/stats_analysis_pkg:ro"
+      - "../metaspace/postprocessing/server:/app/server_pkg:ro"
     user: "$SM_USER"
     ports:
       - "9877:9877"

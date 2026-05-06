@@ -83,6 +83,9 @@
             </p>
           </div>
         </el-tab-pane>
+        <el-tab-pane v-if="visibleTabs.includes('experiments')" name="experiments" label="Experiments" lazy>
+          <ExperimentsList :project-id="projectId" :can-edit="canEdit" />
+        </el-tab-pane>
         <el-tab-pane
           v-if="visibleTabs.includes('publishing')"
           name="publishing"
@@ -139,6 +142,7 @@ import RichText from '../../components/RichText'
 import Publishing from './publishing'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 import DatasetsDialog from './DatasetsDialog'
+import ExperimentsList from '../Experiment/ExperimentsList'
 import { DefaultApolloClient, useQuery, useSubscription } from '@vue/apollo-composable'
 import { ElIcon } from '../../lib/element-plus'
 import { Loading } from '@element-plus/icons-vue'
@@ -155,6 +159,7 @@ export default defineComponent({
     ElTabPane,
     DatasetList,
     DatasetsDialog,
+    ExperimentsList,
     ProjectMembersList,
     ProjectSettings,
     NotificationIcon,
@@ -317,12 +322,12 @@ export default defineComponent({
         return []
       }
       if (canEdit.value) {
-        return ['about', 'datasets', 'members', 'publishing', 'settings']
+        return ['about', 'datasets', 'members', 'experiments', 'publishing', 'settings']
       }
       if (project.value && project.value?.projectDescription !== null) {
-        return ['about', 'datasets', 'members']
+        return ['about', 'datasets', 'members', 'experiments']
       }
-      return ['datasets', 'members']
+      return ['datasets', 'members', 'experiments']
     })
     const setTab = (newTab: string | null) => {
       if (newTab !== null && visibleTabs.value.includes(newTab)) {

@@ -517,10 +517,23 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       return []
     }
 
-    return ctx.entityManager.find(Segmentation, {
+    const rows = await ctx.entityManager.find(Segmentation, {
       where: { datasetId },
       order: { segmentIndex: 'ASC' } as any,
     })
+    if (rows.length === 0) return []
+    const latestJob = await ctx.entityManager
+      .createQueryBuilder(ImageSegmentationJob, 'j')
+      .where('j.datasetId = :datasetId', { datasetId })
+      .andWhere('j.status = \'FINISHED\'')
+      .orderBy('j.createdAt', 'DESC')
+      .limit(1)
+      .getOne()
+    const latestJobId = latestJob != null ? latestJob.id : null
+    return rows.map((r: any) => ({
+      ...r,
+      stale: latestJobId != null && r.jobId != null && r.jobId !== latestJobId,
+    }))
   },
 
   async segmentationIonProfiles(

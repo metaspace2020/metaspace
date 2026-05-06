@@ -90,7 +90,7 @@ def submit_segmentation_job(  # pylint: disable=too-many-arguments, too-many-loc
     try:
         service_call_start = time.time()
         resp = requests.post(
-            f'{segmentation_endpoint}/run',
+            f'{segmentation_endpoint}/segmentation/run',
             json=payload,
             timeout=30,
         )

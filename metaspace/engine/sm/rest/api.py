@@ -12,6 +12,7 @@ from sm.rest import (
     enrichment,
     diff_roi,
     segmentation,
+    experiment,
 )
 from sm.rest.utils import make_response, OK, INTERNAL_ERROR
 
@@ -24,6 +25,7 @@ app.mount('/v1/enrichment/', enrichment.app)
 app.mount('/v1/browser/', imzml_browser.app)
 app.mount('/v1/diffroi/', diff_roi.app)
 app.mount('/v1/segmentation/', segmentation.app)
+app.mount('/v1/experiment/', experiment.app)
 
 
 @app.get('/')
