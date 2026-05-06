@@ -63,6 +63,9 @@
             </router-link>
           </div>
         </el-tab-pane>
+        <el-tab-pane v-if="visibleTabs.includes('experiments')" name="experiments" label="Experiments" lazy>
+          <ExperimentsList :project-id="projectId" :can-edit="canEdit" />
+        </el-tab-pane>
         <el-tab-pane name="members" lazy>
           <template v-slot:label>
             <span>
@@ -82,9 +85,6 @@
               + {{ plural(countHiddenMembers, 'hidden member', 'hidden members') }}.
             </p>
           </div>
-        </el-tab-pane>
-        <el-tab-pane v-if="visibleTabs.includes('experiments')" name="experiments" label="Experiments" lazy>
-          <ExperimentsList :project-id="projectId" :can-edit="canEdit" />
         </el-tab-pane>
         <el-tab-pane
           v-if="visibleTabs.includes('publishing')"

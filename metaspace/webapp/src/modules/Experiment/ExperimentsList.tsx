@@ -1,8 +1,11 @@
 import { defineComponent, computed, inject } from 'vue'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { useRouter } from 'vue-router'
-import { ElButton, ElCard, ElLink, ElMessage, ElMessageBox, ElTag } from '../../lib/element-plus'
+import { ElButton, ElCard, ElIcon, ElMessage, ElMessageBox, ElTag } from '../../lib/element-plus'
+import { PictureFilled, EditPen, Delete } from '@element-plus/icons-vue'
 import { experimentsByProjectQuery, deleteExperimentMutation } from './api'
+import CopyButton from '../../components/CopyButton.vue'
+import ElapsedTime from '../../components/ElapsedTime'
 
 interface ExperimentRunSummary {
   id: string
@@ -93,7 +96,10 @@ export default defineComponent({
             <div class="flex justify-between items-start">
               <div class="min-w-0 flex-1 pr-4">
                 <div class="flex items-center gap-2">
-                  <h3 class="text-lg font-semibold truncate">{exp.name}</h3>
+                  <h3 class="text-lg font-semibold truncate m-0">{exp.name}</h3>
+                  <CopyButton isId text={exp.id}>
+                    Copy experiment id to clipboard
+                  </CopyButton>
                   <ElTag type={statusTagType(exp.run?.status)} size="small" data-test-key={`status-${exp.id}`}>
                     {exp.run?.status ?? 'NOT RUN'}
                   </ElTag>
@@ -103,28 +109,60 @@ export default defineComponent({
                 </p>
                 <p class="text-xs text-gray-400">
                   Created by <strong>{exp.createdBy?.name ?? 'unknown'}</strong>
+                  {' — '}
+                  <ElapsedTime date={exp.createdAt} />
                 </p>
               </div>
-              <div class="flex gap-3 items-center">
-                <ElButton
-                  type="primary"
-                  size="small"
-                  data-test-key={`browse-${exp.id}`}
-                  onClick={() => router.push(`/project/${props.projectId}/experiment/${exp.id}`)}
-                >
-                  Browse analysis
-                </ElButton>
+              <div class="flex flex-col gap-1 items-start">
+                <div class="flex items-center">
+                  <ElIcon>
+                    <PictureFilled />
+                  </ElIcon>
+                  <a
+                    href="#"
+                    class="ml-1"
+                    data-test-key={`browse-${exp.id}`}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      router.push(`/project/${props.projectId}/experiment/${exp.id}`)
+                    }}
+                  >
+                    Browse analysis
+                  </a>
+                </div>
                 {props.canEdit && (
                   <>
-                    <ElLink
-                      type="primary"
-                      onClick={() => router.push(`/project/${props.projectId}/experiment/${exp.id}/edit`)}
-                    >
-                      Manage
-                    </ElLink>
-                    <ElLink type="danger" onClick={() => onDelete(exp.id)} data-test-key={`delete-${exp.id}`}>
-                      Delete
-                    </ElLink>
+                    <div class="flex items-center">
+                      <ElIcon>
+                        <EditPen />
+                      </ElIcon>
+                      <a
+                        href="#"
+                        class="ml-1"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          router.push(`/project/${props.projectId}/experiment/${exp.id}/edit`)
+                        }}
+                      >
+                        Manage experiment
+                      </a>
+                    </div>
+                    <div class="flex items-center">
+                      <ElIcon>
+                        <Delete />
+                      </ElIcon>
+                      <a
+                        href="#"
+                        class="ml-1 text-danger"
+                        data-test-key={`delete-${exp.id}`}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          onDelete(exp.id)
+                        }}
+                      >
+                        Delete experiment
+                      </a>
+                    </div>
                   </>
                 )}
               </div>

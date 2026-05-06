@@ -85,6 +85,7 @@ export default defineComponent({
                 <img
                   src={props.opticalImageUrl}
                   class="absolute inset-0 w-full h-full object-contain opacity-60 pointer-events-none"
+                  style={{ imageRendering: 'pixelated' }}
                   data-test-key="ion-image-optical"
                 />
               )}
@@ -92,7 +93,7 @@ export default defineComponent({
                 <img
                   src={props.ionImageUrl}
                   class="relative block w-full object-contain"
-                  style={{ maxHeight: '300px', height: 'auto' }}
+                  style={{ maxHeight: '300px', height: 'auto', imageRendering: 'pixelated' }}
                   onLoad={onIonImageLoad}
                   data-test-key="ion-image-tic"
                 />
