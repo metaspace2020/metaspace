@@ -57,6 +57,7 @@ export default defineComponent({
     imageHeight: { type: Number as PropType<number | null>, default: null },
     overlays: { type: Array as PropType<IonPreviewOverlay[]>, default: () => [] },
     shown: { type: Boolean, default: true },
+    hideIonImage: { type: Boolean, default: false },
   },
   setup(props) {
     const naturalWidth = ref<number>(0)
@@ -78,7 +79,7 @@ export default defineComponent({
       const vbH = props.imageHeight ?? naturalHeight.value
       const viewBox = vbW > 0 && vbH > 0 ? `0 0 ${vbW} ${vbH}` : '0 0 100 100'
       return (
-        <div class="relative bg-gray-100 border border-dashed rounded p-2 flex justify-center">
+        <div class="relative p-2 flex justify-center">
           <div class="relative w-full" style={{ maxHeight: '320px' }}>
             <div class="relative mx-auto" style={{ maxHeight: '300px', maxWidth: '100%' }}>
               {props.opticalImageUrl && (
@@ -93,7 +94,12 @@ export default defineComponent({
                 <img
                   src={props.ionImageUrl}
                   class="relative block w-full object-contain"
-                  style={{ maxHeight: '300px', height: 'auto', imageRendering: 'pixelated' }}
+                  style={{
+                    maxHeight: '300px',
+                    height: 'auto',
+                    imageRendering: 'pixelated',
+                    visibility: props.hideIonImage ? 'hidden' : 'visible',
+                  }}
                   onLoad={onIonImageLoad}
                   data-test-key="ion-image-tic"
                 />

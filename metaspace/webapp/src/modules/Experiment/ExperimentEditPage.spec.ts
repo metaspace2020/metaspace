@@ -400,6 +400,176 @@ describe('ExperimentEditPage', () => {
     expect(banner.text()).toContain('g1')
   })
 
+  describe('region mapping merge logic', () => {
+    const baseRegion = (regionKey: string, labelGroupName: string | null = null) => ({
+      regionKey,
+      sourceKind: 'whole' as const,
+      roiId: null,
+      segmentationId: null,
+      labelGroupName,
+      included: true,
+      metadata: {
+        condition: 'control',
+        biologicalReplicateId: regionKey,
+        sampleId: regionKey,
+        technicalReplicateId: null,
+        batchId: null,
+      },
+    })
+
+    const draftWith = (datasets: any[], labelGroups: any[] = []): ExperimentDraft => ({
+      name: 'X',
+      description: null,
+      matchMode: 'NAME',
+      labelGroups,
+      datasets,
+    })
+
+    const setupAndMount = async () => {
+      mockRoute = { params: { projectId: 'p1' } }
+      setupQueries()
+      const wrapper = mountPage()
+      await flushPromises()
+      await nextTick()
+      return wrapper
+    }
+
+    it('creates a new auto group when neither endpoint has one', async () => {
+      const wrapper = await setupAndMount()
+      const vm: any = wrapper.vm
+      vm.setDraft(
+        draftWith([
+          { datasetId: 'd1', regionSource: 'WHOLE', regions: [baseRegion('r1')] },
+          { datasetId: 'd2', regionSource: 'WHOLE', regions: [baseRegion('r2')] },
+        ])
+      )
+      await nextTick()
+
+      vm.onAddEdge({ from: 'r1', to: 'r2' })
+      await nextTick()
+
+      expect(vm.draft.labelGroups).toHaveLength(1)
+      expect(vm.draft.labelGroups[0].name).toBe('auto_1')
+      expect(vm.draft.datasets[0].regions[0].labelGroupName).toBe('auto_1')
+      expect(vm.draft.datasets[1].regions[0].labelGroupName).toBe('auto_1')
+    })
+
+    it('extends an existing auto group with a third region (1↔1↔1)', async () => {
+      const wrapper = await setupAndMount()
+      const vm: any = wrapper.vm
+      vm.setDraft(
+        draftWith(
+          [
+            { datasetId: 'd1', regionSource: 'WHOLE', regions: [baseRegion('r1', 'auto_1')] },
+            { datasetId: 'd2', regionSource: 'WHOLE', regions: [baseRegion('r2', 'auto_1')] },
+            { datasetId: 'd3', regionSource: 'WHOLE', regions: [baseRegion('r3')] },
+          ],
+          [{ name: 'auto_1', color: '#000' }]
+        )
+      )
+      await nextTick()
+
+      vm.onAddEdge({ from: 'r2', to: 'r3' })
+      await nextTick()
+
+      expect(vm.draft.labelGroups).toHaveLength(1)
+      const groups = vm.draft.datasets.map((d: any) => d.regions[0].labelGroupName)
+      expect(groups).toEqual(['auto_1', 'auto_1', 'auto_1'])
+    })
+
+    it('merges two existing auto groups when bridged', async () => {
+      const wrapper = await setupAndMount()
+      const vm: any = wrapper.vm
+      vm.setDraft(
+        draftWith(
+          [
+            { datasetId: 'd1', regionSource: 'WHOLE', regions: [baseRegion('r1', 'auto_1')] },
+            { datasetId: 'd2', regionSource: 'WHOLE', regions: [baseRegion('r2', 'auto_1')] },
+            { datasetId: 'd3', regionSource: 'WHOLE', regions: [baseRegion('r3', 'auto_2')] },
+            { datasetId: 'd4', regionSource: 'WHOLE', regions: [baseRegion('r4', 'auto_2')] },
+          ],
+          [
+            { name: 'auto_1', color: '#000' },
+            { name: 'auto_2', color: '#fff' },
+          ]
+        )
+      )
+      await nextTick()
+
+      vm.onAddEdge({ from: 'r2', to: 'r3' })
+      await nextTick()
+
+      expect(vm.draft.labelGroups.map((g: any) => g.name)).toEqual(['auto_1'])
+      const groups = vm.draft.datasets.map((d: any) => d.regions[0].labelGroupName)
+      expect(groups).toEqual(['auto_1', 'auto_1', 'auto_1', 'auto_1'])
+    })
+
+    it('is a no-op when both endpoints already share a group', async () => {
+      const wrapper = await setupAndMount()
+      const vm: any = wrapper.vm
+      vm.setDraft(
+        draftWith(
+          [
+            { datasetId: 'd1', regionSource: 'WHOLE', regions: [baseRegion('r1', 'auto_1')] },
+            { datasetId: 'd2', regionSource: 'WHOLE', regions: [baseRegion('r2', 'auto_1')] },
+          ],
+          [{ name: 'auto_1', color: '#000' }]
+        )
+      )
+      await nextTick()
+      const before = JSON.stringify(vm.draft)
+      vm.onAddEdge({ from: 'r1', to: 'r2' })
+      await nextTick()
+      expect(JSON.stringify(vm.draft)).toEqual(before)
+    })
+
+    it('detaches a single region on remove and keeps the group when ≥2 remain', async () => {
+      const wrapper = await setupAndMount()
+      const vm: any = wrapper.vm
+      vm.setDraft(
+        draftWith(
+          [
+            { datasetId: 'd1', regionSource: 'WHOLE', regions: [baseRegion('r1', 'auto_1')] },
+            { datasetId: 'd2', regionSource: 'WHOLE', regions: [baseRegion('r2', 'auto_1')] },
+            { datasetId: 'd3', regionSource: 'WHOLE', regions: [baseRegion('r3', 'auto_1')] },
+          ],
+          [{ name: 'auto_1', color: '#000' }]
+        )
+      )
+      await nextTick()
+
+      vm.onRemoveMapping('r1|r3')
+      await nextTick()
+
+      expect(vm.draft.labelGroups).toHaveLength(1)
+      expect(vm.draft.datasets[0].regions[0].labelGroupName).toBe('auto_1')
+      expect(vm.draft.datasets[1].regions[0].labelGroupName).toBe('auto_1')
+      expect(vm.draft.datasets[2].regions[0].labelGroupName).toBeNull()
+    })
+
+    it('removes the group entirely when remove drops it below 2 members', async () => {
+      const wrapper = await setupAndMount()
+      const vm: any = wrapper.vm
+      vm.setDraft(
+        draftWith(
+          [
+            { datasetId: 'd1', regionSource: 'WHOLE', regions: [baseRegion('r1', 'auto_1')] },
+            { datasetId: 'd2', regionSource: 'WHOLE', regions: [baseRegion('r2', 'auto_1')] },
+          ],
+          [{ name: 'auto_1', color: '#000' }]
+        )
+      )
+      await nextTick()
+
+      vm.onRemoveMapping('r1|r2')
+      await nextTick()
+
+      expect(vm.draft.labelGroups).toHaveLength(0)
+      expect(vm.draft.datasets[0].regions[0].labelGroupName).toBeNull()
+      expect(vm.draft.datasets[1].regions[0].labelGroupName).toBeNull()
+    })
+  })
+
   it('omits excluded regions from the saved experiment payload', () => {
     const draft: ExperimentDraft = {
       name: 'X',

@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { defineComponent, h, ref } from 'vue'
+import { defineComponent, h, ref, nextTick } from 'vue'
 import DatasetMetadataCard, { RoiOption, SegmentationOption } from './DatasetMetadataCard'
 import type { ExperimentDraftDataset } from '../api'
 import { ElSelect } from '../../../lib/element-plus'
@@ -169,7 +169,13 @@ describe('DatasetMetadataCard', () => {
     })
     const wrapper = mount(Wrapper)
     expect(wrapper.find('[data-test-key="ion-image-tic"]').exists()).toBe(true)
+    const previewWrapper = wrapper.find('[data-test-key="ion-preview-wrapper-d1"]')
+    expect(previewWrapper.classes()).toContain('grid-rows-[1fr]')
     await wrapper.find('[data-test-key="toggle-ion-image-d1"]').trigger('click')
-    expect(wrapper.find('[data-test-key="ion-image-tic"]').exists()).toBe(false)
+    await nextTick()
+    // The preview stays mounted (so the image is preserved between toggles); only
+    // the wrapper's grid-rows class flips, driving a CSS drawer transition.
+    expect(previewWrapper.classes()).toContain('grid-rows-[0fr]')
+    expect(wrapper.find('[data-test-key="ion-image-tic"]').exists()).toBe(true)
   })
 })

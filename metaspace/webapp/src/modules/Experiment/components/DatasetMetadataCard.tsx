@@ -1,14 +1,6 @@
 import { defineComponent, PropType, computed, ref } from 'vue'
-import {
-  ElCard,
-  ElSelect,
-  ElOption,
-  ElInput,
-  ElTable,
-  ElTableColumn,
-  ElButton,
-  ElCheckbox,
-} from '../../../lib/element-plus'
+import { ElCard, ElSelect, ElOption, ElInput, ElTable, ElTableColumn, ElCheckbox } from '../../../lib/element-plus'
+import { View, Close } from '@element-plus/icons-vue'
 import { generateRegionKey, regionLabel as sharedRegionLabel, paletteColor } from '../api'
 import type { ExperimentDraftDataset, ExperimentDraftRegion } from '../api'
 import DatasetIonImagePreview, { IonPreviewOverlay } from './DatasetIonImagePreview'
@@ -165,20 +157,22 @@ export default defineComponent({
       const ds = props.dataset
       const v = props.modelValue
       return (
-        <ElCard class="mb-4" data-test-key={`dataset-card-${ds.id}`}>
+        <ElCard class="mb-4 " shadow="never" data-test-key={`dataset-card-${ds.id}`}>
           {{
             header: () => (
-              <div class="flex justify-between items-center">
+              <div class="flex justify-between items-center gap-4">
                 <div>
                   <strong>{ds.name}</strong>
                   <span class="text-xs text-gray-500 ml-2">{ds.polarity ?? ''}</span>
                 </div>
                 <button
-                  class="text-red-500 text-sm"
+                  class="bg-transparent border-0 p-0 text-gray-400 
+                  hover:text-gray-700 cursor-pointer inline-flex items-center"
                   data-test-key={`remove-dataset-${ds.id}`}
+                  aria-label="Remove dataset"
                   onClick={() => emit('remove')}
                 >
-                  Remove
+                  <Close class="w-4 h-4" />
                 </button>
               </div>
             ),
@@ -195,48 +189,65 @@ export default defineComponent({
                     <ElOption value="ROI" label="ROI" />
                     <ElOption value="SEGMENTATION" label="Segmentation cluster" />
                   </ElSelect>
-                  <ElButton
-                    size="small"
+                  <a
+                    class="ml-auto text-blue-600 hover:text-blue-700 text-sm
+                     inline-flex items-center gap-1 cursor-pointer select-none"
                     data-test-key={`toggle-ion-image-${ds.id}`}
                     onClick={() => {
                       shownIonImage.value = !shownIonImage.value
                     }}
                   >
-                    {shownIonImage.value ? 'Hide ion image' : 'Show ion image'}
-                  </ElButton>
+                    <span class="underline">Show/hide ion image</span>
+                    <View class="w-4 h-4" />
+                  </a>
                 </div>
-                <div class="flex gap-3 items-start">
-                  <div class="flex-1 min-w-0">
-                    <DatasetIonImagePreview
-                      shown={shownIonImage.value}
-                      ionImageUrl={props.ionImageUrl}
-                      opticalImageUrl={props.opticalImageUrl}
-                      imageWidth={props.imageWidth}
-                      imageHeight={props.imageHeight}
-                      overlays={overlays.value}
-                    />
-                  </div>
-                  {shownIonImage.value && overlays.value.length > 0 && (
-                    <div
-                      class="flex flex-col gap-1 text-sm py-2 min-w-[140px]"
-                      data-test-key={`overlay-toggles-${ds.id}`}
-                    >
-                      {overlays.value.map((o, idx) => (
-                        <label key={o.id} class="flex items-center gap-2 cursor-pointer">
-                          <ElCheckbox
-                            modelValue={o.visible}
-                            onChange={(val: boolean) => updateRegion(idx, { included: val })}
-                            data-test-key={`overlay-toggle-${o.id}`}
-                          />
-                          <span
-                            class="inline-block w-3 h-3 rounded-sm border border-gray-300"
-                            style={{ backgroundColor: o.color }}
-                          />
-                          <span class="truncate">{o.label}</span>
-                        </label>
-                      ))}
+                <div
+                  data-test-key={`ion-preview-wrapper-${ds.id}`}
+                  class={[
+                    'grid transition-[grid-template-rows] duration-500 ease-in-out',
+                    shownIonImage.value ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+                  ]}
+                >
+                  <div
+                    class={`min-h-0 overflow-hidden bg-gray-100 border-2 border-dashed border-gray-300 rounded p-2 ${
+                      shownIonImage.value ? '' : '!border-0 bg-white'
+                    }`}
+                  >
+                    <div class="flex gap-3 items-start">
+                      <div class="flex-1 min-w-0">
+                        <DatasetIonImagePreview
+                          shown={true}
+                          ionImageUrl={props.ionImageUrl}
+                          opticalImageUrl={props.opticalImageUrl}
+                          imageWidth={props.imageWidth}
+                          imageHeight={props.imageHeight}
+                          overlays={overlays.value}
+                          hideIonImage={v.regionSource === 'SEGMENTATION'}
+                        />
+                      </div>
+                      {overlays.value.length > 0 && (
+                        <div
+                          class="flex flex-col gap-1 text-sm py-2 min-w-[140px] bg-white rounded p-2"
+                          data-test-key={`overlay-toggles-${ds.id}`}
+                        >
+                          {overlays.value.map((o, idx) => (
+                            <label key={o.id} class="flex items-center gap-2 cursor-pointer">
+                              <ElCheckbox
+                                modelValue={o.visible}
+                                onChange={(val: boolean) => updateRegion(idx, { included: val })}
+                                data-test-key={`overlay-toggle-${o.id}`}
+                              />
+                              <span
+                                class="inline-block w-3 h-3 rounded-sm border border-gray-300"
+                                style={{ backgroundColor: o.color }}
+                              />
+                              <span class="truncate">{o.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
                 <ElTable data={v.regions} size="small" data-test-key={`region-table-${ds.id}`}>
                   <ElTableColumn label="Region" width="180">

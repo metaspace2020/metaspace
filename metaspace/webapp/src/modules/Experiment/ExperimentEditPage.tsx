@@ -290,8 +290,10 @@ export default defineComponent({
     )
 
     /**
-     * Edges are derived from auto-generated label groups. For each `auto_*` group,
-     * collect the regionKeys assigned to it and emit one edge per pair (region[0], region[i>0]).
+     * Edges are derived from auto-generated label groups. For each `auto_*` group, emit one
+     * edge between each pair of consecutive participating datasets (in dataset order). This
+     * keeps lines short and only crosses non-participating datasets when datasets in the same
+     * group are not adjacent.
      */
     const edges = computed<BoardEdge[]>(() => {
       const out: BoardEdge[] = []
@@ -300,12 +302,15 @@ export default defineComponent({
         const assigned: string[] = []
         for (const ds of draft.value.datasets) {
           for (const r of ds.regions) {
-            if (r.labelGroupName === lg.name) assigned.push(r.regionKey)
+            if (r.labelGroupName === lg.name) {
+              assigned.push(r.regionKey)
+              break
+            }
           }
         }
         if (assigned.length < 2) continue
         for (let i = 1; i < assigned.length; i++) {
-          out.push({ from: assigned[0], to: assigned[i] })
+          out.push({ from: assigned[i - 1], to: assigned[i], color: lg.color })
         }
       }
       return out
@@ -346,7 +351,45 @@ export default defineComponent({
       return `auto_${n}`
     }
 
+    const groupOf = (regionKey: string): string | null => {
+      for (const ds of draft.value.datasets) {
+        const r = ds.regions.find((x) => x.regionKey === regionKey)
+        if (r?.labelGroupName?.startsWith('auto_')) return r.labelGroupName
+      }
+      return null
+    }
+
     const onAddEdge = (e: BoardEdge): void => {
+      const gFrom = groupOf(e.from)
+      const gTo = groupOf(e.to)
+
+      // Both already in same group — nothing to do.
+      if (gFrom && gTo && gFrom === gTo) return
+
+      // Merge two existing groups: keep gFrom, drop gTo.
+      if (gFrom && gTo) {
+        const datasets = draft.value.datasets.map((ds) => ({
+          ...ds,
+          regions: ds.regions.map((r) => (r.labelGroupName === gTo ? { ...r, labelGroupName: gFrom } : r)),
+        }))
+        const labelGroups = draft.value.labelGroups.filter((g) => g.name !== gTo)
+        draft.value = { ...draft.value, labelGroups, datasets }
+        return
+      }
+
+      // Extend an existing group with the other endpoint.
+      if (gFrom || gTo) {
+        const groupName = (gFrom ?? gTo) as string
+        const newcomer = gFrom ? e.to : e.from
+        const datasets = draft.value.datasets.map((ds) => ({
+          ...ds,
+          regions: ds.regions.map((r) => (r.regionKey === newcomer ? { ...r, labelGroupName: groupName } : r)),
+        }))
+        draft.value = { ...draft.value, datasets }
+        return
+      }
+
+      // Neither has a group — create a fresh one.
       const groupName = nextAutoGroupName()
       const color = REGION_PALETTE[draft.value.labelGroups.length % REGION_PALETTE.length]
       const labelGroups = [...draft.value.labelGroups, { name: groupName, color }]
@@ -359,27 +402,53 @@ export default defineComponent({
       draft.value = { ...draft.value, labelGroups, datasets }
     }
 
+    const detachRegionFromGroup = (regionKey: string): void => {
+      const groupName = groupOf(regionKey)
+      if (!groupName) return
+      let datasets = draft.value.datasets.map((ds) => ({
+        ...ds,
+        regions: ds.regions.map((r) => (r.regionKey === regionKey ? { ...r, labelGroupName: null } : r)),
+      }))
+      const remaining: string[] = []
+      for (const ds of datasets) {
+        for (const r of ds.regions) {
+          if (r.labelGroupName === groupName) remaining.push(r.regionKey)
+        }
+      }
+      let labelGroups = draft.value.labelGroups
+      // Drop the group entirely if it has fewer than 2 members left.
+      if (remaining.length < 2) {
+        datasets = datasets.map((ds) => ({
+          ...ds,
+          regions: ds.regions.map((r) => (r.labelGroupName === groupName ? { ...r, labelGroupName: null } : r)),
+        }))
+        labelGroups = labelGroups.filter((g) => g.name !== groupName)
+      }
+      draft.value = { ...draft.value, labelGroups, datasets }
+    }
+
     const onRemoveMapping = (mappingId: string): void => {
       const [from, to] = mappingId.split('|')
-      // Find the auto_* group that owns both endpoints.
-      const groupName = draft.value.labelGroups
-        .filter((g) => g.name.startsWith('auto_'))
-        .find((g) => {
-          const assigned: string[] = []
-          for (const ds of draft.value.datasets) {
-            for (const r of ds.regions) {
-              if (r.labelGroupName === g.name) assigned.push(r.regionKey)
-            }
-          }
-          return assigned.includes(from) && assigned.includes(to)
-        })?.name
-      if (!groupName) return
-      const datasets = draft.value.datasets.map((ds) => ({
-        ...ds,
-        regions: ds.regions.map((r) => (r.labelGroupName === groupName ? { ...r, labelGroupName: null } : r)),
-      }))
-      const labelGroups = draft.value.labelGroups.filter((g) => g.name !== groupName)
-      draft.value = { ...draft.value, labelGroups, datasets }
+      // Detach the `to` endpoint; if the group falls below 2 members it's removed entirely.
+      // Detaching `to` covers both pairwise and N-way cases since the chip's endpoints come
+      // from the star-fan derivation in `edges`.
+      const gFrom = groupOf(from)
+      const gTo = groupOf(to)
+      if (!gFrom || gFrom !== gTo) return
+      detachRegionFromGroup(to)
+    }
+
+    const onReorderColumns = (payload: { from: string; toIndex: number }): void => {
+      const list = draft.value.datasets
+      const fromIdx = list.findIndex((d) => d.datasetId === payload.from)
+      if (fromIdx < 0 || payload.toIndex < 0 || payload.toIndex > list.length) return
+      // Splice removes first, so adjust target index when moving forwards.
+      const adjusted = fromIdx < payload.toIndex ? payload.toIndex - 1 : payload.toIndex
+      if (adjusted === fromIdx) return
+      const next = list.slice()
+      const [moved] = next.splice(fromIdx, 1)
+      next.splice(adjusted, 0, moved)
+      draft.value = { ...draft.value, datasets: next }
     }
 
     const onMatchModeChange = (mode: MatchMode): void => {
@@ -423,6 +492,9 @@ export default defineComponent({
       setDraft: (d: ExperimentDraft) => {
         draft.value = d
       },
+      onAddEdge,
+      onRemoveMapping,
+      onReorderColumns,
     })
 
     return () => (
@@ -431,7 +503,7 @@ export default defineComponent({
           {isEdit.value ? 'Edit experiment' : 'Create experiment'}
         </h1>
 
-        <ElCard class="mb-6">
+        <ElCard class="mb-6" shadow="never">
           <div class="space-y-4">
             <div>
               <label class="block text-sm mb-1">Name</label>
@@ -460,7 +532,7 @@ export default defineComponent({
           </div>
         </ElCard>
 
-        <ElCard class="mb-6">
+        <ElCard class="mb-6" shadow="never">
           <h2 class="text-lg mb-2">Datasets</h2>
           <DatasetSelector
             candidates={candidates.value}
@@ -511,25 +583,26 @@ export default defineComponent({
           </div>
         )}
 
-        <ElCard class="mb-6">
+        <ElCard class="mb-6" shadow="never">
           <h2 class="text-lg mb-2">Region mapping</h2>
-          <RegionMappingBoard
-            data-test-key="mapping-board"
-            columns={columns.value}
-            edges={edges.value}
-            onAdd-edge={onAddEdge}
-            onRemove-edge={(e: BoardEdge) => onRemoveMapping(`${e.from}|${e.to}`)}
-          />
-        </ElCard>
-
-        <ElCard class="mb-6">
           <MatchModeSelector
             modelValue={draft.value.matchMode}
             mappings={mappings.value}
             onUpdate:modelValue={onMatchModeChange}
             onRemove-mapping={onRemoveMapping}
           />
+          <div class="my-4"/>
+          <RegionMappingBoard
+            data-test-key="mapping-board"
+            columns={columns.value}
+            edges={edges.value}
+            onAdd-edge={onAddEdge}
+            onRemove-edge={(e: BoardEdge) => onRemoveMapping(`${e.from}|${e.to}`)}
+            onReorder={onReorderColumns}
+          />
         </ElCard>
+
+          
 
         <div class="flex gap-2 justify-end">
           <ElButton onClick={() => router.push(`/project/${projectId}`)}>Cancel</ElButton>
