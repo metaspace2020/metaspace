@@ -20,6 +20,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import PIL.Image
+from botocore.exceptions import ClientError
 
 from sm.engine.db import DB
 from sm.engine import image_storage as _image_storage
@@ -205,12 +206,36 @@ def build_prep_block(
         if not surviving:
             continue
 
-        first_principal = surviving[0][5][0]
-        first_image = load_iso_image(ds_id, first_principal)
+        # Iso-images for an older FINISHED job may have been deleted (e.g. while
+        # a re-annotation is in progress). Find the first surviving row whose
+        # principal image actually loads, so we can determine mask dimensions;
+        # rows with missing images are dropped.
+        image_cache: Dict[str, np.ndarray] = {}
+        first_image: Optional[np.ndarray] = None
+        first_idx = 0
+        for idx, surv_row in enumerate(surviving):
+            principal = surv_row[5][0]
+            try:
+                first_image = load_iso_image(ds_id, principal)
+            except ClientError as exc:
+                logger.warning(
+                    f'experiment_prep: missing iso image {principal} for ds {ds_id}: {exc}'
+                )
+                continue
+            image_cache[principal] = first_image
+            first_idx = idx
+            break
+
+        if first_image is None:
+            logger.warning(f'experiment_prep: no loadable iso images for ds {ds_id}; skipping')
+            continue
+
+        surviving = surviving[first_idx:]
         height, width = first_image.shape
-        image_cache: Dict[str, np.ndarray] = {first_principal: first_image}
 
         for region in ds.get('regions') or []:
+            if region.get('labelGroupName') is None:
+                continue
             md_dict = region.get('metadata') or {}
             # Per metadata spec: sampleId defaults to dataset_id when blank.
             sample_id = (md_dict.get('sampleId') or '').strip() or ds_id
@@ -243,7 +268,14 @@ def build_prep_block(
                 principal = iso[0]
                 arr = image_cache.get(principal)
                 if arr is None:
-                    arr = load_iso_image(ds_id, principal)
+                    try:
+                        arr = load_iso_image(ds_id, principal)
+                    except ClientError as exc:
+                        logger.warning(
+                            f'experiment_prep: missing iso image {principal} '
+                            f'for ds {ds_id}: {exc}'
+                        )
+                        continue
                     image_cache[principal] = arr
                 vals = arr[rows_idx, cols_idx].astype(np.float64)
                 mean_val = float(vals.mean()) if vals.size else 0.0

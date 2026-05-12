@@ -52,9 +52,15 @@ export async function persistExperiment(
 ): Promise<string> {
   await validatePolarity(ctx, input.datasets.map(d => d.datasetId))
 
-  const labelGroups: ExperimentLabelGroupSpec[] = input.labelGroups.map(lg => ({
-    name: lg.name, color: lg.color,
-  }))
+  const usedGroupNames = new Set<string>()
+  for (const ds of input.datasets) {
+    for (const r of ds.regions) {
+      if (r.labelGroupName) usedGroupNames.add(r.labelGroupName)
+    }
+  }
+  const labelGroups: ExperimentLabelGroupSpec[] = input.labelGroups
+    .filter(lg => usedGroupNames.has(lg.name))
+    .map(lg => ({ name: lg.name, color: lg.color }))
   const matchMode = input.matchMode.toLowerCase() as 'name' | 'manual'
 
   const expRepo = em.getRepository(Experiment)

@@ -105,6 +105,21 @@ describe('createExperiment', () => {
     expect(eds[0].regions).toHaveLength(1)
     expect(eds[0].regions[0].labelGroupName).toBe('tumor')
   })
+
+  it('prunes labelGroups not referenced by any region', async() => {
+    const p = await makeProjectWithMember()
+    const ds = await createTestDataset()
+    setEsPolarity({ [ds.id]: '+' })
+    const input = buildInput([ds.id])
+    input.labelGroups = [
+      { name: 'tumor', color: '#ff0000' },
+      { name: 'stroma', color: '#00ff00' },
+      { name: 'orphan', color: '#0000ff' },
+    ]
+    await doQuery<any>(createMutation, { projectId: (p as any).id, input })
+    const exps = await testEntityManager.find(Experiment)
+    expect(exps[0].labelGroups.map((l: any) => l.name)).toEqual(['tumor'])
+  })
 })
 
 const updateMutation = `

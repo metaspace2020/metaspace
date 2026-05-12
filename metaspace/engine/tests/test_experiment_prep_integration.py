@@ -138,6 +138,7 @@ def test_build_prep_block_filters_and_resolves_intensities_against_real_db(fixtu
                     'sourceKind': 'roi',
                     'roiId': 5050,
                     'segmentationId': None,
+                    'labelGroupName': 'g1',
                     'metadata': {'sampleId': 's0'},
                 },
                 {
@@ -145,6 +146,7 @@ def test_build_prep_block_filters_and_resolves_intensities_against_real_db(fixtu
                     'sourceKind': 'roi',
                     'roiId': 5051,
                     'segmentationId': None,
+                    'labelGroupName': 'g1',
                     'metadata': {'sampleId': 's1'},
                 },
             ],

@@ -9,7 +9,7 @@ import { smApiDatasetRequest } from '../../../utils'
 
 function loadFullExperiment(ctx: Context, id: string) {
   return ctx.entityManager.getRepository(Experiment).findOneOrFail({
-    where: { id }, relations: ['datasets', 'datasets.dataset'],
+    where: { id }, relations: ['project', 'datasets', 'datasets.dataset'],
   })
 }
 

@@ -89,6 +89,7 @@ def test_build_prep_block_emits_per_sample_intensities_and_filter_chain():
                     'sourceKind': 'roi',
                     'roiId': 42,
                     'segmentationId': None,
+                    'labelGroupName': 'g1',
                     'metadata': {'sampleId': 's0'},
                 },
                 {
@@ -96,6 +97,7 @@ def test_build_prep_block_emits_per_sample_intensities_and_filter_chain():
                     'sourceKind': 'roi',
                     'roiId': 43,
                     'segmentationId': None,
+                    'labelGroupName': 'g1',
                     'metadata': {'sampleId': 's1'},
                 },
             ],
@@ -152,6 +154,7 @@ def test_build_prep_block_handles_segmentation_cluster_regions():
                     'sourceKind': 'segmentation_cluster',
                     'roiId': None,
                     'segmentationId': 'seg-uuid',
+                    'labelGroupName': 'g1',
                     'metadata': {'sampleId': 's0'},
                 },
             ],
@@ -166,3 +169,71 @@ def test_build_prep_block_handles_segmentation_cluster_regions():
     )
     # cluster 1 is at (y=0,x=1) and (y=1,x=0): values 20 and 30, mean 25.
     assert prep['intensities'] == {'r-s0': {11: 25.0}}
+
+
+def test_build_prep_block_skips_regions_without_label_group():
+    annotations = [(1, 11, 0.01, '+H', 9, ['img-a'])]
+    db = _FakeDB(
+        latest_job_by_ds={'ds-1': (101,)},
+        annotations_by_job={101: annotations},
+        roi_by_id={
+            42: (
+                {
+                    'features': [
+                        {
+                            'properties': {
+                                'id': 42,
+                                'coordinates': [{'x': 0, 'y': 0}, {'x': 0, 'y': 1}],
+                            }
+                        }
+                    ]
+                },
+            ),
+            43: (
+                {
+                    'features': [
+                        {
+                            'properties': {
+                                'id': 43,
+                                'coordinates': [{'x': 1, 'y': 0}, {'x': 1, 'y': 1}],
+                            }
+                        }
+                    ]
+                },
+            ),
+        },
+    )
+    images = {'img-a': _img([[10, 20], [10, 20]])}
+    datasets = [
+        {
+            'dataset_id': 'ds-1',
+            'region_source': 'roi',
+            'regions': [
+                {
+                    'regionKey': 'r-mapped',
+                    'sourceKind': 'roi',
+                    'roiId': 42,
+                    'segmentationId': None,
+                    'labelGroupName': 'g1',
+                    'metadata': {'sampleId': 's0'},
+                },
+                {
+                    'regionKey': 'r-unmapped',
+                    'sourceKind': 'roi',
+                    'roiId': 43,
+                    'segmentationId': None,
+                    'labelGroupName': None,
+                    'metadata': {'sampleId': 's1'},
+                },
+            ],
+        }
+    ]
+    prep = build_prep_block(
+        db,
+        datasets,
+        {},
+        load_iso_image=lambda ds_id, iid: images[iid],
+        load_label_map=lambda ds_id, sid: None,
+    )
+    assert [s['regionKey'] for s in prep['samples']] == ['r-mapped']
+    assert 'r-unmapped' not in prep['intensities']

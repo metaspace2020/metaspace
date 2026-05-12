@@ -1,6 +1,6 @@
 import { nextTick, ref } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
-import { vi } from 'vitest'
+import { vi, expect } from 'vitest'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { initMockGraphqlClient } from '../../tests/utils/mockGraphqlClient'
 import store from '../../store'
@@ -228,13 +228,11 @@ describe('ExperimentEditPage', () => {
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.find('[data-test-key="mapping-board"]').exists()).toBe(true)
-
     const vm: any = wrapper.vm
     vm.setDraft({
       name: '',
       description: null,
-      matchMode: 'NAME',
+      matchMode: 'MANUAL',
       labelGroups: [],
       datasets: [
         {
@@ -420,7 +418,7 @@ describe('ExperimentEditPage', () => {
     const draftWith = (datasets: any[], labelGroups: any[] = []): ExperimentDraft => ({
       name: 'X',
       description: null,
-      matchMode: 'NAME',
+      matchMode: 'MANUAL',
       labelGroups,
       datasets,
     })
@@ -538,7 +536,7 @@ describe('ExperimentEditPage', () => {
       )
       await nextTick()
 
-      vm.onRemoveMapping('r1|r3')
+      vm.detachRegionFromGroup('r3')
       await nextTick()
 
       expect(vm.draft.labelGroups).toHaveLength(1)
@@ -561,12 +559,138 @@ describe('ExperimentEditPage', () => {
       )
       await nextTick()
 
-      vm.onRemoveMapping('r1|r2')
+      vm.detachRegionFromGroup('r2')
       await nextTick()
 
       expect(vm.draft.labelGroups).toHaveLength(0)
       expect(vm.draft.datasets[0].regions[0].labelGroupName).toBeNull()
       expect(vm.draft.datasets[1].regions[0].labelGroupName).toBeNull()
+    })
+  })
+
+  describe('NAME-mode seeding and renameGroup', () => {
+    const baseRegion = (regionKey: string, labelGroupName: string | null = null) => ({
+      regionKey,
+      sourceKind: 'whole' as const,
+      roiId: null,
+      segmentationId: null,
+      labelGroupName,
+      included: true,
+      metadata: {
+        condition: 'control',
+        biologicalReplicateId: regionKey,
+        sampleId: regionKey,
+        technicalReplicateId: null,
+        batchId: null,
+      },
+    })
+
+    const setupAndMount = async () => {
+      mockRoute = { params: { projectId: 'p1' } }
+      setupQueries()
+      const wrapper = mount(ExperimentEditPage, {
+        global: {
+          plugins: [store, router],
+          provide: { [DefaultApolloClient]: mockClient },
+        },
+      })
+      await flushPromises()
+      await nextTick()
+      return wrapper
+    }
+
+    it('Test A: materializes label groups when match mode toggles to NAME', async () => {
+      const wrapper = await setupAndMount()
+      const vm: any = wrapper.vm
+
+      // Start with MANUAL mode, empty labelGroups, two datasets each with one 'whole' region
+      vm.setDraft({
+        name: 'A',
+        description: null,
+        matchMode: 'MANUAL',
+        labelGroups: [],
+        datasets: [
+          { datasetId: 'd1', regionSource: 'WHOLE', regions: [baseRegion('r1')] },
+          { datasetId: 'd2', regionSource: 'WHOLE', regions: [baseRegion('r2')] },
+        ],
+      })
+      await nextTick()
+
+      // Switch to NAME mode — the post-flush watcher should run seedGroups
+      vm.draft.matchMode = 'NAME'
+      await nextTick()
+      await nextTick() // flush: 'post' may need a second tick
+
+      // Both 'whole' regions resolve to 'Whole dataset' — expect a group with that name
+      const groupNames = vm.draft.labelGroups.map((g: any) => g.name)
+      expect(groupNames).toContain('Whole dataset')
+      expect(vm.draft.datasets[0].regions[0].labelGroupName).toBe('Whole dataset')
+      expect(vm.draft.datasets[1].regions[0].labelGroupName).toBe('Whole dataset')
+    })
+
+    it('Test B: preserves a renamed group across NAME-mode toggles', async () => {
+      const wrapper = await setupAndMount()
+      const vm: any = wrapper.vm
+
+      // Start in NAME mode with one pre-existing group 'Whole dataset', both regions assigned
+      vm.setDraft({
+        name: 'B',
+        description: null,
+        matchMode: 'NAME',
+        labelGroups: [{ name: 'Whole dataset', color: '#abc' }],
+        datasets: [
+          { datasetId: 'd1', regionSource: 'WHOLE', regions: [baseRegion('r1', 'Whole dataset')] },
+          { datasetId: 'd2', regionSource: 'WHOLE', regions: [baseRegion('r2', 'Whole dataset')] },
+        ],
+      })
+      await nextTick()
+      await nextTick()
+
+      // Rename 'Whole dataset' → 'downtown'
+      vm.renameGroup({ oldName: 'Whole dataset', newName: 'downtown' })
+      await nextTick()
+
+      // Toggle MANUAL → NAME
+      vm.draft.matchMode = 'MANUAL'
+      await nextTick()
+      await nextTick()
+      vm.draft.matchMode = 'NAME'
+      await nextTick()
+      await nextTick()
+
+      // The only group should still be 'downtown' — no new 'Whole dataset' re-materialized
+      expect(vm.draft.labelGroups).toHaveLength(1)
+      expect(vm.draft.labelGroups[0].name).toBe('downtown')
+      expect(vm.draft.datasets[0].regions[0].labelGroupName).toBe('downtown')
+      expect(vm.draft.datasets[1].regions[0].labelGroupName).toBe('downtown')
+    })
+
+    it('Test C: rename collision suffixes the typed name', async () => {
+      const wrapper = await setupAndMount()
+      const vm: any = wrapper.vm
+
+      vm.setDraft({
+        name: 'C',
+        description: null,
+        matchMode: 'MANUAL',
+        labelGroups: [
+          { name: 'urban', color: '#aaa' },
+          { name: 'auto_2', color: '#bbb' },
+        ],
+        datasets: [
+          { datasetId: 'd1', regionSource: 'WHOLE', regions: [baseRegion('r1', 'urban')] },
+          { datasetId: 'd2', regionSource: 'WHOLE', regions: [baseRegion('r2', 'auto_2')] },
+        ],
+      })
+      await nextTick()
+
+      // Rename 'auto_2' → 'urban' (collision)
+      vm.renameGroup({ oldName: 'auto_2', newName: 'urban' })
+      await nextTick()
+
+      const names = vm.draft.labelGroups.map((g: any) => g.name)
+      expect(names).toEqual(['urban', 'urban 2'])
+      expect(vm.draft.datasets[1].regions[0].labelGroupName).toBe('urban 2')
     })
   })
 

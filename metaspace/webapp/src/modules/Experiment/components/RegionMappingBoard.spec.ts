@@ -26,11 +26,11 @@ describe('RegionMappingBoard', () => {
     expect(w.emitted('add-edge')?.[0]).toEqual([{ from: 'r1b', to: 'r2a' }])
   })
 
-  it('does not emit when both clicks are in the same column', async () => {
+  it('emits add-edge when two regions in the same column are clicked', async () => {
     const w = mount(RegionMappingBoard, { props: { columns, edges: [] } })
     await w.find('[data-test-key="region-cell-r1a"]').trigger('click')
     await w.find('[data-test-key="region-cell-r1b"]').trigger('click')
-    expect(w.emitted('add-edge')).toBeUndefined()
+    expect(w.emitted('add-edge')?.[0]).toEqual([{ from: 'r1a', to: 'r1b' }])
   })
 
   it('renders one arrow per edge', () => {

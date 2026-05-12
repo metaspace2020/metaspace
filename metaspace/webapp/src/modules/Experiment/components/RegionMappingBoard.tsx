@@ -31,6 +31,7 @@ interface DragState {
 
 const NEUTRAL_EDGE = '#6b7280'
 const COLUMN_DRAG_MIME = 'application/x-region-board-column'
+const ROW_DRAG_MIME = 'application/x-region-board-row'
 
 export default defineComponent({
   name: 'RegionMappingBoard',
@@ -38,7 +39,7 @@ export default defineComponent({
     columns: { type: Array as PropType<BoardColumn[]>, required: true },
     edges: { type: Array as PropType<BoardEdge[]>, default: () => [] },
   },
-  emits: ['add-edge', 'remove-edge', 'reorder'],
+  emits: ['add-edge', 'remove-edge', 'reorder', 'reorder-region'],
   setup(props, { emit }) {
     const selected = ref<{ regionKey: string; datasetId: string } | null>(null)
     const hidden = ref<Set<string>>(new Set())
@@ -48,6 +49,8 @@ export default defineComponent({
     const drag = ref<DragState | null>(null)
     const draggingColumnId = ref<string | null>(null)
     const reorderTargetIdx = ref<number | null>(null)
+    const draggingRow = ref<{ datasetId: string; regionKey: string } | null>(null)
+    const rowReorderTarget = ref<{ datasetId: string; idx: number } | null>(null)
     /** Bumped whenever the column DOM has reflowed; referenced inside `edgePath` so the SVG
      * paths re-evaluate against the new bounding rects (which Vue cannot observe on its own). */
     const layoutVersion = ref(0)
@@ -74,6 +77,19 @@ export default defineComponent({
         await nextTick()
         attachLayoutObserver()
         bumpLayout()
+      }
+    )
+
+    // Row reorders don't resize columns, so the ResizeObserver doesn't fire and edge SVG
+    // paths read stale bounding rects. Bump layoutVersion explicitly when the per-column
+    // region order changes. Use double-bump (microtask + animation frame) so paths recompute
+    // both immediately after DOM patch and again after the browser has laid out the new rows.
+    watch(
+      () => props.columns.map((c) => `${c.datasetId}:${c.regions.map((r) => r.regionKey).join(',')}`).join('|'),
+      async () => {
+        await nextTick()
+        bumpLayout()
+        requestAnimationFrame(() => bumpLayout())
       }
     )
 
@@ -154,10 +170,30 @@ export default defineComponent({
       // Touch layoutVersion so this re-evaluates whenever the DOM has reflowed.
       void layoutVersion.value
       const a = handleAnchor(`${from}:right`)
-      const b = handleAnchor(`${to}:left`)
-      if (!a || !b) return ''
       const fromDs = datasetOfRegion(from)
       const toDs = datasetOfRegion(to)
+      // Same-column edges: route out the right side of the card so the line never crosses
+      // the row label or column title. Anchor on right→right handles instead of right→left.
+      if (fromDs && toDs && fromDs === toDs) {
+        const bRight = handleAnchor(`${to}:right`)
+        if (!a || !bRight) return ''
+        const col = columnRefs.value[fromDs]
+        const cr2 = containerRef.value?.getBoundingClientRect()
+        const stubX = col && cr2 ? col.getBoundingClientRect().right - cr2.left + 2 + edgeIdx * 3 : a.x + 8
+        const r = 6
+        const goingDown = bRight.y > a.y
+        const dirY = goingDown ? 1 : -1
+        return [
+          `M ${a.x} ${a.y}`,
+          `L ${stubX - r} ${a.y}`,
+          `Q ${stubX} ${a.y} ${stubX} ${a.y + dirY * r}`,
+          `L ${stubX} ${bRight.y - dirY * r}`,
+          `Q ${stubX} ${bRight.y} ${stubX - r} ${bRight.y}`,
+          `L ${bRight.x} ${bRight.y}`,
+        ].join(' ')
+      }
+      const b = handleAnchor(`${to}:left`)
+      if (!a || !b) return ''
       if (!fromDs || !toDs || !containerRef.value) return simpleCurve(a.x, a.y, b.x, b.y)
       const cr = containerRef.value.getBoundingClientRect()
       const fromIdx = props.columns.findIndex((c) => c.datasetId === fromDs)
@@ -177,17 +213,58 @@ export default defineComponent({
         const sourceRowTop = fromRect.top - cr.top
         const targetRowTop = toRect.top - cr.top
         const targetRowBottom = toRect.bottom - cr.top
-        // Bias the lane toward the source row so the descent into the lower row has more
-        // breathing room before reaching the target card.
-        const baseLane = goingDown
-          ? sourceRowBottom + (targetRowTop - sourceRowBottom) * 0.35
-          : targetRowBottom + (sourceRowTop - targetRowBottom) * 0.65
-        const lane = baseLane + (goingDown ? 1 : -1) * edgeIdx * 6
-        // Vertical drop sits just outside each card in the inter-card gap.
-        const x1Out = fromRect.right - cr.left + 8
-        const x2In = toRect.left - cr.left - 8
         const r = 6
         const dirY = goingDown ? 1 : -1
+        const x1Out = fromRect.right - cr.left + 8
+        const x2In = toRect.left - cr.left - 8
+
+        // Detect any column that sits in a row strictly between source and target. If so,
+        // a single horizontal lane between source and target rows would slice through those
+        // intermediate cards' titles. Route around the right-most column edge instead, with
+        // one lane just below source row and another just above target row — both cleanly
+        // in the inter-row gaps.
+        const hasIntermediate = props.columns.some((c) => {
+          if (c.datasetId === fromDs || c.datasetId === toDs) return false
+          const col = columnRefs.value[c.datasetId]
+          if (!col) return false
+          const top = col.getBoundingClientRect().top
+          if (goingDown) return top > fromRect.top + 2 && top < toRect.top - 2
+          return top < fromRect.top - 2 && top > toRect.top + 2
+        })
+
+        if (hasIntermediate) {
+          const lane1 = goingDown ? sourceRowBottom + 16 : sourceRowTop - 16
+          const lane2 = goingDown ? targetRowTop - 16 : targetRowBottom + 16
+          // Far-right detour x: past every column's right edge, with per-edge offset so
+          // multiple detours fan out instead of overlapping.
+          const allRights = props.columns
+            .map((c) => columnRefs.value[c.datasetId])
+            .filter((el): el is HTMLElement => !!el)
+            .map((el) => el.getBoundingClientRect().right - cr.left)
+          const farRightX = (allRights.length ? Math.max(...allRights) : x1Out) + 16 + edgeIdx * 5
+          return [
+            `M ${a.x} ${a.y}`,
+            `L ${x1Out - r} ${a.y}`,
+            `Q ${x1Out} ${a.y} ${x1Out} ${a.y + dirY * r}`,
+            `L ${x1Out} ${lane1 - dirY * r}`,
+            `Q ${x1Out} ${lane1} ${x1Out + r} ${lane1}`,
+            `L ${farRightX - r} ${lane1}`,
+            `Q ${farRightX} ${lane1} ${farRightX} ${lane1 + dirY * r}`,
+            `L ${farRightX} ${lane2 - dirY * r}`,
+            `Q ${farRightX} ${lane2} ${farRightX - r} ${lane2}`,
+            `L ${x2In + r} ${lane2}`,
+            `Q ${x2In} ${lane2} ${x2In} ${lane2 + dirY * r}`,
+            `L ${x2In} ${b.y - dirY * r}`,
+            `Q ${x2In} ${b.y} ${x2In + r} ${b.y}`,
+            `L ${b.x} ${b.y}`,
+          ].join(' ')
+        }
+
+        // Adjacent rows: keep the simpler single-lane routing.
+        const baseLane = goingDown
+          ? sourceRowBottom + (targetRowTop - sourceRowBottom) * 0.5
+          : targetRowBottom + (sourceRowTop - targetRowBottom) * 0.5
+        const lane = baseLane + (goingDown ? 1 : -1) * edgeIdx * 6
         const horizDir = x2In >= x1Out ? 1 : -1
         return [
           `M ${a.x} ${a.y}`,
@@ -273,7 +350,8 @@ export default defineComponent({
       const fromKey = drag.value.fromKey
       const fromDataset = drag.value.fromDatasetId
       stopDrag()
-      if (!target || target.regionKey === fromKey || target.datasetId === fromDataset) return
+      void fromDataset
+      if (!target || target.regionKey === fromKey) return
       emit('add-edge', { from: fromKey, to: target.regionKey })
     }
 
@@ -304,10 +382,6 @@ export default defineComponent({
         return
       }
       if (!selected.value) {
-        selected.value = { regionKey, datasetId }
-        return
-      }
-      if (selected.value.datasetId === datasetId) {
         selected.value = { regionKey, datasetId }
         return
       }
@@ -362,6 +436,57 @@ export default defineComponent({
       if (!from || idx !== wasIdx) return
       ev.preventDefault()
       emit('reorder', { from, toIndex: idx })
+    }
+
+    // Row reorder via native HTML5 drag-and-drop, mirrors column reorder. Drop zones render
+    // *between* rows of the same column so a region can be repositioned within its dataset.
+    const onRowDragStart = (ev: DragEvent, datasetId: string, regionKey: string): void => {
+      if (!ev.dataTransfer) return
+      ev.dataTransfer.effectAllowed = 'move'
+      ev.dataTransfer.setData(ROW_DRAG_MIME, `${datasetId}::${regionKey}`)
+      ev.dataTransfer.setData('text/plain', regionKey)
+      draggingRow.value = { datasetId, regionKey }
+    }
+
+    const onRowDragEnd = (): void => {
+      draggingRow.value = null
+      rowReorderTarget.value = null
+    }
+
+    const onRowGapDragOver = (ev: DragEvent, datasetId: string, idx: number): void => {
+      const types = ev.dataTransfer?.types
+      if (!types || !Array.from(types).includes(ROW_DRAG_MIME)) return
+      if (draggingRow.value?.datasetId !== datasetId) return
+      ev.preventDefault()
+      ev.dataTransfer!.dropEffect = 'move'
+      rowReorderTarget.value = { datasetId, idx }
+    }
+
+    const onRowGapDragLeave = (datasetId: string, idx: number): void => {
+      const cur = rowReorderTarget.value
+      if (cur && cur.datasetId === datasetId && cur.idx === idx) rowReorderTarget.value = null
+    }
+
+    const onRowGapDrop = (ev: DragEvent, datasetId: string, idx: number): void => {
+      const payload = ev.dataTransfer?.getData(ROW_DRAG_MIME)
+      const cur = rowReorderTarget.value
+      rowReorderTarget.value = null
+      const dragging = draggingRow.value
+      draggingRow.value = null
+      if (!payload || !cur || cur.datasetId !== datasetId || cur.idx !== idx) return
+      const [dsId, regionKey] = payload.split('::')
+      if (dsId !== datasetId || !dragging || dragging.datasetId !== datasetId) return
+      ev.preventDefault()
+      emit('reorder-region', { datasetId, regionKey, toIndex: idx })
+    }
+
+    const rowGapIsNoop = (datasetId: string, idx: number): boolean => {
+      const cur = draggingRow.value
+      if (!cur || cur.datasetId !== datasetId) return false
+      const col = props.columns.find((c) => c.datasetId === datasetId)
+      if (!col) return false
+      const fromIdx = col.regions.findIndex((r) => r.regionKey === cur.regionKey)
+      return fromIdx === idx || fromIdx === idx - 1
     }
 
     /** Whether the gap at `idx` is a no-op (dropping there leaves order unchanged). */
@@ -452,7 +577,7 @@ export default defineComponent({
                 <Rank />
               </ElIcon>
             </span>
-            <div class="font-medium truncate flex-1" title={c.name}>
+            <div class="font-medium truncate flex-1 select-none" title={c.name}>
               {c.name}
             </div>
             <button
@@ -467,37 +592,85 @@ export default defineComponent({
               </ElIcon>
             </button>
           </div>
-          {c.regions.map((r) => {
+          {c.regions.map((r, ri) => {
             const isSelected = selected.value?.regionKey === r.regionKey
             const tint = colorByRegion.value[r.regionKey] ?? null
             const connected = !!tint
             const rowPos = rowPositionByColumn.value[c.datasetId] ?? { first: false, last: false }
             return (
-              <div
-                key={r.regionKey}
-                data-test-key={`region-cell-${r.regionKey}`}
-                class={[
-                  'flex items-center gap-2 px-2 py-1 my-1 rounded cursor-pointer transition-colors',
-                  isSelected ? 'bg-blue-50' : connected ? 'bg-blue-50' : 'hover:bg-gray-50',
-                ]}
-                style={{
-                  border: isSelected
-                    ? `1px solid ${tint ?? '#3b82f6'}`
-                    : connected
-                    ? `1px solid ${tint}`
-                    : '1px solid #e5e7eb',
-                }}
-                onClick={() => onClick(c.datasetId, r.regionKey)}
-              >
-                {renderHandle(c.datasetId, r.regionKey, 'left', tint, !rowPos.first)}
-                <span class="w-3 h-3 rounded-full flex-shrink-0" style={{ background: tint ?? r.color }} />
-                <span class="flex-1 truncate" title={r.label}>
-                  {r.label}
-                </span>
-                {renderHandle(c.datasetId, r.regionKey, 'right', tint, !rowPos.last)}
-              </div>
+              <>
+                {renderRowGap(c.datasetId, ri)}
+                <div
+                  key={r.regionKey}
+                  data-test-key={`region-cell-${r.regionKey}`}
+                  class={[
+                    'flex items-center gap-1 px-2 py-1 my-1 rounded cursor-pointer transition-colors',
+                    isSelected ? 'bg-blue-50' : connected ? 'bg-blue-50' : 'hover:bg-gray-50',
+                  ]}
+                  style={{
+                    border: isSelected
+                      ? `1px solid ${tint ?? '#3b82f6'}`
+                      : connected
+                      ? `1px solid ${tint}`
+                      : '1px solid #e5e7eb',
+                  }}
+                  onClick={() => onClick(c.datasetId, r.regionKey)}
+                >
+                  <span
+                    draggable="true"
+                    data-test-key={`region-drag-${r.regionKey}`}
+                    class="text-gray-300 hover:text-gray-500 cursor-grab
+                     active:cursor-grabbing flex-shrink-0 inline-flex
+                     items-center justify-center"
+                    style={{ width: '20px', height: '20px', margin: '-4px 0' }}
+                    title="Drag to reorder region"
+                    onMousedown={(ev: MouseEvent) => ev.stopPropagation()}
+                    onClick={(ev: MouseEvent) => ev.stopPropagation()}
+                    onDragstart={(ev: DragEvent) => onRowDragStart(ev, c.datasetId, r.regionKey)}
+                    onDragend={onRowDragEnd}
+                  >
+                    <ElIcon>
+                      <Rank />
+                    </ElIcon>
+                  </span>
+                  {renderHandle(c.datasetId, r.regionKey, 'left', tint, !rowPos.first)}
+                  <span class="w-3 h-3 rounded-full flex-shrink-0" style={{ background: tint ?? r.color }} />
+                  <span class="flex-1 truncate select-none" title={r.label}>
+                    {r.label}
+                  </span>
+                  {renderHandle(c.datasetId, r.regionKey, 'right', tint, true)}
+                </div>
+              </>
             )
           })}
+          {renderRowGap(c.datasetId, c.regions.length)}
+        </div>
+      )
+    }
+
+    const renderRowGap = (datasetId: string, idx: number): JSX.Element | null => {
+      const draggingThis = draggingRow.value?.datasetId === datasetId
+      const isActive = rowReorderTarget.value?.datasetId === datasetId && rowReorderTarget.value?.idx === idx
+      const isNoop = rowGapIsNoop(datasetId, idx)
+      // Always rendered (zero-height when idle) so the DOM doesn't reflow mid-drag — that
+      // reflow was breaking subsequent drags after the first one.
+      return (
+        <div
+          key={`row-gap-${datasetId}-${idx}`}
+          data-test-key={`row-gap-${datasetId}-${idx}`}
+          class="w-full flex-shrink-0"
+          style={{ height: draggingThis ? (isActive ? '14px' : '8px') : '0px', transition: 'height 120ms ease' }}
+          onDragover={(ev: DragEvent) => !isNoop && onRowGapDragOver(ev, datasetId, idx)}
+          onDragleave={() => onRowGapDragLeave(datasetId, idx)}
+          onDrop={(ev: DragEvent) => !isNoop && onRowGapDrop(ev, datasetId, idx)}
+        >
+          <div
+            class="w-full h-full rounded"
+            style={{
+              background: isActive && !isNoop ? '#9ca3af' : 'transparent',
+              transition: 'background 120ms ease',
+            }}
+          />
         </div>
       )
     }

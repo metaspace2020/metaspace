@@ -60,6 +60,20 @@ def test_run_experiment_returns_full_run_qc_shape():
     assert ion1['p_value'] < 0.5
 
 
+def test_run_experiment_skips_label_group_with_single_condition():
+    payload = build_payload([
+        _region('r-1', 's1', 'control', bio='m1', base=10.0),
+        _region('r-2', 's2', 'control', bio='m2', base=12.0),
+    ])
+    out = run_experiment('exp-1', 1, payload)
+    assert out['run_qc']['inferredTestPerLabelGroup'] == {'auto_1': 'NOT_ENOUGH_DATA'}
+    assert all(
+        r['p_value'] is None and r['fdr'] is None
+        for r in out['results']
+        if r['label_group_name'] == 'auto_1'
+    )
+
+
 def test_run_experiment_emits_null_p_when_not_enough_replicates():
     """n=1 per arm: test name is still inferred from design, but p/fdr are NULL."""
     payload = make_payload()

@@ -88,22 +88,85 @@ export const experimentQuery = gql`
   }
 `
 
-export const createExperimentMutation = gql`
-  mutation createExperiment($projectId: ID!, $input: ExperimentInput!) {
-    createExperiment(projectId: $projectId, input: $input) {
+// Mutations return the same Experiment shape as `experimentQuery` so Apollo's
+// cache merge doesn't drop fields the active `experimentQuery` watcher relies
+// on (e.g. nested `run.startedAt`/`excludedSamples`). Returning a partial shape
+// causes the watcher's re-read to fail with "Cannot convert object to primitive value".
+const EXPERIMENT_FIELDS = gql`
+  fragment ExperimentFields on Experiment {
+    id
+    name
+    description
+    matchMode
+    createdAt
+    project {
       id
       name
     }
+    datasets {
+      id
+      regionSource
+      dataset {
+        id
+        name
+        polarity
+      }
+      regions {
+        regionKey
+        sourceKind
+        roi {
+          id
+          name
+        }
+        segmentation {
+          id
+          segmentIndex
+          name
+        }
+        labelGroupName
+        metadata {
+          condition
+          biologicalReplicateId
+          sampleId
+          technicalReplicateId
+          batchId
+        }
+      }
+    }
+    labelGroups {
+      name
+      color
+    }
+    run {
+      status
+      stage
+      generation
+      excludedSamples
+      inferredTest
+      filters
+      error
+      startedAt
+      finishedAt
+    }
   }
+`
+
+export const createExperimentMutation = gql`
+  mutation createExperiment($projectId: ID!, $input: ExperimentInput!) {
+    createExperiment(projectId: $projectId, input: $input) {
+      ...ExperimentFields
+    }
+  }
+  ${EXPERIMENT_FIELDS}
 `
 
 export const updateExperimentMutation = gql`
   mutation updateExperiment($id: ID!, $input: ExperimentInput!) {
     updateExperiment(id: $id, input: $input) {
-      id
-      name
+      ...ExperimentFields
     }
   }
+  ${EXPERIMENT_FIELDS}
 `
 
 export const deleteExperimentMutation = gql`
@@ -115,14 +178,10 @@ export const deleteExperimentMutation = gql`
 export const runExperimentMutation = gql`
   mutation runExperiment($id: ID!) {
     runExperiment(id: $id) {
-      id
-      run {
-        status
-        stage
-        generation
-      }
+      ...ExperimentFields
     }
   }
+  ${EXPERIMENT_FIELDS}
 `
 
 export const experimentResultsQuery = gql`
@@ -288,7 +347,7 @@ export interface ExperimentDraftDataset {
 export interface ExperimentDraft {
   name: string
   description: string | null
-  matchMode: 'COLOR' | 'MANUAL' | 'NAME'
+  matchMode: 'COLOR' | 'MANUAL' | 'NAME' | 'GROUP'
   datasets: ExperimentDraftDataset[]
   labelGroups: { name: string; color: string }[]
 }
@@ -354,7 +413,8 @@ export const emptyDraft = (): ExperimentDraft => ({
 export const draftFromExperiment = (exp: any): ExperimentDraft => ({
   name: exp.name,
   description: exp.description ?? null,
-  matchMode: exp.matchMode === 'MANUAL' ? 'MANUAL' : exp.matchMode === 'COLOR' ? 'COLOR' : 'NAME',
+  matchMode:
+    exp.matchMode === 'MANUAL' || exp.matchMode === 'GROUP' ? 'MANUAL' : exp.matchMode === 'COLOR' ? 'COLOR' : 'NAME',
   datasets: (exp.datasets ?? []).map((d: any) => ({
     datasetId: d.dataset.id,
     regionSource: d.regionSource,
@@ -400,8 +460,8 @@ export const serializeDraft = (
 } => ({
   name: d.name,
   description: d.description,
-  // TODO: backend currently lacks COLOR enum value
-  matchMode: d.matchMode === 'COLOR' ? 'MANUAL' : d.matchMode,
+  // TODO: backend currently lacks COLOR/GROUP enum values
+  matchMode: d.matchMode === 'COLOR' ? 'MANUAL' : d.matchMode === 'GROUP' ? 'NAME' : d.matchMode,
   datasets: d.datasets.map((ds) => ({
     datasetId: ds.datasetId,
     regionSource: ds.regionSource,
@@ -419,5 +479,13 @@ export const serializeDraft = (
         },
       })),
   })),
-  labelGroups: d.labelGroups.map((lg) => ({ name: lg.name, color: lg.color })),
+  labelGroups: (() => {
+    const used = new Set<string>()
+    for (const ds of d.datasets) {
+      for (const r of ds.regions) {
+        if (r.included !== false && r.labelGroupName) used.add(r.labelGroupName)
+      }
+    }
+    return d.labelGroups.filter((lg) => used.has(lg.name)).map((lg) => ({ name: lg.name, color: lg.color }))
+  })(),
 })

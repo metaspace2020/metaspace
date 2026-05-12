@@ -23,7 +23,9 @@ import {
 import DatasetSelector, { CandidateDataset } from './components/DatasetSelector'
 import DatasetMetadataCard, { RoiOption, SegmentationOption } from './components/DatasetMetadataCard'
 import RegionMappingBoard, { BoardColumn, BoardEdge } from './components/RegionMappingBoard'
-import MatchModeSelector, { MappingChip, MatchMode } from './components/MatchModeSelector'
+import MatchModeSelector, { MatchMode } from './components/MatchModeSelector'
+import RegionMappingGroups from './components/RegionMappingGroups'
+import { resolveRenameTarget, seedNameModeGroups } from './composables/groupNaming'
 import { buildSegmentationMasks } from './composables/useSegmentationMasks'
 import { isRegionValid, oneConditionGroupWarnings } from './composables/useRegionValidation'
 import { getDatasetDiagnosticsQuery } from '../../api/dataset'
@@ -289,23 +291,13 @@ export default defineComponent({
       }))
     )
 
-    /**
-     * Edges are derived from auto-generated label groups. For each `auto_*` group, emit one
-     * edge between each pair of consecutive participating datasets (in dataset order). This
-     * keeps lines short and only crosses non-participating datasets when datasets in the same
-     * group are not adjacent.
-     */
     const edges = computed<BoardEdge[]>(() => {
       const out: BoardEdge[] = []
       for (const lg of draft.value.labelGroups) {
-        if (!lg.name.startsWith('auto_')) continue
         const assigned: string[] = []
         for (const ds of draft.value.datasets) {
           for (const r of ds.regions) {
-            if (r.labelGroupName === lg.name) {
-              assigned.push(r.regionKey)
-              break
-            }
+            if (r.labelGroupName === lg.name) assigned.push(r.regionKey)
           }
         }
         if (assigned.length < 2) continue
@@ -314,33 +306,6 @@ export default defineComponent({
         }
       }
       return out
-    })
-
-    /** Mapping chips for MatchModeSelector — one per edge, using a "ds - region → ds - region" label. */
-    const mappings = computed<MappingChip[]>(() => {
-      const regionContext = (regionKey: string): { dsName: string; label: string } | null => {
-        for (const ds of draft.value.datasets) {
-          const r = ds.regions.find((x) => x.regionKey === regionKey)
-          if (r) {
-            const info = datasetInfo(ds.datasetId)
-            return {
-              dsName: info.name,
-              label: sharedRegionLabel(
-                r,
-                roisByDataset.value[ds.datasetId] ?? [],
-                segmentationsByDataset.value[ds.datasetId] ?? []
-              ),
-            }
-          }
-        }
-        return null
-      }
-      return edges.value.map((e) => {
-        const a = regionContext(e.from)
-        const b = regionContext(e.to)
-        const label = a && b ? `${a.dsName} - ${a.label} → ${b.dsName} - ${b.label}` : `${e.from} → ${e.to}`
-        return { id: `${e.from}|${e.to}`, label }
-      })
     })
 
     /** Allocate a fresh `auto_N` group name not currently in the draft. */
@@ -354,12 +319,14 @@ export default defineComponent({
     const groupOf = (regionKey: string): string | null => {
       for (const ds of draft.value.datasets) {
         const r = ds.regions.find((x) => x.regionKey === regionKey)
-        if (r?.labelGroupName?.startsWith('auto_')) return r.labelGroupName
+        if (r?.labelGroupName) return r.labelGroupName
       }
       return null
     }
 
     const onAddEdge = (e: BoardEdge): void => {
+      // In NAME mode, edges are derived from matching region labels — manual edits would be ignored.
+      if (draft.value.matchMode === 'NAME') return
       const gFrom = groupOf(e.from)
       const gTo = groupOf(e.to)
 
@@ -427,15 +394,137 @@ export default defineComponent({
       draft.value = { ...draft.value, labelGroups, datasets }
     }
 
-    const onRemoveMapping = (mappingId: string): void => {
-      const [from, to] = mappingId.split('|')
-      // Detach the `to` endpoint; if the group falls below 2 members it's removed entirely.
-      // Detaching `to` covers both pairwise and N-way cases since the chip's endpoints come
-      // from the star-fan derivation in `edges`.
-      const gFrom = groupOf(from)
-      const gTo = groupOf(to)
-      if (!gFrom || gFrom !== gTo) return
-      detachRegionFromGroup(to)
+    const renameGroup = (payload: { oldName: string; newName: string }): void => {
+      const { oldName, newName } = payload
+      const trimmed = newName.trim()
+      if (!trimmed || trimmed === oldName) return
+      const others = draft.value.labelGroups.filter((g) => g.name !== oldName).map((g) => g.name)
+      const finalName = resolveRenameTarget(trimmed, others)
+      const labelGroups = draft.value.labelGroups.map((g) => (g.name === oldName ? { ...g, name: finalName } : g))
+      const datasets = draft.value.datasets.map((ds) => ({
+        ...ds,
+        regions: ds.regions.map((r) => (r.labelGroupName === oldName ? { ...r, labelGroupName: finalName } : r)),
+      }))
+      draft.value = { ...draft.value, labelGroups, datasets }
+    }
+
+    const addRegionToGroup = (payload: { groupName: string; regionKey: string }): void => {
+      const { groupName, regionKey } = payload
+      detachRegionFromGroup(regionKey)
+      const datasets = draft.value.datasets.map((ds) => ({
+        ...ds,
+        regions: ds.regions.map((r) => (r.regionKey === regionKey ? { ...r, labelGroupName: groupName } : r)),
+      }))
+      draft.value = { ...draft.value, datasets }
+    }
+
+    const deleteGroup = (payload: { name: string }): void => {
+      const { name } = payload
+      const labelGroups = draft.value.labelGroups.filter((g) => g.name !== name)
+      const datasets = draft.value.datasets.map((ds) => ({
+        ...ds,
+        regions: ds.regions.map((r) => (r.labelGroupName === name ? { ...r, labelGroupName: null } : r)),
+      }))
+      draft.value = { ...draft.value, labelGroups, datasets }
+    }
+
+    const createGroupWithRegion = (payload: { regionKey: string }): void => {
+      const groupName = nextAutoGroupName()
+      const color = REGION_PALETTE[draft.value.labelGroups.length % REGION_PALETTE.length]
+      const labelGroups = [...draft.value.labelGroups, { name: groupName, color }]
+      const datasets = draft.value.datasets.map((ds) => ({
+        ...ds,
+        regions: ds.regions.map((r) => (r.regionKey === payload.regionKey ? { ...r, labelGroupName: groupName } : r)),
+      }))
+      draft.value = { ...draft.value, labelGroups, datasets }
+    }
+
+    const seedGroups = (): void => {
+      if (draft.value.matchMode !== 'NAME') return
+      const labelByKey = new Map<string, string>()
+      for (const ds of draft.value.datasets) {
+        const rois = roisByDataset.value[ds.datasetId] ?? []
+        const segs = segmentationsByDataset.value[ds.datasetId] ?? []
+        for (const r of ds.regions) {
+          if (r.included === false) continue
+          labelByKey.set(r.regionKey, sharedRegionLabel(r, rois, segs))
+        }
+      }
+      const seeded = seedNameModeGroups({
+        datasets: draft.value.datasets.map((ds) => ({
+          datasetId: ds.datasetId,
+          regions: ds.regions.filter((r) => r.included !== false),
+        })),
+        labelGroups: draft.value.labelGroups,
+        labelOf: (r) => labelByKey.get(r.regionKey) ?? '',
+        palette: [...REGION_PALETTE],
+      })
+      const updatedDatasets = draft.value.datasets.map((ds, idx) => {
+        const seededDs = seeded.datasets[idx]
+        const byKey = new Map(seededDs.regions.map((r) => [r.regionKey, r.labelGroupName]))
+        return {
+          ...ds,
+          regions: ds.regions.map((r) =>
+            byKey.has(r.regionKey) ? { ...r, labelGroupName: byKey.get(r.regionKey) ?? null } : r
+          ),
+        }
+      })
+      const sameLabelGroups =
+        seeded.labelGroups.length === draft.value.labelGroups.length &&
+        seeded.labelGroups.every((g, i) => {
+          const cur = draft.value.labelGroups[i]
+          return cur && cur.name === g.name && cur.color === g.color
+        })
+      const sameAssignments = updatedDatasets.every((nextDs, i) => {
+        const curDs = draft.value.datasets[i]
+        if (!curDs || nextDs.regions.length !== curDs.regions.length) return false
+        return nextDs.regions.every((r, j) => r.labelGroupName === curDs.regions[j].labelGroupName)
+      })
+      if (sameLabelGroups && sameAssignments) return
+      draft.value = { ...draft.value, labelGroups: seeded.labelGroups, datasets: updatedDatasets }
+    }
+
+    watch(
+      () => {
+        const regionsKey = draft.value.datasets.map((d) => d.regions.length).join(',')
+        const labelsKey = draft.value.datasets
+          .map((d) => {
+            const rois = roisByDataset.value[d.datasetId]?.length ?? -1
+            const segs = segmentationsByDataset.value[d.datasetId]?.length ?? -1
+            return `${rois}/${segs}`
+          })
+          .join('|')
+        return `${draft.value.matchMode}|${regionsKey}|${labelsKey}`
+      },
+      seedGroups,
+      { flush: 'post' }
+    )
+
+    const noNamesMatched = computed(() => {
+      if (draft.value.matchMode !== 'NAME') return false
+      if (draft.value.datasets.length < 2) return false
+      const allLabelsLoaded = draft.value.datasets.every(
+        (d) => roisByDataset.value[d.datasetId] != null && segmentationsByDataset.value[d.datasetId] != null
+      )
+      if (!allLabelsLoaded) return false
+      const hasIncludedRegions = draft.value.datasets.some((d) => d.regions.some((r) => r.included !== false))
+      if (!hasIncludedRegions) return false
+      return draft.value.labelGroups.length === 0
+    })
+
+    const onReorderRegion = (payload: { datasetId: string; regionKey: string; toIndex: number }): void => {
+      const datasets = draft.value.datasets.map((ds) => {
+        if (ds.datasetId !== payload.datasetId) return ds
+        const fromIdx = ds.regions.findIndex((r) => r.regionKey === payload.regionKey)
+        if (fromIdx < 0 || payload.toIndex < 0 || payload.toIndex > ds.regions.length) return ds
+        const adjusted = fromIdx < payload.toIndex ? payload.toIndex - 1 : payload.toIndex
+        if (adjusted === fromIdx) return ds
+        const next = ds.regions.slice()
+        const [moved] = next.splice(fromIdx, 1)
+        next.splice(adjusted, 0, moved)
+        return { ...ds, regions: next }
+      })
+      draft.value = { ...draft.value, datasets }
     }
 
     const onReorderColumns = (payload: { from: string; toIndex: number }): void => {
@@ -493,137 +582,203 @@ export default defineComponent({
         draft.value = d
       },
       onAddEdge,
-      onRemoveMapping,
+      detachRegionFromGroup,
+      renameGroup,
+      addRegionToGroup,
+      createGroupWithRegion,
+      deleteGroup,
       onReorderColumns,
     })
 
     return () => (
-      <div class="m-8 max-w-5xl">
-        <h1 class="text-2xl mb-4" data-test-key="experiment-edit-title">
-          {isEdit.value ? 'Edit experiment' : 'Create experiment'}
-        </h1>
+      <div class="flex items-center justify-center">
+        <div class="m-8 w-full max-w-5xl">
+          <h1 class="text-2xl mb-4" data-test-key="experiment-edit-title">
+            {isEdit.value ? 'Edit experiment' : 'Create experiment'}
+          </h1>
 
-        <ElCard class="mb-6" shadow="never">
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm mb-1">Name</label>
-              <ElInput
-                modelValue={draft.value.name}
-                placeholder="Experiment name"
-                data-test-key="experiment-name"
-                onUpdate:modelValue={(v: string) => {
-                  draft.value = { ...draft.value, name: v }
-                }}
-              />
-            </div>
-            <div>
-              <label class="block text-sm mb-1">Description</label>
-              <ElInput
-                type="textarea"
-                rows={2}
-                modelValue={draft.value.description ?? ''}
-                placeholder="Optional description"
-                data-test-key="experiment-description"
-                onUpdate:modelValue={(v: string) => {
-                  draft.value = { ...draft.value, description: v || null }
-                }}
-              />
-            </div>
-          </div>
-        </ElCard>
-
-        <ElCard class="mb-6" shadow="never">
-          <h2 class="text-lg mb-2">Datasets</h2>
-          <DatasetSelector
-            candidates={candidates.value}
-            modelValue={draft.value.datasets}
-            onUpdate:modelValue={onDatasetsChange}
-          />
-        </ElCard>
-
-        {draft.value.datasets.map((d, idx) => {
-          const preview = ionImageByDataset.value[d.datasetId] ?? {
-            ionImageUrl: null,
-            opticalImageUrl: null,
-            imageWidth: null,
-            imageHeight: null,
-          }
-          return (
-            <DatasetMetadataCard
-              key={d.datasetId}
-              dataset={datasetInfo(d.datasetId)}
-              modelValue={d}
-              rois={roisByDataset.value[d.datasetId] ?? []}
-              segmentations={segmentationsByDataset.value[d.datasetId] ?? []}
-              labelGroups={labelGroupOptions.value}
-              ionImageUrl={preview.ionImageUrl}
-              opticalImageUrl={preview.opticalImageUrl}
-              imageWidth={preview.imageWidth}
-              imageHeight={preview.imageHeight}
-              segmentationMasks={segmentationMasksByDataset.value[d.datasetId] ?? {}}
-              onUpdate:modelValue={(v: ExperimentDraftDataset) => onCardChange(idx, v)}
-              onRemove={() => onCardRemove(idx)}
-            />
-          )
-        })}
-
-        <ElDivider />
-
-        {oneConditionWarnings.value.length > 0 && (
-          <div
-            class="bg-yellow-50 border border-yellow-300 rounded p-2 text-sm mb-4"
-            data-test-key="one-condition-warning"
-          >
-            {oneConditionWarnings.value.map((warning) => (
-              <div key={warning.labelGroupName}>
-                Label group <strong>{warning.labelGroupName}</strong> has only one condition (
-                {warning.conditions.join(', ')}); a statistical test cannot be inferred.
+          <ElCard class="mb-6" shadow="never">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm mb-1">Name</label>
+                <ElInput
+                  modelValue={draft.value.name}
+                  placeholder="Experiment name"
+                  data-test-key="experiment-name"
+                  onUpdate:modelValue={(v: string) => {
+                    draft.value = { ...draft.value, name: v }
+                  }}
+                />
               </div>
-            ))}
+              <div>
+                <label class="block text-sm mb-1">Description</label>
+                <ElInput
+                  type="textarea"
+                  rows={2}
+                  modelValue={draft.value.description ?? ''}
+                  placeholder="Optional description"
+                  data-test-key="experiment-description"
+                  onUpdate:modelValue={(v: string) => {
+                    draft.value = { ...draft.value, description: v || null }
+                  }}
+                />
+              </div>
+            </div>
+          </ElCard>
+
+          <ElCard class="mb-6" shadow="never">
+            <h2 class="text-lg mb-2">Datasets</h2>
+            <DatasetSelector
+              candidates={candidates.value}
+              modelValue={draft.value.datasets}
+              onUpdate:modelValue={onDatasetsChange}
+            />
+          </ElCard>
+
+          {draft.value.datasets.map((d, idx) => {
+            const preview = ionImageByDataset.value[d.datasetId] ?? {
+              ionImageUrl: null,
+              opticalImageUrl: null,
+              imageWidth: null,
+              imageHeight: null,
+            }
+            return (
+              <DatasetMetadataCard
+                key={d.datasetId}
+                dataset={datasetInfo(d.datasetId)}
+                modelValue={d}
+                rois={roisByDataset.value[d.datasetId] ?? []}
+                segmentations={segmentationsByDataset.value[d.datasetId] ?? []}
+                labelGroups={labelGroupOptions.value}
+                ionImageUrl={preview.ionImageUrl}
+                opticalImageUrl={preview.opticalImageUrl}
+                imageWidth={preview.imageWidth}
+                imageHeight={preview.imageHeight}
+                segmentationMasks={segmentationMasksByDataset.value[d.datasetId] ?? {}}
+                onUpdate:modelValue={(v: ExperimentDraftDataset) => onCardChange(idx, v)}
+                onRemove={() => onCardRemove(idx)}
+              />
+            )
+          })}
+
+          <ElDivider />
+
+          {oneConditionWarnings.value.length > 0 && (
+            <div
+              class="bg-yellow-50 border border-yellow-300 rounded p-2 text-sm mb-4"
+              data-test-key="one-condition-warning"
+            >
+              {oneConditionWarnings.value.map((warning) => (
+                <div key={warning.labelGroupName}>
+                  Label group <strong>{warning.labelGroupName}</strong> has only one condition (
+                  {warning.conditions.join(', ')}); a statistical test cannot be inferred.
+                </div>
+              ))}
+            </div>
+          )}
+
+          <ElCard class="mb-6" shadow="never">
+            <h2 class="text-lg mb-2">Region mapping</h2>
+            <MatchModeSelector modelValue={draft.value.matchMode} onUpdate:modelValue={onMatchModeChange} />
+            <div class="my-3" />
+            {draft.value.matchMode === 'MANUAL' && (
+              <>
+                <RegionMappingBoard
+                  data-test-key="mapping-board"
+                  columns={columns.value}
+                  edges={edges.value}
+                  onAdd-edge={onAddEdge}
+                  onRemove-edge={(e: BoardEdge) => detachRegionFromGroup(e.to)}
+                  onReorder={onReorderColumns}
+                  onReorder-region={onReorderRegion}
+                />
+                <div class="flex flex-col justify-center items-center bg-black/[.02] p-2 mt-4">
+                  <div class="text-sm mb-2">Generated mappings</div>
+                  <RegionMappingGroups
+                    data-test-key="region-mapping-groups-manual"
+                    datasets={draft.value.datasets.map((ds) => ({
+                      datasetId: ds.datasetId,
+                      name: datasetInfo(ds.datasetId).name,
+                      regions: ds.regions
+                        .filter((r) => r.included !== false)
+                        .map((r) => ({
+                          regionKey: r.regionKey,
+                          label: sharedRegionLabel(
+                            r,
+                            roisByDataset.value[ds.datasetId] ?? [],
+                            segmentationsByDataset.value[ds.datasetId] ?? []
+                          ),
+                          labelGroupName: r.labelGroupName ?? null,
+                        })),
+                    }))}
+                    labelGroups={draft.value.labelGroups}
+                    onRename-group={renameGroup}
+                    onAdd-region-to-group={addRegionToGroup}
+                    onRemove-region-from-group={(p: { regionKey: string }) => detachRegionFromGroup(p.regionKey)}
+                    onCreate-group-with-region={createGroupWithRegion}
+                    onDelete-group={deleteGroup}
+                  />
+                </div>
+              </>
+            )}
+            {draft.value.matchMode === 'NAME' && noNamesMatched.value && (
+              <div
+                class="bg-yellow-50 border border-yellow-300 rounded p-2 text-sm mb-3"
+                data-test-key="no-names-matched"
+              >
+                No names matched across datasets. Switch to "Manual mapping" to link regions explicitly.
+              </div>
+            )}
+            {draft.value.matchMode === 'NAME' && (
+              <RegionMappingGroups
+                data-test-key="region-mapping-groups"
+                allowAdd={false}
+                datasets={draft.value.datasets.map((ds) => ({
+                  datasetId: ds.datasetId,
+                  name: datasetInfo(ds.datasetId).name,
+                  regions: ds.regions
+                    .filter((r) => r.included !== false)
+                    .map((r) => ({
+                      regionKey: r.regionKey,
+                      label: sharedRegionLabel(
+                        r,
+                        roisByDataset.value[ds.datasetId] ?? [],
+                        segmentationsByDataset.value[ds.datasetId] ?? []
+                      ),
+                      labelGroupName: r.labelGroupName ?? null,
+                    })),
+                }))}
+                labelGroups={draft.value.labelGroups}
+                onRename-group={renameGroup}
+                onAdd-region-to-group={addRegionToGroup}
+                onRemove-region-from-group={(p: { regionKey: string }) => detachRegionFromGroup(p.regionKey)}
+                onCreate-group-with-region={createGroupWithRegion}
+                onDelete-group={deleteGroup}
+              />
+            )}
+          </ElCard>
+
+          <div class="flex gap-2 justify-end">
+            <ElButton onClick={() => router.push(`/project/${projectId}`)}>Cancel</ElButton>
+            <ElButton
+              type="primary"
+              data-test-key="experiment-save"
+              loading={saving.value}
+              disabled={saveBlocked.value}
+              onClick={onSave}
+            >
+              Save
+            </ElButton>
+            <ElButton
+              type="success"
+              data-test-key="experiment-run"
+              loading={running.value || saving.value}
+              disabled={draft.value.datasets.length === 0}
+              onClick={onRun}
+            >
+              Save and run
+            </ElButton>
           </div>
-        )}
-
-        <ElCard class="mb-6" shadow="never">
-          <h2 class="text-lg mb-2">Region mapping</h2>
-          <MatchModeSelector
-            modelValue={draft.value.matchMode}
-            mappings={mappings.value}
-            onUpdate:modelValue={onMatchModeChange}
-            onRemove-mapping={onRemoveMapping}
-          />
-          <div class="my-4"/>
-          <RegionMappingBoard
-            data-test-key="mapping-board"
-            columns={columns.value}
-            edges={edges.value}
-            onAdd-edge={onAddEdge}
-            onRemove-edge={(e: BoardEdge) => onRemoveMapping(`${e.from}|${e.to}`)}
-            onReorder={onReorderColumns}
-          />
-        </ElCard>
-
-          
-
-        <div class="flex gap-2 justify-end">
-          <ElButton onClick={() => router.push(`/project/${projectId}`)}>Cancel</ElButton>
-          <ElButton
-            type="primary"
-            data-test-key="experiment-save"
-            loading={saving.value}
-            disabled={saveBlocked.value}
-            onClick={onSave}
-          >
-            Save
-          </ElButton>
-          <ElButton
-            type="success"
-            data-test-key="experiment-run"
-            loading={running.value || saving.value}
-            disabled={draft.value.datasets.length === 0}
-            onClick={onRun}
-          >
-            Save and run
-          </ElButton>
         </div>
       </div>
     )
