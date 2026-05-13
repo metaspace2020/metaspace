@@ -26,7 +26,10 @@ from sm.engine.postprocessing.ion_thumbnail import (
     delete_ion_thumbnail,
 )
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
-from sm.engine.postprocessing.experiment_wrapper import submit_experiment_job
+from sm.engine.postprocessing.experiment_wrapper import (
+    submit_experiment_job,
+    submit_experiment_stats_only_job,
+)
 from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
 from sm.engine.postprocessing.segmentation_wrapper import submit_segmentation_job
 from sm.engine.postprocessing.ds_size_hash import save_size_hash
@@ -412,6 +415,31 @@ class DatasetManager:
             )
         except Exception as e:  # pylint: disable=broad-except
             self.logger.exception('Failed to submit experiment job')
+            self._db.alter(
+                "UPDATE experiment SET run_status='FAILED', run_error=%s, "
+                "run_finished_at=NOW() WHERE id=%s AND run_generation=%s",
+                params=(str(e), experiment_id, run_generation),
+            )
+
+    def run_experiment_stats_only(self, msg):
+        """Submit a stats-only re-run that reuses the persisted intensity blob."""
+        experiment_id = msg['experiment_id']
+        run_generation = msg['run_generation']
+        self.logger.info(
+            f'Running stats-only re-run for experiment {experiment_id} '
+            f'run_generation={run_generation}'
+        )
+        try:
+            submit_experiment_stats_only_job(
+                experiment_id=experiment_id,
+                run_generation=run_generation,
+                intensity_blob_s3_key=msg['intensity_blob_s3_key'],
+                filter=msg.get('filter') or {},
+                excluded_samples=msg.get('excluded_samples') or [],
+                db=self._db,
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            self.logger.exception('Failed to submit stats-only job')
             self._db.alter(
                 "UPDATE experiment SET run_status='FAILED', run_error=%s, "
                 "run_finished_at=NOW() WHERE id=%s AND run_generation=%s",

@@ -95,3 +95,70 @@ def run():
 @app.get('/health')
 def health():
     return {'status': 'ok'}
+
+
+from stats_analysis.pipeline import run_experiment_stats_only  # noqa: E402
+
+
+def _do_stats_only(experiment_id, run_generation, payload, callback_url):
+    try:
+        result = run_experiment_stats_only(experiment_id, run_generation, payload)
+        body = {
+            'experiment_id': experiment_id,
+            'run_generation': run_generation,
+            'status': 'FINISHED',
+            'result': result,
+        }
+        resp = requests.post(callback_url, json=body, timeout=30)
+        logger.info(
+            'Stats-only finished for experiment %s gen=%s; callback %s -> %s',
+            experiment_id, run_generation, callback_url, resp.status_code,
+        )
+    except Exception as e:  # pylint: disable=broad-except
+        logger.exception(
+            'Stats-only failed for experiment %s gen %s', experiment_id, run_generation,
+        )
+        try:
+            requests.post(callback_url, json={
+                'experiment_id': experiment_id,
+                'run_generation': run_generation,
+                'status': 'FAILED',
+                'error': str(e),
+            }, timeout=30)
+        except Exception:  # pylint: disable=broad-except
+            logger.exception(
+                'Callback POST failed for stats-only %s gen %s',
+                experiment_id, run_generation,
+            )
+
+
+@app.post('/run_stats')
+def run_stats():
+    payload = bottle.request.json or {}
+    required = ('experiment_id', 'callback_url', 'intensity_blob_s3_key')
+    missing = [k for k in required if not payload.get(k)]
+    if payload.get('run_generation') is None:
+        missing.append('run_generation')
+    if missing:
+        bottle.response.status = 400
+        return {'status': 'error', 'error': f'missing required fields: {missing}'}
+
+    experiment_id = payload['experiment_id']
+    run_generation = payload['run_generation']
+    callback_url = payload['callback_url']
+
+    logger.info(
+        'Accepted stats-only run for experiment %s gen=%s',
+        experiment_id, run_generation,
+    )
+    threading.Thread(
+        target=_do_stats_only,
+        args=(experiment_id, run_generation, payload, callback_url),
+        daemon=True,
+    ).start()
+    bottle.response.status = 202
+    return {
+        'status': 'accepted',
+        'experiment_id': experiment_id,
+        'run_generation': run_generation,
+    }

@@ -10,8 +10,8 @@ import { Ion } from '../annotation/model'
 
 export type ExperimentMatchMode = 'name' | 'manual'
 export type ExperimentRunStatus =
-  | 'QUEUED' | 'PREPARING' | 'RUNNING' | 'FINISHED' | 'FAILED'
-export type ExperimentRunStage = 'PREP' | 'TEST' | 'DONE'
+  | 'QUEUED' | 'PREPARING' | 'RUNNING' | 'RUNNING_STATS' | 'FINISHED' | 'FAILED'
+export type ExperimentRunStage = 'PREP' | 'TEST' | 'STATS' | 'DONE'
 
 export interface ExperimentLabelGroupSpec {
   name: string

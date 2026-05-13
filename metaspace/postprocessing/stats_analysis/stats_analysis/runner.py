@@ -542,6 +542,144 @@ def run_experiment(experiment_id: str, run_generation: int, payload: Dict) -> Di
     }
 
 
+import gzip
+import json as _json  # alias to avoid colliding with any local 'json' var
+from io import BytesIO
+
+
+def _load_postprocessing_config() -> Dict[str, Any]:
+    """Read the shared postprocessing config (mirrors image_segmentation.loader)."""
+    import os
+    from pathlib import Path
+    from postprocessing_shared import load_config
+    # stats_analysis/stats_analysis/runner.py -> postprocessing/conf/config.json
+    default_path = Path(__file__).resolve().parents[2] / 'conf' / 'config.json'
+    path = os.environ.get('POSTPROCESSING_CONFIG') or default_path
+    return load_config(path)
+
+
+def _build_s3_client(cfg: Dict[str, Any]):
+    """Build an S3 client from the postprocessing config (aws creds in prod,
+    storage.endpoint_url + access keys for the local MinIO dev stack).
+    Mirrors :func:`image_segmentation.loader._get_s3_client`."""
+    import boto3
+    boto_config = boto3.session.Config(signature_version='s3v4')
+    if 'aws' in cfg:
+        aws = cfg['aws']
+        return boto3.client(
+            's3',
+            region_name=aws['aws_default_region'],
+            aws_access_key_id=aws['aws_access_key_id'],
+            aws_secret_access_key=aws['aws_secret_access_key'],
+            config=boto_config,
+        )
+    storage = cfg['storage']
+    return boto3.client(
+        's3',
+        endpoint_url=storage['endpoint_url'],
+        aws_access_key_id=storage['access_key_id'],
+        aws_secret_access_key=storage['secret_access_key'],
+        config=boto_config,
+    )
+
+
+def _fetch_intensity_blob(s3_key: str) -> List[Dict[str, Any]]:
+    """Read the gzipped intensity blob from S3 and return the row list.
+
+    The blob shape is a flat list of {'ion_id', 'region_key', 'intensity'} dicts
+    as written by the engine's ExperimentManager._write_intensity_blob. The
+    bucket is read from this service's own ``conf/config.json``
+    (``image_storage.bucket``) so engine and postprocessing each own their
+    deployment config independently.
+    """
+    cfg = _load_postprocessing_config()
+    try:
+        bucket = cfg['image_storage']['bucket']
+    except KeyError as e:
+        raise RuntimeError(
+            'image_storage.bucket missing from postprocessing config; '
+            'add it to conf/config.json (and the ansible template)'
+        ) from e
+    client = _build_s3_client(cfg)
+    obj = client.get_object(Bucket=bucket, Key=s3_key)
+    raw = gzip.GzipFile(fileobj=BytesIO(obj['Body'].read())).read()
+    return _json.loads(raw.decode('utf-8'))
+
+
+def _reconstruct_prep_from_blob(
+    blob_rows: List[Dict[str, Any]],
+    datasets: List[Dict[str, Any]],
+    excluded_samples: List[str],
+) -> Dict[str, Any]:
+    """Rebuild the minimum 'prep' block run_experiment expects.
+
+    Drops rows whose region's sampleId is in excluded_samples. tic is unknown
+    without re-querying ES and is emitted as 0.0 (downstream QC tolerates this).
+    """
+    excluded = set(excluded_samples or [])
+    samples: List[Dict[str, Any]] = []
+    keep_region_keys: set = set()
+    for ds in datasets:
+        for region in ds.get('regions') or []:
+            md = region.get('metadata') or {}
+            if md.get('sampleId') in excluded:
+                continue
+            region_key = region.get('regionKey')
+            keep_region_keys.add(region_key)
+            samples.append({
+                'regionKey': region_key,
+                'sampleId': md.get('sampleId'),
+                'datasetId': ds.get('dataset_id'),
+                'labelGroupName': region.get('labelGroupName'),
+                'condition': md.get('condition') or '',
+                'biologicalReplicateId': md.get('biologicalReplicateId'),
+                'technicalReplicateId': md.get('technicalReplicateId'),
+                'batchId': md.get('batchId'),
+                'tic': 0.0,
+            })
+
+    intensities: Dict[str, Dict[int, float]] = {}
+    for row in blob_rows:
+        rk = row.get('region_key')
+        if rk not in keep_region_keys:
+            continue
+        intensities.setdefault(rk, {})[int(row['ion_id'])] = float(row['intensity'])
+
+    ions_total = len({int(r['ion_id']) for r in blob_rows})
+    return {
+        'samples': samples,
+        'intensities': intensities,
+        'ions_total': ions_total,
+        'filterChain': [],
+        'all_ions': [],
+    }
+
+
+def run_experiment_stats_only(
+    experiment_id: str, run_generation: int, payload: Dict,
+) -> Dict[str, Any]:
+    """Stats-only entry: fetch blob, reconstruct prep, run stats, strip intensity_rows.
+
+    The returned dict deliberately omits ``intensity_rows`` so the engine
+    callback handler does not rewrite the persisted S3 blob.
+    """
+    blob_rows = _fetch_intensity_blob(payload['intensity_blob_s3_key'])
+    prep = _reconstruct_prep_from_blob(
+        blob_rows,
+        payload.get('datasets') or [],
+        payload.get('excluded_samples') or [],
+    )
+    inner = {
+        'prep': prep,
+        'label_groups': payload.get('label_groups') or [],
+        'filters': payload.get('filter') or {},
+        'datasets': payload.get('datasets') or [],
+    }
+    result = run_experiment(experiment_id, run_generation, inner)
+    result.pop('intensity_rows', None)
+    return result
+
+
 def _build_all_ions(
     all_ions: List[Dict[str, Any]],
     intensities: Dict[str, Dict[int, float]],

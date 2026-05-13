@@ -220,7 +220,15 @@ export default defineComponent({
     const createMut = async (variables: any): Promise<any> => {
       creating.value = true
       try {
-        return await apolloClient.mutate({ mutation: createExperimentMutation, variables })
+        return await apolloClient.mutate({
+          mutation: createExperimentMutation,
+          variables,
+          // The newly-created Experiment is not in any cached
+          // `experimentsByProject` result, so the post-redirect list view
+          // would render stale without an explicit refetch.
+          refetchQueries: ['experimentsByProject'],
+          awaitRefetchQueries: true,
+        })
       } finally {
         creating.value = false
       }
@@ -228,7 +236,12 @@ export default defineComponent({
     const updateMut = async (variables: any): Promise<any> => {
       updating.value = true
       try {
-        return await apolloClient.mutate({ mutation: updateExperimentMutation, variables })
+        return await apolloClient.mutate({
+          mutation: updateExperimentMutation,
+          variables,
+          refetchQueries: ['experimentsByProject'],
+          awaitRefetchQueries: true,
+        })
       } finally {
         updating.value = false
       }
@@ -589,210 +602,212 @@ export default defineComponent({
       onReorderColumns,
     })
 
-    return () => (
-      <div class="flex items-center justify-center">
-        <div class="m-8 w-full max-w-5xl">
-          <h1 class="text-2xl mb-4" data-test-key="experiment-edit-title">
-            {isEdit.value ? 'Edit experiment' : 'Create experiment'}
-          </h1>
+    return () => {
+      return (
+        <div class="flex items-center justify-center">
+          <div class="m-8 w-full max-w-5xl">
+            <h1 class="text-2xl mb-4" data-test-key="experiment-edit-title">
+              {isEdit.value ? 'Edit experiment' : 'Create experiment'}
+            </h1>
 
-          <ElCard class="mb-6" shadow="never">
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm mb-1">Name</label>
-                <ElInput
-                  modelValue={draft.value.name}
-                  placeholder="Experiment name"
-                  data-test-key="experiment-name"
-                  onUpdate:modelValue={(v: string) => {
-                    draft.value = { ...draft.value, name: v }
-                  }}
-                />
-              </div>
-              <div>
-                <label class="block text-sm mb-1">Description</label>
-                <ElInput
-                  type="textarea"
-                  rows={2}
-                  modelValue={draft.value.description ?? ''}
-                  placeholder="Optional description"
-                  data-test-key="experiment-description"
-                  onUpdate:modelValue={(v: string) => {
-                    draft.value = { ...draft.value, description: v || null }
-                  }}
-                />
-              </div>
-            </div>
-          </ElCard>
-
-          <ElCard class="mb-6" shadow="never">
-            <h2 class="text-lg mb-2">Datasets</h2>
-            <DatasetSelector
-              candidates={candidates.value}
-              modelValue={draft.value.datasets}
-              onUpdate:modelValue={onDatasetsChange}
-            />
-          </ElCard>
-
-          {draft.value.datasets.map((d, idx) => {
-            const preview = ionImageByDataset.value[d.datasetId] ?? {
-              ionImageUrl: null,
-              opticalImageUrl: null,
-              imageWidth: null,
-              imageHeight: null,
-            }
-            return (
-              <DatasetMetadataCard
-                key={d.datasetId}
-                dataset={datasetInfo(d.datasetId)}
-                modelValue={d}
-                rois={roisByDataset.value[d.datasetId] ?? []}
-                segmentations={segmentationsByDataset.value[d.datasetId] ?? []}
-                labelGroups={labelGroupOptions.value}
-                ionImageUrl={preview.ionImageUrl}
-                opticalImageUrl={preview.opticalImageUrl}
-                imageWidth={preview.imageWidth}
-                imageHeight={preview.imageHeight}
-                segmentationMasks={segmentationMasksByDataset.value[d.datasetId] ?? {}}
-                onUpdate:modelValue={(v: ExperimentDraftDataset) => onCardChange(idx, v)}
-                onRemove={() => onCardRemove(idx)}
-              />
-            )
-          })}
-
-          <ElDivider />
-
-          {conditionWarning.value && (
-            <div
-              class="bg-yellow-50 border border-yellow-300 rounded p-2 text-sm mb-4"
-              data-test-key="one-condition-warning"
-            >
-              {conditionWarning.value.conditions.length === 0 ? (
-                <div>No condition values are set; a statistical test cannot be inferred.</div>
-              ) : (
+            <ElCard class="mb-6" shadow="never">
+              <div class="space-y-4">
                 <div>
-                  Only one condition (<strong>{conditionWarning.value.conditions.join(', ')}</strong>) is present across
-                  the experiment; a statistical test needs at least two conditions to compare.
+                  <label class="block text-sm mb-1">Name</label>
+                  <ElInput
+                    modelValue={draft.value.name}
+                    placeholder="Experiment name"
+                    data-test-key="experiment-name"
+                    onUpdate:modelValue={(v: string) => {
+                      draft.value = { ...draft.value, name: v }
+                    }}
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm mb-1">Description</label>
+                  <ElInput
+                    type="textarea"
+                    rows={2}
+                    modelValue={draft.value.description ?? ''}
+                    placeholder="Optional description"
+                    data-test-key="experiment-description"
+                    onUpdate:modelValue={(v: string) => {
+                      draft.value = { ...draft.value, description: v || null }
+                    }}
+                  />
+                </div>
+              </div>
+            </ElCard>
+
+            <ElCard class="mb-6" shadow="never">
+              <h2 class="text-lg mb-2">Datasets</h2>
+              <DatasetSelector
+                candidates={candidates.value}
+                modelValue={draft.value.datasets}
+                onUpdate:modelValue={onDatasetsChange}
+              />
+            </ElCard>
+
+            {draft.value.datasets.map((d, idx) => {
+              const preview = ionImageByDataset.value[d.datasetId] ?? {
+                ionImageUrl: null,
+                opticalImageUrl: null,
+                imageWidth: null,
+                imageHeight: null,
+              }
+              return (
+                <DatasetMetadataCard
+                  key={d.datasetId}
+                  dataset={datasetInfo(d.datasetId)}
+                  modelValue={d}
+                  rois={roisByDataset.value[d.datasetId] ?? []}
+                  segmentations={segmentationsByDataset.value[d.datasetId] ?? []}
+                  labelGroups={labelGroupOptions.value}
+                  ionImageUrl={preview.ionImageUrl}
+                  opticalImageUrl={preview.opticalImageUrl}
+                  imageWidth={preview.imageWidth}
+                  imageHeight={preview.imageHeight}
+                  segmentationMasks={segmentationMasksByDataset.value[d.datasetId] ?? {}}
+                  onUpdate:modelValue={(v: ExperimentDraftDataset) => onCardChange(idx, v)}
+                  onRemove={() => onCardRemove(idx)}
+                />
+              )
+            })}
+
+            <ElDivider />
+
+            {conditionWarning.value && draft.value?.datasets?.length > 0 && (
+              <div
+                class="bg-yellow-50 border border-yellow-300 rounded p-2 text-sm mb-4"
+                data-test-key="one-condition-warning"
+              >
+                {conditionWarning.value.conditions.length === 0 ? (
+                  <div>No condition values are set; a statistical test cannot be inferred.</div>
+                ) : (
+                  <div>
+                    Only one condition (<strong>{conditionWarning.value.conditions.join(', ')}</strong>) is present
+                    across the experiment; a statistical test needs at least two conditions to compare.
+                  </div>
+                )}
+              </div>
+            )}
+
+            <ElCard class="mb-6" shadow="never">
+              <h2 class="text-lg mb-2">Region mapping</h2>
+              <MatchModeSelector modelValue={draft.value.matchMode} onUpdate:modelValue={onMatchModeChange} />
+              <div class="my-3" />
+              {draft.value.matchMode === 'MANUAL' && (
+                <>
+                  <div class="flex justify-end mb-2">
+                    <button
+                      class="text-sm text-blue-600 hover:underline cursor-pointer"
+                      style={{ background: 'transparent', border: 'none', padding: 0 }}
+                      onClick={() => (showMappingBoard.value = !showMappingBoard.value)}
+                    >
+                      {showMappingBoard.value ? 'Hide mapping board' : 'Show mapping board'}
+                    </button>
+                  </div>
+                  {showMappingBoard.value && (
+                    <RegionMappingBoard
+                      data-test-key="mapping-board"
+                      columns={columns.value}
+                      edges={edges.value}
+                      onAdd-edge={onAddEdge}
+                      onRemove-edge={(e: BoardEdge) => detachRegionFromGroup(e.to)}
+                      onReorder={onReorderColumns}
+                      onReorder-region={onReorderRegion}
+                    />
+                  )}
+                  <div class="flex flex-col justify-center items-center bg-black/[.02] p-2 mt-4">
+                    <div class="text-sm mb-2">Generated mappings</div>
+                    <RegionMappingGroups
+                      data-test-key="region-mapping-groups-manual"
+                      datasets={draft.value.datasets.map((ds) => ({
+                        datasetId: ds.datasetId,
+                        name: datasetInfo(ds.datasetId).name,
+                        regions: ds.regions
+                          .filter((r) => r.included !== false)
+                          .map((r) => ({
+                            regionKey: r.regionKey,
+                            label: sharedRegionLabel(
+                              r,
+                              roisByDataset.value[ds.datasetId] ?? [],
+                              segmentationsByDataset.value[ds.datasetId] ?? []
+                            ),
+                            labelGroupName: r.labelGroupName ?? null,
+                          })),
+                      }))}
+                      labelGroups={draft.value.labelGroups}
+                      onRename-group={renameGroup}
+                      onAdd-region-to-group={addRegionToGroup}
+                      onRemove-region-from-group={(p: { regionKey: string }) => detachRegionFromGroup(p.regionKey)}
+                      onCreate-group-with-region={createGroupWithRegion}
+                      onDelete-group={deleteGroup}
+                    />
+                  </div>
+                </>
+              )}
+              {draft.value.matchMode === 'NAME' && noNamesMatched.value && (
+                <div
+                  class="bg-yellow-50 border border-yellow-300 rounded p-2 text-sm mb-3"
+                  data-test-key="no-names-matched"
+                >
+                  No names matched across datasets. Switch to "Manual mapping" to link regions explicitly.
                 </div>
               )}
-            </div>
-          )}
+              {draft.value.matchMode === 'NAME' && (
+                <RegionMappingGroups
+                  data-test-key="region-mapping-groups"
+                  allowAdd={false}
+                  datasets={draft.value.datasets.map((ds) => ({
+                    datasetId: ds.datasetId,
+                    name: datasetInfo(ds.datasetId).name,
+                    regions: ds.regions
+                      .filter((r) => r.included !== false)
+                      .map((r) => ({
+                        regionKey: r.regionKey,
+                        label: sharedRegionLabel(
+                          r,
+                          roisByDataset.value[ds.datasetId] ?? [],
+                          segmentationsByDataset.value[ds.datasetId] ?? []
+                        ),
+                        labelGroupName: r.labelGroupName ?? null,
+                      })),
+                  }))}
+                  labelGroups={draft.value.labelGroups}
+                  onRename-group={renameGroup}
+                  onAdd-region-to-group={addRegionToGroup}
+                  onRemove-region-from-group={(p: { regionKey: string }) => detachRegionFromGroup(p.regionKey)}
+                  onCreate-group-with-region={createGroupWithRegion}
+                  onDelete-group={deleteGroup}
+                />
+              )}
+            </ElCard>
 
-          <ElCard class="mb-6" shadow="never">
-            <h2 class="text-lg mb-2">Region mapping</h2>
-            <MatchModeSelector modelValue={draft.value.matchMode} onUpdate:modelValue={onMatchModeChange} />
-            <div class="my-3" />
-            {draft.value.matchMode === 'MANUAL' && (
-              <>
-                <div class="flex justify-end mb-2">
-                  <button
-                    class="text-sm text-blue-600 hover:underline cursor-pointer"
-                    style={{ background: 'transparent', border: 'none', padding: 0 }}
-                    onClick={() => (showMappingBoard.value = !showMappingBoard.value)}
-                  >
-                    {showMappingBoard.value ? 'Hide mapping board' : 'Show mapping board'}
-                  </button>
-                </div>
-                {showMappingBoard.value && (
-                  <RegionMappingBoard
-                    data-test-key="mapping-board"
-                    columns={columns.value}
-                    edges={edges.value}
-                    onAdd-edge={onAddEdge}
-                    onRemove-edge={(e: BoardEdge) => detachRegionFromGroup(e.to)}
-                    onReorder={onReorderColumns}
-                    onReorder-region={onReorderRegion}
-                  />
-                )}
-                <div class="flex flex-col justify-center items-center bg-black/[.02] p-2 mt-4">
-                  <div class="text-sm mb-2">Generated mappings</div>
-                  <RegionMappingGroups
-                    data-test-key="region-mapping-groups-manual"
-                    datasets={draft.value.datasets.map((ds) => ({
-                      datasetId: ds.datasetId,
-                      name: datasetInfo(ds.datasetId).name,
-                      regions: ds.regions
-                        .filter((r) => r.included !== false)
-                        .map((r) => ({
-                          regionKey: r.regionKey,
-                          label: sharedRegionLabel(
-                            r,
-                            roisByDataset.value[ds.datasetId] ?? [],
-                            segmentationsByDataset.value[ds.datasetId] ?? []
-                          ),
-                          labelGroupName: r.labelGroupName ?? null,
-                        })),
-                    }))}
-                    labelGroups={draft.value.labelGroups}
-                    onRename-group={renameGroup}
-                    onAdd-region-to-group={addRegionToGroup}
-                    onRemove-region-from-group={(p: { regionKey: string }) => detachRegionFromGroup(p.regionKey)}
-                    onCreate-group-with-region={createGroupWithRegion}
-                    onDelete-group={deleteGroup}
-                  />
-                </div>
-              </>
-            )}
-            {draft.value.matchMode === 'NAME' && noNamesMatched.value && (
-              <div
-                class="bg-yellow-50 border border-yellow-300 rounded p-2 text-sm mb-3"
-                data-test-key="no-names-matched"
+            <div class="flex gap-2 justify-end">
+              <ElButton onClick={() => router.push(`/project/${projectId}`)}>Cancel</ElButton>
+              <ElButton
+                type="primary"
+                data-test-key="experiment-save"
+                loading={saving.value}
+                disabled={saveBlocked.value}
+                onClick={onSave}
               >
-                No names matched across datasets. Switch to "Manual mapping" to link regions explicitly.
-              </div>
-            )}
-            {draft.value.matchMode === 'NAME' && (
-              <RegionMappingGroups
-                data-test-key="region-mapping-groups"
-                allowAdd={false}
-                datasets={draft.value.datasets.map((ds) => ({
-                  datasetId: ds.datasetId,
-                  name: datasetInfo(ds.datasetId).name,
-                  regions: ds.regions
-                    .filter((r) => r.included !== false)
-                    .map((r) => ({
-                      regionKey: r.regionKey,
-                      label: sharedRegionLabel(
-                        r,
-                        roisByDataset.value[ds.datasetId] ?? [],
-                        segmentationsByDataset.value[ds.datasetId] ?? []
-                      ),
-                      labelGroupName: r.labelGroupName ?? null,
-                    })),
-                }))}
-                labelGroups={draft.value.labelGroups}
-                onRename-group={renameGroup}
-                onAdd-region-to-group={addRegionToGroup}
-                onRemove-region-from-group={(p: { regionKey: string }) => detachRegionFromGroup(p.regionKey)}
-                onCreate-group-with-region={createGroupWithRegion}
-                onDelete-group={deleteGroup}
-              />
-            )}
-          </ElCard>
-
-          <div class="flex gap-2 justify-end">
-            <ElButton onClick={() => router.push(`/project/${projectId}`)}>Cancel</ElButton>
-            <ElButton
-              type="primary"
-              data-test-key="experiment-save"
-              loading={saving.value}
-              disabled={saveBlocked.value}
-              onClick={onSave}
-            >
-              Save
-            </ElButton>
-            <ElButton
-              type="success"
-              data-test-key="experiment-run"
-              loading={running.value || saving.value}
-              disabled={draft.value.datasets.length === 0}
-              onClick={onRun}
-            >
-              Save and run
-            </ElButton>
+                Save
+              </ElButton>
+              <ElButton
+                type="success"
+                data-test-key="experiment-run"
+                loading={running.value || saving.value}
+                disabled={draft.value.datasets.length === 0}
+                onClick={onRun}
+              >
+                Save and run
+              </ElButton>
+            </div>
           </div>
         </div>
-      </div>
-    )
+      )
+    }
   },
 })

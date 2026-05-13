@@ -1,16 +1,19 @@
-"""Public entry point for the stats_analysis microservice.
-
-Delegates to :mod:`stats_analysis.runner`. Kept as its own module so
-:mod:`stats_analysis.app` can import a stable name regardless of how the
-runner evolves.
-"""
+"""Public entry points for the stats_analysis microservice."""
 from typing import Dict
 
-from .runner import run_experiment as _run
+from .runner import (
+    run_experiment as _run,
+    run_experiment_stats_only as _run_stats_only,
+)
 
-__all__ = ['run_experiment']
+__all__ = ['run_experiment', 'run_experiment_stats_only']
 
 
 def run_experiment(experiment_id: str, run_generation: int, payload: Dict) -> Dict:
-    """Run the real stats pipeline; thin wrapper over :mod:`stats_analysis.runner`."""
     return _run(experiment_id, run_generation, payload)
+
+
+def run_experiment_stats_only(
+    experiment_id: str, run_generation: int, payload: Dict,
+) -> Dict:
+    return _run_stats_only(experiment_id, run_generation, payload)

@@ -150,4 +150,9 @@ extend type Mutation {
     experimentId: ID!
     excludedSamples: [String!]!
   ): Experiment!
+  runExperimentStats(
+    id: ID!
+    filter: ExperimentResultsFilter!
+    excludedSamples: [String!]!
+  ): Experiment!
 }

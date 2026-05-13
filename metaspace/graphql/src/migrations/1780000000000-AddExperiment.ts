@@ -27,9 +27,9 @@ export class AddExperiment1780000000000 implements MigrationInterface {
       CONSTRAINT "CHK_experiment_match_mode"
         CHECK ("match_mode" IN ('name','manual')),
       CONSTRAINT "CHK_experiment_run_status"
-        CHECK ("run_status" IS NULL OR "run_status" IN ('QUEUED','PREPARING','RUNNING','FINISHED','FAILED')),
+        CHECK ("run_status" IS NULL OR "run_status" IN ('QUEUED','PREPARING','RUNNING','RUNNING_STATS','FINISHED','FAILED')),
       CONSTRAINT "CHK_experiment_run_stage"
-        CHECK ("run_stage" IS NULL OR "run_stage" IN ('PREP','TEST','DONE')),
+        CHECK ("run_stage" IS NULL OR "run_stage" IN ('PREP','TEST','STATS','DONE')),
       CONSTRAINT "PK_experiment" PRIMARY KEY ("id"))`)
     await queryRunner.query(
       `CREATE INDEX "experiment_project_id_index" ON "public"."experiment" ("project_id")`

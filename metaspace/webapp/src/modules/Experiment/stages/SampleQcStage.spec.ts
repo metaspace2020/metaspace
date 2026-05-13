@@ -59,7 +59,7 @@ describe('SampleQcStage', () => {
     mockClient = { mutate: mutateSpy, query: vi.fn().mockResolvedValue({ data: {} }) }
   })
 
-  it('renders a checkbox per distinct sampleId and toggling calls the mutation', async () => {
+  it('renders an exclude multi-select with one option per distinct sampleId and persists selections', async () => {
     const wrapper = mount(SampleQcStage, {
       props: { experimentId: 'e1', initialExcluded: [] },
       global: { provide: { [DefaultApolloClient]: mockClient } },
@@ -67,12 +67,10 @@ describe('SampleQcStage', () => {
     await flushPromises()
     await nextTick()
 
-    for (const id of ['s0', 's1', 's2', 's3']) {
-      expect(wrapper.find(`[data-test-key="sample-${id}"]`).exists()).toBe(true)
-    }
+    const select = wrapper.findComponent('[data-test-key="excluded-samples-select"]') as any
+    expect(select.exists()).toBe(true)
 
-    const cb = wrapper.findComponent('[data-test-key="sample-s1"]') as any
-    cb.vm.$emit('change', false)
+    select.vm.$emit('update:modelValue', ['s1'])
     await flushPromises()
 
     expect(mutateSpy).toHaveBeenCalledTimes(1)
@@ -81,7 +79,7 @@ describe('SampleQcStage', () => {
     expect(call.excludedSamples).toEqual(['s1'])
   })
 
-  it('renders the QC chart grid alongside the checkbox grid', async () => {
+  it('renders the QC chart grid alongside the exclude selector', async () => {
     const wrapper = mount(SampleQcStage, {
       props: { experimentId: 'e1', initialExcluded: [] },
       global: { provide: { [DefaultApolloClient]: mockClient } },
@@ -90,6 +88,30 @@ describe('SampleQcStage', () => {
     await nextTick()
     expect(wrapper.find('[data-test-key="qc-charts"]').exists()).toBe(true)
     expect(wrapper.findComponent({ name: 'PcaScatter' }).exists()).toBe(true)
+  })
+
+  it('emits update:excludedSamples as a plain Array<string>, never a Set', async () => {
+    const wrapper = mount(SampleQcStage, {
+      props: { experimentId: 'e1', initialExcluded: [] },
+      global: { provide: { [DefaultApolloClient]: mockClient } },
+    })
+    await flushPromises()
+    await nextTick()
+
+    const select = wrapper.findComponent('[data-test-key="excluded-samples-select"]') as any
+    select.vm.$emit('update:modelValue', ['s1'])
+    await flushPromises()
+
+    const emissions = wrapper.emitted('update:excludedSamples') ?? []
+    expect(emissions.length).toBeGreaterThan(0)
+    for (const emission of emissions) {
+      const payload = emission[0]
+      expect(Array.isArray(payload)).toBe(true)
+      // Sets are not arrays — guard against a regression where the raw Set
+      // would be emitted and downstream consumers throw on stringification.
+      expect(payload instanceof Set).toBe(false)
+    }
+    expect(emissions.at(-1)![0]).toEqual(['s1'])
   })
 
   it('excluding a sample via the PCA scatter triggers the mutation', async () => {

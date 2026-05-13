@@ -102,3 +102,62 @@ def submit_experiment_job(
     )
     response = requests.post(stats_run_url, json=payload, timeout=30)
     response.raise_for_status()
+
+
+def submit_experiment_stats_only_job(
+    experiment_id: str,
+    run_generation: int,
+    intensity_blob_s3_key: str,
+    filter: Dict[str, Any],  # pylint: disable=redefined-builtin
+    excluded_samples: List[str],
+    db: Optional[DB] = None,
+) -> None:
+    """Submit a stats-only re-run to the ``stats_analysis`` service.
+
+    The service reads the persisted intensity blob at the given S3 key,
+    drops excluded samples, applies the filter, and runs only the test.
+    No Elasticsearch query or intensity-matrix rebuild is performed here.
+    """
+    config = SMConfig.get_conf()
+    services = config.get('services', {})
+    segmentation_url = services.get('segmentation', 'http://image-segmentation:9877')
+    stats_url = f'{segmentation_url}/experiment/run_stats'
+    callback_url = services.get('experiment_callback', 'http://api:5123/v1/experiment/callback')
+
+    if db is None:
+        db = DB()
+
+    row = db.select_one(
+        'SELECT label_groups FROM experiment WHERE id=%s',
+        params=(experiment_id,),
+    )
+    if not row:
+        raise Exception(f'experiment {experiment_id} not found')
+    (label_groups,) = row
+
+    ds_rows = db.select(
+        'SELECT dataset_id, region_source, regions FROM experiment_dataset '
+        'WHERE experiment_id=%s ORDER BY id',
+        params=(experiment_id,),
+    )
+    datasets = [
+        {'dataset_id': ds_id, 'region_source': region_source, 'regions': regions or []}
+        for ds_id, region_source, regions in ds_rows
+    ]
+
+    payload = {
+        'experiment_id': experiment_id,
+        'run_generation': run_generation,
+        'intensity_blob_s3_key': intensity_blob_s3_key,
+        'filter': filter,
+        'excluded_samples': excluded_samples,
+        'label_groups': label_groups or [],
+        'datasets': datasets,
+        'callback_url': callback_url,
+    }
+    logger.info(
+        f'Submitting stats-only run for experiment {experiment_id} '
+        f'run_generation={run_generation} to {stats_url}'
+    )
+    response = requests.post(stats_url, json=payload, timeout=30)
+    response.raise_for_status()

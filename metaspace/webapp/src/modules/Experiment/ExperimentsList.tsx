@@ -52,7 +52,8 @@ export default defineComponent({
     const router = useRouter()
     const { result, loading, refetch } = useQuery<{ experimentsByProject: ExperimentSummary[] }>(
       experimentsByProjectQuery,
-      () => ({ projectId: props.projectId })
+      () => ({ projectId: props.projectId }),
+      { fetchPolicy: 'cache-and-network' }
     )
     const experiments = computed<ExperimentSummary[]>(() => result.value?.experimentsByProject ?? [])
     const apolloClient: any = inject(DefaultApolloClient)

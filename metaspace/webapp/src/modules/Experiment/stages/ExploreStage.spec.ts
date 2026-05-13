@@ -67,7 +67,7 @@ describe('ExploreStage', () => {
     },
   ]
 
-  it('apply button emits update:filters with the local filter values', async () => {
+  it('auto-emits update:filters on mount with the initial filter values', async () => {
     setQueryResult({ experimentRunQc: { filterChain, coverage, samples } })
     const wrapper = mount(ExploreStage, {
       props: {
@@ -79,12 +79,9 @@ describe('ExploreStage', () => {
     await flushPromises()
     await nextTick()
 
-    await wrapper.find('[data-test-key="apply-filters"]').trigger('click')
-    await flushPromises()
-
     const events = wrapper.emitted('update:filters')
     expect(events).toBeTruthy()
-    expect(events!.length).toBe(1)
+    expect(events!.length).toBeGreaterThanOrEqual(1)
     expect(events![0][0]).toMatchObject({
       fdrMax: 0.05,
       minDetectionRate: 0.2,

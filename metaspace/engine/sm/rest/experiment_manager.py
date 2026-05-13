@@ -100,6 +100,59 @@ class ExperimentManager:
         logger.info(f'Experiment {experiment_id} run_generation={run_generation} queued')
         return {'experiment_id': experiment_id, 'run_generation': run_generation}
 
+    def run_stats_only(
+        self,
+        experiment_id: str,
+        run_generation: int,
+        filter: Dict[str, Any],  # pylint: disable=redefined-builtin
+        excluded_samples: List[str],
+    ) -> Dict[str, Any]:
+        """Kick off a stats-only re-run that reuses the existing intensity blob.
+
+        If the blob is missing (e.g. legacy experiment), promotes the request
+        to a full run via :meth:`run_experiment`.
+
+        Args:
+            experiment_id: UUID of the experiment.
+            run_generation: Current run generation whose intensity blob will
+                be reused.
+            filter: Stats filter payload (e.g. ``{'fdrMax': 0.1}``).
+            excluded_samples: List of sample IDs to exclude from the run.
+
+        Returns:
+            Dict with ``experiment_id`` and ``run_generation``. When the
+            blob is missing, the returned generation is the new one assigned
+            by the full-run fallback (``run_generation + 1``).
+        """
+        bucket_name = self._sm_config['image_storage']['bucket']
+        s3_key = self._intensity_blob_key(experiment_id, run_generation)
+        if not self._blob_exists(bucket_name, s3_key):
+            logger.info(
+                f'Stats-only requested for {experiment_id} gen={run_generation} '
+                f'but blob missing at s3://{bucket_name}/{s3_key}; promoting to full run'
+            )
+            return self.run_experiment(experiment_id, run_generation + 1)
+
+        self._db.alter(
+            "UPDATE experiment SET run_status='RUNNING_STATS', run_stage='STATS' " "WHERE id=%s",
+            params=(experiment_id,),
+        )
+        publisher = self._create_update_queue_publisher()
+        msg = {
+            'action': DaemonAction.EXPERIMENT_STATS_ONLY,
+            'experiment_id': experiment_id,
+            'run_generation': run_generation,
+            'intensity_blob_s3_key': s3_key,
+            'filter': filter,
+            'excluded_samples': excluded_samples,
+        }
+        publisher.publish(msg)
+        logger.info(
+            f'Experiment {experiment_id} run_generation={run_generation} '
+            f'queued for stats-only re-run'
+        )
+        return {'experiment_id': experiment_id, 'run_generation': run_generation}
+
     # Per-job poll/timeout when republishing pending jobs sequentially. Prep is
     # heavy (multi-MB ES queries + intensity matrix build); running them in
     # parallel risks OOM on the update-daemon. Sequential republishing trickles
@@ -126,7 +179,7 @@ class ExperimentManager:
         try:
             rows = self._db.select(
                 "SELECT id, run_generation FROM experiment "
-                "WHERE run_status IN ('PREPARING', 'RUNNING') "
+                "WHERE run_status IN ('PREPARING', 'RUNNING', 'RUNNING_STATS') "
                 "ORDER BY run_started_at ASC NULLS FIRST",
             )
             if not rows:
@@ -151,10 +204,9 @@ class ExperimentManager:
     def _sequential_republish_worker(self, pending: List) -> None:
         """Background worker: publish one job, wait for it to finish, repeat.
 
-        Uses a fresh ``QueuePublisher`` so it owns its own AMQP channel.
-        Reads ``experiment.run_status`` after each publish; advances when
-        the row leaves ``PREPARING``/``RUNNING`` (or after a per-job
-        timeout, to avoid a single stuck job blocking the queue forever).
+        Reads the row's run_status, run_filters and run_excluded_samples to
+        decide whether to republish EXPERIMENT_STATS (full run) or
+        EXPERIMENT_STATS_ONLY (stats-only). Sequential to bound memory.
         """
         try:
             queue_publisher = self._create_update_queue_publisher()
@@ -163,19 +215,48 @@ class ExperimentManager:
             return
 
         for experiment_id, run_generation in pending:
-            msg = {
-                'action': DaemonAction.EXPERIMENT_STATS,
-                'experiment_id': experiment_id,
-                'run_generation': run_generation,
-            }
+            try:
+                row = self._db.select_one(
+                    'SELECT run_status, run_generation, run_filters, '
+                    'run_excluded_samples FROM experiment WHERE id=%s',
+                    params=(experiment_id,),
+                )
+            except Exception as e:  # pylint: disable=broad-except
+                logger.warning(
+                    f'Sequential republish: DB read failed for {experiment_id}: {e}; skipping'
+                )
+                continue
+            if not row:
+                continue
+            status, current_gen, run_filters, excluded = row
+            if current_gen != run_generation:
+                # A newer run was kicked off elsewhere; nothing to republish.
+                continue
+
+            if status == 'RUNNING_STATS':
+                s3_key = self._intensity_blob_key(experiment_id, run_generation)
+                msg = {
+                    'action': DaemonAction.EXPERIMENT_STATS_ONLY,
+                    'experiment_id': experiment_id,
+                    'run_generation': run_generation,
+                    'intensity_blob_s3_key': s3_key,
+                    'filter': run_filters or {},
+                    'excluded_samples': excluded or [],
+                }
+            else:
+                msg = {
+                    'action': DaemonAction.EXPERIMENT_STATS,
+                    'experiment_id': experiment_id,
+                    'run_generation': run_generation,
+                }
             try:
                 queue_publisher.publish(msg)
                 logger.info(
-                    f'Republished experiment_stats {experiment_id} '
+                    f'Republished {msg["action"]} {experiment_id} '
                     f'run_generation={run_generation} (waiting for completion)'
                 )
             except Exception as e:  # pylint: disable=broad-except
-                logger.error(f'Failed to republish experiment_stats {experiment_id}: {e}')
+                logger.error(f'Failed to republish {msg["action"]} {experiment_id}: {e}')
                 continue
 
             self._wait_for_run_settled(experiment_id, run_generation)
@@ -201,7 +282,7 @@ class ExperimentManager:
             # and there's nothing to wait for — let the next job through.
             if current_gen != run_generation:
                 return
-            if status not in ('PREPARING', 'RUNNING'):
+            if status not in ('PREPARING', 'RUNNING', 'RUNNING_STATS'):
                 return
             time.sleep(self._RESTART_POLL_INTERVAL_S)
         logger.warning(
@@ -343,6 +424,20 @@ class ExperimentManager:
     @staticmethod
     def _intensity_blob_key(experiment_id: str, run_generation: int) -> str:
         return f'experiments/{experiment_id}/{run_generation}/intensities.json.gz'
+
+    def _blob_exists(self, bucket_name: str, s3_key: str) -> bool:
+        """Return ``True`` if the S3 object exists, ``False`` on 404/NoSuchKey.
+
+        Other ``ClientError`` codes (permissions, transport, etc.) propagate.
+        """
+        try:
+            get_s3_resource(self._sm_config).Object(bucket_name, s3_key).load()
+            return True
+        except ClientError as e:
+            code = e.response.get('Error', {}).get('Code', '')
+            if code in ('NoSuchKey', '404', 'NotFound'):
+                return False
+            raise
 
     def _write_intensity_blob(
         self,

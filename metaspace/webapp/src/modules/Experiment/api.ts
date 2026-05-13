@@ -184,6 +184,15 @@ export const runExperimentMutation = gql`
   ${EXPERIMENT_FIELDS}
 `
 
+export const runExperimentStatsMutation = gql`
+  mutation runExperimentStats($id: ID!, $filter: ExperimentResultsFilter!, $excludedSamples: [String!]!) {
+    runExperimentStats(id: $id, filter: $filter, excludedSamples: $excludedSamples) {
+      ...ExperimentFields
+    }
+  }
+  ${EXPERIMENT_FIELDS}
+`
+
 export const experimentResultsQuery = gql`
   query experimentResults(
     $experimentId: ID!
@@ -232,15 +241,10 @@ export const experimentRunQcQuery = gql`
 export const updateExperimentExcludedSamplesMutation = gql`
   mutation updateExperimentExcludedSamples($experimentId: ID!, $excludedSamples: [String!]!) {
     updateExperimentExcludedSamples(experimentId: $experimentId, excludedSamples: $excludedSamples) {
-      id
-      run {
-        status
-        stage
-        generation
-        excludedSamples
-      }
+      ...ExperimentFields
     }
   }
+  ${EXPERIMENT_FIELDS}
 `
 
 export const experimentRunStatusQuery = gql`
@@ -250,6 +254,21 @@ export const experimentRunStatusQuery = gql`
       name
       project {
         id
+      }
+      labelGroups {
+        name
+      }
+      datasets {
+        dataset {
+          id
+          name
+        }
+        regions {
+          metadata {
+            sampleId
+            condition
+          }
+        }
       }
       run {
         status

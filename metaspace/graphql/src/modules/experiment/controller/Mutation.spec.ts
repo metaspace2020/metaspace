@@ -197,7 +197,11 @@ describe('runExperiment', () => {
     expect(second.run.generation).toBe(2)
   })
 
-  it('updateExperimentExcludedSamples persists and triggers run', async() => {
+  it('updateExperimentExcludedSamples persists without triggering a run', async() => {
+    // Exclusion is a per-sample read-time filter — the existing PREP/QC blob
+    // is reusable; we deliberately do NOT re-run the experiment on every
+    // toggle. The frontend hides excluded rows from the QC charts client-side
+    // and Stage 3 stats are recomputed via a separate stats-only path.
     const exp = await seed()
     await testEntityManager.update(Experiment, exp.id, {
       runStatus: 'FINISHED', runStage: 'DONE', runGeneration: 1,
@@ -205,9 +209,86 @@ describe('runExperiment', () => {
     mockSm.smApiDatasetRequest.mockClear()
     const r = await doQuery<any>(updExclMutation, { experimentId: exp.id, excludedSamples: ['s0', 's3'] })
     expect(r.run.excludedSamples).toEqual(['s0', 's3'])
-    expect(r.run.status).toBe('QUEUED')
-    expect(r.run.generation).toBe(2)
+    expect(r.run.status).toBe('FINISHED')
+    expect(r.run.generation).toBe(1)
+    expect(mockSm.smApiDatasetRequest).not.toHaveBeenCalled()
+  })
+})
+
+const runStatsMutation = `mutation($id: ID!, $filter: ExperimentResultsFilter!, $excludedSamples: [String!]!) {
+  runExperimentStats(id: $id, filter: $filter, excludedSamples: $excludedSamples) {
+    id run { status stage generation filters excludedSamples error }
+  } }`
+
+describe('runExperimentStats', () => {
+  beforeAll(onBeforeAll); afterAll(onAfterAll)
+  beforeEach(async() => { await onBeforeEach(); await setupTestUsers(); mockSm.smApiDatasetRequest.mockResolvedValue({} as any) })
+  afterEach(async() => { await onAfterEach(); jest.clearAllMocks() })
+
+  const seed = async() => {
+    const p = await makeProjectWithMember()
+    const ds = await createTestDataset(); setEsPolarity({ [ds.id]: '+' })
+    return await doQuery<any>(createMutation, { projectId: (p as any).id, input: buildInput([ds.id]) })
+  }
+
+  it('rejects when previous run is not FINISHED', async() => {
+    const exp = await seed()
+    await testEntityManager.update(Experiment, exp.id, {
+      runStatus: 'RUNNING', runStage: 'TEST', runGeneration: 1,
+    } as any)
+    mockSm.smApiDatasetRequest.mockClear()
+    await expect(doQuery(runStatsMutation, {
+      id: exp.id, filter: { fdrMax: 0.1 }, excludedSamples: [],
+    })).rejects.toThrowError(/Stats-only re-run requires a finished previous run/)
+    expect(mockSm.smApiDatasetRequest).not.toHaveBeenCalled()
+  })
+
+  it('posts to engine and marks RUNNING_STATS without bumping generation', async() => {
+    const exp = await seed()
+    await testEntityManager.update(Experiment, exp.id, {
+      runStatus: 'FINISHED', runStage: 'DONE', runGeneration: 3, runError: 'old',
+    } as any)
+    mockSm.smApiDatasetRequest.mockClear()
+    const filter = { fdrMax: 0.05, minDetectionRate: 0.5 }
+    const excluded = ['s0', 's2']
+    const r = await doQuery<any>(runStatsMutation, {
+      id: exp.id, filter, excludedSamples: excluded,
+    })
+    expect(r.run.status).toBe('RUNNING_STATS')
+    expect(r.run.stage).toBe('STATS')
+    expect(r.run.generation).toBe(3)
+    expect(r.run.excludedSamples).toEqual(excluded)
+    expect(r.run.error).toBeNull()
     expect(mockSm.smApiDatasetRequest).toHaveBeenCalledWith(
-      '/v1/experiment/run', expect.objectContaining({ experiment_id: exp.id, run_generation: 2 }))
+      '/v1/experiment/run_stats',
+      {
+        experiment_id: exp.id,
+        run_generation: 3,
+        filter,
+        excluded_samples: excluded,
+      },
+    )
+    const row = await testEntityManager.findOneOrFail(Experiment, exp.id)
+    expect(row.runStatus).toBe('RUNNING_STATS')
+    expect(row.runStage).toBe('STATS')
+    expect(row.runGeneration).toBe(3)
+    expect(row.runFilters).toEqual(filter)
+    expect(row.runExcludedSamples).toEqual(excluded)
+    expect(row.runError).toBeNull()
+  })
+
+  it('marks FAILED when engine POST fails', async() => {
+    const exp = await seed()
+    await testEntityManager.update(Experiment, exp.id, {
+      runStatus: 'FINISHED', runStage: 'DONE', runGeneration: 2,
+    } as any)
+    mockSm.smApiDatasetRequest.mockReset()
+    mockSm.smApiDatasetRequest.mockRejectedValueOnce(new Error('boom'))
+    await expect(doQuery(runStatsMutation, {
+      id: exp.id, filter: { fdrMax: 0.1 }, excludedSamples: [],
+    })).rejects.toThrowError(/Failed to submit stats-only job/)
+    const row = await testEntityManager.findOneOrFail(Experiment, exp.id)
+    expect(row.runStatus).toBe('FAILED')
+    expect(row.runError).toMatch(/boom/)
   })
 })

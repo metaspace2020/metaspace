@@ -1,6 +1,6 @@
-import { defineComponent, ref, watch, computed } from 'vue'
+import { defineComponent, ref, watch, computed, onMounted } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
-import { ElCard, ElForm, ElFormItem, ElSelect, ElOption, ElInputNumber, ElButton } from '../../../lib/element-plus'
+import { ElCard, ElForm, ElFormItem, ElSelect, ElOption, ElInputNumber } from '../../../lib/element-plus'
 import { experimentRunQcQuery } from '../api'
 import FilterChainWaterfall from '../charts/FilterChainWaterfall'
 import CoverageBars from '../charts/CoverageBars'
@@ -31,6 +31,10 @@ export default defineComponent({
   props: {
     experimentId: { type: String, required: true },
     initialFilters: { type: Object as () => Partial<ExperimentFilters> | null, default: null },
+    /** Current Stage-1 exclusion list. The QC blob persists the last run's full
+     *  sample set; we filter the coverage chart client-side by this list so the
+     *  user sees what the next stats-only run will actually analyze. */
+    excludedSamples: { type: Array as () => string[], default: () => [] },
   },
   emits: ['update:filters'],
   setup(props, { emit }) {
@@ -64,9 +68,15 @@ export default defineComponent({
       return out
     }
 
-    const apply = (): void => {
+    /** Auto-publish the current filter shape upward whenever the form changes
+     *  (and once on mount), so the parent's `currentFilters` is always in sync
+     *  and the Stage 2→3 transition can navigate immediately without a
+     *  separate "Apply" step. */
+    const emitFilters = (): void => {
       emit('update:filters', buildResolverFilter())
     }
+    onMounted(() => emitFilters())
+    watch([fdr, minDetectionRate, databases, adducts], () => emitFilters(), { deep: true })
 
     watch(
       () => props.initialFilters,
@@ -148,12 +158,15 @@ export default defineComponent({
         sampleId: string
       }>
       const sampleByKey = new Map(samples.map((s) => [s.regionKey, s.sampleId]))
-      return Object.entries(cov).map(([regionKey, v]) => ({
-        regionKey,
-        sampleId: sampleByKey.get(regionKey) ?? regionKey,
-        detected: v.detected,
-        total: v.total,
-      }))
+      const excluded = new Set(props.excludedSamples ?? [])
+      return Object.entries(cov)
+        .map(([regionKey, v]) => ({
+          regionKey,
+          sampleId: sampleByKey.get(regionKey) ?? regionKey,
+          detected: v.detected,
+          total: v.total,
+        }))
+        .filter((row) => !excluded.has(row.sampleId))
     })
     const ionsEnteringTest = computed<number>(() => {
       const chain = filterChain.value
@@ -214,9 +227,6 @@ export default defineComponent({
                 ))}
               </ElSelect>
             </ElFormItem>
-            <ElButton type="primary" onClick={apply} data-test-key="apply-filters">
-              Apply filters
-            </ElButton>
           </ElForm>
         </ElCard>
       </div>

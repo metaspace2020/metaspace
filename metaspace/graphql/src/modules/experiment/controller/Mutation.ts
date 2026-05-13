@@ -72,14 +72,52 @@ const MutationResolvers: FieldResolversFor<Mutation, any> = {
     await submitExperimentRun(ctx, exp)
     return loadFullExperiment(ctx, id) as any
   },
+  runExperimentStats: async(_, args, ctx: Context) => {
+    const id: string = args.id
+    const filter = args.filter
+    const excludedSamples: string[] = args.excludedSamples
+    const exp = await loadAndAuthorize(ctx, id)
+    if (exp.runStatus !== 'FINISHED') {
+      throw new UserError('Stats-only re-run requires a finished previous run.')
+    }
+    const repo = ctx.entityManager.getRepository(Experiment)
+    await repo.update(exp.id, {
+      runFilters: filter,
+      runExcludedSamples: excludedSamples,
+      runStatus: 'RUNNING_STATS',
+      runStage: 'STATS',
+      runStartedAt: new Date(),
+      runFinishedAt: null,
+      runError: null,
+      // run_generation unchanged — overlay
+    } as any)
+    try {
+      await smApiDatasetRequest('/v1/experiment/run_stats', {
+        experiment_id: exp.id,
+        run_generation: exp.runGeneration,
+        filter,
+        excluded_samples: excludedSamples,
+      })
+    } catch (err) {
+      await repo.update(exp.id, {
+        runStatus: 'FAILED', runError: String(err.message ?? err),
+      })
+      throw new UserError('Failed to submit stats-only job. See run.error.')
+    }
+    return loadFullExperiment(ctx, exp.id) as any
+  },
   updateExperimentExcludedSamples: async(_, args, ctx: Context) => {
+    // Persist-only. We deliberately do NOT call submitExperimentRun here:
+    // exclusion is a per-sample filter applied at read time (QC charts hide
+    // excluded rows client-side; Stage 3 stats can be recomputed via a
+    // separate stats-only path triggered from Stage 2→3). Re-running PREP on
+    // every checkbox toggle wastes minutes and bounces the row back to
+    // PREPARING for no benefit.
     const experimentId: string = args.experimentId
     const excludedSamples: string[] = args.excludedSamples
     const repo = ctx.entityManager.getRepository(Experiment)
     await loadAndAuthorize(ctx, experimentId)
     await repo.update(experimentId, { runExcludedSamples: excludedSamples })
-    const refreshed = await repo.findOneOrFail(experimentId)
-    await submitExperimentRun(ctx, refreshed)
     return loadFullExperiment(ctx, experimentId) as any
   },
 }

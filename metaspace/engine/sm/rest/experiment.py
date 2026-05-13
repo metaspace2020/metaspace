@@ -73,6 +73,22 @@ def run_experiment(experiment_man, params):
     )
 
 
+@app.post('/run_stats')
+@sm_modify_experiment('RUN_STATS')
+def run_experiment_stats(experiment_man, params):
+    """Kick off a stats-only re-run that reuses the persisted intensity blob.
+
+    Body: ``{ experiment_id: str, run_generation: int, filter: dict, excluded_samples: list[str] }``
+    """
+    _require(params, 'experiment_id', 'run_generation')
+    return experiment_man.run_stats_only(
+        experiment_id=params['experiment_id'],
+        run_generation=int(params['run_generation']),
+        filter=params.get('filter') or {},
+        excluded_samples=params.get('excluded_samples') or [],
+    )
+
+
 @app.get('/<experiment_id>/ion/<ion_id:int>/intensities')
 def get_ion_intensities(experiment_id, ion_id):
     """Return per-region intensities for one ion of an experiment.
