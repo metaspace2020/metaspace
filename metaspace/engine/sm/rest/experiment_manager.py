@@ -20,6 +20,8 @@ Schema notes:
 import gzip
 import json
 import logging
+import threading
+import time
 from io import BytesIO
 from typing import Any, Dict, List, Optional
 
@@ -97,6 +99,116 @@ class ExperimentManager:
 
         logger.info(f'Experiment {experiment_id} run_generation={run_generation} queued')
         return {'experiment_id': experiment_id, 'run_generation': run_generation}
+
+    # Per-job poll/timeout when republishing pending jobs sequentially. Prep is
+    # heavy (multi-MB ES queries + intensity matrix build); running them in
+    # parallel risks OOM on the update-daemon. Sequential republishing trickles
+    # them through and keeps memory bounded. Timeout is generous so a single
+    # genuinely-long run doesn't strand the rest forever.
+    _RESTART_POLL_INTERVAL_S = 5
+    _RESTART_PER_JOB_TIMEOUT_S = 30 * 60  # 30 min — well above normal prep+stats
+
+    def restart_pending_jobs(self) -> Dict[str, Any]:
+        """Republish EXPERIMENT_STATS jobs whose runs are still in flight.
+
+        Mirrors :meth:`SegmentationManager.restart_pending_jobs` but
+        republishes one job at a time on a background thread, polling the
+        ``experiment`` row until each leaves the in-flight statuses before
+        sending the next. This avoids the thundering-herd / parallel-OOM
+        failure mode where multiple heavy prep steps run concurrently after
+        a service restart.
+
+        Returns:
+            Dict with ``restarted_count`` — count of pending rows found
+            (and queued for sequential republish, not necessarily finished
+            by the time the HTTP response returns).
+        """
+        try:
+            rows = self._db.select(
+                "SELECT id, run_generation FROM experiment "
+                "WHERE run_status IN ('PREPARING', 'RUNNING') "
+                "ORDER BY run_started_at ASC NULLS FIRST",
+            )
+            if not rows:
+                logger.info('No pending experiment_stats jobs found to restart')
+                return {'restarted_count': 0}
+            # pylint: disable=unnecessary-comprehension
+            pending = [(exp_id, gen) for exp_id, gen in rows]
+            threading.Thread(
+                target=self._sequential_republish_worker,
+                args=(pending,),
+                daemon=True,
+                name='experiment-restart-pending',
+            ).start()
+            logger.info(
+                f'Queued {len(pending)} pending experiment_stats jobs for sequential republish'
+            )
+            return {'restarted_count': len(pending)}
+        except Exception as e:
+            logger.error(f'Failed to restart pending experiment_stats jobs: {e}', exc_info=True)
+            raise
+
+    def _sequential_republish_worker(self, pending: List) -> None:
+        """Background worker: publish one job, wait for it to finish, repeat.
+
+        Uses a fresh ``QueuePublisher`` so it owns its own AMQP channel.
+        Reads ``experiment.run_status`` after each publish; advances when
+        the row leaves ``PREPARING``/``RUNNING`` (or after a per-job
+        timeout, to avoid a single stuck job blocking the queue forever).
+        """
+        try:
+            queue_publisher = self._create_update_queue_publisher()
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f'Sequential republish: failed to open queue publisher: {e}')
+            return
+
+        for experiment_id, run_generation in pending:
+            msg = {
+                'action': DaemonAction.EXPERIMENT_STATS,
+                'experiment_id': experiment_id,
+                'run_generation': run_generation,
+            }
+            try:
+                queue_publisher.publish(msg)
+                logger.info(
+                    f'Republished experiment_stats {experiment_id} '
+                    f'run_generation={run_generation} (waiting for completion)'
+                )
+            except Exception as e:  # pylint: disable=broad-except
+                logger.error(f'Failed to republish experiment_stats {experiment_id}: {e}')
+                continue
+
+            self._wait_for_run_settled(experiment_id, run_generation)
+
+    def _wait_for_run_settled(self, experiment_id: str, run_generation: int) -> None:
+        """Block until the experiment row leaves PREPARING/RUNNING (or timeout)."""
+        deadline = time.monotonic() + self._RESTART_PER_JOB_TIMEOUT_S
+        while time.monotonic() < deadline:
+            try:
+                row = self._db.select_one(
+                    "SELECT run_status, run_generation FROM experiment WHERE id=%s",
+                    params=(experiment_id,),
+                )
+            except Exception as e:  # pylint: disable=broad-except
+                logger.warning(
+                    f'Sequential republish: DB poll failed for {experiment_id}: {e}; ' f'continuing'
+                )
+                return
+            if not row:
+                return
+            status, current_gen = row
+            # If a newer run was kicked off elsewhere, our generation is stale
+            # and there's nothing to wait for — let the next job through.
+            if current_gen != run_generation:
+                return
+            if status not in ('PREPARING', 'RUNNING'):
+                return
+            time.sleep(self._RESTART_POLL_INTERVAL_S)
+        logger.warning(
+            f'Sequential republish: experiment {experiment_id} '
+            f'run_generation={run_generation} did not settle within '
+            f'{self._RESTART_PER_JOB_TIMEOUT_S}s; advancing to next job'
+        )
 
     def handle_experiment_callback(  # pylint: disable=too-many-arguments
         self,

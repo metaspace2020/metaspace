@@ -23,9 +23,14 @@ from pathlib import Path
 import bottle
 
 from image_segmentation.app import app as segmentation_app
-from image_segmentation.restart import delayed_restart_pending_jobs
+from image_segmentation.restart import (
+    delayed_restart_pending_jobs as delayed_restart_pending_segmentation_jobs,
+)
 from postprocessing_shared import load_config
 from stats_analysis.app import app as stats_analysis_app
+from stats_analysis.restart import (
+    delayed_restart_pending_jobs as delayed_restart_pending_experiment_jobs,
+)
 
 # PREP payloads can ship multi-MB JSON; raise from Bottle's 100 KB default.
 bottle.BaseRequest.MEMFILE_MAX = 256 * 1024 * 1024
@@ -67,7 +72,10 @@ def main():
     )
 
     threading.Thread(
-        target=delayed_restart_pending_jobs, args=(config,), daemon=True
+        target=delayed_restart_pending_segmentation_jobs, args=(config,), daemon=True
+    ).start()
+    threading.Thread(
+        target=delayed_restart_pending_experiment_jobs, args=(config,), daemon=True
     ).start()
 
     app.run(**bottle_config)

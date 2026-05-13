@@ -61,6 +61,7 @@ def test_run_experiment_returns_full_run_qc_shape():
 
 
 def test_run_experiment_skips_label_group_with_single_condition():
+    # Only one condition exists across the entire experiment -> no fallback either.
     payload = build_payload([
         _region('r-1', 's1', 'control', bio='m1', base=10.0),
         _region('r-2', 's2', 'control', bio='m2', base=12.0),
@@ -72,6 +73,33 @@ def test_run_experiment_skips_label_group_with_single_condition():
         for r in out['results']
         if r['label_group_name'] == 'auto_1'
     )
+
+
+def test_run_experiment_falls_back_to_experiment_wide_when_lgs_are_single_condition():
+    # User's control/innoculated layout: two label groups, each carrying a single
+    # condition. Per-LG inference is NOT_ENOUGH_DATA but the experiment as a
+    # whole has 2 conditions -> pool and run WILCOXON_UNPAIRED.
+    payload = build_payload([
+        _region('r-1', 's1', 'control', bio='m1', base=1.0, lg='control'),
+        _region('r-2', 's2', 'control', bio='m2', base=1.2, lg='control'),
+        _region('r-3', 's3', 'nash', bio='m3', base=10.0, lg='innoculated'),
+        _region('r-4', 's4', 'nash', bio='m4', base=11.0, lg='innoculated'),
+    ])
+    payload['label_groups'] = [
+        {'name': 'control', 'color': '#000'},
+        {'name': 'innoculated', 'color': '#111'},
+    ]
+    out = run_experiment('exp-1', 1, payload)
+    per_lg = out['run_qc']['inferredTestPerLabelGroup']
+    assert per_lg['control'] == 'NOT_ENOUGH_DATA'
+    assert per_lg['innoculated'] == 'NOT_ENOUGH_DATA'
+    assert per_lg['__experiment__'] == 'WILCOXON_UNPAIRED'
+    assert out['inferred_test'] == 'WILCOXON_UNPAIRED'
+    assert 'EXPERIMENT_WIDE_FALLBACK' in out['run_qc']['warnings']
+    fb_rows = [r for r in out['results'] if r['label_group_name'] == '__experiment__']
+    assert fb_rows, 'expected experiment-wide fallback result rows'
+    assert any(r['p_value'] is not None for r in fb_rows)
+    assert all(r['n_a'] == 2 and r['n_b'] == 2 for r in fb_rows)
 
 
 def test_run_experiment_emits_null_p_when_not_enough_replicates():

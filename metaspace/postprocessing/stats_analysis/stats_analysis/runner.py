@@ -488,8 +488,45 @@ def run_experiment(experiment_id: str, run_generation: int, payload: Dict) -> Di
             lg_name, test_kind, groups, local_intensities, surviving_ids,
         ))
 
+    # Experiment-wide fallback: when no label group yielded a usable test (e.g.
+    # the user used label groups as a replicate-cluster axis instead of a
+    # within-group comparison axis), pool all LG-assigned regions and run one
+    # experiment-wide test if ≥2 distinct conditions exist across the pool.
+    # Mirrors design1.csv scenarios #1/#8 where the comparison happens across
+    # conditions at the experiment level.
+    fallback_test: Optional[str] = None
+    if label_groups and all(t == 'NOT_ENOUGH_DATA' for t in per_lg_tests):
+        pooled: List[Dict] = []
+        for lg in label_groups:
+            pooled.extend(_regions_per_label_group(samples_meta, lg['name']))
+        pooled_conditions = {r.get('condition') for r in pooled if r.get('condition')}
+        if len(pooled_conditions) >= 2:
+            local_intensities = dict(intensities)
+            agg_regions, local_intensities, did_multi = _multi_region_aggregate(
+                pooled, local_intensities,
+            )
+            agg_regions, local_intensities, _ = _tech_rep_aggregate(
+                agg_regions, local_intensities,
+            )
+            groups = _split_by_condition(agg_regions)
+            test_kind, fb_warnings = _infer_test(groups, raw_regions=pooled)
+            if did_multi:
+                fb_warnings.append('MULTI_REGION_AGGREGATED')
+            fb_warnings.append('EXPERIMENT_WIDE_FALLBACK')
+            fallback_test = test_kind
+            warnings_per_lg['__experiment__'] = fb_warnings
+            flat_warnings.extend(fb_warnings)
+            results = _per_label_group_results(
+                '__experiment__', test_kind, groups, local_intensities, surviving_ids,
+            )
+
+    per_lg_map = dict(zip([lg['name'] for lg in label_groups], per_lg_tests))
+    if fallback_test is not None:
+        per_lg_map['__experiment__'] = fallback_test
+    summary_tests = [fallback_test] if fallback_test is not None else per_lg_tests
+
     return {
-        'inferred_test': _summarise_inferred_test(per_lg_tests),
+        'inferred_test': _summarise_inferred_test(summary_tests),
         'results': results,
         'intensity_rows': intensity_rows,
         'run_qc': {
@@ -497,9 +534,7 @@ def run_experiment(experiment_id: str, run_generation: int, payload: Dict) -> Di
             'pcaVariance': pca_var,
             'filterChain': chain,
             'coverage': coverage,
-            'inferredTestPerLabelGroup': dict(zip(
-                [lg['name'] for lg in label_groups], per_lg_tests
-            )),
+            'inferredTestPerLabelGroup': per_lg_map,
             'allIons': _build_all_ions(prep.get('all_ions') or [], intensities, region_keys),
             'warnings': flat_warnings,
             'warningsPerLabelGroup': warnings_per_lg,

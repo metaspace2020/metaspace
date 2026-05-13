@@ -98,6 +98,18 @@ def get_ion_intensities(experiment_id, ion_id):
         return make_response(INTERNAL_ERROR)
 
 
+@app.post('/restart_pending')
+def restart_pending(experiment_man=None, params=None):  # pylint: disable=unused-argument
+    """Republish pending experiment_stats jobs (called by stats_analysis on startup)."""
+    try:
+        logger.info('Received experiment restart_pending request')
+        man = ExperimentManager(db=DB())
+        return man.restart_pending_jobs()
+    except Exception as e:  # pylint: disable=broad-except
+        logger.exception(f'{bottle.request} - {e}')
+        return make_response(INTERNAL_ERROR)
+
+
 @app.post('/callback')
 @sm_modify_experiment('CALLBACK')
 def experiment_callback(experiment_man, params):

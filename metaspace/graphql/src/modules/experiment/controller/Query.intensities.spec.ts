@@ -14,20 +14,19 @@ import { Experiment } from '../model'
 const mockFetch = fetch as jest.Mock
 
 describe('Query.experimentIonIntensities', () => {
-  let originalManagerApiUrl: string | undefined
+  let originalEngineHost: string | undefined
 
   beforeAll(async() => {
     await onBeforeAll()
-    originalManagerApiUrl = config.manager_api_url
-    config.manager_api_url = 'https://test-api.metaspace.example'
+    originalEngineHost = config.services?.sm_engine_api_host
+    if (!config.services) (config as any).services = {} as any
+    config.services.sm_engine_api_host = 'test-api.metaspace.example'
   })
 
   afterAll(async() => {
     await onAfterAll()
-    if (originalManagerApiUrl !== undefined) {
-      config.manager_api_url = originalManagerApiUrl
-    } else {
-      delete (config as any).manager_api_url
+    if (originalEngineHost !== undefined) {
+      config.services.sm_engine_api_host = originalEngineHost
     }
   })
 
@@ -78,7 +77,7 @@ describe('Query.experimentIonIntensities', () => {
       { id: exp.id, ionId: 42 })
 
     expect(mockFetch).toHaveBeenCalledWith(
-      `https://test-api.metaspace.example/v1/experiment/${exp.id}/ion/42/intensities`
+      `http://test-api.metaspace.example/v1/experiment/${exp.id}/ion/42/intensities`
     )
     expect(rows).toEqual([
       { regionKey: 'r1', intensity: 10, condition: 'control', sampleId: 'ds_1', biologicalReplicateId: 'b1' },

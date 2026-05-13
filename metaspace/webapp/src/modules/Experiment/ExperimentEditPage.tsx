@@ -27,7 +27,7 @@ import MatchModeSelector, { MatchMode } from './components/MatchModeSelector'
 import RegionMappingGroups from './components/RegionMappingGroups'
 import { resolveRenameTarget, seedNameModeGroups } from './composables/groupNaming'
 import { buildSegmentationMasks } from './composables/useSegmentationMasks'
-import { isRegionValid, oneConditionGroupWarnings } from './composables/useRegionValidation'
+import { isRegionValid, conditionCoverageWarning } from './composables/useRegionValidation'
 import { getDatasetDiagnosticsQuery } from '../../api/dataset'
 
 interface IonPreviewCacheEntry {
@@ -215,6 +215,7 @@ export default defineComponent({
     const creating = ref(false)
     const updating = ref(false)
     const running = ref(false)
+    const showMappingBoard = ref(false)
 
     const createMut = async (variables: any): Promise<any> => {
       creating.value = true
@@ -244,9 +245,7 @@ export default defineComponent({
     const saving = computed(() => creating.value || updating.value)
 
     const saveBlocked = computed(() => draft.value.datasets.some((ds) => ds.regions.some((r) => !isRegionValid(r).ok)))
-    const oneConditionWarnings = computed(() =>
-      oneConditionGroupWarnings(draft.value.datasets.flatMap((ds) => ds.regions))
-    )
+    const conditionWarning = computed(() => conditionCoverageWarning(draft.value.datasets.flatMap((ds) => ds.regions)))
 
     const labelGroupOptions = computed(() => draft.value.labelGroups.map((lg) => ({ name: lg.name, color: lg.color })))
 
@@ -663,17 +662,19 @@ export default defineComponent({
 
           <ElDivider />
 
-          {oneConditionWarnings.value.length > 0 && (
+          {conditionWarning.value && (
             <div
               class="bg-yellow-50 border border-yellow-300 rounded p-2 text-sm mb-4"
               data-test-key="one-condition-warning"
             >
-              {oneConditionWarnings.value.map((warning) => (
-                <div key={warning.labelGroupName}>
-                  Label group <strong>{warning.labelGroupName}</strong> has only one condition (
-                  {warning.conditions.join(', ')}); a statistical test cannot be inferred.
+              {conditionWarning.value.conditions.length === 0 ? (
+                <div>No condition values are set; a statistical test cannot be inferred.</div>
+              ) : (
+                <div>
+                  Only one condition (<strong>{conditionWarning.value.conditions.join(', ')}</strong>) is present across
+                  the experiment; a statistical test needs at least two conditions to compare.
                 </div>
-              ))}
+              )}
             </div>
           )}
 
@@ -683,15 +684,26 @@ export default defineComponent({
             <div class="my-3" />
             {draft.value.matchMode === 'MANUAL' && (
               <>
-                <RegionMappingBoard
-                  data-test-key="mapping-board"
-                  columns={columns.value}
-                  edges={edges.value}
-                  onAdd-edge={onAddEdge}
-                  onRemove-edge={(e: BoardEdge) => detachRegionFromGroup(e.to)}
-                  onReorder={onReorderColumns}
-                  onReorder-region={onReorderRegion}
-                />
+                <div class="flex justify-end mb-2">
+                  <button
+                    class="text-sm text-blue-600 hover:underline cursor-pointer"
+                    style={{ background: 'transparent', border: 'none', padding: 0 }}
+                    onClick={() => (showMappingBoard.value = !showMappingBoard.value)}
+                  >
+                    {showMappingBoard.value ? 'Hide mapping board' : 'Show mapping board'}
+                  </button>
+                </div>
+                {showMappingBoard.value && (
+                  <RegionMappingBoard
+                    data-test-key="mapping-board"
+                    columns={columns.value}
+                    edges={edges.value}
+                    onAdd-edge={onAddEdge}
+                    onRemove-edge={(e: BoardEdge) => detachRegionFromGroup(e.to)}
+                    onReorder={onReorderColumns}
+                    onReorder-region={onReorderRegion}
+                  />
+                )}
                 <div class="flex flex-col justify-center items-center bg-black/[.02] p-2 mt-4">
                   <div class="text-sm mb-2">Generated mappings</div>
                   <RegionMappingGroups

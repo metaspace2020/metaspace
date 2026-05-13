@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isRegionValid, oneConditionGroupWarnings } from './useRegionValidation'
+import { isRegionValid, conditionCoverageWarning } from './useRegionValidation'
 import type { ExperimentDraftRegion } from '../api'
 
 const region = (over: Partial<ExperimentDraftRegion> = {}): ExperimentDraftRegion => ({
@@ -41,8 +41,8 @@ describe('isRegionValid', () => {
   })
 })
 
-describe('oneConditionGroupWarnings', () => {
-  it('warns when a label group has only one distinct condition', () => {
+describe('conditionCoverageWarning', () => {
+  it('warns when the whole experiment has only one condition', () => {
     const regions = [
       region({
         regionKey: 'a',
@@ -55,27 +55,38 @@ describe('oneConditionGroupWarnings', () => {
         metadata: { ...region().metadata, condition: 'control', biologicalReplicateId: 'm2' },
       }),
     ]
-    expect(oneConditionGroupWarnings(regions)).toEqual([{ labelGroupName: 'g1', conditions: ['control'] }])
+    expect(conditionCoverageWarning(regions)).toEqual({ conditions: ['control'] })
   })
 
-  it('does not warn when there are 2+ conditions', () => {
+  it('does not warn ≥2 conditions exist across experiment, even if label is single-condition', () => {
+    // design1.csv scenario #8: matched replicates clustered per condition in separate groups.
     const regions = [
       region({
         regionKey: 'a',
-        labelGroupName: 'g1',
+        labelGroupName: 'control_group',
         metadata: { ...region().metadata, condition: 'control', biologicalReplicateId: 'm1' },
       }),
       region({
         regionKey: 'b',
-        labelGroupName: 'g1',
-        metadata: { ...region().metadata, condition: 'treated', biologicalReplicateId: 'm2' },
+        labelGroupName: 'control_group',
+        metadata: { ...region().metadata, condition: 'control', biologicalReplicateId: 'm2' },
+      }),
+      region({
+        regionKey: 'c',
+        labelGroupName: 'treated_group',
+        metadata: { ...region().metadata, condition: 'nash', biologicalReplicateId: 'm3' },
+      }),
+      region({
+        regionKey: 'd',
+        labelGroupName: 'treated_group',
+        metadata: { ...region().metadata, condition: 'nash', biologicalReplicateId: 'm4' },
       }),
     ]
-    expect(oneConditionGroupWarnings(regions)).toEqual([])
+    expect(conditionCoverageWarning(regions)).toBeNull()
   })
 
-  it('ignores regions with no labelGroupName', () => {
-    const regions = [region({ labelGroupName: null })]
-    expect(oneConditionGroupWarnings(regions)).toEqual([])
+  it('warns with empty conditions when no region has a condition set', () => {
+    const regions = [region({ metadata: { ...region().metadata, condition: '' } })]
+    expect(conditionCoverageWarning(regions)).toEqual({ conditions: [] })
   })
 })

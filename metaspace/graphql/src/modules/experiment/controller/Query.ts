@@ -132,12 +132,15 @@ const QueryResolvers: FieldResolversFor<Query, any> = {
     if (!exp) return []
     await assertCanAccessProject(ctx, exp.projectId, { write: false })
 
-    const apiUrl = config.manager_api_url
-    if (!apiUrl) {
-      logger.error('manager_api_url is not configured')
-      throw new Error('Engine API URL is not configured')
+    // Use the engine REST host (same one smApiCall hits, configured per-env in
+    // config.services.sm_engine_api_host) rather than manager_api_url, which in
+    // dev points at an nginx route that doesn't exist for /v1/experiment.
+    const apiHost = config.services?.sm_engine_api_host
+    if (!apiHost) {
+      logger.error('services.sm_engine_api_host is not configured')
+      throw new Error('Engine API host is not configured')
     }
-    const url = `${apiUrl}/v1/experiment/${experimentId}/ion/${ionId}/intensities`
+    const url = `http://${apiHost}/v1/experiment/${experimentId}/ion/${ionId}/intensities`
     const res = await fetch(url)
     if (!res.ok) {
       if (res.status === 404) return []

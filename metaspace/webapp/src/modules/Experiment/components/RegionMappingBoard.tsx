@@ -703,7 +703,7 @@ export default defineComponent({
 
     return () => (
       <div class="space-y-3">
-        <div class="flex items-start justify-between gap-4">
+        <div class="flex flex-col items-end ">
           <ElAlert
             type="info"
             show-icon={true}
@@ -711,24 +711,27 @@ export default defineComponent({
             class="flex-1"
             v-slots={{
               default: () => (
-                <div class="text-xs leading-snug">
-                  <span class="inline-flex items-center gap-1 align-middle">
-                    Drag a region's
+                <div class="text-xs leading-relaxed space-y-1">
+                  <div>
+                    To link regions across datasets, click a region's circular handle{' '}
                     <span
                       class="inline-block w-3 h-3 rounded-full align-middle"
                       style={{ border: '1.5px solid #6b7280', background: '#fff' }}
-                    />
-                    handle to another region's handle to link them across datasets — linked regions share a color.
-                  </span>{' '}
-                  Use the
-                  <ElIcon class="align-middle mx-1">
-                    <Rank />
-                  </ElIcon>
-                  icon to drop a card into a new position, and the
-                  <ElIcon class="align-middle mx-1">
-                    <View />
-                  </ElIcon>
-                  icon to hide a card while you connect others.
+                    />{' '}
+                    and then click another region's handle. Linked regions share a color. Click additional handles to
+                    chain more regions into the same group, and click a linked handle again to remove it from the group.
+                  </div>
+                  <div>
+                    Use the{' '}
+                    <ElIcon class="align-middle">
+                      <Rank />
+                    </ElIcon>{' '}
+                    handle to drag a card into a new position, and the{' '}
+                    <ElIcon class="align-middle">
+                      <View />
+                    </ElIcon>{' '}
+                    icon to temporarily hide a card so it's easier to connect the remaining ones.
+                  </div>
                 </div>
               ),
             }}

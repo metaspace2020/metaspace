@@ -12,23 +12,23 @@ export function isRegionValid(region: ExperimentDraftRegion): RegionValidity {
   return { ok: missing.length === 0, missing }
 }
 
-export interface OneConditionWarning {
-  labelGroupName: string
+export interface ConditionCoverageWarning {
   conditions: string[]
 }
 
-export function oneConditionGroupWarnings(regions: ExperimentDraftRegion[]): OneConditionWarning[] {
-  const byGroup = new Map<string, Set<string>>()
+/**
+ * A statistical test needs ≥2 distinct conditions somewhere across the included regions.
+ * The engine (stats_analysis/runner.py) first tries per-label-group inference and, if every
+ * group lands on NOT_ENOUGH_DATA, falls back to an experiment-wide test pooling all
+ * LG-assigned regions. So a single-condition label group is fine as long as the experiment
+ * as a whole has ≥2 conditions; only flag when even that pool is single-condition.
+ */
+export function conditionCoverageWarning(regions: ExperimentDraftRegion[]): ConditionCoverageWarning | null {
+  const conditions = new Set<string>()
   for (const r of regions) {
-    if (!r.labelGroupName) continue
     const cond = r.metadata.condition?.trim()
-    if (!cond) continue
-    if (!byGroup.has(r.labelGroupName)) byGroup.set(r.labelGroupName, new Set())
-    byGroup.get(r.labelGroupName)!.add(cond)
+    if (cond) conditions.add(cond)
   }
-  const out: OneConditionWarning[] = []
-  for (const [labelGroupName, set] of byGroup) {
-    if (set.size === 1) out.push({ labelGroupName, conditions: [...set] })
-  }
-  return out
+  if (conditions.size >= 2) return null
+  return { conditions: [...conditions] }
 }

@@ -281,6 +281,12 @@ describe('ExperimentEditPage', () => {
     })
     await nextTick()
 
+    // Board is collapsed by default; click "Show mapping board" to expand.
+    const toggle = wrapper.findAll('button').find((b) => b.text().includes('Show mapping board'))
+    expect(toggle).toBeTruthy()
+    await toggle!.trigger('click')
+    await nextTick()
+
     const board = wrapper.find('[data-test-key="mapping-board"]')
     expect(board.exists()).toBe(true)
     // Each column is rendered as a direct child div with the dataset name.
@@ -332,7 +338,7 @@ describe('ExperimentEditPage', () => {
     expect(saveBtn.attributes('disabled')).toBeDefined()
   })
 
-  it('shows a warning banner when a label group has only one condition', async () => {
+  it('shows a warning banner when the whole experiment has only one distinct condition', async () => {
     mockRoute = { params: { projectId: 'p1' } }
     setupQueries()
 
@@ -395,7 +401,7 @@ describe('ExperimentEditPage', () => {
 
     const banner = wrapper.find('[data-test-key="one-condition-warning"]')
     expect(banner.exists()).toBe(true)
-    expect(banner.text()).toContain('g1')
+    expect(banner.text()).toContain('control')
   })
 
   describe('region mapping merge logic', () => {
