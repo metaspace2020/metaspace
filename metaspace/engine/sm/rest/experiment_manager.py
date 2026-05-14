@@ -345,6 +345,18 @@ class ExperimentManager:
             self._write_results(experiment_id, run_generation, result or {})
             inferred_test = (result or {}).get('inferred_test')
             run_qc = (result or {}).get('run_qc')
+            # Stats-only re-runs intentionally omit some keys (notably
+            # ``allIons``) because the intensity blob lacks the per-ion
+            # FDR/adduct/moldb metadata to reconstruct them. Merge with the
+            # existing run_qc so those keys survive the re-run.
+            if run_qc is not None:
+                existing = self._db.select_one(
+                    'SELECT run_qc FROM experiment WHERE id=%s',
+                    params=(experiment_id,),
+                )
+                prev = (existing[0] if existing else None) or {}
+                merged = {**prev, **run_qc}
+                run_qc = merged
             self._db.alter(
                 "UPDATE experiment SET run_status='FINISHED', run_stage='DONE', "
                 "run_finished_at=NOW(), run_inferred_test=%s, run_qc=%s WHERE id=%s",

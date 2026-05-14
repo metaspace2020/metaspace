@@ -69,6 +69,11 @@ export default defineComponent({
     )
     const selectedRow = ref<Record<string, unknown> | null>(null)
     const currentFilters = ref<Record<string, unknown> | null>(null)
+    /** Form-shape filters held by Stage 2's panel. Persisted at the parent so
+     *  unmounting Stage 2 (when the user navigates to Stage 3) doesn't drop
+     *  the user's selections — ExploreStage re-initializes from this prop on
+     *  remount. */
+    const currentFormFilters = ref<Record<string, unknown> | null>(null)
     const currentExcludedSamples = ref<string[]>([])
 
     const queryReturn: any = useQuery(experimentRunStatusQuery, () => ({ id }), { pollInterval: 3000 })
@@ -115,6 +120,21 @@ export default defineComponent({
      *  the user can re-apply via Stage 2's form. */
     const isResolverFilterShape = (f: any): boolean =>
       f != null && (f.fdrMax !== undefined || (Array.isArray(f.databases) && typeof f.databases[0] === 'number'))
+
+    /** Project the server-saved resolver-shape filter onto the form shape
+     *  ExploreStage expects. We can't reverse-map numeric database IDs to
+     *  names here (the name dictionary lives in `allIons`), so `databases`
+     *  is left out — ExploreStage's auto-fill will populate it once the QC
+     *  data arrives. FDR and adducts round-trip directly. */
+    const deriveFormFromRun = (f: any): Record<string, unknown> | null => {
+      if (f == null) return null
+      const out: Record<string, unknown> = {}
+      if (typeof f.fdrMax === 'number') out.fdr = f.fdrMax
+      if (typeof f.fdr === 'number') out.fdr = f.fdr
+      if (typeof f.minDetectionRate === 'number') out.minDetectionRate = f.minDetectionRate
+      if (Array.isArray(f.adducts)) out.adducts = f.adducts.map(String)
+      return Object.keys(out).length ? out : null
+    }
 
     watch(
       () => exp.value?.run?.filters,
@@ -200,7 +220,13 @@ export default defineComponent({
      *  the absence of any filter configuration at all. */
     const isNextDisabled = computed<boolean>(() => {
       if (pendingAdvanceToResults.value) return true
-      if (stage.value === 1) return currentFilters.value == null
+      if (stage.value === 1) {
+        if (currentFilters.value == null) return true
+        // Require at least one database AND one adduct so the resolver doesn't
+        // run on an empty set; the form-shape selection is authoritative here.
+        const ff = currentFormFilters.value as { databases?: string[]; adducts?: string[] } | null
+        if (!ff || (ff.databases?.length ?? 0) === 0 || (ff.adducts?.length ?? 0) === 0) return true
+      }
       return false
     })
 
@@ -446,9 +472,13 @@ export default defineComponent({
           {stage.value === 1 && run && (
             <ExploreStage
               experimentId={e.id}
-              initialFilters={run.filters ?? null}
+              initialFilters={currentFormFilters.value ?? (deriveFormFromRun(run.filters) as any)}
               excludedSamples={currentExcludedSamples.value}
-              {...{ 'onUpdate:filters': (f: any) => (currentFilters.value = f) }}
+              sampleLabels={sampleLabels.value}
+              {...{
+                'onUpdate:filters': (f: any) => (currentFilters.value = f),
+                'onUpdate:formFilters': (f: any) => (currentFormFilters.value = f),
+              }}
             />
           )}
           {stage.value === 2 && run && inProgress && (

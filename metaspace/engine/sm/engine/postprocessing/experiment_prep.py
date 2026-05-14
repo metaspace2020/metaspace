@@ -87,6 +87,20 @@ def _latest_finished_job_id(db, dataset_id: str) -> Optional[int]:
     return row[0] if row else None
 
 
+def _latest_finished_job_ids_per_moldb(db, dataset_id: str) -> List[int]:
+    """Latest FINISHED job per (dataset, moldb). A dataset annotated against
+    multiple molecular databases has one FINISHED job per moldb, so loading
+    only the most recent job would silently drop annotations from the others.
+    """
+    rows = db.select(
+        "SELECT DISTINCT ON (moldb_id) id FROM job "
+        "WHERE ds_id=%s AND status='FINISHED' "
+        "ORDER BY moldb_id, finish DESC NULLS LAST, id DESC",
+        params=(dataset_id,),
+    )
+    return [r[0] for r in rows]
+
+
 def _load_annotations(db, job_id: int):
     return db.select(
         "SELECT a.id, a.ion_id, a.fdr, a.adduct, j.moldb_id, a.iso_image_ids, "
@@ -181,13 +195,18 @@ def build_prep_block(
 
     for ds in datasets:
         ds_id = ds['dataset_id']
-        job_id = _latest_finished_job_id(db, ds_id)
-        if job_id is None:
+        # A dataset annotated against N molecular DBs has N FINISHED jobs (one
+        # per moldb); we need all of them so the frontend sees every DB the
+        # user expects to filter by.
+        job_ids = _latest_finished_job_ids_per_moldb(db, ds_id)
+        if not job_ids:
             logger.info(f'experiment_prep: no FINISHED job for dataset {ds_id}')
             continue
-        all_rows = _load_annotations(db, job_id)
+        all_rows = []
+        for jid in job_ids:
+            all_rows.extend(_load_annotations(db, jid))
         # Collect a per-ion snapshot BEFORE filtering so the frontend can
-        # recompute the chain client-side. Dedupicated by ion_id keeping first.
+        # recompute the chain client-side. Deduplicated by ion_id keeping first.
         for row in all_rows:
             ion_id = row[1]
             if ion_id is None or ion_id in all_ions_by_ion_id:

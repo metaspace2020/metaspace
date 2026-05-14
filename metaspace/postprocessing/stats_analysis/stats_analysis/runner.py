@@ -662,6 +662,12 @@ def run_experiment_stats(
 
     The returned dict deliberately omits ``intensity_rows`` so the engine
     callback handler does not rewrite the persisted S3 blob.
+
+    The reconstructed prep has no per-ion FDR/adduct/moldb metadata (the
+    intensity blob only carries ion_id/region_key/intensity), so the resulting
+    ``run_qc.allIons`` would be empty. We drop the key entirely; the engine
+    callback handler merges the new run_qc into the existing row, so the
+    previous ``allIons`` snapshot from the full-prep run is preserved.
     """
     blob_rows = _fetch_intensity_blob(payload['intensity_blob_s3_key'])
     prep = _reconstruct_prep_from_blob(
@@ -677,6 +683,9 @@ def run_experiment_stats(
     }
     result = run_experiment_prep(experiment_id, run_generation, inner)
     result.pop('intensity_rows', None)
+    run_qc = result.get('run_qc') or {}
+    if not run_qc.get('allIons'):
+        run_qc.pop('allIons', None)
     return result
 
 

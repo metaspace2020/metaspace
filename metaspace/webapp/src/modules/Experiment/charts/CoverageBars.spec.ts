@@ -29,7 +29,7 @@ describe('CoverageBars', () => {
     const echart = w.findComponent({ name: 'echarts' }) as any
     const option: any = echart.props('option')
     expect(option.yAxis.data).toEqual(['ds_001', 'ds_002', 'ds_003'])
-    expect(option.series[0].data).toEqual([0.8, 0.6, 0.25])
+    expect(option.series[0].data.map((d: any) => d.value)).toEqual([0.8, 0.6, 0.25])
   })
 
   it('disambiguates duplicate sampleIds with (R<index>) suffix', () => {
