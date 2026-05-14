@@ -10,7 +10,7 @@ import threading
 import bottle
 import requests
 
-from stats_analysis.pipeline import run_experiment_prep
+from stats_analysis.pipeline import run_experiment_prep, run_experiment_stats
 
 logger = logging.getLogger(__name__)
 
@@ -30,12 +30,12 @@ def _do_run_prep(experiment_id, run_generation, payload, callback_url, email):
             body['email'] = email
         resp = requests.post(callback_url, json=body, timeout=30)
         logger.info(
-            'Pipeline finished for experiment %s gen=%s; callback %s -> %s',
-            experiment_id, run_generation, callback_url, resp.status_code,
+            f'Pipeline finished for experiment {experiment_id} gen={run_generation}; '
+            f'callback {callback_url} -> {resp.status_code}'
         )
     except Exception as e:  # pylint: disable=broad-except
         logger.exception(
-            'Mock pipeline failed for experiment %s gen %s', experiment_id, run_generation
+            f'Mock pipeline failed for experiment {experiment_id} gen {run_generation}'
         )
         try:
             failure = {
@@ -49,9 +49,7 @@ def _do_run_prep(experiment_id, run_generation, payload, callback_url, email):
             requests.post(callback_url, json=failure, timeout=30)
         except Exception:  # pylint: disable=broad-except
             logger.exception(
-                'Callback POST failed for experiment %s gen %s',
-                experiment_id,
-                run_generation,
+                f'Callback POST failed for experiment {experiment_id} gen {run_generation}'
             )
 
 
@@ -72,11 +70,7 @@ def run_prep():
     callback_url = payload['callback_url']
     email = payload.get('email')
 
-    logger.info(
-        'Accepted stats_analysis run for experiment %s gen=%s',
-        experiment_id,
-        run_generation,
-    )
+    logger.info(f'Accepted stats_analysis run for experiment {experiment_id} gen={run_generation}')
 
     threading.Thread(
         target=_do_run_prep,
@@ -97,9 +91,6 @@ def health():
     return {'status': 'ok'}
 
 
-from stats_analysis.pipeline import run_experiment_stats  # noqa: E402
-
-
 def _do_stats_only(experiment_id, run_generation, payload, callback_url):
     try:
         result = run_experiment_stats(experiment_id, run_generation, payload)
@@ -111,24 +102,25 @@ def _do_stats_only(experiment_id, run_generation, payload, callback_url):
         }
         resp = requests.post(callback_url, json=body, timeout=30)
         logger.info(
-            'Stats-only finished for experiment %s gen=%s; callback %s -> %s',
-            experiment_id, run_generation, callback_url, resp.status_code,
+            f'Stats-only finished for experiment {experiment_id} gen={run_generation}; '
+            f'callback {callback_url} -> {resp.status_code}'
         )
     except Exception as e:  # pylint: disable=broad-except
-        logger.exception(
-            'Stats-only failed for experiment %s gen %s', experiment_id, run_generation,
-        )
+        logger.exception(f'Stats-only failed for experiment {experiment_id} gen {run_generation}')
         try:
-            requests.post(callback_url, json={
-                'experiment_id': experiment_id,
-                'run_generation': run_generation,
-                'status': 'FAILED',
-                'error': str(e),
-            }, timeout=30)
+            requests.post(
+                callback_url,
+                json={
+                    'experiment_id': experiment_id,
+                    'run_generation': run_generation,
+                    'status': 'FAILED',
+                    'error': str(e),
+                },
+                timeout=30,
+            )
         except Exception:  # pylint: disable=broad-except
             logger.exception(
-                'Callback POST failed for stats-only %s gen %s',
-                experiment_id, run_generation,
+                f'Callback POST failed for stats-only {experiment_id} gen {run_generation}'
             )
 
 
@@ -147,10 +139,7 @@ def run_stats():
     run_generation = payload['run_generation']
     callback_url = payload['callback_url']
 
-    logger.info(
-        'Accepted stats-only run for experiment %s gen=%s',
-        experiment_id, run_generation,
-    )
+    logger.info(f'Accepted stats-only run for experiment {experiment_id} gen={run_generation}')
     threading.Thread(
         target=_do_stats_only,
         args=(experiment_id, run_generation, payload, callback_url),

@@ -25,10 +25,16 @@ A/B derivation (option 2, per design2.csv): for each label group, collect
 its regions (where `region.labelGroupName == lg.name`) and split by
 `region.metadata.condition`.
 """
+# pylint: disable=invalid-name  # short loop/stats vars (r, p, q, rk, lg, md, s) are conventional
 from __future__ import annotations
 
+import gzip
+import json as _json  # alias to avoid colliding with any local 'json' var
 import math
+import os
 from collections import OrderedDict
+from io import BytesIO
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -62,9 +68,7 @@ def _matrix(
     return m
 
 
-def _regions_per_label_group(
-    samples_meta: List[Dict], label_group_name: str
-) -> List[Dict]:
+def _regions_per_label_group(samples_meta: List[Dict], label_group_name: str) -> List[Dict]:
     return [s for s in samples_meta if s.get('labelGroupName') == label_group_name]
 
 
@@ -86,7 +90,7 @@ def _bio_rep_sets(
     ]
 
 
-def _infer_test(
+def _infer_test(  # pylint: disable=too-many-return-statements
     groups: "OrderedDict[str, List[Dict]]",
     raw_regions: Optional[List[Dict]] = None,
 ) -> Tuple[str, List[str]]:
@@ -125,7 +129,7 @@ def _infer_test(
     return 'WILCOXON_UNPAIRED', warnings
 
 
-def _run_pair_test(
+def _run_pair_test(  # pylint: disable=too-many-return-statements
     test_kind: str, a_vals: np.ndarray, b_vals: np.ndarray
 ) -> Tuple[float, float]:
     """Return (statistic, p_value). NaN/NaN if degenerate."""
@@ -216,8 +220,7 @@ def _aggregate_regions_by_key(
         averaged: Dict[int, float] = {}
         for ion_id in all_ions:
             vals = [
-                float((intensities.get(r.get('regionKey')) or {}).get(ion_id, 0.0))
-                for r in group
+                float((intensities.get(r.get('regionKey')) or {}).get(ion_id, 0.0)) for r in group
             ]
             averaged[ion_id] = sum(vals) / len(vals)
         synth_key = f'{synth_prefix}::{idx}'
@@ -241,6 +244,7 @@ def _multi_region_aggregate(
     Returns:
         (new_regions, new_intensities, did_collapse).
     """
+
     def key(r: Dict):
         bio = r.get('biologicalReplicateId')
         cond = r.get('condition')
@@ -270,6 +274,7 @@ def _tech_rep_aggregate(
     Returns:
         (new_regions, new_intensities, did_collapse).
     """
+
     def key(r: Dict):
         tech = r.get('technicalReplicateId')
         if not tech:
@@ -288,7 +293,7 @@ def _tech_rep_aggregate(
     return new_r, new_i, True
 
 
-def _per_label_group_results(
+def _per_label_group_results(  # pylint: disable=too-many-locals
     label_group_name: str,
     test_kind: str,
     groups: "OrderedDict[str, List[Dict]]",
@@ -353,16 +358,18 @@ def _per_label_group_results(
             _, p = _run_pair_test(test_kind, a_vals, b_vals)
 
         per_ion_p.append(p)
-        per_ion_rows.append({
-            'ion_id': ion_id,
-            'label_group_name': label_group_name,
-            'lfc': lfc,
-            'p_value': None if math.isnan(p) else p,
-            'detection_rate_a': float((a_vals > 0).mean()) if a_vals.size else 0.0,
-            'detection_rate_b': float((b_vals > 0).mean()) if b_vals.size else 0.0,
-            'n_a': len(a_regions),
-            'n_b': len(b_regions),
-        })
+        per_ion_rows.append(
+            {
+                'ion_id': ion_id,
+                'label_group_name': label_group_name,
+                'lfc': lfc,
+                'p_value': None if math.isnan(p) else p,
+                'detection_rate_a': float((a_vals > 0).mean()) if a_vals.size else 0.0,
+                'detection_rate_b': float((b_vals > 0).mean()) if b_vals.size else 0.0,
+                'n_a': len(a_regions),
+                'n_b': len(b_regions),
+            }
+        )
 
     fdrs = benjamini_hochberg(per_ion_p)
     for row, q in zip(per_ion_rows, fdrs):
@@ -382,7 +389,9 @@ def _summarise_inferred_test(per_lg: List[str]) -> str:
     return 'MIXED:' + ','.join(unique)
 
 
-def run_experiment_prep(experiment_id: str, run_generation: int, payload: Dict) -> Dict[str, Any]:
+def run_experiment_prep(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements,unused-argument
+    experiment_id: str, run_generation: int, payload: Dict
+) -> Dict[str, Any]:
     """Execute the real stats pipeline against an engine-built prep block."""
     prep = payload.get('prep') or {}
     intensities: Dict[str, Dict[int, float]] = prep.get('intensities') or {}
@@ -394,22 +403,31 @@ def run_experiment_prep(experiment_id: str, run_generation: int, payload: Dict) 
     ions = _ion_table(intensities)
 
     # PREP filtered by fdr/moldb/adduct and recorded counts; append +detection here.
-    chain = list(prep.get('filterChain') or [
-        {'name': 'All annotated ions', 'count': len(ions), 'droppedFromPrev': 0},
-    ])
+    chain = list(
+        prep.get('filterChain')
+        or [
+            {'name': 'All annotated ions', 'count': len(ions), 'droppedFromPrev': 0},
+        ]
+    )
     min_detect = filters.get('min_detection')
     if min_detect is not None and region_keys:
         before = len(ions)
         surviving_ids = [
-            ion_id for ion_id in ions
-            if (sum(1 for rk in region_keys if intensities.get(rk, {}).get(ion_id, 0.0) > 0)
-                / max(1, len(region_keys))) >= min_detect
+            ion_id
+            for ion_id in ions
+            if (
+                sum(1 for rk in region_keys if intensities.get(rk, {}).get(ion_id, 0.0) > 0)
+                / max(1, len(region_keys))
+            )
+            >= min_detect
         ]
-        chain.append({
-            'name': f'+detection >= {min_detect}',
-            'count': len(surviving_ids),
-            'droppedFromPrev': before - len(surviving_ids),
-        })
+        chain.append(
+            {
+                'name': f'+detection >= {min_detect}',
+                'count': len(surviving_ids),
+                'droppedFromPrev': before - len(surviving_ids),
+            }
+        )
     else:
         surviving_ids = ions
 
@@ -421,19 +439,21 @@ def run_experiment_prep(experiment_id: str, run_generation: int, payload: Dict) 
     samples_out = []
     for idx, s in enumerate(samples_meta):
         rk = s.get('regionKey') or s.get('sampleId')
-        samples_out.append({
-            'regionKey': rk,
-            'sampleId': s.get('sampleId'),
-            'datasetId': s.get('datasetId'),
-            'labelGroupName': s.get('labelGroupName'),
-            'condition': s.get('condition') or '',
-            'biologicalReplicateId': s.get('biologicalReplicateId'),
-            'tic': float(s.get('tic', 0.0)),
-            'detectionRate': qc_basic.get(rk, {}).get('detectionRate', 0.0),
-            'cv': qc_basic.get(rk, {}).get('cv', 0.0),
-            'pcaPC1': float(pca_coords[idx, 0]) if matrix.size else 0.0,
-            'pcaPC2': float(pca_coords[idx, 1]) if matrix.size else 0.0,
-        })
+        samples_out.append(
+            {
+                'regionKey': rk,
+                'sampleId': s.get('sampleId'),
+                'datasetId': s.get('datasetId'),
+                'labelGroupName': s.get('labelGroupName'),
+                'condition': s.get('condition') or '',
+                'biologicalReplicateId': s.get('biologicalReplicateId'),
+                'tic': float(s.get('tic', 0.0)),
+                'detectionRate': qc_basic.get(rk, {}).get('detectionRate', 0.0),
+                'cv': qc_basic.get(rk, {}).get('cv', 0.0),
+                'pcaPC1': float(pca_coords[idx, 0]) if matrix.size else 0.0,
+                'pcaPC2': float(pca_coords[idx, 1]) if matrix.size else 0.0,
+            }
+        )
 
     coverage = {
         rk: {
@@ -449,11 +469,13 @@ def run_experiment_prep(experiment_id: str, run_generation: int, payload: Dict) 
             val = float(intensities.get(rk, {}).get(ion_id, 0.0))
             if val == 0.0:
                 continue
-            intensity_rows.append({
-                'ion_id': ion_id,
-                'region_key': rk,
-                'intensity': val,
-            })
+            intensity_rows.append(
+                {
+                    'ion_id': ion_id,
+                    'region_key': rk,
+                    'intensity': val,
+                }
+            )
 
     results: List[Dict] = []
     per_lg_tests: List[str] = []
@@ -470,10 +492,12 @@ def run_experiment_prep(experiment_id: str, run_generation: int, payload: Dict) 
         # Order: multi-region pre-aggregation -> tech-rep averaging -> infer test.
         local_intensities: Dict[str, Dict[int, float]] = dict(intensities)
         agg_regions, local_intensities, did_multi = _multi_region_aggregate(
-            lg_regions, local_intensities,
+            lg_regions,
+            local_intensities,
         )
         agg_regions, local_intensities, _ = _tech_rep_aggregate(
-            agg_regions, local_intensities,
+            agg_regions,
+            local_intensities,
         )
 
         groups = _split_by_condition(agg_regions)
@@ -484,9 +508,15 @@ def run_experiment_prep(experiment_id: str, run_generation: int, payload: Dict) 
         warnings_per_lg[lg_name] = lg_warnings
         flat_warnings.extend(lg_warnings)
 
-        results.extend(_per_label_group_results(
-            lg_name, test_kind, groups, local_intensities, surviving_ids,
-        ))
+        results.extend(
+            _per_label_group_results(
+                lg_name,
+                test_kind,
+                groups,
+                local_intensities,
+                surviving_ids,
+            )
+        )
 
     # Experiment-wide fallback: when no label group yielded a usable test (e.g.
     # the user used label groups as a replicate-cluster axis instead of a
@@ -503,10 +533,12 @@ def run_experiment_prep(experiment_id: str, run_generation: int, payload: Dict) 
         if len(pooled_conditions) >= 2:
             local_intensities = dict(intensities)
             agg_regions, local_intensities, did_multi = _multi_region_aggregate(
-                pooled, local_intensities,
+                pooled,
+                local_intensities,
             )
             agg_regions, local_intensities, _ = _tech_rep_aggregate(
-                agg_regions, local_intensities,
+                agg_regions,
+                local_intensities,
             )
             groups = _split_by_condition(agg_regions)
             test_kind, fb_warnings = _infer_test(groups, raw_regions=pooled)
@@ -517,7 +549,11 @@ def run_experiment_prep(experiment_id: str, run_generation: int, payload: Dict) 
             warnings_per_lg['__experiment__'] = fb_warnings
             flat_warnings.extend(fb_warnings)
             results = _per_label_group_results(
-                '__experiment__', test_kind, groups, local_intensities, surviving_ids,
+                '__experiment__',
+                test_kind,
+                groups,
+                local_intensities,
+                surviving_ids,
             )
 
     per_lg_map = dict(zip([lg['name'] for lg in label_groups], per_lg_tests))
@@ -542,16 +578,11 @@ def run_experiment_prep(experiment_id: str, run_generation: int, payload: Dict) 
     }
 
 
-import gzip
-import json as _json  # alias to avoid colliding with any local 'json' var
-from io import BytesIO
-
-
 def _load_postprocessing_config() -> Dict[str, Any]:
     """Read the shared postprocessing config (mirrors image_segmentation.loader)."""
-    import os
-    from pathlib import Path
+    # pylint: disable=import-outside-toplevel,import-error
     from postprocessing_shared import load_config
+
     # stats_analysis/stats_analysis/runner.py -> postprocessing/conf/config.json
     default_path = Path(__file__).resolve().parents[2] / 'conf' / 'config.json'
     path = os.environ.get('POSTPROCESSING_CONFIG') or default_path
@@ -562,7 +593,8 @@ def _build_s3_client(cfg: Dict[str, Any]):
     """Build an S3 client from the postprocessing config (aws creds in prod,
     storage.endpoint_url + access keys for the local MinIO dev stack).
     Mirrors :func:`image_segmentation.loader._get_s3_client`."""
-    import boto3
+    import boto3  # pylint: disable=import-outside-toplevel
+
     boto_config = boto3.session.Config(signature_version='s3v4')
     if 'aws' in cfg:
         aws = cfg['aws']
@@ -626,17 +658,19 @@ def _reconstruct_prep_from_blob(
                 continue
             region_key = region.get('regionKey')
             keep_region_keys.add(region_key)
-            samples.append({
-                'regionKey': region_key,
-                'sampleId': md.get('sampleId'),
-                'datasetId': ds.get('dataset_id'),
-                'labelGroupName': region.get('labelGroupName'),
-                'condition': md.get('condition') or '',
-                'biologicalReplicateId': md.get('biologicalReplicateId'),
-                'technicalReplicateId': md.get('technicalReplicateId'),
-                'batchId': md.get('batchId'),
-                'tic': 0.0,
-            })
+            samples.append(
+                {
+                    'regionKey': region_key,
+                    'sampleId': md.get('sampleId'),
+                    'datasetId': ds.get('dataset_id'),
+                    'labelGroupName': region.get('labelGroupName'),
+                    'condition': md.get('condition') or '',
+                    'biologicalReplicateId': md.get('biologicalReplicateId'),
+                    'technicalReplicateId': md.get('technicalReplicateId'),
+                    'batchId': md.get('batchId'),
+                    'tic': 0.0,
+                }
+            )
 
     intensities: Dict[str, Dict[int, float]] = {}
     for row in blob_rows:
@@ -656,7 +690,9 @@ def _reconstruct_prep_from_blob(
 
 
 def run_experiment_stats(
-    experiment_id: str, run_generation: int, payload: Dict,
+    experiment_id: str,
+    run_generation: int,
+    payload: Dict,
 ) -> Dict[str, Any]:
     """Stats-only entry: fetch blob, reconstruct prep, run stats, strip intensity_rows.
 
@@ -707,12 +743,14 @@ def _build_all_ions(
         detected = sum(
             1 for rk in region_keys if (intensities.get(rk) or {}).get(ion_id, 0.0) > 0.0
         )
-        out.append({
-            'ion_id': ion_id,
-            'fdr': entry.get('fdr'),
-            'adduct': entry.get('adduct'),
-            'moldb_id': entry.get('moldb_id'),
-            'moldb_name': entry.get('moldb_name'),
-            'detection_rate': detected / n_regions,
-        })
+        out.append(
+            {
+                'ion_id': ion_id,
+                'fdr': entry.get('fdr'),
+                'adduct': entry.get('adduct'),
+                'moldb_id': entry.get('moldb_id'),
+                'moldb_name': entry.get('moldb_name'),
+                'detection_rate': detected / n_regions,
+            }
+        )
     return out

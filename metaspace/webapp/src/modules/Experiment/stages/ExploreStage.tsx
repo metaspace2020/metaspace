@@ -459,7 +459,7 @@ export default defineComponent({
                 </ElButton>
               </div>
 
-              <div class="filter-section">
+              {/* <div class="filter-section">
                 <div class="filter-section-header">
                   <span class="filter-label">Min detection rate</span>
                   <span class="filter-value">{detectionPct.value > 0 ? `≥ ${detectionPct.value}%` : '—'}</span>
@@ -473,7 +473,7 @@ export default defineComponent({
                   showTooltip={false}
                   data-test-key="filter-min-detection"
                 />
-              </div>
+              </div> */}
 
               <div class="filter-section">
                 <div class="filter-label mb-2">Annotation database</div>

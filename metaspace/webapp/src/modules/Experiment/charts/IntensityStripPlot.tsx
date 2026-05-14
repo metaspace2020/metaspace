@@ -60,24 +60,33 @@ export default defineComponent({
 
     const showSignificance = computed(() => props.fdr != null && props.fdr < 0.05 && conditions.value.length === 2)
 
+    // Mockup palette: first condition purple ("treated"), second teal ("control").
+    const PALETTE = ['#7C5CC7', '#5CA98F', '#909399']
+
     const option = computed(() => {
-      const series = conditions.value.map((cond) => ({
-        name: cond,
-        type: 'scatter',
-        symbolSize: 10,
-        data: data.value
-          .filter((r) => r.condition === cond)
-          .map((r) => ({
-            value: [cond, r.intensity],
-            sampleId: r.sampleId,
-            regionKey: r.regionKey,
-          })),
-        markLine: {
-          symbol: 'none',
-          lineStyle: { type: 'dashed', color: '#666' },
-          data: [{ type: 'average', name: 'mean' }],
-        },
-      }))
+      const series = conditions.value.map((cond, i) => {
+        const color = PALETTE[i % PALETTE.length]
+        const condCount = data.value.filter((r) => r.condition === cond).length
+        return {
+          name: `${cond} (n=${condCount})`,
+          type: 'scatter',
+          symbolSize: 12,
+          itemStyle: { color, opacity: 0.9 },
+          data: data.value
+            .filter((r) => r.condition === cond)
+            .map((r) => ({
+              value: [cond, r.intensity],
+              sampleId: r.sampleId,
+              regionKey: r.regionKey,
+            })),
+          markLine: {
+            symbol: 'none',
+            lineStyle: { color, width: 2 },
+            label: { show: false },
+            data: [{ type: 'average' }],
+          },
+        }
+      })
 
       const yMax = data.value.length ? Math.max(...data.value.map((r) => r.intensity)) : 1
       const bracketY = yMax * 1.12
@@ -106,15 +115,43 @@ export default defineComponent({
           : []
 
       return {
-        title: { text: 'Per-region intensity', textStyle: { fontSize: 13 } },
         tooltip: {
           trigger: 'item',
-          formatter: (p: any) => `${p.data.sampleId} / ${p.data.regionKey}<br/>${p.data.value[1]}`,
+          formatter: (p: any) =>
+            `${p.data?.sampleId ?? ''} / ${p.data?.regionKey ?? ''}<br/>${p.data?.value?.[1] ?? ''}`,
         },
-        legend: { top: 24 },
-        grid: { left: 56, right: 16, top: 64, bottom: 40 },
-        xAxis: { type: 'category', data: conditions.value },
-        yAxis: { type: 'value', name: 'intensity' },
+        legend: {
+          top: 4,
+          left: 8,
+          textStyle: { fontSize: 11, color: '#606266' },
+          itemWidth: 12,
+          itemHeight: 12,
+          icon: 'rect',
+        },
+        grid: { left: 56, right: 24, top: 40, bottom: 56 },
+        xAxis: {
+          type: 'category',
+          data: conditions.value,
+          axisLine: { lineStyle: { color: '#dcdfe6' } },
+          axisLabel: {
+            fontSize: 12,
+            fontWeight: 500,
+            color: (val: string) => {
+              const idx = conditions.value.indexOf(val)
+              return PALETTE[idx % PALETTE.length] ?? '#606266'
+            },
+          },
+        },
+        yAxis: {
+          type: 'value',
+          name: 'INTENSITY (NORM.)',
+          nameLocation: 'end',
+          nameGap: 12,
+          nameTextStyle: { color: '#909399', fontSize: 10, align: 'left' },
+          axisLine: { show: false },
+          axisLabel: { color: '#606266', fontSize: 10 },
+          splitLine: { lineStyle: { type: 'dashed', color: '#ebeef5' } },
+        },
         series: [...series, ...sigSeries],
       }
     })
@@ -122,27 +159,28 @@ export default defineComponent({
     return () => {
       if (props.ionId == null) {
         return (
-          <div class="text-sm text-gray-400 p-4" data-test-key="strip-empty">
-            Select a row to view per-region intensities.
+          <div class="strip-plot-wrapper" data-test-key="strip-plot">
+            <div class="text-sm text-gray-400 p-4" data-test-key="strip-empty">
+              Select a row to view per-region intensities.
+            </div>
           </div>
         )
       }
-      if (loading.value && data.value.length === 0) {
-        return (
-          <div class="text-sm text-gray-400 p-4" data-test-key="strip-loading">
-            Loading intensities…
-          </div>
-        )
-      }
-      if (error.value) {
+      // Defensive: some callers (page-level tests) mock useQuery without
+      // an `error` ref. Treat the absence the same as no error.
+      const err = error?.value
+      if (err) {
         return (
           <div class="text-sm text-red-500 p-4" data-test-key="strip-error">
-            {error.value.message}
+            {err.message}
           </div>
         )
       }
+      // Keep ECharts mounted across ionId changes / refetches; the v-loading
+      // overlay conveys the in-flight state without replacing the canvas with
+      // a "Loading…" string (which caused visible flicker on row clicks).
       return (
-        <div data-test-key="strip-plot">
+        <div class="strip-plot-wrapper" data-test-key="strip-plot" v-loading={loading?.value ?? false}>
           <ECharts option={option.value} autoresize style="width: 100%; height: 320px" />
           {showSignificance.value && (
             <div class="hidden" data-test-key="strip-significance">

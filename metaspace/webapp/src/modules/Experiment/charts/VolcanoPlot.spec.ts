@@ -29,7 +29,8 @@ describe('VolcanoPlot', () => {
     const w = mount(VolcanoPlot, { props: { rows } })
     const echart = w.findComponent({ name: 'echarts' }) as any
     const option: any = echart.props('option')
-    expect(option.series[0].data).toHaveLength(2)
+    const total = option.series.reduce((acc: number, s: any) => acc + s.data.length, 0)
+    expect(total).toBe(2)
     expect(w.find('[data-test-key="volcano-null-caption"]').text()).toContain('1')
   })
 

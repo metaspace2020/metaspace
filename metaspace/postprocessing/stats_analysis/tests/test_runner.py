@@ -14,16 +14,22 @@ def _ions(base: float) -> dict:
 
 def _region(rk, sid, cond, *, bio=None, tech=None, ds='ds-1', base=1.0, lg='auto_1'):
     return {
-        'regionKey': rk, 'sampleId': sid, 'datasetId': ds, 'labelGroupName': lg,
-        'condition': cond, 'biologicalReplicateId': bio,
-        'technicalReplicateId': tech, 'intensities': _ions(base),
+        'regionKey': rk,
+        'sampleId': sid,
+        'datasetId': ds,
+        'labelGroupName': lg,
+        'condition': cond,
+        'biologicalReplicateId': bio,
+        'technicalReplicateId': tech,
+        'intensities': _ions(base),
     }
 
 
 def _assert_results_have_pvalue(out):
     assert out['results'], 'expected at least one result row'
-    assert any(r['p_value'] is not None for r in out['results']), \
-        f"all p-values null for test_kind={out['inferred_test']}"
+    assert any(
+        r['p_value'] is not None for r in out['results']
+    ), f"all p-values null for test_kind={out['inferred_test']}"
 
 
 def test_run_experiment_returns_full_run_qc_shape():
@@ -36,8 +42,14 @@ def test_run_experiment_returns_full_run_qc_shape():
     assert region_keys == {'r-ctrl-1', 'r-ctrl-2', 'r-tum-1', 'r-tum-2'}
     for s in qc['samples']:
         assert set(s.keys()) >= {
-            'regionKey', 'sampleId', 'condition', 'tic',
-            'detectionRate', 'cv', 'pcaPC1', 'pcaPC2',
+            'regionKey',
+            'sampleId',
+            'condition',
+            'tic',
+            'detectionRate',
+            'cv',
+            'pcaPC1',
+            'pcaPC2',
         }
     assert {'pc1', 'pc2'} == set(qc['pcaVariance'].keys())
     assert qc['filterChain'][0]['name'] == 'All annotated ions'
@@ -50,8 +62,15 @@ def test_run_experiment_returns_full_run_qc_shape():
     assert len(out['results']) == 3
     row = out['results'][0]
     assert set(row.keys()) >= {
-        'ion_id', 'label_group_name', 'lfc', 'p_value', 'fdr',
-        'detection_rate_a', 'detection_rate_b', 'n_a', 'n_b',
+        'ion_id',
+        'label_group_name',
+        'lfc',
+        'p_value',
+        'fdr',
+        'detection_rate_a',
+        'detection_rate_b',
+        'n_a',
+        'n_b',
     }
     assert row['n_a'] == 2 and row['n_b'] == 2
     # With clear separation between control and tumor on ion 1, p should be small.
@@ -62,10 +81,12 @@ def test_run_experiment_returns_full_run_qc_shape():
 
 def test_run_experiment_skips_label_group_with_single_condition():
     # Only one condition exists across the entire experiment -> no fallback either.
-    payload = build_payload([
-        _region('r-1', 's1', 'control', bio='m1', base=10.0),
-        _region('r-2', 's2', 'control', bio='m2', base=12.0),
-    ])
+    payload = build_payload(
+        [
+            _region('r-1', 's1', 'control', bio='m1', base=10.0),
+            _region('r-2', 's2', 'control', bio='m2', base=12.0),
+        ]
+    )
     out = run_experiment_prep('exp-1', 1, payload)
     assert out['run_qc']['inferredTestPerLabelGroup'] == {'auto_1': 'NOT_ENOUGH_DATA'}
     assert all(
@@ -79,12 +100,14 @@ def test_run_experiment_falls_back_to_experiment_wide_when_lgs_are_single_condit
     # User's control/innoculated layout: two label groups, each carrying a single
     # condition. Per-LG inference is NOT_ENOUGH_DATA but the experiment as a
     # whole has 2 conditions -> pool and run WILCOXON_UNPAIRED.
-    payload = build_payload([
-        _region('r-1', 's1', 'control', bio='m1', base=1.0, lg='control'),
-        _region('r-2', 's2', 'control', bio='m2', base=1.2, lg='control'),
-        _region('r-3', 's3', 'nash', bio='m3', base=10.0, lg='innoculated'),
-        _region('r-4', 's4', 'nash', bio='m4', base=11.0, lg='innoculated'),
-    ])
+    payload = build_payload(
+        [
+            _region('r-1', 's1', 'control', bio='m1', base=1.0, lg='control'),
+            _region('r-2', 's2', 'control', bio='m2', base=1.2, lg='control'),
+            _region('r-3', 's3', 'nash', bio='m3', base=10.0, lg='innoculated'),
+            _region('r-4', 's4', 'nash', bio='m4', base=11.0, lg='innoculated'),
+        ]
+    )
     payload['label_groups'] = [
         {'name': 'control', 'color': '#000'},
         {'name': 'innoculated', 'color': '#111'},
@@ -157,8 +180,10 @@ def test_run_experiment_picks_paired_when_bio_reps_match():
     payload = make_payload()
     # Make bio-reps repeat across conditions: mouse_1 control + mouse_1 tumor, etc.
     bio_map = {
-        'r-ctrl-1': 'mouse_1', 'r-ctrl-2': 'mouse_2',
-        'r-tum-1':  'mouse_1', 'r-tum-2':  'mouse_2',
+        'r-ctrl-1': 'mouse_1',
+        'r-ctrl-2': 'mouse_2',
+        'r-tum-1': 'mouse_1',
+        'r-tum-2': 'mouse_2',
     }
     for s in payload['prep']['samples']:
         s['biologicalReplicateId'] = bio_map[s['regionKey']]
@@ -174,8 +199,7 @@ def test_run_experiment_picks_paired_when_bio_reps_match():
 
 def test_scenario_1_two_conditions_one_region_per_sample():
     samples = [
-        _region(f'r-c-{i}', f's-c-{i}', 'control', bio=f'm{i}', base=10.0 + i)
-        for i in range(1, 4)
+        _region(f'r-c-{i}', f's-c-{i}', 'control', bio=f'm{i}', base=10.0 + i) for i in range(1, 4)
     ] + [
         _region(f'r-t-{i}', f's-t-{i}', 'tumor', bio=f'm{10 + i}', base=100.0 + i)
         for i in range(1, 4)
@@ -190,8 +214,9 @@ def test_scenario_2_three_conditions_kruskal():
     samples = []
     for cond, base in [('A', 10.0), ('B', 50.0), ('C', 100.0)]:
         for i in range(1, 4):
-            samples.append(_region(f'r-{cond}-{i}', f's-{cond}-{i}', cond,
-                                   bio=f'{cond}m{i}', base=base + i))
+            samples.append(
+                _region(f'r-{cond}-{i}', f's-{cond}-{i}', cond, bio=f'{cond}m{i}', base=base + i)
+            )
     out = run_experiment_prep('e', 1, build_payload(samples))
     assert out['inferred_test'] == 'KRUSKAL_WALLIS'
     _assert_results_have_pvalue(out)
@@ -215,10 +240,8 @@ def test_scenario_3_unbalanced_n():
 def test_scenario_4_fully_paired():
     samples = []
     for i in range(1, 5):
-        samples.append(_region(f'r-c-{i}', f'sc{i}', 'control',
-                               bio=f'm{i}', base=10.0 + i))
-        samples.append(_region(f'r-t-{i}', f'st{i}', 'tumor',
-                               bio=f'm{i}', base=50.0 + i))
+        samples.append(_region(f'r-c-{i}', f'sc{i}', 'control', bio=f'm{i}', base=10.0 + i))
+        samples.append(_region(f'r-t-{i}', f'st{i}', 'tumor', bio=f'm{i}', base=50.0 + i))
     out = run_experiment_prep('e', 1, build_payload(samples))
     assert out['inferred_test'] == 'WILCOXON_PAIRED'
     _assert_results_have_pvalue(out)
@@ -245,8 +268,9 @@ def test_scenario_6_friedman_longitudinal():
     samples = []
     for cond, base in [('t0', 10.0), ('t1', 30.0), ('t2', 60.0)]:
         for i in range(1, 5):
-            samples.append(_region(f'r-{cond}-{i}', f's-{cond}-{i}', cond,
-                                   bio=f'm{i}', base=base + i * 0.5))
+            samples.append(
+                _region(f'r-{cond}-{i}', f's-{cond}-{i}', cond, bio=f'm{i}', base=base + i * 0.5)
+            )
     out = run_experiment_prep('e', 1, build_payload(samples))
     assert out['inferred_test'] == 'FRIEDMAN'
     _assert_results_have_pvalue(out)
@@ -257,10 +281,16 @@ def test_scenario_7_multi_region_within_one_dataset():
     samples = []
     for i in range(1, 4):
         for ridx in (1, 2):
-            samples.append(_region(f'r-c-{i}-{ridx}', f's-c-{i}-{ridx}',
-                                   'control', bio=f'm{i}', base=10.0 + ridx))
-            samples.append(_region(f'r-t-{i}-{ridx}', f's-t-{i}-{ridx}',
-                                   'tumor', bio=f'm{i}', base=80.0 + ridx))
+            samples.append(
+                _region(
+                    f'r-c-{i}-{ridx}', f's-c-{i}-{ridx}', 'control', bio=f'm{i}', base=10.0 + ridx
+                )
+            )
+            samples.append(
+                _region(
+                    f'r-t-{i}-{ridx}', f's-t-{i}-{ridx}', 'tumor', bio=f'm{i}', base=80.0 + ridx
+                )
+            )
     out = run_experiment_prep('e', 1, build_payload(samples))
     assert 'MULTI_REGION_AGGREGATED' in out['run_qc']['warnings']
     # After aggregation the bio_reps overlap fully across conditions -> paired.
@@ -272,14 +302,18 @@ def test_scenario_8_multi_region_cross_dataset():
     samples = []
     for i in range(1, 4):
         # Same bio_rep contributes from two datasets in the same condition.
-        samples.append(_region(f'r-c-{i}-a', f's-c-{i}a', 'control',
-                               bio=f'm{i}', ds='ds-A', base=10.0 + i))
-        samples.append(_region(f'r-c-{i}-b', f's-c-{i}b', 'control',
-                               bio=f'm{i}', ds='ds-B', base=12.0 + i))
-        samples.append(_region(f'r-t-{i}-a', f's-t-{i}a', 'tumor',
-                               bio=f'm{i}', ds='ds-A', base=80.0 + i))
-        samples.append(_region(f'r-t-{i}-b', f's-t-{i}b', 'tumor',
-                               bio=f'm{i}', ds='ds-B', base=82.0 + i))
+        samples.append(
+            _region(f'r-c-{i}-a', f's-c-{i}a', 'control', bio=f'm{i}', ds='ds-A', base=10.0 + i)
+        )
+        samples.append(
+            _region(f'r-c-{i}-b', f's-c-{i}b', 'control', bio=f'm{i}', ds='ds-B', base=12.0 + i)
+        )
+        samples.append(
+            _region(f'r-t-{i}-a', f's-t-{i}a', 'tumor', bio=f'm{i}', ds='ds-A', base=80.0 + i)
+        )
+        samples.append(
+            _region(f'r-t-{i}-b', f's-t-{i}b', 'tumor', bio=f'm{i}', ds='ds-B', base=82.0 + i)
+        )
     out = run_experiment_prep('e', 1, build_payload(samples))
     assert 'MULTI_REGION_AGGREGATED' in out['run_qc']['warnings']
     assert out['inferred_test'] == 'WILCOXON_PAIRED'
@@ -306,17 +340,35 @@ def test_scenario_10_different_region_labels_per_condition():
     # Two label groups, each with its own arrangement.
     samples = []
     for cond, base, lg, bio_prefix in [
-        ('control', 10.0, 'auto_1', 'lg1c'), ('tumor', 80.0, 'auto_1', 'lg1t'),
+        ('control', 10.0, 'auto_1', 'lg1c'),
+        ('tumor', 80.0, 'auto_1', 'lg1t'),
     ]:
         for i in range(1, 4):
-            samples.append(_region(f'r-1-{cond}-{i}', f's-1-{cond}-{i}', cond,
-                                   bio=f'{bio_prefix}{i}', base=base + i, lg=lg))
+            samples.append(
+                _region(
+                    f'r-1-{cond}-{i}',
+                    f's-1-{cond}-{i}',
+                    cond,
+                    bio=f'{bio_prefix}{i}',
+                    base=base + i,
+                    lg=lg,
+                )
+            )
     for cond, base, lg, bio_prefix in [
-        ('control', 5.0, 'auto_2', 'lg2c'), ('tumor', 40.0, 'auto_2', 'lg2t'),
+        ('control', 5.0, 'auto_2', 'lg2c'),
+        ('tumor', 40.0, 'auto_2', 'lg2t'),
     ]:
         for i in range(1, 4):
-            samples.append(_region(f'r-2-{cond}-{i}', f's-2-{cond}-{i}', cond,
-                                   bio=f'{bio_prefix}{i}', base=base + i, lg=lg))
+            samples.append(
+                _region(
+                    f'r-2-{cond}-{i}',
+                    f's-2-{cond}-{i}',
+                    cond,
+                    bio=f'{bio_prefix}{i}',
+                    base=base + i,
+                    lg=lg,
+                )
+            )
     payload = build_payload(samples)
     payload['label_groups'] = [
         {'name': 'auto_1', 'color': '#1'},
@@ -333,12 +385,15 @@ def test_scenario_11_tech_reps_one_condition():
     # 3 bio reps in each condition; control has 2 tech reps each (sampleId reused).
     samples = []
     for i in range(1, 4):
-        samples.append(_region(f'r-c-{i}-a', f'sc{i}', 'control',
-                               bio=f'm{i}', tech=f't{i}a', base=10.0 + i))
-        samples.append(_region(f'r-c-{i}-b', f'sc{i}', 'control',
-                               bio=f'm{i}', tech=f't{i}b', base=11.0 + i))
-        samples.append(_region(f'r-t-{i}', f'st{i}', 'tumor',
-                               bio=f'm{10 + i}', tech=f'tt{i}', base=80.0 + i))
+        samples.append(
+            _region(f'r-c-{i}-a', f'sc{i}', 'control', bio=f'm{i}', tech=f't{i}a', base=10.0 + i)
+        )
+        samples.append(
+            _region(f'r-c-{i}-b', f'sc{i}', 'control', bio=f'm{i}', tech=f't{i}b', base=11.0 + i)
+        )
+        samples.append(
+            _region(f'r-t-{i}', f'st{i}', 'tumor', bio=f'm{10 + i}', tech=f'tt{i}', base=80.0 + i)
+        )
     out = run_experiment_prep('e', 1, build_payload(samples))
     # Tech-reps fully populated so no PARTIAL warning expected.
     assert 'TECH_REPS_PARTIAL' not in out['run_qc']['warnings']
@@ -351,10 +406,14 @@ def test_scenario_12_tech_reps_across_conditions():
     for cond, base in [('control', 10.0), ('tumor', 80.0)]:
         for i in range(1, 4):
             sid = f's-{cond}-{i}'
-            samples.append(_region(f'r-{cond}-{i}-a', sid, cond,
-                                   bio=f'{cond}m{i}', tech='a', base=base + i))
-            samples.append(_region(f'r-{cond}-{i}-b', sid, cond,
-                                   bio=f'{cond}m{i}', tech='b', base=base + i + 0.5))
+            samples.append(
+                _region(f'r-{cond}-{i}-a', sid, cond, bio=f'{cond}m{i}', tech='a', base=base + i)
+            )
+            samples.append(
+                _region(
+                    f'r-{cond}-{i}-b', sid, cond, bio=f'{cond}m{i}', tech='b', base=base + i + 0.5
+                )
+            )
     out = run_experiment_prep('e', 1, build_payload(samples))
     assert 'TECH_REPS_PARTIAL' not in out['run_qc']['warnings']
     assert out['inferred_test'] == 'WILCOXON_UNPAIRED'
@@ -366,13 +425,10 @@ def test_scenario_13_tech_reps_partial():
     samples = []
     for i in range(1, 4):
         sid = f's-c-{i}'
-        samples.append(_region(f'r-c-{i}-a', sid, 'control',
-                               bio=f'cm{i}', tech='a', base=10.0 + i))
-        samples.append(_region(f'r-c-{i}-b', sid, 'control',
-                               bio=f'cm{i}', tech='b', base=11.0 + i))
+        samples.append(_region(f'r-c-{i}-a', sid, 'control', bio=f'cm{i}', tech='a', base=10.0 + i))
+        samples.append(_region(f'r-c-{i}-b', sid, 'control', bio=f'cm{i}', tech='b', base=11.0 + i))
     for i in range(1, 4):
-        samples.append(_region(f'r-t-{i}', f's-t-{i}', 'tumor',
-                               bio=f'tm{i}', base=80.0 + i))
+        samples.append(_region(f'r-t-{i}', f's-t-{i}', 'tumor', bio=f'tm{i}', base=80.0 + i))
     out = run_experiment_prep('e', 1, build_payload(samples))
     assert 'TECH_REPS_PARTIAL' in out['run_qc']['warnings']
     _assert_results_have_pvalue(out)

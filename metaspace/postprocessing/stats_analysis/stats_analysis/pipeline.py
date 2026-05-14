@@ -14,6 +14,8 @@ def run_experiment_prep(experiment_id: str, run_generation: int, payload: Dict) 
 
 
 def run_experiment_stats(
-    experiment_id: str, run_generation: int, payload: Dict,
+    experiment_id: str,
+    run_generation: int,
+    payload: Dict,
 ) -> Dict:
     return _run_stats(experiment_id, run_generation, payload)

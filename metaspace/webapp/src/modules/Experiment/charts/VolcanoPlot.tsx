@@ -11,7 +11,7 @@ use([CanvasRenderer, ScatterChart, GridComponent, TooltipComponent, LegendCompon
  * One row in the experiment results table.
  */
 export interface ResultRow {
-  ion: { id: number; ion: string }
+  ion: { id: number; ion: string; formula?: string; adduct?: string }
   lfc: number
   pValue: number | null
   fdr: number | null
@@ -19,11 +19,17 @@ export interface ResultRow {
 
 const NEG_LOG10 = (p: number): number => -Math.log10(p)
 
+// Mockup palette
+const COLOR_UP = '#7C5CC7' // up (LFC ≥ 0) — purple
+const COLOR_DOWN = '#5CA98F' // down (LFC < 0) — teal
+const COLOR_THRESHOLD = '#E29B3F' // FDR dashed line — orange
+
 export default defineComponent({
   name: 'VolcanoPlot',
   props: {
     rows: { type: Array as PropType<ResultRow[]>, required: true },
     fdrThreshold: { type: Number, default: 0.05 },
+    selectedIonId: { type: Number as unknown as () => number | null, default: null },
   },
   emits: ['select'],
   setup(props, { emit }) {
@@ -39,37 +45,109 @@ export default defineComponent({
       return NEG_LOG10(minP)
     })
 
+    // Standard volcano plot convention: color by direction of log2 fold change.
+    // The dashed FDR threshold line conveys significance separately, so a row
+    // with high FDR still gets coloured by direction (just rendered at lower
+    // opacity to de-emphasise it).
+    const classify = (r: ResultRow): 'up' | 'down' => (r.lfc >= 0 ? 'up' : 'down')
+    const isSignificant = (r: ResultRow): boolean => r.fdr != null && r.fdr <= props.fdrThreshold
+
+    const seriesData = (kind: 'up' | 'down') =>
+      plottable.value
+        .filter((r) => classify(r) === kind)
+        .map((r) => {
+          const significant = isSignificant(r)
+          const selected = props.selectedIonId === r.ion.id
+          return {
+            value: [r.lfc, NEG_LOG10(r.pValue as number)],
+            ionId: r.ion.id,
+            ionLabel: r.ion.ion,
+            fdr: r.fdr,
+            symbolSize: selected ? 14 : 8,
+            itemStyle: {
+              opacity: significant ? 0.95 : 0.55,
+              ...(selected ? { borderColor: '#222', borderWidth: 2 } : {}),
+            },
+          }
+        })
+
     const option = computed(() => {
-      const data = plottable.value.map((r) => ({
-        value: [r.lfc, NEG_LOG10(r.pValue as number)],
-        ionId: r.ion.id,
-        ionLabel: r.ion.ion,
-        fdr: r.fdr,
-      }))
-      const series: Record<string, unknown> = {
-        name: 'ions',
-        type: 'scatter',
-        symbolSize: 8,
-        data,
-      }
+      const upData = seriesData('up')
+      const downData = seriesData('down')
+
+      const series: any[] = [
+        {
+          name: `up · ${upData.length}`,
+          type: 'scatter',
+          symbolSize: (_: any, p: any) => p.data.symbolSize,
+          itemStyle: { color: COLOR_UP },
+          data: upData,
+          z: 3,
+        },
+        {
+          name: `down · ${downData.length}`,
+          type: 'scatter',
+          symbolSize: (_: any, p: any) => p.data.symbolSize,
+          itemStyle: { color: COLOR_DOWN },
+          data: downData,
+          z: 3,
+        },
+      ]
+
       if (thresholdY.value != null) {
-        series.markLine = {
-          symbol: 'none',
-          lineStyle: { type: 'dashed', color: '#888' },
-          data: [{ yAxis: thresholdY.value, name: `FDR ≤ ${props.fdrThreshold}` }],
+        series[0] = {
+          ...series[0],
+          markLine: {
+            symbol: 'none',
+            silent: true,
+            lineStyle: { type: 'dashed', color: COLOR_THRESHOLD, width: 1 },
+            label: {
+              show: true,
+              position: 'insideStartTop',
+              formatter: `FDR ${props.fdrThreshold}`,
+              color: COLOR_THRESHOLD,
+              fontSize: 10,
+            },
+            data: [{ yAxis: thresholdY.value }],
+          },
         }
       }
+
       return {
-        title: { text: 'Volcano plot', textStyle: { fontSize: 13 } },
         tooltip: {
           trigger: 'item',
           formatter: (p: any) =>
-            `${p.data.ionLabel}<br/>LFC: ${p.data.value[0].toFixed(2)}<br/>−log10(p): ${p.data.value[1].toFixed(2)}`,
+            `${p.data.ionLabel}<br/>log₂FC: ${p.data.value[0].toFixed(2)}<br/>−log10(p): ${p.data.value[1].toFixed(2)}`,
         },
-        grid: { left: 48, right: 16, top: 48, bottom: 40 },
-        xAxis: { type: 'value', name: 'log fold change', nameLocation: 'middle', nameGap: 24 },
-        yAxis: { type: 'value', name: '−log10(p-Value)', nameLocation: 'middle', nameGap: 36 },
-        series: [series],
+        legend: {
+          top: 4,
+          left: 8,
+          textStyle: { fontSize: 11, color: '#606266' },
+          itemWidth: 10,
+          itemHeight: 10,
+        },
+        grid: { left: 56, right: 24, top: 48, bottom: 48 },
+        xAxis: {
+          type: 'value',
+          name: 'log₂ FOLD CHANGE',
+          nameLocation: 'middle',
+          nameGap: 28,
+          nameTextStyle: { color: '#909399', fontSize: 10 },
+          axisLine: { lineStyle: { color: '#dcdfe6' } },
+          axisLabel: { color: '#606266', fontSize: 10 },
+          splitLine: { lineStyle: { type: 'dashed', color: '#ebeef5' } },
+        },
+        yAxis: {
+          type: 'value',
+          name: '−log₁₀ p-VALUE',
+          nameLocation: 'end',
+          nameGap: 16,
+          nameTextStyle: { color: '#909399', fontSize: 10, align: 'left' },
+          axisLine: { show: false },
+          axisLabel: { color: '#606266', fontSize: 10 },
+          splitLine: { lineStyle: { type: 'dashed', color: '#ebeef5' } },
+        },
+        series,
       }
     })
 
@@ -88,7 +166,7 @@ export default defineComponent({
       }
       return (
         <div data-test-key="volcano-plot">
-          <ECharts option={option.value} autoresize style="width: 100%; height: 320px" onClick={onClick} />
+          <ECharts option={option.value} autoresize style="width: 100%; height: 340px" onClick={onClick} />
           {nullCount.value > 0 && (
             <div class="text-xs text-gray-500 px-2" data-test-key="volcano-null-caption">
               ({nullCount.value} null pValues hidden)

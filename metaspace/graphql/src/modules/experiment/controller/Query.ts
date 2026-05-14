@@ -112,15 +112,29 @@ const QueryResolvers: FieldResolversFor<Query, any> = {
       rows = rows.filter(r => r.fdr != null && r.fdr <= cap)
     }
 
+    // orderBy may be a bare column name (legacy) or "<col> ASC|DESC".
+    // Direction is honoured for the user-facing sortable columns
+    // (pValue, lfc, fdr). Unknown columns fall back to fdr ASC.
+    const [orderCol, orderDirRaw] = orderBy.trim().split(/\s+/)
+    const orderDir = orderDirRaw?.toUpperCase() === 'DESC' ? -1 : 1
     rows.sort((a, b) => {
-      if (orderBy === 'pValue') {
+      if (orderCol === 'pValue') {
+        // Null p-values always sort to the bottom regardless of direction.
         if (a.pValue == null && b.pValue == null) return 0
         if (a.pValue == null) return 1
         if (b.pValue == null) return -1
-        return a.pValue - b.pValue
+        return (a.pValue - b.pValue) * orderDir
       }
-      if (orderBy === 'lfc') return Math.abs(b.lfc) - Math.abs(a.lfc)
-      return (a.fdr ?? Infinity) - (b.fdr ?? Infinity)
+      if (orderCol === 'lfc') {
+        // Signed numeric order so ascending puts the most-negative LFC
+        // first (matches what a user expects from a "log fold change"
+        // column with a sort arrow).
+        return (a.lfc - b.lfc) * orderDir
+      }
+      // Default: fdr ascending puts the most significant rows first.
+      const fa = a.fdr ?? Infinity
+      const fb = b.fdr ?? Infinity
+      return (fa - fb) * orderDir
     })
 
     return rows.slice(offset, offset + limit) as any

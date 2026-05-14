@@ -4,6 +4,7 @@ No I/O; deterministic given inputs. Statistical functions are tested
 against scipy reference values; helpers are tested against hand-built
 fixtures.
 """
+# pylint: disable=invalid-name  # short stats notation (p, t, b, cv) is conventional
 from __future__ import annotations
 
 import math
@@ -105,9 +106,7 @@ def compute_sample_qc(
     """Per-sample detection rate + coefficient of variation over detected ions."""
     out: Dict[str, Dict[str, float]] = {}
     for sample_id, ion_map in intensities.items():
-        detected_vals = np.array(
-            [v for v in ion_map.values() if v > 0.0], dtype=np.float64
-        )
+        detected_vals = np.array([v for v in ion_map.values() if v > 0.0], dtype=np.float64)
         detection_rate = float(detected_vals.size / ions_total) if ions_total else 0.0
         if detected_vals.size == 0:
             cv = 0.0

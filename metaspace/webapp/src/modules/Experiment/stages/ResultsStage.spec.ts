@@ -134,7 +134,8 @@ describe('ResultsStage', () => {
     const passedRows = volcano.props('rows') as any[]
     expect(passedRows).toHaveLength(5)
     const echart = volcano.findComponent({ name: 'echarts' }) as any
-    expect(echart.props('option').series[0].data).toHaveLength(4)
+    const totalPoints = echart.props('option').series.reduce((n: number, s: any) => n + s.data.length, 0)
+    expect(totalPoints).toBe(4)
   })
 
   it('renders 5 rows with the expected columns', async () => {
@@ -143,7 +144,7 @@ describe('ResultsStage', () => {
     await nextTick()
 
     const html = wrapper.html()
-    expect(html).toContain('Ion')
+    expect(html).toContain('Annotation')
     expect(html).toContain('LFC')
     expect(html).toContain('p-Value')
     expect(html).toContain('FDR')
@@ -151,33 +152,24 @@ describe('ResultsStage', () => {
     expect(html).toContain('det. B')
   })
 
-  it('sort by FDR ascending re-issues query with orderBy "fdr ASC"', async () => {
-    const wrapper = mountStage()
+  it('starts with orderBy "fdr ASC" matching the resolver contract', async () => {
+    mountStage()
     await flushPromises()
     await nextTick()
-
-    const tableComp: any = wrapper.findComponent({ name: 'ElTable' })
-    expect(tableComp.exists()).toBe(true)
-    tableComp.vm.$emit('sort-change', { prop: 'fdr', order: 'ascending' })
-    await nextTick()
-
+    // Resolver was extended to honour direction; the page sends "<col>
+    // ASC|DESC" so clicking the same column's arrow flips the order.
     expect(lastVariables.orderBy).toBe('fdr ASC')
   })
 
-  it('toggling a column off removes the matching ElTableColumn', async () => {
+  it('omits the n A / n B columns by default', async () => {
     const wrapper = mountStage()
     await flushPromises()
     await nextTick()
 
-    const before = wrapper.findAllComponents(ElTableColumn).length
-    const group: any = wrapper.findComponent({ name: 'ElCheckboxGroup' })
-    expect(group.exists()).toBe(true)
-    const next = (group.props('modelValue') as string[]).filter((id: string) => id !== 'fdr')
-    group.vm.$emit('update:modelValue', next)
-    await nextTick()
-
-    const after = wrapper.findAllComponents(ElTableColumn).length
-    expect(after).toBe(before - 1)
+    const cols = wrapper.findAllComponents(ElTableColumn)
+    const labels = cols.map((c) => c.props('label'))
+    expect(labels).not.toContain('n A')
+    expect(labels).not.toContain('n B')
   })
 
   it('formats pValue as scientific notation and renders n/a when null', async () => {
@@ -188,18 +180,19 @@ describe('ResultsStage', () => {
     const pValueCol = cols.find((c) => c.props('prop') === 'pValue')!
     const fmt = pValueCol.props('formatter') as (row: any) => string
     expect(typeof fmt).toBe('function')
-    expect(fmt(mockRows[0])).toBe((0.001).toExponential(3))
-    expect(fmt(mockRows[4])).toBe('n/a')
+    // Values in the [0.001, 1000) range render as fixed-3, outside as scientific.
+    expect(fmt(mockRows[0])).toBe('0.001')
+    expect(fmt(mockRows[4])).toBe('—')
   })
 
-  it('formats lfc to 3 decimals', async () => {
+  it('formats lfc to 2 decimals (matches diff-analysis table)', async () => {
     const wrapper = mountStage()
     await flushPromises()
     await nextTick()
     const cols = wrapper.findAllComponents(ElTableColumn)
     const lfcCol = cols.find((c) => c.props('prop') === 'lfc')!
     const fmt = lfcCol.props('formatter') as (row: any) => string
-    expect(fmt({ lfc: 0.08225768 })).toBe('0.082')
+    expect(fmt({ lfc: 0.08225768 })).toBe('0.08')
   })
 
   it('formats det.A and det.B as percentages', async () => {

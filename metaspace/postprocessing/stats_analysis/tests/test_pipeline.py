@@ -37,12 +37,24 @@ def test_stats_only_excludes_samples_and_strips_intensity_rows(fetch):
                 'dataset_id': 'd1',
                 'region_source': 'WHOLE',
                 'regions': [
-                    {'regionKey': 'r1', 'labelGroupName': 'LG',
-                     'metadata': {'sampleId': 'sampleA', 'condition': 'A',
-                                  'biologicalReplicateId': 'b1'}},
-                    {'regionKey': 'r2', 'labelGroupName': 'LG',
-                     'metadata': {'sampleId': 'sampleB', 'condition': 'B',
-                                  'biologicalReplicateId': 'b1'}},
+                    {
+                        'regionKey': 'r1',
+                        'labelGroupName': 'LG',
+                        'metadata': {
+                            'sampleId': 'sampleA',
+                            'condition': 'A',
+                            'biologicalReplicateId': 'b1',
+                        },
+                    },
+                    {
+                        'regionKey': 'r2',
+                        'labelGroupName': 'LG',
+                        'metadata': {
+                            'sampleId': 'sampleB',
+                            'condition': 'B',
+                            'biologicalReplicateId': 'b1',
+                        },
+                    },
                 ],
             },
         ],
@@ -57,15 +69,20 @@ def test_stats_only_excludes_samples_and_strips_intensity_rows(fetch):
 @patch.object(runner_mod, '_fetch_intensity_blob')
 def test_reconstruct_prep_drops_excluded_samples(fetch):
     from stats_analysis.runner import _reconstruct_prep_from_blob
+
     blob = [
         {'ion_id': 1, 'region_key': 'r1', 'intensity': 1.0},
         {'ion_id': 1, 'region_key': 'r2', 'intensity': 2.0},
     ]
     datasets = [
-        {'dataset_id': 'd', 'region_source': 'WHOLE', 'regions': [
-            {'regionKey': 'r1', 'metadata': {'sampleId': 'A'}},
-            {'regionKey': 'r2', 'metadata': {'sampleId': 'B'}},
-        ]},
+        {
+            'dataset_id': 'd',
+            'region_source': 'WHOLE',
+            'regions': [
+                {'regionKey': 'r1', 'metadata': {'sampleId': 'A'}},
+                {'regionKey': 'r2', 'metadata': {'sampleId': 'B'}},
+            ],
+        },
     ]
     prep = _reconstruct_prep_from_blob(blob, datasets, ['A'])
     sample_ids = [s['sampleId'] for s in prep['samples']]

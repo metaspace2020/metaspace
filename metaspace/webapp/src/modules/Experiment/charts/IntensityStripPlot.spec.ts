@@ -59,7 +59,7 @@ describe('IntensityStripPlot', () => {
     expect(useQuery).toHaveBeenCalled()
     const echart = w.findComponent({ name: 'echarts' }) as any
     const option: any = echart.props('option')
-    const scatterSeries = option.series.filter((s: any) => s.name === 'control' || s.name === 'treated')
+    const scatterSeries = option.series.filter((s: any) => /^(control|treated)/.test(s.name))
     expect(scatterSeries).toHaveLength(2)
     const total = scatterSeries.reduce((acc: number, s: any) => acc + s.data.length, 0)
     expect(total).toBe(3)

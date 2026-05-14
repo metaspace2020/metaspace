@@ -8,7 +8,7 @@ import logging
 
 import requests
 
-from postprocessing_shared import wait_for_api_ready
+from postprocessing_shared import wait_for_api_ready  # pylint: disable=import-error
 
 logger = logging.getLogger(__name__)
 

@@ -60,7 +60,7 @@ def test_pca_2d_handles_too_few_samples():
 def test_compute_sample_qc_reports_detection_and_cv():
     intensities = {
         's0': {1: 10.0, 2: 0.0, 3: 5.0},
-        's1': {1: 0.0,  2: 0.0, 3: 0.0},
+        's1': {1: 0.0, 2: 0.0, 3: 0.0},
     }
     ions_total = 3
     qc = compute_sample_qc(intensities, ions_total)
