@@ -6,7 +6,7 @@ import {
   experimentQuery,
   createExperimentMutation,
   updateExperimentMutation,
-  runExperimentMutation,
+  runExperimentPrepMutation,
   projectCandidateDatasetsQuery,
   datasetRoisQuery,
   datasetSegmentationsQuery,
@@ -249,7 +249,12 @@ export default defineComponent({
     const runMut = async (variables: any): Promise<any> => {
       running.value = true
       try {
-        return await apolloClient.mutate({ mutation: runExperimentMutation, variables })
+        return await apolloClient.mutate({
+          mutation: runExperimentPrepMutation,
+          variables,
+          refetchQueries: ['experimentsByProject'],
+          awaitRefetchQueries: true,
+        })
       } finally {
         running.value = false
       }

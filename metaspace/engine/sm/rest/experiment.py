@@ -2,7 +2,7 @@
 
 Two endpoints under ``/v1/experiment/`` (mount in :mod:`sm.rest.api`):
 
-* ``POST /run`` — kick off a new (re-)run; engine bumps run_generation.
+* ``POST /run_prep`` — kick off a new (re-)run with prep; engine bumps run_generation.
 * ``POST /callback`` — receive a result from the stats microservice.
 """
 
@@ -58,15 +58,15 @@ def _require(params, *names):
             raise Exception(f'Missing required parameter: {name}')
 
 
-@app.post('/run')
-@sm_modify_experiment('RUN')
-def run_experiment(experiment_man, params):
-    """Kick off an experiment statistical-analysis run.
+@app.post('/run_prep')
+@sm_modify_experiment('RUN_PREP')
+def run_experiment_prep(experiment_man, params):
+    """Kick off an experiment prep + stats run.
 
     Body: ``{ experiment_id: str, run_generation: int, email?: str }``
     """
     _require(params, 'experiment_id', 'run_generation')
-    return experiment_man.run_experiment(
+    return experiment_man.run_prep(
         experiment_id=params['experiment_id'],
         run_generation=int(params['run_generation']),
         email=params.get('email'),
@@ -81,7 +81,7 @@ def run_experiment_stats(experiment_man, params):
     Body: ``{ experiment_id: str, run_generation: int, filter: dict, excluded_samples: list[str] }``
     """
     _require(params, 'experiment_id', 'run_generation')
-    return experiment_man.run_stats_only(
+    return experiment_man.run_stats(
         experiment_id=params['experiment_id'],
         run_generation=int(params['run_generation']),
         filter=params.get('filter') or {},
@@ -97,7 +97,7 @@ def get_ion_intensities(experiment_id, ion_id):
     from S3, filters by ``ion_id``, and enriches each row with the region's
     sample metadata. Returns ``{"rows": [...]}``; an empty list when the blob
     is missing (e.g. legacy experiments). Auth is left to the upstream
-    GraphQL layer (mirrors the rest of this module — ``/run`` and
+    GraphQL layer (mirrors the rest of this module — ``/run_prep`` and
     ``/callback`` are also unauthenticated here).
     """
     try:

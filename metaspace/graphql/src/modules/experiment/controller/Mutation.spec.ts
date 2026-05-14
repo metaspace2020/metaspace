@@ -164,13 +164,13 @@ describe('deleteExperiment', () => {
   })
 })
 
-const runMutation = 'mutation($id: ID!) { runExperiment(id: $id) { id run { status stage generation } } }'
+const runMutation = 'mutation($id: ID!) { runExperimentPrep(id: $id) { id run { status stage generation } } }'
 const updExclMutation = `mutation($experimentId: ID!, $excludedSamples: [String!]!) {
   updateExperimentExcludedSamples(experimentId: $experimentId, excludedSamples: $excludedSamples) {
     id run { status generation excludedSamples }
   } }`
 
-describe('runExperiment', () => {
+describe('runExperimentPrep', () => {
   beforeAll(onBeforeAll); afterAll(onAfterAll)
   beforeEach(async() => { await onBeforeEach(); await setupTestUsers(); mockSm.smApiDatasetRequest.mockResolvedValue({} as any) })
   afterEach(async() => { await onAfterEach(); jest.clearAllMocks() })
@@ -187,7 +187,7 @@ describe('runExperiment', () => {
     expect(r.run.status).toBe('QUEUED')
     expect(r.run.generation).toBe(1)
     expect(mockSm.smApiDatasetRequest).toHaveBeenCalledWith(
-      '/v1/experiment/run', expect.objectContaining({ experiment_id: exp.id, run_generation: 1 }))
+      '/v1/experiment/run_prep', expect.objectContaining({ experiment_id: exp.id, run_generation: 1 }))
   })
 
   it('increments generation on re-run', async() => {

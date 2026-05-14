@@ -4,8 +4,8 @@ These tests mock the DB and the SM_UPDATE queue publisher, so they don't
 need a live Postgres / RabbitMQ. They cover the contract guarantees of
 the simplified single-phase 3-table flow:
 
-* ``POST /run`` flips ``experiment.run_status`` to ``PREPARING`` and
-  publishes an ``EXPERIMENT_STATS`` message carrying ``experiment_id``
+* ``POST /run_prep`` flips ``experiment.run_status`` to ``PREPARING`` and
+  publishes an ``EXPERIMENT_PREP`` message carrying ``experiment_id``
   and ``run_generation``.
 * ``POST /callback`` with ``status='FINISHED'`` writes ``experiment_result``
   rows (carrying ``ion_id``) and updates the ``experiment`` row to
@@ -107,13 +107,13 @@ def patch_db_and_publisher(fake_db):
 
 
 def test_run_endpoint_marks_preparing_and_publishes(patch_db_and_publisher):
-    """POST /run sets run_status=PREPARING and publishes the right message."""
+    """POST /run_prep sets run_status=PREPARING and publishes the right message."""
     fake_db = patch_db_and_publisher['db']
     publisher = patch_db_and_publisher['publisher']
 
     body = {'experiment_id': 'exp-uuid-1', 'run_generation': 1}
     with _patch_bottle_request(body):
-        resp = experiment.run_experiment()
+        resp = experiment.run_experiment_prep()
 
     assert resp['status'] == 'success'
     assert resp['experiment_id'] == 'exp-uuid-1'
@@ -123,7 +123,7 @@ def test_run_endpoint_marks_preparing_and_publishes(patch_db_and_publisher):
 
     publisher.publish.assert_called_once()
     msg = publisher.publish.call_args[0][0]
-    assert msg['action'] == 'experiment_stats'
+    assert msg['action'] == 'experiment_prep'
     assert msg['experiment_id'] == 'exp-uuid-1'
     assert msg['run_generation'] == 1
     assert 'phase' not in msg

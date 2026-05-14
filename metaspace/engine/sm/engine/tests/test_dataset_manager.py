@@ -1,8 +1,8 @@
 from unittest.mock import MagicMock, patch
 
 
-@patch('sm.engine.daemons.dataset_manager.submit_experiment_stats_only_job')
-def test_run_experiment_stats_only_submits_job(submit):
+@patch('sm.engine.daemons.dataset_manager.submit_experiment_stats_job')
+def test_run_experiment_stats_submits_job(submit):
     from sm.engine.daemons.dataset_manager import DatasetManager
 
     dm = DatasetManager.__new__(DatasetManager)
@@ -16,7 +16,7 @@ def test_run_experiment_stats_only_submits_job(submit):
         'filter': {'fdrMax': 0.1},
         'excluded_samples': ['s1'],
     }
-    dm.run_experiment_stats_only(msg)
+    dm.run_experiment_stats(msg)
 
     submit.assert_called_once_with(
         experiment_id='exp-1',
@@ -29,16 +29,16 @@ def test_run_experiment_stats_only_submits_job(submit):
 
 
 @patch(
-    'sm.engine.daemons.dataset_manager.submit_experiment_stats_only_job',
+    'sm.engine.daemons.dataset_manager.submit_experiment_stats_job',
     side_effect=Exception('boom'),
 )
-def test_run_experiment_stats_only_marks_failed_on_exception(_submit):
+def test_run_experiment_stats_marks_failed_on_exception(_submit):
     from sm.engine.daemons.dataset_manager import DatasetManager
 
     dm = DatasetManager.__new__(DatasetManager)
     dm._db = MagicMock()
     dm.logger = MagicMock()
-    dm.run_experiment_stats_only(
+    dm.run_experiment_stats(
         {
             'experiment_id': 'exp-1',
             'run_generation': 3,

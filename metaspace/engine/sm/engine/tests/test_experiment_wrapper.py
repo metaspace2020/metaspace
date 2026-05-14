@@ -6,7 +6,7 @@ We mock the DB and ``requests.post``.
 """
 from unittest.mock import MagicMock, patch
 
-from sm.engine.postprocessing.experiment_wrapper import submit_experiment_job
+from sm.engine.postprocessing.experiment_wrapper import submit_experiment_prep_job
 
 
 class _FakeDB:
@@ -26,7 +26,7 @@ class _FakeDB:
 @patch('sm.engine.postprocessing.experiment_wrapper.build_prep_block')
 @patch('sm.engine.postprocessing.experiment_wrapper.requests.post')
 @patch('sm.engine.postprocessing.experiment_wrapper.SMConfig.get_conf')
-def test_submit_experiment_job_posts_full_payload(mock_conf, mock_post, mock_prep):
+def test_submit_experiment_prep_job_posts_full_payload(mock_conf, mock_post, mock_prep):
     mock_conf.return_value = {
         'services': {
             'segmentation': 'http://image-seg:9877',
@@ -65,11 +65,11 @@ def test_submit_experiment_job_posts_full_payload(mock_conf, mock_post, mock_pre
         ds_rows=[('ds-1', 'roi', regions)],
     )
 
-    submit_experiment_job('exp-1', run_generation=3, email='u@e.com', db=db)
+    submit_experiment_prep_job('exp-1', run_generation=3, email='u@e.com', db=db)
 
     mock_post.assert_called_once()
     args, kwargs = mock_post.call_args
-    assert args[0] == 'http://image-seg:9877/experiment/run'
+    assert args[0] == 'http://image-seg:9877/experiment/run_prep'
 
     body = kwargs['json']
     assert body['experiment_id'] == 'exp-1'
@@ -99,16 +99,18 @@ def test_submit_experiment_job_posts_full_payload(mock_conf, mock_post, mock_pre
 @patch('sm.engine.postprocessing.experiment_wrapper.build_prep_block')
 @patch('sm.engine.postprocessing.experiment_wrapper.requests.post')
 @patch('sm.engine.postprocessing.experiment_wrapper.SMConfig.get_conf')
-def test_submit_experiment_job_uses_defaults_when_services_missing(mock_conf, mock_post, mock_prep):
+def test_submit_experiment_prep_job_uses_defaults_when_services_missing(
+    mock_conf, mock_post, mock_prep
+):
     mock_conf.return_value = {}
     mock_post.return_value = MagicMock(status_code=200)
     mock_prep.return_value = {'samples': [], 'intensities': {}, 'ions_total': 0, 'filterChain': []}
 
     db = _FakeDB(exp_row=([], [], {}), ds_rows=[])
-    submit_experiment_job('exp-2', run_generation=0, db=db)
+    submit_experiment_prep_job('exp-2', run_generation=0, db=db)
 
     args, kwargs = mock_post.call_args
-    assert args[0] == 'http://image-segmentation:9877/experiment/run'
+    assert args[0] == 'http://image-segmentation:9877/experiment/run_prep'
     body = kwargs['json']
     assert body['callback_url'] == 'http://api:5123/v1/experiment/callback'
     assert body['datasets'] == []

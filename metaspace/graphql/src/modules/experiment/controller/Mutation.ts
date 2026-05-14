@@ -13,7 +13,7 @@ function loadFullExperiment(ctx: Context, id: string) {
   })
 }
 
-async function submitExperimentRun(ctx: Context, exp: Experiment) {
+async function submitExperimentPrep(ctx: Context, exp: Experiment) {
   const repo = ctx.entityManager.getRepository(Experiment)
   const nextGeneration = exp.runGeneration + 1
   await repo.update(exp.id, {
@@ -25,7 +25,7 @@ async function submitExperimentRun(ctx: Context, exp: Experiment) {
     runGeneration: nextGeneration,
   })
   try {
-    await smApiDatasetRequest('/v1/experiment/run', {
+    await smApiDatasetRequest('/v1/experiment/run_prep', {
       experiment_id: exp.id,
       run_generation: nextGeneration,
     })
@@ -66,10 +66,10 @@ const MutationResolvers: FieldResolversFor<Mutation, any> = {
     await ctx.entityManager.delete(Experiment, id)
     return true
   },
-  runExperiment: async(_, args, ctx: Context) => {
+  runExperimentPrep: async(_, args, ctx: Context) => {
     const id: string = args.id
     const exp = await loadAndAuthorize(ctx, id)
-    await submitExperimentRun(ctx, exp)
+    await submitExperimentPrep(ctx, exp)
     return loadFullExperiment(ctx, id) as any
   },
   runExperimentStats: async(_, args, ctx: Context) => {
@@ -107,7 +107,7 @@ const MutationResolvers: FieldResolversFor<Mutation, any> = {
     return loadFullExperiment(ctx, exp.id) as any
   },
   updateExperimentExcludedSamples: async(_, args, ctx: Context) => {
-    // Persist-only. We deliberately do NOT call submitExperimentRun here:
+    // Persist-only. We deliberately do NOT call submitExperimentPrep here:
     // exclusion is a per-sample filter applied at read time (QC charts hide
     // excluded rows client-side; Stage 3 stats can be recomputed via a
     // separate stats-only path triggered from Stage 2→3). Re-running PREP on

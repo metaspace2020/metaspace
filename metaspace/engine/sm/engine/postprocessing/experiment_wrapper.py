@@ -62,7 +62,7 @@ def _load_experiment_payload(
     }
 
 
-def submit_experiment_job(
+def submit_experiment_prep_job(
     experiment_id: str,
     run_generation: int,
     email: Optional[str] = None,
@@ -86,7 +86,7 @@ def submit_experiment_job(
     services = config.get('services', {})
     # stats_analysis is co-hosted with image_segmentation behind /experiment.
     segmentation_url = services.get('segmentation', 'http://image-segmentation:9877')
-    stats_run_url = f'{segmentation_url}/experiment/run'
+    stats_run_url = f'{segmentation_url}/experiment/run_prep'
     callback_url = services.get('experiment_callback', 'http://api:5123/v1/experiment/callback')
 
     if db is None:
@@ -104,7 +104,7 @@ def submit_experiment_job(
     response.raise_for_status()
 
 
-def submit_experiment_stats_only_job(
+def submit_experiment_stats_job(
     experiment_id: str,
     run_generation: int,
     intensity_blob_s3_key: str,

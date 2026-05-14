@@ -4,7 +4,7 @@ import math
 import pytest
 from tests.fixtures import build_payload, make_payload, make_prep_block
 
-from stats_analysis.runner import run_experiment
+from stats_analysis.runner import run_experiment_prep
 
 
 def _ions(base: float) -> dict:
@@ -27,7 +27,7 @@ def _assert_results_have_pvalue(out):
 
 
 def test_run_experiment_returns_full_run_qc_shape():
-    out = run_experiment('exp-1', 1, make_payload())
+    out = run_experiment_prep('exp-1', 1, make_payload())
     # 4 unpaired regions across 2 conditions, 2 per arm -> Wilcoxon rank-sum.
     assert out['inferred_test'] == 'WILCOXON_UNPAIRED'
 
@@ -66,7 +66,7 @@ def test_run_experiment_skips_label_group_with_single_condition():
         _region('r-1', 's1', 'control', bio='m1', base=10.0),
         _region('r-2', 's2', 'control', bio='m2', base=12.0),
     ])
-    out = run_experiment('exp-1', 1, payload)
+    out = run_experiment_prep('exp-1', 1, payload)
     assert out['run_qc']['inferredTestPerLabelGroup'] == {'auto_1': 'NOT_ENOUGH_DATA'}
     assert all(
         r['p_value'] is None and r['fdr'] is None
@@ -89,7 +89,7 @@ def test_run_experiment_falls_back_to_experiment_wide_when_lgs_are_single_condit
         {'name': 'control', 'color': '#000'},
         {'name': 'innoculated', 'color': '#111'},
     ]
-    out = run_experiment('exp-1', 1, payload)
+    out = run_experiment_prep('exp-1', 1, payload)
     per_lg = out['run_qc']['inferredTestPerLabelGroup']
     assert per_lg['control'] == 'NOT_ENOUGH_DATA'
     assert per_lg['innoculated'] == 'NOT_ENOUGH_DATA'
@@ -109,7 +109,7 @@ def test_run_experiment_emits_null_p_when_not_enough_replicates():
     prep['samples'] = prep['samples'][:1] + prep['samples'][2:3]
     keep_keys = {s['regionKey'] for s in prep['samples']}
     prep['intensities'] = {k: v for k, v in prep['intensities'].items() if k in keep_keys}
-    out = run_experiment('exp-1', 1, payload)
+    out = run_experiment_prep('exp-1', 1, payload)
     assert out['inferred_test'] == 'WILCOXON_UNPAIRED'
     # Degenerate cases emit p_value=NULL and fdr=NULL.
     assert len(out['results']) > 0
@@ -121,7 +121,7 @@ def test_run_experiment_emits_intensity_rows_skipping_zeros():
     payload = make_payload()
     # Inject a zero intensity for ion 1 in r-ctrl-1 (overrides the 100.0 default).
     payload['prep']['intensities']['r-ctrl-1'][1] = 0.0
-    out = run_experiment('exp-1', 1, payload)
+    out = run_experiment_prep('exp-1', 1, payload)
     assert 'intensity_rows' in out
     rows = out['intensity_rows']
     assert all(r['intensity'] != 0.0 for r in rows)
@@ -136,7 +136,7 @@ def test_run_experiment_emits_intensity_rows_skipping_zeros():
 
 def test_run_experiment_emits_all_ions_with_detection_rate():
     """run_qc.allIons mirrors the prep snapshot enriched with detection_rate."""
-    out = run_experiment('exp-1', 1, make_payload())
+    out = run_experiment_prep('exp-1', 1, make_payload())
     qc = out['run_qc']
     assert 'allIons' in qc
     rows = qc['allIons']
@@ -162,7 +162,7 @@ def test_run_experiment_picks_paired_when_bio_reps_match():
     }
     for s in payload['prep']['samples']:
         s['biologicalReplicateId'] = bio_map[s['regionKey']]
-    out = run_experiment('exp-1', 1, payload)
+    out = run_experiment_prep('exp-1', 1, payload)
     assert out['inferred_test'] == 'WILCOXON_PAIRED'
 
 
@@ -180,7 +180,7 @@ def test_scenario_1_two_conditions_one_region_per_sample():
         _region(f'r-t-{i}', f's-t-{i}', 'tumor', bio=f'm{10 + i}', base=100.0 + i)
         for i in range(1, 4)
     ]
-    out = run_experiment('e', 1, build_payload(samples))
+    out = run_experiment_prep('e', 1, build_payload(samples))
     assert out['inferred_test'] == 'WILCOXON_UNPAIRED'
     assert out['run_qc']['warnings'] == []
     _assert_results_have_pvalue(out)
@@ -192,7 +192,7 @@ def test_scenario_2_three_conditions_kruskal():
         for i in range(1, 4):
             samples.append(_region(f'r-{cond}-{i}', f's-{cond}-{i}', cond,
                                    bio=f'{cond}m{i}', base=base + i))
-    out = run_experiment('e', 1, build_payload(samples))
+    out = run_experiment_prep('e', 1, build_payload(samples))
     assert out['inferred_test'] == 'KRUSKAL_WALLIS'
     _assert_results_have_pvalue(out)
 
@@ -206,7 +206,7 @@ def test_scenario_3_unbalanced_n():
         _region('r-t-3', 's5', 'tumor', bio='m5', base=105.0),
         _region('r-t-4', 's6', 'tumor', bio='m6', base=108.0),
     ]
-    out = run_experiment('e', 1, build_payload(samples))
+    out = run_experiment_prep('e', 1, build_payload(samples))
     assert out['inferred_test'] == 'WILCOXON_UNPAIRED'
     assert 'UNBALANCED_N' in out['run_qc']['warnings']
     _assert_results_have_pvalue(out)
@@ -219,7 +219,7 @@ def test_scenario_4_fully_paired():
                                bio=f'm{i}', base=10.0 + i))
         samples.append(_region(f'r-t-{i}', f'st{i}', 'tumor',
                                bio=f'm{i}', base=50.0 + i))
-    out = run_experiment('e', 1, build_payload(samples))
+    out = run_experiment_prep('e', 1, build_payload(samples))
     assert out['inferred_test'] == 'WILCOXON_PAIRED'
     _assert_results_have_pvalue(out)
 
@@ -234,7 +234,7 @@ def test_scenario_5_partially_paired():
         _region('r-t-2', 's5', 'tumor', bio='m2', base=55.0),
         _region('r-t-3', 's6', 'tumor', bio='m4', base=53.0),
     ]
-    out = run_experiment('e', 1, build_payload(samples))
+    out = run_experiment_prep('e', 1, build_payload(samples))
     assert out['inferred_test'] == 'WILCOXON_PAIRED_PARTIAL'
     assert 'PARTIAL_PAIRING' in out['run_qc']['warnings']
     _assert_results_have_pvalue(out)
@@ -247,7 +247,7 @@ def test_scenario_6_friedman_longitudinal():
         for i in range(1, 5):
             samples.append(_region(f'r-{cond}-{i}', f's-{cond}-{i}', cond,
                                    bio=f'm{i}', base=base + i * 0.5))
-    out = run_experiment('e', 1, build_payload(samples))
+    out = run_experiment_prep('e', 1, build_payload(samples))
     assert out['inferred_test'] == 'FRIEDMAN'
     _assert_results_have_pvalue(out)
 
@@ -261,7 +261,7 @@ def test_scenario_7_multi_region_within_one_dataset():
                                    'control', bio=f'm{i}', base=10.0 + ridx))
             samples.append(_region(f'r-t-{i}-{ridx}', f's-t-{i}-{ridx}',
                                    'tumor', bio=f'm{i}', base=80.0 + ridx))
-    out = run_experiment('e', 1, build_payload(samples))
+    out = run_experiment_prep('e', 1, build_payload(samples))
     assert 'MULTI_REGION_AGGREGATED' in out['run_qc']['warnings']
     # After aggregation the bio_reps overlap fully across conditions -> paired.
     assert out['inferred_test'] == 'WILCOXON_PAIRED'
@@ -280,7 +280,7 @@ def test_scenario_8_multi_region_cross_dataset():
                                bio=f'm{i}', ds='ds-A', base=80.0 + i))
         samples.append(_region(f'r-t-{i}-b', f's-t-{i}b', 'tumor',
                                bio=f'm{i}', ds='ds-B', base=82.0 + i))
-    out = run_experiment('e', 1, build_payload(samples))
+    out = run_experiment_prep('e', 1, build_payload(samples))
     assert 'MULTI_REGION_AGGREGATED' in out['run_qc']['warnings']
     assert out['inferred_test'] == 'WILCOXON_PAIRED'
     _assert_results_have_pvalue(out)
@@ -296,7 +296,7 @@ def test_scenario_9_same_region_label_across_datasets():
         _region('r-t-2', 's5', 'tumor', bio='m5', ds='ds-B', base=82.0),
         _region('r-t-3', 's6', 'tumor', bio='m6', ds='ds-C', base=85.0),
     ]
-    out = run_experiment('e', 1, build_payload(samples))
+    out = run_experiment_prep('e', 1, build_payload(samples))
     assert out['inferred_test'] == 'WILCOXON_UNPAIRED'
     assert out['run_qc']['warnings'] == []
     _assert_results_have_pvalue(out)
@@ -322,7 +322,7 @@ def test_scenario_10_different_region_labels_per_condition():
         {'name': 'auto_1', 'color': '#1'},
         {'name': 'auto_2', 'color': '#2'},
     ]
-    out = run_experiment('e', 1, payload)
+    out = run_experiment_prep('e', 1, payload)
     per_lg = out['run_qc']['inferredTestPerLabelGroup']
     assert per_lg['auto_1'] == 'WILCOXON_UNPAIRED'
     assert per_lg['auto_2'] == 'WILCOXON_UNPAIRED'
@@ -339,7 +339,7 @@ def test_scenario_11_tech_reps_one_condition():
                                bio=f'm{i}', tech=f't{i}b', base=11.0 + i))
         samples.append(_region(f'r-t-{i}', f'st{i}', 'tumor',
                                bio=f'm{10 + i}', tech=f'tt{i}', base=80.0 + i))
-    out = run_experiment('e', 1, build_payload(samples))
+    out = run_experiment_prep('e', 1, build_payload(samples))
     # Tech-reps fully populated so no PARTIAL warning expected.
     assert 'TECH_REPS_PARTIAL' not in out['run_qc']['warnings']
     assert out['inferred_test'] == 'WILCOXON_UNPAIRED'
@@ -355,7 +355,7 @@ def test_scenario_12_tech_reps_across_conditions():
                                    bio=f'{cond}m{i}', tech='a', base=base + i))
             samples.append(_region(f'r-{cond}-{i}-b', sid, cond,
                                    bio=f'{cond}m{i}', tech='b', base=base + i + 0.5))
-    out = run_experiment('e', 1, build_payload(samples))
+    out = run_experiment_prep('e', 1, build_payload(samples))
     assert 'TECH_REPS_PARTIAL' not in out['run_qc']['warnings']
     assert out['inferred_test'] == 'WILCOXON_UNPAIRED'
     _assert_results_have_pvalue(out)
@@ -373,6 +373,6 @@ def test_scenario_13_tech_reps_partial():
     for i in range(1, 4):
         samples.append(_region(f'r-t-{i}', f's-t-{i}', 'tumor',
                                bio=f'tm{i}', base=80.0 + i))
-    out = run_experiment('e', 1, build_payload(samples))
+    out = run_experiment_prep('e', 1, build_payload(samples))
     assert 'TECH_REPS_PARTIAL' in out['run_qc']['warnings']
     _assert_results_have_pvalue(out)

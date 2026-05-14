@@ -23,7 +23,7 @@ class SMUpdateDaemon:
     def _on_success(self, msg):
         self.logger.info(' SM update daemon: success')
 
-        if msg['action'] in (DaemonAction.EXPERIMENT_STATS, DaemonAction.EXPERIMENT_STATS_ONLY):
+        if msg['action'] in (DaemonAction.EXPERIMENT_PREP, DaemonAction.EXPERIMENT_STATS):
             return
 
         if msg['action'] == DaemonAction.DELETE:
@@ -61,11 +61,11 @@ class SMUpdateDaemon:
         try:
             self.logger.info(f' SM update daemon received a message: {msg}')
 
+            if msg['action'] == DaemonAction.EXPERIMENT_PREP:
+                self._manager.run_experiment_prep(msg)
+                return
             if msg['action'] == DaemonAction.EXPERIMENT_STATS:
                 self._manager.run_experiment_stats(msg)
-                return
-            if msg['action'] == DaemonAction.EXPERIMENT_STATS_ONLY:
-                self._manager.run_experiment_stats_only(msg)
                 return
 
             ds = self._manager.load_ds(msg['ds_id'])

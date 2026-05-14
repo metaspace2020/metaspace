@@ -145,7 +145,7 @@ extend type Mutation {
   createExperiment(projectId: ID!, input: ExperimentInput!): Experiment!
   updateExperiment(id: ID!, input: ExperimentInput!): Experiment!
   deleteExperiment(id: ID!): Boolean!
-  runExperiment(id: ID!): Experiment!
+  runExperimentPrep(id: ID!): Experiment!
   updateExperimentExcludedSamples(
     experimentId: ID!
     excludedSamples: [String!]!

@@ -120,7 +120,7 @@ export default defineComponent({
       // ElSelect re-emits `update:modelValue` with a fresh array reference on
       // mount / props update; without this guard every visit to the page
       // would re-trigger `updateExperimentExcludedSamples`, which calls
-      // `submitExperimentRun` server-side and bounces the run back to
+      // `submitExperimentPrep` server-side and bounces the run back to
       // PREPARING.
       if (setsEqual(excluded.value, next)) return
       excluded.value = next

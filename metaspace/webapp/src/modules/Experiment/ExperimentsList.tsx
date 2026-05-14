@@ -1,4 +1,4 @@
-import { defineComponent, computed, inject } from 'vue'
+import { defineComponent, computed, inject, onMounted } from 'vue'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { useRouter } from 'vue-router'
 import { ElButton, ElCard, ElIcon, ElMessage, ElMessageBox, ElTag } from '../../lib/element-plus'
@@ -53,9 +53,12 @@ export default defineComponent({
     const { result, loading, refetch } = useQuery<{ experimentsByProject: ExperimentSummary[] }>(
       experimentsByProjectQuery,
       () => ({ projectId: props.projectId }),
-      { fetchPolicy: 'cache-and-network' }
+      { fetchPolicy: 'network-only' }
     )
     const experiments = computed<ExperimentSummary[]>(() => result.value?.experimentsByProject ?? [])
+    onMounted(() => {
+      refetch()
+    })
     const apolloClient: any = inject(DefaultApolloClient)
     const deleteExperiment = (variables: any): Promise<any> =>
       apolloClient.mutate({ mutation: deleteExperimentMutation, variables })

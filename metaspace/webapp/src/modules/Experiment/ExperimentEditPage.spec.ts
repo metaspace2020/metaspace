@@ -153,7 +153,7 @@ describe('ExperimentEditPage', () => {
       const name = mutation?.definitions?.[0]?.name?.value ?? ''
       if (name === 'createExperiment') return createMutate(variables)
       if (name === 'updateExperiment') return updateMutate(variables)
-      if (name === 'runExperiment') return runMutate(variables)
+      if (name === 'runExperimentPrep') return runMutate(variables)
       return Promise.resolve({ data: {} })
     })
 

@@ -2,18 +2,18 @@
 from typing import Dict
 
 from .runner import (
-    run_experiment as _run,
-    run_experiment_stats_only as _run_stats_only,
+    run_experiment_prep as _run_prep,
+    run_experiment_stats as _run_stats,
 )
 
-__all__ = ['run_experiment', 'run_experiment_stats_only']
+__all__ = ['run_experiment_prep', 'run_experiment_stats']
 
 
-def run_experiment(experiment_id: str, run_generation: int, payload: Dict) -> Dict:
-    return _run(experiment_id, run_generation, payload)
+def run_experiment_prep(experiment_id: str, run_generation: int, payload: Dict) -> Dict:
+    return _run_prep(experiment_id, run_generation, payload)
 
 
-def run_experiment_stats_only(
+def run_experiment_stats(
     experiment_id: str, run_generation: int, payload: Dict,
 ) -> Dict:
-    return _run_stats_only(experiment_id, run_generation, payload)
+    return _run_stats(experiment_id, run_generation, payload)

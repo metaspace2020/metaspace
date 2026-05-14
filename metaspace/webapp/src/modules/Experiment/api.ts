@@ -175,9 +175,9 @@ export const deleteExperimentMutation = gql`
   }
 `
 
-export const runExperimentMutation = gql`
-  mutation runExperiment($id: ID!) {
-    runExperiment(id: $id) {
+export const runExperimentPrepMutation = gql`
+  mutation runExperimentPrep($id: ID!) {
+    runExperimentPrep(id: $id) {
       ...ExperimentFields
     }
   }

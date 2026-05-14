@@ -382,7 +382,7 @@ def _summarise_inferred_test(per_lg: List[str]) -> str:
     return 'MIXED:' + ','.join(unique)
 
 
-def run_experiment(experiment_id: str, run_generation: int, payload: Dict) -> Dict[str, Any]:
+def run_experiment_prep(experiment_id: str, run_generation: int, payload: Dict) -> Dict[str, Any]:
     """Execute the real stats pipeline against an engine-built prep block."""
     prep = payload.get('prep') or {}
     intensities: Dict[str, Dict[int, float]] = prep.get('intensities') or {}
@@ -611,7 +611,7 @@ def _reconstruct_prep_from_blob(
     datasets: List[Dict[str, Any]],
     excluded_samples: List[str],
 ) -> Dict[str, Any]:
-    """Rebuild the minimum 'prep' block run_experiment expects.
+    """Rebuild the minimum 'prep' block run_experiment_prep expects.
 
     Drops rows whose region's sampleId is in excluded_samples. tic is unknown
     without re-querying ES and is emitted as 0.0 (downstream QC tolerates this).
@@ -655,7 +655,7 @@ def _reconstruct_prep_from_blob(
     }
 
 
-def run_experiment_stats_only(
+def run_experiment_stats(
     experiment_id: str, run_generation: int, payload: Dict,
 ) -> Dict[str, Any]:
     """Stats-only entry: fetch blob, reconstruct prep, run stats, strip intensity_rows.
@@ -675,7 +675,7 @@ def run_experiment_stats_only(
         'filters': payload.get('filter') or {},
         'datasets': payload.get('datasets') or [],
     }
-    result = run_experiment(experiment_id, run_generation, inner)
+    result = run_experiment_prep(experiment_id, run_generation, inner)
     result.pop('intensity_rows', None)
     return result
 

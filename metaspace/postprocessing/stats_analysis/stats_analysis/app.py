@@ -2,7 +2,7 @@
 
 The umbrella server mounts this app under ``/experiment`` and owns config
 loading, port binding, and ``MEMFILE_MAX``. This module exposes only the
-routes (``POST /run``, ``GET /health``).
+routes (``POST /run_prep``, ``GET /health``).
 """
 import logging
 import threading
@@ -10,16 +10,16 @@ import threading
 import bottle
 import requests
 
-from stats_analysis.pipeline import run_experiment
+from stats_analysis.pipeline import run_experiment_prep
 
 logger = logging.getLogger(__name__)
 
 app = bottle.Bottle()
 
 
-def _do_run(experiment_id, run_generation, payload, callback_url, email):
+def _do_run_prep(experiment_id, run_generation, payload, callback_url, email):
     try:
-        result = run_experiment(experiment_id, run_generation, payload)
+        result = run_experiment_prep(experiment_id, run_generation, payload)
         body = {
             'experiment_id': experiment_id,
             'run_generation': run_generation,
@@ -55,8 +55,8 @@ def _do_run(experiment_id, run_generation, payload, callback_url, email):
             )
 
 
-@app.post('/run')
-def run():
+@app.post('/run_prep')
+def run_prep():
     payload = bottle.request.json or {}
 
     required = ('experiment_id', 'callback_url')
@@ -79,7 +79,7 @@ def run():
     )
 
     threading.Thread(
-        target=_do_run,
+        target=_do_run_prep,
         args=(experiment_id, run_generation, payload, callback_url, email),
         daemon=True,
     ).start()
@@ -97,12 +97,12 @@ def health():
     return {'status': 'ok'}
 
 
-from stats_analysis.pipeline import run_experiment_stats_only  # noqa: E402
+from stats_analysis.pipeline import run_experiment_stats  # noqa: E402
 
 
 def _do_stats_only(experiment_id, run_generation, payload, callback_url):
     try:
-        result = run_experiment_stats_only(experiment_id, run_generation, payload)
+        result = run_experiment_stats(experiment_id, run_generation, payload)
         body = {
             'experiment_id': experiment_id,
             'run_generation': run_generation,

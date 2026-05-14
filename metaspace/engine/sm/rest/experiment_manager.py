@@ -63,7 +63,7 @@ class ExperimentManager:
         """Create a queue publisher for the SM_UPDATE queue."""
         return QueuePublisher(self._sm_config['rabbitmq'], SM_UPDATE, logger)
 
-    def run_experiment(
+    def run_prep(
         self,
         experiment_id: str,
         run_generation: int,
@@ -89,7 +89,7 @@ class ExperimentManager:
 
         queue_publisher = self._create_update_queue_publisher()
         msg = {
-            'action': DaemonAction.EXPERIMENT_STATS,
+            'action': DaemonAction.EXPERIMENT_PREP,
             'experiment_id': experiment_id,
             'run_generation': run_generation,
         }
@@ -100,7 +100,7 @@ class ExperimentManager:
         logger.info(f'Experiment {experiment_id} run_generation={run_generation} queued')
         return {'experiment_id': experiment_id, 'run_generation': run_generation}
 
-    def run_stats_only(
+    def run_stats(
         self,
         experiment_id: str,
         run_generation: int,
@@ -110,7 +110,7 @@ class ExperimentManager:
         """Kick off a stats-only re-run that reuses the existing intensity blob.
 
         If the blob is missing (e.g. legacy experiment), promotes the request
-        to a full run via :meth:`run_experiment`.
+        to a full run via :meth:`run_prep`.
 
         Args:
             experiment_id: UUID of the experiment.
@@ -131,7 +131,7 @@ class ExperimentManager:
                 f'Stats-only requested for {experiment_id} gen={run_generation} '
                 f'but blob missing at s3://{bucket_name}/{s3_key}; promoting to full run'
             )
-            return self.run_experiment(experiment_id, run_generation + 1)
+            return self.run_prep(experiment_id, run_generation + 1)
 
         self._db.alter(
             "UPDATE experiment SET run_status='RUNNING_STATS', run_stage='STATS' " "WHERE id=%s",
@@ -139,7 +139,7 @@ class ExperimentManager:
         )
         publisher = self._create_update_queue_publisher()
         msg = {
-            'action': DaemonAction.EXPERIMENT_STATS_ONLY,
+            'action': DaemonAction.EXPERIMENT_STATS,
             'experiment_id': experiment_id,
             'run_generation': run_generation,
             'intensity_blob_s3_key': s3_key,
@@ -162,7 +162,7 @@ class ExperimentManager:
     _RESTART_PER_JOB_TIMEOUT_S = 30 * 60  # 30 min — well above normal prep+stats
 
     def restart_pending_jobs(self) -> Dict[str, Any]:
-        """Republish EXPERIMENT_STATS jobs whose runs are still in flight.
+        """Republish EXPERIMENT_PREP / EXPERIMENT_STATS jobs whose runs are still in flight.
 
         Mirrors :meth:`SegmentationManager.restart_pending_jobs` but
         republishes one job at a time on a background thread, polling the
@@ -205,8 +205,8 @@ class ExperimentManager:
         """Background worker: publish one job, wait for it to finish, repeat.
 
         Reads the row's run_status, run_filters and run_excluded_samples to
-        decide whether to republish EXPERIMENT_STATS (full run) or
-        EXPERIMENT_STATS_ONLY (stats-only). Sequential to bound memory.
+        decide whether to republish EXPERIMENT_PREP (full run) or
+        EXPERIMENT_STATS (stats-only). Sequential to bound memory.
         """
         try:
             queue_publisher = self._create_update_queue_publisher()
@@ -236,7 +236,7 @@ class ExperimentManager:
             if status == 'RUNNING_STATS':
                 s3_key = self._intensity_blob_key(experiment_id, run_generation)
                 msg = {
-                    'action': DaemonAction.EXPERIMENT_STATS_ONLY,
+                    'action': DaemonAction.EXPERIMENT_STATS,
                     'experiment_id': experiment_id,
                     'run_generation': run_generation,
                     'intensity_blob_s3_key': s3_key,
@@ -245,7 +245,7 @@ class ExperimentManager:
                 }
             else:
                 msg = {
-                    'action': DaemonAction.EXPERIMENT_STATS,
+                    'action': DaemonAction.EXPERIMENT_PREP,
                     'experiment_id': experiment_id,
                     'run_generation': run_generation,
                 }

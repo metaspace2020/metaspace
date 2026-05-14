@@ -1,14 +1,14 @@
-"""Smoke test: pipeline.run_experiment delegates to the real runner."""
+"""Smoke test: pipeline.run_experiment_prep delegates to the real runner."""
 from unittest.mock import patch
 
 from tests.fixtures import make_payload
 
-from stats_analysis.pipeline import run_experiment, run_experiment_stats_only
+from stats_analysis.pipeline import run_experiment_prep, run_experiment_stats
 from stats_analysis import runner as runner_mod
 
 
 def test_pipeline_delegates_to_runner_and_returns_full_shape():
-    out = run_experiment('exp-1', 1, make_payload())
+    out = run_experiment_prep('exp-1', 1, make_payload())
     assert out['inferred_test'] in {'WILCOXON_UNPAIRED', 'WILCOXON_PAIRED', 'NOT_ENOUGH_DATA'}
     assert 'samples' in out['run_qc']
     assert 'pcaVariance' in out['run_qc']
@@ -47,7 +47,7 @@ def test_stats_only_excludes_samples_and_strips_intensity_rows(fetch):
             },
         ],
     }
-    result = run_experiment_stats_only('exp-1', 3, payload)
+    result = run_experiment_stats('exp-1', 3, payload)
     # 'intensity_rows' MUST be absent (stats-only does not rewrite the blob).
     assert 'intensity_rows' not in result
     # 'results' MUST be present (we ran the test, even if data is sparse).

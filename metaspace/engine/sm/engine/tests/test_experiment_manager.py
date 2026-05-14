@@ -23,7 +23,7 @@ def test_run_stats_only_publishes_when_blob_present(_blob, _make_pub):
     _make_pub.return_value = pub
     mgr = _make_mgr(db)
 
-    result = mgr.run_stats_only(
+    result = mgr.run_stats(
         experiment_id='exp-1',
         run_generation=3,
         filter={'fdrMax': 0.1},
@@ -36,7 +36,7 @@ def test_run_stats_only_publishes_when_blob_present(_blob, _make_pub):
     assert "run_status='RUNNING_STATS'" in args[0]
     pub.publish.assert_called_once()
     msg = pub.publish.call_args[0][0]
-    assert msg['action'] == DaemonAction.EXPERIMENT_STATS_ONLY
+    assert msg['action'] == DaemonAction.EXPERIMENT_STATS
     assert msg['experiment_id'] == 'exp-1'
     assert msg['run_generation'] == 3
     assert msg['intensity_blob_s3_key'] == 'experiments/exp-1/3/intensities.json.gz'
@@ -44,7 +44,7 @@ def test_run_stats_only_publishes_when_blob_present(_blob, _make_pub):
     assert msg['excluded_samples'] == ['s1']
 
 
-@patch.object(ExperimentManager, 'run_experiment')
+@patch.object(ExperimentManager, 'run_prep')
 @patch.object(ExperimentManager, '_create_update_queue_publisher')
 @patch.object(ExperimentManager, '_blob_exists', return_value=False)
 def test_run_stats_only_falls_back_when_blob_missing(_blob, _make_pub, run_full):
@@ -52,7 +52,7 @@ def test_run_stats_only_falls_back_when_blob_missing(_blob, _make_pub, run_full)
     mgr = _make_mgr(db)
     run_full.return_value = {'experiment_id': 'exp-1', 'run_generation': 4}
 
-    result = mgr.run_stats_only(
+    result = mgr.run_stats(
         experiment_id='exp-1',
         run_generation=3,
         filter={},
@@ -81,7 +81,7 @@ def test_sequential_republish_uses_stats_only_for_running_stats(_make_pub, _wait
 
     pub.publish.assert_called_once()
     msg = pub.publish.call_args[0][0]
-    assert msg['action'] == DaemonAction.EXPERIMENT_STATS_ONLY
+    assert msg['action'] == DaemonAction.EXPERIMENT_STATS
     assert msg['experiment_id'] == 'exp-1'
     assert msg['run_generation'] == 3
     assert msg['intensity_blob_s3_key'] == 'experiments/exp-1/3/intensities.json.gz'
@@ -105,7 +105,7 @@ def test_sequential_republish_uses_full_run_for_preparing(_make_pub, _wait):
     mgr._sequential_republish_worker([('exp-2', 5)])
 
     msg = pub.publish.call_args[0][0]
-    assert msg['action'] == DaemonAction.EXPERIMENT_STATS
+    assert msg['action'] == DaemonAction.EXPERIMENT_PREP
     assert msg['experiment_id'] == 'exp-2'
     assert msg['run_generation'] == 5
     assert 'filter' not in msg  # only stats-only carries filter/excluded

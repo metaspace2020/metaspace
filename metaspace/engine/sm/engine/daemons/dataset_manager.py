@@ -27,8 +27,8 @@ from sm.engine.postprocessing.ion_thumbnail import (
 )
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.postprocessing.experiment_wrapper import (
-    submit_experiment_job,
-    submit_experiment_stats_only_job,
+    submit_experiment_prep_job,
+    submit_experiment_stats_job,
 )
 from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
 from sm.engine.postprocessing.segmentation_wrapper import submit_segmentation_job
@@ -388,8 +388,8 @@ class DatasetManager:
                         f'Failed to send failure email for job {job_id}: {email_err}'
                     )
 
-    def run_experiment_stats(self, msg):
-        """Submit a cross-dataset experiment statistical analysis job.
+    def run_experiment_prep(self, msg):
+        """Submit a cross-dataset experiment prep + stats analysis job.
 
         Args:
             msg: Dict with keys ``experiment_id`` and ``run_generation``,
@@ -398,11 +398,11 @@ class DatasetManager:
         experiment_id = msg['experiment_id']
         run_generation = msg['run_generation']
         self.logger.info(
-            f'Running experiment stats for experiment {experiment_id} '
+            f'Running experiment prep for experiment {experiment_id} '
             f'run_generation={run_generation}'
         )
         try:
-            submit_experiment_job(
+            submit_experiment_prep_job(
                 experiment_id=experiment_id,
                 run_generation=run_generation,
                 email=msg.get('email'),
@@ -421,7 +421,7 @@ class DatasetManager:
                 params=(str(e), experiment_id, run_generation),
             )
 
-    def run_experiment_stats_only(self, msg):
+    def run_experiment_stats(self, msg):
         """Submit a stats-only re-run that reuses the persisted intensity blob."""
         experiment_id = msg['experiment_id']
         run_generation = msg['run_generation']
@@ -430,7 +430,7 @@ class DatasetManager:
             f'run_generation={run_generation}'
         )
         try:
-            submit_experiment_stats_only_job(
+            submit_experiment_stats_job(
                 experiment_id=experiment_id,
                 run_generation=run_generation,
                 intensity_blob_s3_key=msg['intensity_blob_s3_key'],

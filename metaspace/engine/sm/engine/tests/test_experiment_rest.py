@@ -17,9 +17,9 @@ except ImportError:  # pragma: no cover - webtest is optional
 @patch('sm.rest.experiment.DB')
 @patch('sm.rest.experiment.ExperimentManager')
 def test_run_stats_endpoint_invokes_manager(MockManager, _MockDB):
-    """``POST /run_stats`` forwards params to ``ExperimentManager.run_stats_only``."""
+    """``POST /run_stats`` forwards params to ``ExperimentManager.run_stats``."""
     instance = MockManager.return_value
-    instance.run_stats_only.return_value = {
+    instance.run_stats.return_value = {
         'experiment_id': 'exp-1',
         'run_generation': 3,
     }
@@ -54,7 +54,7 @@ def test_run_stats_endpoint_invokes_manager(MockManager, _MockDB):
                 pytest.fail('route /run_stats not registered')
             callback()
 
-    instance.run_stats_only.assert_called_once_with(
+    instance.run_stats.assert_called_once_with(
         experiment_id='exp-1',
         run_generation=3,
         filter={'fdrMax': 0.1},
