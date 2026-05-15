@@ -47,7 +47,7 @@ def test_run_stats_endpoint_invokes_manager(MockManager, _MockDB):
         ):
             callback = None
             for route in experiment.app.routes:
-                if route.rule == '/run_stats':
+                if route.rule.endswith('/run_stats') and route.method == 'POST':
                     callback = route.callback
                     break
             if callback is None:
