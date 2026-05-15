@@ -38,7 +38,7 @@ from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import perf_profile
 
 
-class DatasetManager:
+class DatasetManager:  # pylint: disable=too-many-public-methods
     def __init__(self, db, es, status_queue=None, logger=None, sm_config=None):
         self._sm_config = sm_config or SMConfig.get_conf()
         self._slack_conf = self._sm_config.get('slack', {})
