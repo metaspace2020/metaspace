@@ -430,19 +430,39 @@ def test_write_results_inserts_pair_and_omnibus_rows(patch_db_and_publisher):
     # Omnibus row params.
     omnibus_params = insert_calls[0][1]
     assert omnibus_params == (
-        'exp-uuid', 1, 1, 'lg1',
-        None, None,
-        None, 0.01, 0.02,
-        None, None, None, None,
-        None, None,
+        'exp-uuid',
+        1,
+        1,
+        'lg1',
+        None,
+        None,
+        None,
+        0.01,
+        0.02,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
     )
 
     # Pair row params.
     pair_params = insert_calls[1][1]
     assert pair_params == (
-        'exp-uuid', 1, 1, 'lg1',
-        'control', 'treated',
-        1.5, 0.03, 0.05,
-        4, 4, 10.0, 30.0,
-        0.75, 1.0,
+        'exp-uuid',
+        1,
+        1,
+        'lg1',
+        'control',
+        'treated',
+        1.5,
+        0.03,
+        0.05,
+        4,
+        4,
+        10.0,
+        30.0,
+        0.75,
+        1.0,
     )

@@ -18,13 +18,16 @@ class _FakeDB:
         self.roi_by_id = roi_by_id
 
     def select_one(self, sql, params=None):
-        if 'FROM job' in sql:
-            return self.latest_job_by_ds.get(params[0])
         if 'FROM public.roi' in sql or 'FROM roi' in sql:
             return self.roi_by_id.get(params[0])
         raise AssertionError(f'Unexpected SQL: {sql}')
 
     def select(self, sql, params=None):
+        if 'FROM job' in sql:
+            row = self.latest_job_by_ds.get(params[0])
+            if row is None:
+                return []
+            return [row]
         if 'FROM annotation' in sql:
             return self.annotations_by_job.get(params[0], [])
         raise AssertionError(f'Unexpected SQL: {sql}')
