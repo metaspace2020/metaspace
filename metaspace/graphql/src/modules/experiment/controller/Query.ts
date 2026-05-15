@@ -10,12 +10,19 @@ import { assertCanAccessProject } from '../operation/permissions'
 import config from '../../../utils/config'
 import logger from '../../../utils/logger'
 
+interface ResultsContrastFilter {
+  omnibus?: boolean | null
+  condA?: string | null
+  condB?: string | null
+}
+
 interface ResultsFilter {
   databases?: number[] | null
   adducts?: string[] | null
   fdrMax?: number | null
   minDetectionRate?: number | null
   labelGroupName?: string | null
+  contrast?: ResultsContrastFilter | null
 }
 
 // Rows with `fdr=null` (the upstream branch skipped correction) are kept as-is.
@@ -79,8 +86,25 @@ const QueryResolvers: FieldResolversFor<Query, any> = {
       qb.andWhere('r.label_group_name = :lg', { lg: filter.labelGroupName })
     }
     if (filter.minDetectionRate != null) {
-      qb.andWhere('GREATEST(r.detection_rate_a, r.detection_rate_b) >= :mdr',
-        { mdr: filter.minDetectionRate })
+      // Detection-rate filter only meaningful on pair rows.
+      qb.andWhere(
+        '(r.cond_a IS NOT NULL AND GREATEST(r.detection_rate_a, r.detection_rate_b) >= :mdr)',
+        { mdr: filter.minDetectionRate }
+      )
+    }
+
+    // Contrast filter — defaults to "pair rows" so K=2 behaves like before.
+    const contrast = filter.contrast ?? undefined
+    if (contrast?.omnibus) {
+      qb.andWhere('r.cond_a IS NULL')
+    } else if (contrast?.condA && contrast?.condB) {
+      // Canonicalize lex-order so the UI doesn't have to.
+      const [ca, cb] = contrast.condA < contrast.condB
+        ? [contrast.condA, contrast.condB]
+        : [contrast.condB, contrast.condA]
+      qb.andWhere('r.cond_a = :ca AND r.cond_b = :cb', { ca, cb })
+    } else {
+      qb.andWhere('r.cond_a IS NOT NULL')
     }
 
     let rows = await qb.getMany()
@@ -128,8 +152,10 @@ const QueryResolvers: FieldResolversFor<Query, any> = {
       if (orderCol === 'lfc') {
         // Signed numeric order so ascending puts the most-negative LFC
         // first (matches what a user expects from a "log fold change"
-        // column with a sort arrow).
-        return (a.lfc - b.lfc) * orderDir
+        // column with a sort arrow). Null LFC (omnibus rows) sort last.
+        const la = a.lfc ?? -Infinity
+        const lb = b.lfc ?? -Infinity
+        return (la - lb) * orderDir
       }
       // Default: fdr ascending puts the most significant rows first.
       const fa = a.fdr ?? Infinity

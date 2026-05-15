@@ -155,8 +155,14 @@ export class ExperimentResult {
   @Column({ name: 'label_group_name', type: 'text' })
   labelGroupName: string
 
-  @Column({ type: 'real' })
-  lfc: number
+  @Column({ name: 'cond_a', type: 'text', nullable: true })
+  condA: string | null
+
+  @Column({ name: 'cond_b', type: 'text', nullable: true })
+  condB: string | null
+
+  @Column({ type: 'real', nullable: true })
+  lfc: number | null
 
   @Column({ name: 'p_value', type: 'real', nullable: true })
   pValue: number | null
@@ -164,17 +170,23 @@ export class ExperimentResult {
   @Column({ type: 'real', nullable: true })
   fdr: number | null
 
-  @Column({ name: 'detection_rate_a', type: 'real' })
-  detectionRateA: number
+  @Column({ name: 'n_a', type: 'integer', nullable: true })
+  nA: number | null
 
-  @Column({ name: 'detection_rate_b', type: 'real' })
-  detectionRateB: number
+  @Column({ name: 'n_b', type: 'integer', nullable: true })
+  nB: number | null
 
-  @Column({ name: 'n_a', type: 'integer' })
-  nA: number
+  @Column({ name: 'mean_a', type: 'real', nullable: true })
+  meanA: number | null
 
-  @Column({ name: 'n_b', type: 'integer' })
-  nB: number
+  @Column({ name: 'mean_b', type: 'real', nullable: true })
+  meanB: number | null
+
+  @Column({ name: 'detection_rate_a', type: 'real', nullable: true })
+  detectionRateA: number | null
+
+  @Column({ name: 'detection_rate_b', type: 'real', nullable: true })
+  detectionRateB: number | null
 }
 
 export const EXPERIMENT_ENTITIES = [

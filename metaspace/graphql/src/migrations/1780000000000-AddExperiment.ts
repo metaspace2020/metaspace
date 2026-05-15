@@ -58,21 +58,31 @@ export class AddExperiment1780000000000 implements MigrationInterface {
       "run_generation" integer NOT NULL,
       "ion_id" integer NOT NULL,
       "label_group_name" text NOT NULL,
-      "lfc" real NOT NULL,
+      "cond_a" text,
+      "cond_b" text,
+      "lfc" real,
       "p_value" real,
       "fdr" real,
-      "detection_rate_a" real NOT NULL,
-      "detection_rate_b" real NOT NULL,
-      "n_a" integer NOT NULL,
-      "n_b" integer NOT NULL,
+      "n_a" integer,
+      "n_b" integer,
+      "mean_a" real,
+      "mean_b" real,
+      "detection_rate_a" real,
+      "detection_rate_b" real,
       CONSTRAINT "PK_experiment_result" PRIMARY KEY ("id"))`)
+
     await queryRunner.query(
-      `CREATE INDEX "experiment_result_run_fdr_index"
-        ON "public"."experiment_result" ("experiment_id", "run_generation", "fdr")`
+      `CREATE INDEX "experiment_result_omnibus_fdr_index"
+        ON "public"."experiment_result"
+          ("experiment_id", "run_generation", "label_group_name", "fdr")
+        WHERE "cond_a" IS NULL`
     )
     await queryRunner.query(
-      `CREATE INDEX "experiment_result_run_label_fdr_index"
-        ON "public"."experiment_result" ("experiment_id", "run_generation", "label_group_name", "fdr")`
+      `CREATE INDEX "experiment_result_pair_fdr_index"
+        ON "public"."experiment_result"
+          ("experiment_id", "run_generation", "label_group_name",
+           "cond_a", "cond_b", "fdr")
+        WHERE "cond_a" IS NOT NULL`
     )
     await queryRunner.query(
       `CREATE INDEX "experiment_result_ion_id_index"

@@ -401,25 +401,35 @@ class ExperimentManager:
             params=(experiment_id, run_generation),
         )
 
-        for row in result.get('results', []) or []:
-            self._db.alter(
+        rows = [
+            (
+                experiment_id,
+                run_generation,
+                row['ion_id'],
+                row['label_group_name'],
+                row.get('cond_a'),
+                row.get('cond_b'),
+                row.get('lfc'),
+                row.get('p_value'),
+                row.get('fdr'),
+                row.get('n_a'),
+                row.get('n_b'),
+                row.get('mean_a'),
+                row.get('mean_b'),
+                row.get('detection_rate_a'),
+                row.get('detection_rate_b'),
+            )
+            for row in (result.get('results') or [])
+        ]
+        if rows:
+            self._db.insert(
                 'INSERT INTO experiment_result '
                 '(experiment_id, run_generation, ion_id, label_group_name, '
-                'lfc, p_value, fdr, detection_rate_a, detection_rate_b, n_a, n_b) '
-                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
-                params=(
-                    experiment_id,
-                    run_generation,
-                    row['ion_id'],
-                    row['label_group_name'],
-                    row['lfc'],
-                    row['p_value'],
-                    row.get('fdr'),
-                    row['detection_rate_a'],
-                    row['detection_rate_b'],
-                    row['n_a'],
-                    row['n_b'],
-                ),
+                'cond_a, cond_b, lfc, p_value, fdr, '
+                'n_a, n_b, mean_a, mean_b, '
+                'detection_rate_a, detection_rate_b) '
+                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+                rows=rows,
             )
 
         # Per-ion per-region intensities are stored as a single gzipped JSON

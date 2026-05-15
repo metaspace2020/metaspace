@@ -10,6 +10,8 @@ import {
   ElIcon,
   ElCollapse,
   ElCollapseItem,
+  ElSelect,
+  ElOption,
 } from '../../../lib/element-plus'
 import { ArrowDown, Check, Download } from '@element-plus/icons-vue'
 import * as FileSaver from 'file-saver'
@@ -67,6 +69,20 @@ const formatScientific = (v: number | null | undefined): string => {
 const COLUMNS: ColumnDef[] = [
   { id: 'ion', prop: 'ion', label: 'Annotation', sortable: false },
   {
+    id: 'condA',
+    prop: 'condA',
+    label: 'A',
+    width: '110',
+    formatter: (row) => row.condA ?? '—',
+  },
+  {
+    id: 'condB',
+    prop: 'condB',
+    label: 'B',
+    width: '110',
+    formatter: (row) => row.condB ?? '—',
+  },
+  {
     id: 'lfc',
     prop: 'lfc',
     label: 'LFC',
@@ -96,8 +112,20 @@ const COLUMNS: ColumnDef[] = [
     width: '80',
     formatter: (row) => formatPercent(row.detectionRateB),
   },
-  { id: 'nA', prop: 'nA', label: 'n A', width: '60' },
-  { id: 'nB', prop: 'nB', label: 'n B', width: '60' },
+  {
+    id: 'nA',
+    prop: 'nA',
+    label: 'n A',
+    width: '60',
+    formatter: (row) => (row.nA == null ? '—' : String(row.nA)),
+  },
+  {
+    id: 'nB',
+    prop: 'nB',
+    label: 'n B',
+    width: '60',
+    formatter: (row) => (row.nB == null ? '—' : String(row.nB)),
+  },
   // FDR is the last column (per mockup) so the colored cell sits at the
   // right edge of the table.
   {
@@ -163,13 +191,37 @@ export default defineComponent({
     const pageSize = ref<number>(15)
     const offset = computed(() => (page.value - 1) * pageSize.value)
 
+    // Contrast filter:
+    //   null               -> default (pair rows, resolver applies cond_a IS NOT NULL)
+    //   { omnibus: true }  -> omnibus rows
+    //   { condA, condB }   -> specific pair
+    const contrast = ref<{ omnibus: true } | { condA: string; condB: string } | null>(null)
+
     const { result, loading } = useQuery(experimentResultsQuery, () => ({
       experimentId: props.experimentId,
-      filter: props.filter,
+      filter: {
+        ...(props.filter ?? {}),
+        ...(contrast.value ? { contrast: contrast.value } : {}),
+      },
       orderBy: orderBy.value,
       limit: pageSize.value,
       offset: offset.value,
     }))
+
+    // Available conditions — discovered from fetched rows.
+    const availableConditions = computed<string[]>(() => {
+      const rows = ((result.value as any)?.experimentResults ?? []) as Array<{
+        condA?: string | null
+        condB?: string | null
+      }>
+      const set = new Set<string>()
+      for (const r of rows) {
+        if (r.condA) set.add(r.condA)
+        if (r.condB) set.add(r.condB)
+      }
+      return Array.from(set).sort()
+    })
+    const showContrastSelector = computed(() => availableConditions.value.length >= 3)
 
     // Live rows from Apollo for the *current* query. May briefly resolve to
     // `[]` while a new page is fetching, depending on cache state.
@@ -192,7 +244,10 @@ export default defineComponent({
     const VOLCANO_LIMIT = 10000
     const { result: volcanoResult }: any = useQuery(experimentResultsQuery, () => ({
       experimentId: props.experimentId,
-      filter: props.filter,
+      filter: {
+        ...(props.filter ?? {}),
+        ...(contrast.value ? { contrast: contrast.value } : {}),
+      },
       // Mirror the table's sort so `volcanoRows.findIndex(...)` yields the
       // row's absolute position under the current ordering — needed to jump
       // the table to the correct page when a volcano dot is clicked.
@@ -488,8 +543,49 @@ export default defineComponent({
       )
     }
 
+    const contrastSelectValue = computed(() => {
+      const c = contrast.value
+      if (c === null) return 'all_pairs'
+      if ('omnibus' in c) return 'omnibus'
+      return `${c.condA}::${c.condB}`
+    })
+
+    const onContrastChange = (v: string): void => {
+      if (v === 'all_pairs') contrast.value = null
+      else if (v === 'omnibus') contrast.value = { omnibus: true }
+      else {
+        const [ca, cb] = v.split('::')
+        contrast.value = { condA: ca, condB: cb }
+      }
+      page.value = 1
+    }
+
+    const renderContrastSelector = () => {
+      if (!showContrastSelector.value) return null
+      const conds = availableConditions.value
+      const pairOptions: any[] = []
+      for (let i = 0; i < conds.length; i++) {
+        for (let j = i + 1; j < conds.length; j++) {
+          const ca = conds[i]
+          const cb = conds[j]
+          pairOptions.push(<ElOption key={`${ca}::${cb}`} value={`${ca}::${cb}`} label={`${ca} vs ${cb}`} />)
+        }
+      }
+      return (
+        <div class="contrast-selector mb-2 flex items-center" data-test-key="contrast-selector">
+          <span class="mr-2">Contrast:</span>
+          <ElSelect modelValue={contrastSelectValue.value} onChange={onContrastChange} size="small">
+            <ElOption value="all_pairs" label="All pair rows" />
+            <ElOption value="omnibus" label="Omnibus (any-difference)" />
+            {pairOptions}
+          </ElSelect>
+        </div>
+      )
+    }
+
     const renderTableWrapper = () => (
       <div class="results-table-wrapper" v-loading={loading.value}>
+        {renderContrastSelector()}
         <ElTable
           ref={tableRef}
           data={rows.value}

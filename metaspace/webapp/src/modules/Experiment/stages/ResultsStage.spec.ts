@@ -40,6 +40,10 @@ const mockRows = [
     detectionRateB: 0.4,
     nA: 5,
     nB: 5,
+    condA: 'control',
+    condB: 'treated',
+    meanA: 10,
+    meanB: 30,
   },
   {
     ion: { id: 2, ion: 'C5H10O5+H', formula: 'C5H10O5', adduct: '+H' },
@@ -51,6 +55,10 @@ const mockRows = [
     detectionRateB: 0.5,
     nA: 5,
     nB: 5,
+    condA: 'control',
+    condB: 'treated',
+    meanA: 10,
+    meanB: 30,
   },
   {
     ion: { id: 3, ion: 'C12H22O11+Na', formula: 'C12H22O11', adduct: '+Na' },
@@ -62,6 +70,10 @@ const mockRows = [
     detectionRateB: 0.8,
     nA: 5,
     nB: 5,
+    condA: 'control',
+    condB: 'treated',
+    meanA: 10,
+    meanB: 30,
   },
   {
     ion: { id: 4, ion: 'C3H6O3+H', formula: 'C3H6O3', adduct: '+H' },
@@ -73,6 +85,10 @@ const mockRows = [
     detectionRateB: 0.95,
     nA: 5,
     nB: 5,
+    condA: 'control',
+    condB: 'treated',
+    meanA: 10,
+    meanB: 30,
   },
   {
     ion: { id: 5, ion: 'C4H8O4+H', formula: 'C4H8O4', adduct: '+H' },
@@ -84,6 +100,10 @@ const mockRows = [
     detectionRateB: 0.5,
     nA: 5,
     nB: 5,
+    condA: 'control',
+    condB: 'treated',
+    meanA: 10,
+    meanB: 30,
   },
 ]
 
@@ -206,6 +226,81 @@ describe('ResultsStage', () => {
     const fmtB = detBCol.props('formatter') as (row: any) => string
     expect(fmtA({ detectionRateA: 0.9 })).toBe('90%')
     expect(fmtB({ detectionRateB: 0.4 })).toBe('40%')
+  })
+
+  it('renders omnibus rows with "—" for null pair-scoped fields', async () => {
+    const omnibusRow = {
+      ion: { id: 99, ion: 'C2H4O+H', formula: 'C2H4O', adduct: '+H' },
+      labelGroupName: 'lg1',
+      condA: null,
+      condB: null,
+      lfc: null,
+      pValue: 0.01,
+      fdr: 0.03,
+      nA: null,
+      nB: null,
+      meanA: null,
+      meanB: null,
+      detectionRateA: null,
+      detectionRateB: null,
+    }
+    ;(useQuery as any).mockImplementation((doc: any) => {
+      const opName = doc?.definitions?.[0]?.name?.value
+      if (opName === 'experimentResults') {
+        return { result: ref({ experimentResults: [omnibusRow] }), loading: ref(false), error: ref(null) }
+      }
+      return { result: ref({ experimentIonIntensities: [] }), loading: ref(false), error: ref(null) }
+    })
+
+    const wrapper = mountStage()
+    await flushPromises()
+    await nextTick()
+
+    const cols = wrapper.findAllComponents(ElTableColumn)
+    const lfcCol = cols.find((c) => c.props('prop') === 'lfc')!
+    const detACol = cols.find((c) => c.props('prop') === 'detectionRateA')!
+    const detBCol = cols.find((c) => c.props('prop') === 'detectionRateB')!
+    expect((lfcCol.props('formatter') as any)(omnibusRow)).toBe('—')
+    expect((detACol.props('formatter') as any)(omnibusRow)).toBe('—')
+    expect((detBCol.props('formatter') as any)(omnibusRow)).toBe('—')
+  })
+
+  it('shows contrast selector when conditions count >= 3', async () => {
+    const rowsK3 = [
+      { ...mockRows[0], ion: { id: 11, ion: 'X', formula: 'X', adduct: '' }, condA: 'a', condB: 'b' },
+      { ...mockRows[0], ion: { id: 12, ion: 'Y', formula: 'Y', adduct: '' }, condA: 'a', condB: 'c' },
+      { ...mockRows[0], ion: { id: 13, ion: 'Z', formula: 'Z', adduct: '' }, condA: 'b', condB: 'c' },
+    ]
+    ;(useQuery as any).mockImplementation((doc: any) => {
+      const opName = doc?.definitions?.[0]?.name?.value
+      if (opName === 'experimentResults') {
+        return { result: ref({ experimentResults: rowsK3 }), loading: ref(false), error: ref(null) }
+      }
+      return { result: ref({ experimentIonIntensities: [] }), loading: ref(false), error: ref(null) }
+    })
+
+    const wrapper = mountStage()
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.find('[data-test-key="contrast-selector"]').exists()).toBe(true)
+  })
+
+  it('hides contrast selector for K=2 experiments (single pair)', async () => {
+    const rowsK2 = mockRows.map((r) => ({ ...r, condA: 'ctrl', condB: 'trt' }))
+    ;(useQuery as any).mockImplementation((doc: any) => {
+      const opName = doc?.definitions?.[0]?.name?.value
+      if (opName === 'experimentResults') {
+        return { result: ref({ experimentResults: rowsK2 }), loading: ref(false), error: ref(null) }
+      }
+      return { result: ref({ experimentIonIntensities: [] }), loading: ref(false), error: ref(null) }
+    })
+
+    const wrapper = mountStage()
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.find('[data-test-key="contrast-selector"]').exists()).toBe(false)
   })
 
   it('volcano select wires the strip plot with the matching ion id', async () => {

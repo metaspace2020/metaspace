@@ -28,6 +28,7 @@ import pytest
 from botocore.exceptions import ClientError
 
 from sm.rest import experiment
+from sm.rest.experiment_manager import ExperimentManager
 
 
 # --- helpers ---------------------------------------------------------------
@@ -74,6 +75,13 @@ class FakeDB:
             self.run_error = params[0]
         elif 'INSERT INTO EXPERIMENT_RESULT' in upper:
             self.experiment_results.append(params)
+
+    def insert(self, sql, rows=None):
+        upper = sql.upper()
+        for row in rows or []:
+            self.alter_calls.append((sql, row))
+            if 'INSERT INTO EXPERIMENT_RESULT' in upper:
+                self.experiment_results.append(row)
 
     def select(self, sql, params=None):  # pylint: disable=unused-argument,no-self-use
         return []
@@ -356,3 +364,85 @@ def test_get_ion_intensities_missing_blob_returns_empty(patch_db_and_publisher):
         resp = experiment.get_ion_intensities('exp-uuid-1', 7)
 
     assert resp.body == {'rows': []}
+
+
+# --- _write_results INSERT shape -------------------------------------------
+
+
+def test_write_results_inserts_pair_and_omnibus_rows(patch_db_and_publisher):
+    """_write_results writes the new column list and tolerates None fields on omnibus rows."""
+    fake_db = patch_db_and_publisher['db']
+    manager = ExperimentManager(fake_db)
+
+    payload = {
+        'results': [
+            # Omnibus row (K>=3): cond_a/cond_b None and many numeric fields None.
+            {
+                'ion_id': 1,
+                'label_group_name': 'lg1',
+                'cond_a': None,
+                'cond_b': None,
+                'lfc': None,
+                'p_value': 0.01,
+                'fdr': 0.02,
+                'n_a': None,
+                'n_b': None,
+                'mean_a': None,
+                'mean_b': None,
+                'detection_rate_a': None,
+                'detection_rate_b': None,
+            },
+            # Pair row.
+            {
+                'ion_id': 1,
+                'label_group_name': 'lg1',
+                'cond_a': 'control',
+                'cond_b': 'treated',
+                'lfc': 1.5,
+                'p_value': 0.03,
+                'fdr': 0.05,
+                'n_a': 4,
+                'n_b': 4,
+                'mean_a': 10.0,
+                'mean_b': 30.0,
+                'detection_rate_a': 0.75,
+                'detection_rate_b': 1.0,
+            },
+        ]
+    }
+
+    manager._write_results('exp-uuid', 1, payload)  # pylint: disable=protected-access
+
+    insert_calls = [
+        (sql, params)
+        for sql, params in fake_db.alter_calls
+        if 'INSERT INTO experiment_result' in sql
+    ]
+    assert len(insert_calls) == 2
+
+    # New column list shape.
+    sql, _ = insert_calls[0]
+    assert 'cond_a, cond_b' in sql
+    assert 'mean_a, mean_b' in sql
+    assert 'detection_rate_a, detection_rate_b' in sql
+    assert sql.count('%s') == 15
+
+    # Omnibus row params.
+    omnibus_params = insert_calls[0][1]
+    assert omnibus_params == (
+        'exp-uuid', 1, 1, 'lg1',
+        None, None,
+        None, 0.01, 0.02,
+        None, None, None, None,
+        None, None,
+    )
+
+    # Pair row params.
+    pair_params = insert_calls[1][1]
+    assert pair_params == (
+        'exp-uuid', 1, 1, 'lg1',
+        'control', 'treated',
+        1.5, 0.03, 0.05,
+        4, 4, 10.0, 30.0,
+        0.75, 1.0,
+    )

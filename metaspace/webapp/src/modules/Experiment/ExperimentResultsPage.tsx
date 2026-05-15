@@ -388,7 +388,14 @@ export default defineComponent({
               Edit experiment
             </ElButton>
           </header>
-          {run?.error && <ElAlert type="error" title="Run failed" description={run.error} class="mb-4" />}
+          {run?.error && (
+            <ElAlert
+              type="error"
+              title="Run failed"
+              description="The analysis could not complete. Please retry or contact support if the problem persists."
+              class="mb-4"
+            />
+          )}
           {inProgress && (
             <ElAlert
               type="info"

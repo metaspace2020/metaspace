@@ -420,6 +420,177 @@ def test_scenario_12_tech_reps_across_conditions():
     _assert_results_have_pvalue(out)
 
 
+# ---------------------------------------------------------------------------
+# Task 2 — row-per-contrast refactor of _per_label_group_results.
+# ---------------------------------------------------------------------------
+
+
+def _build_payload_k2_simple():
+    samples = [
+        _region('r-c-1', 's1', 'c1', bio='m1', base=10.0),
+        _region('r-c-2', 's2', 'c1', bio='m2', base=11.0),
+        _region('r-c-3', 's3', 'c1', bio='m3', base=12.0),
+        _region('r-t-1', 's4', 'c2', bio='m4', base=80.0),
+        _region('r-t-2', 's5', 'c2', bio='m5', base=82.0),
+        _region('r-t-3', 's6', 'c2', bio='m6', base=85.0),
+    ]
+    return build_payload(samples)
+
+
+def _build_payload_k3_kruskal():
+    samples_def = []
+    for cond, base in [('c1', 10.0), ('c2', 50.0), ('c3', 100.0)]:
+        for i in range(1, 5):
+            samples_def.append(
+                {
+                    'regionKey': f'r-{cond}-{i}',
+                    'sampleId': f's-{cond}-{i}',
+                    'datasetId': 'ds-1',
+                    'labelGroupName': 'auto_1',
+                    'condition': cond,
+                    'biologicalReplicateId': f'{cond}m{i}',
+                    'technicalReplicateId': None,
+                    'intensities': {1: base + i},
+                }
+            )
+    return build_payload(samples_def, n_ions=1)
+
+
+def _build_payload_k3_friedman_paired():
+    samples_def = []
+    for cond, base in [('c1', 10.0), ('c2', 30.0), ('c3', 60.0)]:
+        for i in range(1, 5):
+            samples_def.append(
+                {
+                    'regionKey': f'r-{cond}-{i}',
+                    'sampleId': f's-{cond}-{i}',
+                    'datasetId': 'ds-1',
+                    'labelGroupName': 'auto_1',
+                    'condition': cond,
+                    'biologicalReplicateId': f'm{i}',
+                    'technicalReplicateId': None,
+                    'intensities': {1: base + i * 0.5},
+                }
+            )
+    return build_payload(samples_def, n_ions=1)
+
+
+def _build_payload_k3_kruskal_many_ions(n_ions: int = 10):
+    samples_def = []
+    for cond, base in [('c1', 10.0), ('c2', 50.0), ('c3', 100.0)]:
+        for i in range(1, 5):
+            intensities = {
+                ion_id: (base + i) * (0.5 + 0.1 * ion_id) for ion_id in range(1, n_ions + 1)
+            }
+            samples_def.append(
+                {
+                    'regionKey': f'r-{cond}-{i}',
+                    'sampleId': f's-{cond}-{i}',
+                    'datasetId': 'ds-1',
+                    'labelGroupName': 'auto_1',
+                    'condition': cond,
+                    'biologicalReplicateId': f'{cond}m{i}',
+                    'technicalReplicateId': None,
+                    'intensities': intensities,
+                }
+            )
+    return build_payload(samples_def, n_ions=n_ions)
+
+
+def test_k2_emits_single_pair_row_per_ion():
+    """K=2 (Wilcoxon) — one PAIR row per (ion, label_group), no omnibus."""
+    payload = _build_payload_k2_simple()
+    out = run_experiment_prep('exp', 1, payload)
+    rows = out['results']
+    by_key = {}
+    for r in rows:
+        by_key.setdefault((r['ion_id'], r['label_group_name']), []).append(r)
+    for key, rs in by_key.items():
+        assert len(rs) == 1, f"K=2 should produce 1 row, got {len(rs)} for {key}"
+        r = rs[0]
+        assert r['cond_a'] is not None
+        assert r['cond_b'] is not None
+        assert r['cond_a'] < r['cond_b'], "Pair ordering must be canonical"
+        assert r['lfc'] is not None
+        assert r['n_a'] is not None and r['n_b'] is not None
+
+
+def test_k3_kruskal_emits_omnibus_plus_pairs():
+    payload = _build_payload_k3_kruskal()
+    out = run_experiment_prep('exp', 1, payload)
+    rows = out['results']
+    omnibus = [r for r in rows if r['cond_a'] is None]
+    pairs = [r for r in rows if r['cond_a'] is not None]
+    assert len(omnibus) == 1
+    assert len(pairs) == 3
+    o = omnibus[0]
+    for field in (
+        'cond_a',
+        'cond_b',
+        'lfc',
+        'n_a',
+        'n_b',
+        'mean_a',
+        'mean_b',
+        'detection_rate_a',
+        'detection_rate_b',
+    ):
+        assert o[field] is None, f"omnibus.{field} must be None"
+    assert o['p_value'] is not None
+    pair_keys = {(r['cond_a'], r['cond_b']) for r in pairs}
+    assert all(a < b for a, b in pair_keys)
+    for r in pairs:
+        assert r['lfc'] is not None
+        assert r['n_a'] is not None and r['n_b'] is not None
+        assert r['mean_a'] is not None and r['mean_b'] is not None
+
+
+def test_k3_friedman_emits_omnibus_plus_pairs():
+    payload = _build_payload_k3_friedman_paired()
+    out = run_experiment_prep('exp', 1, payload)
+    rows = out['results']
+    assert sum(1 for r in rows if r['cond_a'] is None) == 1
+    assert sum(1 for r in rows if r['cond_a'] is not None) == 3
+
+
+def test_cross_row_consistency_per_condition_stats():
+    payload = _build_payload_k3_kruskal()
+    rows = run_experiment_prep('exp', 1, payload)['results']
+    pairs = [r for r in rows if r['cond_a'] is not None]
+    by_ion_lg = {}
+    for r in pairs:
+        key = (r['ion_id'], r['label_group_name'])
+        by_ion_lg.setdefault(key, []).append(r)
+    for rs in by_ion_lg.values():
+        per_cond_n, per_cond_mean = {}, {}
+        for r in rs:
+            for arm in ('a', 'b'):
+                c = r[f'cond_{arm}']
+                n = r[f'n_{arm}']
+                m = r[f'mean_{arm}']
+                if c in per_cond_n:
+                    assert per_cond_n[c] == n
+                    assert per_cond_mean[c] == m
+                else:
+                    per_cond_n[c] = n
+                    per_cond_mean[c] = m
+
+
+def test_fdr_scoped_per_contrast():
+    payload = _build_payload_k3_kruskal_many_ions()
+    rows = run_experiment_prep('exp', 1, payload)['results']
+    from collections import defaultdict
+
+    scopes = defaultdict(list)
+    for r in rows:
+        scopes[(r['cond_a'], r['cond_b'])].append((r['p_value'], r['fdr']))
+    for scope, pairs in scopes.items():
+        finite = [(p, q) for p, q in pairs if p is not None and q is not None]
+        finite.sort()
+        qs = [q for _, q in finite]
+        assert qs == sorted(qs), f"FDR not monotone within scope {scope}"
+
+
 def test_scenario_13_tech_reps_partial():
     # control has tech reps; tumor does not.
     samples = []

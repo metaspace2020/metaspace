@@ -7,6 +7,8 @@ import pytest
 from stats_analysis.stats import (
     benjamini_hochberg,
     compute_sample_qc,
+    dunn_posthoc,
+    nemenyi_posthoc,
     pca_2d,
     welch_ttest,
 )
@@ -68,3 +70,37 @@ def test_compute_sample_qc_reports_detection_and_cv():
     assert qc['s0']['cv'] == pytest.approx(np.std([10.0, 5.0], ddof=0) / 7.5, rel=1e-6)
     assert qc['s1']['detectionRate'] == 0.0
     assert qc['s1']['cv'] == 0.0
+
+
+def test_dunn_posthoc_returns_pair_pvalues():
+    rng = np.random.default_rng(0)
+    arms = [rng.normal(0, 1, 12), rng.normal(0, 1, 12), rng.normal(3, 1, 12)]
+    conds = ['ctrl', 'treated', 'shock']
+    pairs = dunn_posthoc(arms, conds)
+    assert set(pairs.keys()) == {('ctrl', 'shock'), ('ctrl', 'treated'), ('shock', 'treated')}
+    assert all(0.0 <= p <= 1.0 for p in pairs.values())
+    assert pairs[('ctrl', 'shock')] < 0.05
+    assert pairs[('ctrl', 'treated')] > 0.05
+
+
+def test_dunn_posthoc_canonical_pair_order():
+    arms = [np.array([1.0, 2.0, 3.0]), np.array([2.0, 3.0, 4.0]), np.array([3.0, 4.0, 5.0])]
+    pairs = dunn_posthoc(arms, ['b_cond', 'a_cond', 'c_cond'])
+    for a, b in pairs:
+        assert a < b
+
+
+def test_nemenyi_posthoc_paired_returns_pair_pvalues():
+    rng = np.random.default_rng(1)
+    base = rng.normal(0, 1, 10)
+    arms = [base, base + 0.1, base + 3.0]
+    conds = ['t0', 't1', 't2']
+    pairs = nemenyi_posthoc(arms, conds)
+    assert set(pairs.keys()) == {('t0', 't1'), ('t0', 't2'), ('t1', 't2')}
+    assert pairs[('t0', 't2')] < 0.05
+
+
+def test_posthoc_degenerate_returns_nans():
+    arms = [np.array([1.0]), np.array([2.0]), np.array([3.0])]
+    pairs = dunn_posthoc(arms, ['a', 'b', 'c'])
+    assert all(math.isnan(p) for p in pairs.values())

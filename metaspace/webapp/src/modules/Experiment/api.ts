@@ -209,13 +209,17 @@ export const experimentResultsQuery = gql`
         adduct
       }
       labelGroupName
+      condA
+      condB
       lfc
       pValue
       fdr
-      detectionRateA
-      detectionRateB
       nA
       nB
+      meanA
+      meanB
+      detectionRateA
+      detectionRateB
     }
   }
 `

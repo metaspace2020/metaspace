@@ -588,13 +588,17 @@ CREATE TABLE "public"."experiment_result" (
   "run_generation" integer NOT NULL, 
   "ion_id" integer NOT NULL, 
   "label_group_name" text NOT NULL, 
-  "lfc" real NOT NULL, 
+  "cond_a" text, 
+  "cond_b" text, 
+  "lfc" real, 
   "p_value" real, 
   "fdr" real, 
-  "detection_rate_a" real NOT NULL, 
-  "detection_rate_b" real NOT NULL, 
-  "n_a" integer NOT NULL, 
-  "n_b" integer NOT NULL, 
+  "n_a" integer, 
+  "n_b" integer, 
+  "mean_a" real, 
+  "mean_b" real, 
+  "detection_rate_a" real, 
+  "detection_rate_b" real, 
   CONSTRAINT "PK_07ce415c4b2ba31fe9389ffabcf" PRIMARY KEY ("id")
 );
 

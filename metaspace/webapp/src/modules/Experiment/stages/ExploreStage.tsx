@@ -1,6 +1,6 @@
 import { defineComponent, ref, watch, computed, onMounted } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
-import { ElButton, ElCheckbox, ElIcon, ElSlider } from '../../../lib/element-plus'
+import { ElButton, ElCheckbox, ElIcon } from '../../../lib/element-plus'
 import { Filter, TrendCharts, Download } from '@element-plus/icons-vue'
 import { experimentRunQcQuery } from '../api'
 import FilterChainWaterfall from '../charts/FilterChainWaterfall'
@@ -365,12 +365,12 @@ export default defineComponent({
       adducts.value = [...availableAdducts.value]
     }
 
-    const detectionPct = computed<number>({
-      get: () => Math.round(minDetectionRate.value * 100),
-      set: (v) => {
-        minDetectionRate.value = Math.max(0, Math.min(100, v)) / 100
-      },
-    })
+    // const detectionPct = computed<number>({
+    //   get: () => Math.round(minDetectionRate.value * 100),
+    //   set: (v) => {
+    //     minDetectionRate.value = Math.max(0, Math.min(100, v)) / 100
+    //   },
+    // })
 
     const totalIons = computed<number>(() => allIons.value.length)
 

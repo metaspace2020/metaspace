@@ -12,6 +12,7 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 from scipy import stats as _scistats
+from scipy import integrate as _sciintegrate
 from sklearn.decomposition import PCA
 
 
@@ -114,4 +115,115 @@ def compute_sample_qc(
             mean = float(detected_vals.mean())
             cv = float(detected_vals.std() / mean) if mean > 0 else 0.0
         out[sample_id] = {'detectionRate': detection_rate, 'cv': cv}
+    return out
+
+
+def _canonical_pair(a: str, b: str) -> Tuple[str, str]:
+    return (a, b) if a < b else (b, a)
+
+
+def dunn_posthoc(
+    arms: List[np.ndarray], conditions: List[str]
+) -> Dict[Tuple[str, str], float]:
+    """Dunn's test with Bonferroni correction across pairs.
+
+    Post-hoc for Kruskal-Wallis. Each returned p-value is already adjusted
+    for the multiple-condition comparison (within one ion); the caller
+    applies BH across ions separately.
+    """
+    k = len(arms)
+    if k < 2 or len(conditions) != k:
+        return {}
+    if any(a.size < 2 for a in arms):
+        return {
+            _canonical_pair(conditions[i], conditions[j]): math.nan
+            for i in range(k)
+            for j in range(i + 1, k)
+        }
+
+    sizes = [a.size for a in arms]
+    all_vals = np.concatenate(arms)
+    if np.var(all_vals) == 0:
+        return {
+            _canonical_pair(conditions[i], conditions[j]): math.nan
+            for i in range(k)
+            for j in range(i + 1, k)
+        }
+    ranks = _scistats.rankdata(all_vals)
+
+    offsets = np.cumsum([0] + sizes)
+    mean_ranks = [ranks[offsets[i] : offsets[i + 1]].mean() for i in range(k)]
+    N = all_vals.size
+    n_pairs = k * (k - 1) // 2
+
+    out: Dict[Tuple[str, str], float] = {}
+    for i in range(k):
+        for j in range(i + 1, k):
+            se = math.sqrt(N * (N + 1) / 12.0 * (1.0 / sizes[i] + 1.0 / sizes[j]))
+            if se == 0:
+                p = math.nan
+            else:
+                z = abs(mean_ranks[i] - mean_ranks[j]) / se
+                p_unadj = 2.0 * (1.0 - _scistats.norm.cdf(z))
+                p = float(min(1.0, p_unadj * n_pairs))
+            out[_canonical_pair(conditions[i], conditions[j])] = p
+    return out
+
+
+def _studentized_range_sf_inf(q: float, k: int) -> float:
+    """Upper-tail probability of the studentized range with infinite df.
+
+    Tukey's formula: P(Q <= q) = k * int phi(u) * [Phi(u) - Phi(u-q)]^(k-1) du.
+    Implemented here so the module works on scipy < 1.7 (which lacks
+    ``scipy.stats.studentized_range``).
+    """
+    if not math.isfinite(q) or q <= 0 or k < 2:
+        return 1.0
+    norm_pdf = _scistats.norm.pdf
+    norm_cdf = _scistats.norm.cdf
+
+    def integrand(u: float) -> float:
+        return norm_pdf(u) * (norm_cdf(u) - norm_cdf(u - q)) ** (k - 1)
+
+    val, _ = _sciintegrate.quad(integrand, -8.0, 8.0, limit=200)
+    cdf = max(0.0, min(1.0, k * val))
+    return max(0.0, min(1.0, 1.0 - cdf))
+
+
+def nemenyi_posthoc(
+    arms: List[np.ndarray], conditions: List[str]
+) -> Dict[Tuple[str, str], float]:
+    """Nemenyi post-hoc for Friedman test (paired k>=3).
+
+    Arms must be aligned by block (same length, arm[i][j] is the same
+    subject j's value under condition i). Returns Tukey-studentized-range
+    p-values (computed numerically; no scipy.stats.studentized_range
+    dependency, so this works on scipy 1.6).
+    """
+    k = len(arms)
+    if k < 2 or len(conditions) != k:
+        return {}
+    n = arms[0].size if k else 0
+    if n < 2 or any(a.size != n for a in arms):
+        return {
+            _canonical_pair(conditions[i], conditions[j]): math.nan
+            for i in range(k)
+            for j in range(i + 1, k)
+        }
+
+    M = np.column_stack(arms)
+    ranks = np.apply_along_axis(_scistats.rankdata, 1, M)
+    mean_ranks = ranks.mean(axis=0)
+
+    se = math.sqrt(k * (k + 1) / (6.0 * n))
+    out: Dict[Tuple[str, str], float] = {}
+    for i in range(k):
+        for j in range(i + 1, k):
+            if se == 0:
+                p = math.nan
+            else:
+                q = abs(mean_ranks[i] - mean_ranks[j]) / se
+                # Convert to studentized-range scale: multiply by sqrt(2).
+                p = _studentized_range_sf_inf(q * math.sqrt(2.0), k)
+            out[_canonical_pair(conditions[i], conditions[j])] = p
     return out

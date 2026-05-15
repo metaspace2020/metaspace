@@ -43,7 +43,9 @@ from scipy import stats as _scistats
 from .stats import (
     benjamini_hochberg,
     compute_sample_qc,
+    dunn_posthoc,
     friedman_test,
+    nemenyi_posthoc,
     pca_2d,
     welch_ttest,
     wilcoxon_paired,
@@ -293,88 +295,195 @@ def _tech_rep_aggregate(
     return new_r, new_i, True
 
 
-def _per_label_group_results(  # pylint: disable=too-many-locals
+def _pair_row(
+    ion_id: int,
+    label_group_name: str,
+    cond_a: str,
+    cond_b: str,
+    a_vals: np.ndarray,
+    b_vals: np.ndarray,
+    n_a: int,
+    n_b: int,
+    p_value: float,
+) -> Dict[str, Any]:
+    """Build a per-contrast result row for one ion."""
+    mean_a = float(a_vals.mean()) if a_vals.size else 0.0
+    mean_b = float(b_vals.mean()) if b_vals.size else 0.0
+    return {
+        'ion_id': ion_id,
+        'label_group_name': label_group_name,
+        'cond_a': cond_a,
+        'cond_b': cond_b,
+        'lfc': math.log2((mean_b + 1.0) / (mean_a + 1.0)),
+        'p_value': None if math.isnan(p_value) else float(p_value),
+        'fdr': None,
+        'n_a': n_a,
+        'n_b': n_b,
+        'mean_a': mean_a,
+        'mean_b': mean_b,
+        'detection_rate_a': float((a_vals > 0).mean()) if a_vals.size else 0.0,
+        'detection_rate_b': float((b_vals > 0).mean()) if b_vals.size else 0.0,
+    }
+
+
+def _omnibus_row(
+    ion_id: int,
+    label_group_name: str,
+    p_value: float,
+) -> Dict[str, Any]:
+    """Build an omnibus (no-contrast) result row for one ion."""
+    return {
+        'ion_id': ion_id,
+        'label_group_name': label_group_name,
+        'cond_a': None,
+        'cond_b': None,
+        'lfc': None,
+        'p_value': None if math.isnan(p_value) else float(p_value),
+        'fdr': None,
+        'n_a': None,
+        'n_b': None,
+        'mean_a': None,
+        'mean_b': None,
+        'detection_rate_a': None,
+        'detection_rate_b': None,
+    }
+
+
+def _per_label_group_results(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     label_group_name: str,
     test_kind: str,
     groups: "OrderedDict[str, List[Dict]]",
     intensities: Dict[str, Dict[int, float]],
     surviving_ids: List[int],
 ) -> List[Dict[str, Any]]:
-    """Produce result rows for one label group.
+    """Emit one row per (ion, contrast).
 
-    For 2-condition tests the group order from ``groups`` is taken as
-    (A, B). For 3+ conditions we still emit n_a/n_b populated from the
-    first two groups for backwards-compat with the result-row schema; LFC
-    becomes log2(B/A) of the first two conditions.
+    K=2 -> one PAIR row per ion.
+    K>=3 omnibus tests (KRUSKAL_WALLIS / FRIEDMAN) -> one OMNIBUS row + K*(K-1)/2 PAIR rows per ion.
+    FDR is scoped per contrast (and separately across the omnibus rows).
     """
     cond_ids = list(groups.keys())
+    if not cond_ids:
+        return []
 
-    # For paired tests, restrict each arm to regions whose biologicalReplicateId
-    # appears in the common-bio set, then sort by bio_rep_id for alignment.
     common_bios: set = set()
     if test_kind in ('WILCOXON_PAIRED', 'WILCOXON_PAIRED_PARTIAL', 'FRIEDMAN'):
         bio_sets = _bio_rep_sets(groups)
         if all(bio_sets):
             common_bios = set.intersection(*bio_sets)
 
-    def _select_regions(cond: str) -> List[str]:
+    def _select(cond: str) -> List[Dict]:
         regs = groups[cond]
         if test_kind in ('WILCOXON_PAIRED', 'WILCOXON_PAIRED_PARTIAL', 'FRIEDMAN') and common_bios:
             regs = [r for r in regs if r.get('biologicalReplicateId') in common_bios]
             regs = sorted(regs, key=lambda r: r.get('biologicalReplicateId') or '')
-        return [r['regionKey'] for r in regs]
+        return regs
 
-    a_regions = _select_regions(cond_ids[0]) if cond_ids else []
-    b_regions = _select_regions(cond_ids[1]) if len(cond_ids) >= 2 else []
-    extra_arrays_per_ion = [_select_regions(cond) for cond in cond_ids[2:]]
+    regions_by_cond: "OrderedDict[str, List[Dict]]" = OrderedDict((c, _select(c)) for c in cond_ids)
+    keys_by_cond = {c: [r['regionKey'] for r in regs] for c, regs in regions_by_cond.items()}
+    K = len(cond_ids)  # pylint: disable=invalid-name
+    is_omnibus = K >= 3 and test_kind in ('KRUSKAL_WALLIS', 'FRIEDMAN')
 
-    per_ion_p: List[float] = []
-    per_ion_rows: List[Dict[str, Any]] = []
+    omnibus_rows: List[Dict[str, Any]] = []
+    pair_rows_by_pair: Dict[Tuple[str, str], List[Dict[str, Any]]] = {}
+
     for ion_id in surviving_ids:
-        a_vals = np.array([intensities.get(rk, {}).get(ion_id, 0.0) for rk in a_regions])
-        b_vals = np.array([intensities.get(rk, {}).get(ion_id, 0.0) for rk in b_regions])
+        vals_by_cond = {
+            c: np.array([intensities.get(rk, {}).get(ion_id, 0.0) for rk in keys])
+            for c, keys in keys_by_cond.items()
+        }
 
-        mean_a = float(a_vals.mean()) if a_vals.size else 0.0
-        mean_b = float(b_vals.mean()) if b_vals.size else 0.0
-        lfc = math.log2((mean_b + 1.0) / (mean_a + 1.0))
+        if test_kind == 'NOT_ENOUGH_DATA':
+            if len(cond_ids) < 2:
+                continue
+            ca, cb = cond_ids[0], cond_ids[1]
+            ca, cb = (ca, cb) if ca < cb else (cb, ca)
+            a_vals = vals_by_cond.get(ca, np.array([]))
+            b_vals = vals_by_cond.get(cb, np.array([]))
+            pair_rows_by_pair.setdefault((ca, cb), []).append(
+                _pair_row(
+                    ion_id,
+                    label_group_name,
+                    ca,
+                    cb,
+                    a_vals,
+                    b_vals,
+                    a_vals.size,
+                    b_vals.size,
+                    math.nan,
+                )
+            )
+            continue
 
-        if test_kind == 'KRUSKAL_WALLIS':
-            extras = [
-                np.array([intensities.get(rk, {}).get(ion_id, 0.0) for rk in regs])
-                for regs in extra_arrays_per_ion
-            ]
-            _, p = _run_kruskal([a_vals, b_vals, *extras])
-        elif test_kind == 'FRIEDMAN':
-            extras = [
-                np.array([intensities.get(rk, {}).get(ion_id, 0.0) for rk in regs])
-                for regs in extra_arrays_per_ion
-            ]
-            _, p = friedman_test([a_vals, b_vals, *extras])
-        elif test_kind == 'WILCOXON_PAIRED_PARTIAL':
+        if is_omnibus:
+            arms = [vals_by_cond[c] for c in cond_ids]
+            if test_kind == 'KRUSKAL_WALLIS':
+                _, p_omni = _run_kruskal(arms)
+                pair_p = dunn_posthoc(arms, cond_ids)
+            else:  # FRIEDMAN
+                _, p_omni = friedman_test(arms)
+                pair_p = nemenyi_posthoc(arms, cond_ids)
+            omnibus_rows.append(_omnibus_row(ion_id, label_group_name, p_omni))
+            for i in range(K):
+                for j in range(i + 1, K):
+                    ca, cb = cond_ids[i], cond_ids[j]
+                    ca, cb = (ca, cb) if ca < cb else (cb, ca)
+                    p = pair_p.get((ca, cb), math.nan)
+                    a_vals = vals_by_cond[ca]
+                    b_vals = vals_by_cond[cb]
+                    pair_rows_by_pair.setdefault((ca, cb), []).append(
+                        _pair_row(
+                            ion_id,
+                            label_group_name,
+                            ca,
+                            cb,
+                            a_vals,
+                            b_vals,
+                            a_vals.size,
+                            b_vals.size,
+                            p,
+                        )
+                    )
+            continue
+
+        # K=2 path
+        ca, cb = cond_ids[0], cond_ids[1]
+        ca, cb = (ca, cb) if ca < cb else (cb, ca)
+        a_vals = vals_by_cond[ca]
+        b_vals = vals_by_cond[cb]
+        if test_kind == 'WILCOXON_PAIRED_PARTIAL':
             _, p = wilcoxon_paired(a_vals, b_vals)
-        elif test_kind == 'NOT_ENOUGH_DATA':
-            p = math.nan
         else:
             _, p = _run_pair_test(test_kind, a_vals, b_vals)
-
-        per_ion_p.append(p)
-        per_ion_rows.append(
-            {
-                'ion_id': ion_id,
-                'label_group_name': label_group_name,
-                'lfc': lfc,
-                'p_value': None if math.isnan(p) else p,
-                'detection_rate_a': float((a_vals > 0).mean()) if a_vals.size else 0.0,
-                'detection_rate_b': float((b_vals > 0).mean()) if b_vals.size else 0.0,
-                'n_a': len(a_regions),
-                'n_b': len(b_regions),
-            }
+        pair_rows_by_pair.setdefault((ca, cb), []).append(
+            _pair_row(
+                ion_id,
+                label_group_name,
+                ca,
+                cb,
+                a_vals,
+                b_vals,
+                a_vals.size,
+                b_vals.size,
+                p,
+            )
         )
 
-    fdrs = benjamini_hochberg(per_ion_p)
-    for row, q in zip(per_ion_rows, fdrs):
-        row['fdr'] = None if (isinstance(q, float) and math.isnan(q)) else q
-    return per_ion_rows
+    if omnibus_rows:
+        ps = [r['p_value'] if r['p_value'] is not None else math.nan for r in omnibus_rows]
+        qs = benjamini_hochberg(ps)
+        for r, q in zip(omnibus_rows, qs):
+            r['fdr'] = None if (isinstance(q, float) and math.isnan(q)) else q
+
+    flat_pairs: List[Dict[str, Any]] = []
+    for _, rows in pair_rows_by_pair.items():
+        ps = [r['p_value'] if r['p_value'] is not None else math.nan for r in rows]
+        qs = benjamini_hochberg(ps)
+        for r, q in zip(rows, qs):
+            r['fdr'] = None if (isinstance(q, float) and math.isnan(q)) else q
+        flat_pairs.extend(rows)
+
+    return omnibus_rows + flat_pairs
 
 
 def _summarise_inferred_test(per_lg: List[str]) -> str:

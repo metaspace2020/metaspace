@@ -69,13 +69,17 @@ type ExperimentRun {
 type ExperimentResultRow {
   ion: Ion!
   labelGroupName: String!
-  lfc: Float!
+  condA: String
+  condB: String
+  lfc: Float
   pValue: Float
   fdr: Float
-  detectionRateA: Float!
-  detectionRateB: Float!
-  nA: Int!
-  nB: Int!
+  nA: Int
+  nB: Int
+  meanA: Float
+  meanB: Float
+  detectionRateA: Float
+  detectionRateB: Float
 }
 
 input ExperimentInput {
@@ -117,6 +121,17 @@ input ExperimentResultsFilter {
   fdrMax: Float
   minDetectionRate: Float
   labelGroupName: String
+  contrast: ExperimentContrastFilter
+}
+
+# Pick exactly one of:
+#  - { omnibus: true }            — only OMNIBUS rows (cond_a/cond_b NULL)
+#  - { condA: "ctrl", condB: "treated" } — that specific pair
+# If absent: pair rows by default (back-compat with K=2 experiments).
+input ExperimentContrastFilter {
+  omnibus: Boolean
+  condA: String
+  condB: String
 }
 
 extend type Query {
