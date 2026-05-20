@@ -161,6 +161,30 @@ class NotNullFilter extends AbstractDatasetFilter {
   }
 }
 
+class VisibilityFilter extends AbstractDatasetFilter {
+  constructor() {
+    super('', {})
+  }
+
+  esFilter(value) {
+    if (value === 'private') {
+      return { term: { ds_is_public: false } }
+    } else if (value === 'public') {
+      return { term: { ds_is_public: true } }
+    }
+    return {}
+  }
+
+  pgFilter(q, value) {
+    if (value === 'private') {
+      return q.where('is_public', false)
+    } else if (value === 'public') {
+      return q.where('is_public', true)
+    }
+    return q
+  }
+}
+
 class GroupMatchFilter extends AbstractDatasetFilter {
   constructor(schemaPath, options) {
     super(schemaPath, options)
@@ -193,6 +217,7 @@ export const datasetFilters = {
   metadataType: new ExactMatchFilter('Data_Type', {}),
   hasAnnotationMatching: null,
   opticalImage: new OpticalImageFilter(),
+  visibility: new VisibilityFilter(),
 }
 
 export function dsField(hit, alias) {

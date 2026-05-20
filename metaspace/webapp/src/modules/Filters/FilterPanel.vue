@@ -59,6 +59,7 @@ const orderedFilterKeys = [
   'simpleQuery',
   'simpleFilter',
   'datasetOwner',
+  'visibility',
   'metadataType',
   'molClass',
   'opticalImage',
@@ -122,7 +123,8 @@ export default defineComponent({
           !activeKeys.value.includes(key) &&
           (filterSpec.hidden == null ||
             filterSpec.hidden === false ||
-            (isFunction(filterSpec.hidden) && !filterSpec.hidden()))
+            (isFunction(filterSpec.hidden) && !filterSpec.hidden())) &&
+          (key !== 'visibility' || storeFilter.value.datasetOwner === 'my-datasets')
         ) {
           available.push({ key, description: filterSpec.description })
         }
@@ -181,6 +183,9 @@ export default defineComponent({
       if (filterKey === 'datasetOwner') {
         return props.setDatasetOwnerOptions != null
       }
+      if (filterKey === 'visibility') {
+        return storeFilter.value.datasetOwner === 'my-datasets'
+      }
       return true
     }
 
@@ -224,6 +229,11 @@ export default defineComponent({
               extraUpdatesAux.datasetOwner = null
             } else if (filterKey === 'datasetOwner' && submitter !== undefined && val === 'my-datasets') {
               extraUpdatesAux.submitter = undefined
+            }
+
+            // remove visibility if datasetOwner changes away from 'my-datasets'
+            if (filterKey === 'datasetOwner' && val !== 'my-datasets' && storeFilter.value.visibility) {
+              extraUpdatesAux.visibility = undefined
             }
 
             // update datasetOwner settings
