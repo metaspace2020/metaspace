@@ -8,6 +8,10 @@ import logging
 from typing import Dict, List, Literal, Optional, Tuple
 
 import numpy as np
+import pandas as pd
+from scipy.sparse import csr_matrix
+from scipy.spatial import KDTree
+from scipy.stats import norm as scipy_norm
 from sklearn.decomposition import PCA
 from sklearn.mixture import GaussianMixture
 
@@ -20,38 +24,153 @@ logger = logging.getLogger(__name__)
 # --- Internal helpers ---
 
 
-def _run_pca(
-    matrix: np.ndarray,
-    n_components: Optional[int] = None,
-    variance_threshold: float = 0.95,
-) -> Tuple[np.ndarray, np.ndarray, int]:
+MAX_ALLOWED_COMPONENTS = 50  # pylint: disable=invalid-name
+MIN_MORANS_I = 0.1
+MAX_GMM_PCS = 30
+SMALL_DATASET_THRESHOLD = 5000
 
-    # Fit once with maximum useful components
-    max_components = min(matrix.shape[0], matrix.shape[1])
+
+def _run_pca(matrix: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """Fit PCA and return (all_scores, cumulative_variance).
+
+    Computes up to min(n_pixels, n_ions, MAX_ALLOWED_COMPONENTS) components.
+    PC selection for GMM is handled downstream by the Moran's I permutation filter.
+    """
+    max_components = min(matrix.shape[0], matrix.shape[1], MAX_ALLOWED_COMPONENTS)
     pca = PCA(n_components=max_components)
-    all_scores = pca.fit_transform(matrix)  # (n_pixels, max_components)
-    cumulative_variance = np.cumsum(pca.explained_variance_ratio_)  # (max_components,)
-    MAX_ALLOWED_COMPONENTS = 100  # pylint: disable=invalid-name
+    all_scores = pca.fit_transform(matrix)
+    cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
+    logger.info("PCA: computed %d components", max_components)
+    return all_scores, cumulative_variance
 
-    if n_components is not None:
-        n_selected = min(n_components, max_components)
-        n_selected = min(n_selected, MAX_ALLOWED_COMPONENTS)
-        logger.info("PCA: using fixed n_components=%s", n_selected)
-    else:
-        n_selected = int(np.searchsorted(cumulative_variance, variance_threshold) + 1)
-        n_selected = min(n_selected, max_components)
-        n_selected = min(n_selected, MAX_ALLOWED_COMPONENTS)
+
+def _build_weight_matrix(pixel_coordinates: np.ndarray) -> csr_matrix:
+    """Sparse symmetric binary queen-contiguity weight matrix (8-connected).
+
+    r=1.5 captures cardinal + diagonal neighbors (√2 ≈ 1.414 < 1.5 < 2.0).
+    """
+    tree = KDTree(pixel_coordinates)
+    pairs = tree.query_pairs(r=1.5)
+
+    n = len(pixel_coordinates)
+    if not pairs:
+        return csr_matrix((n, n))
+
+    rows, cols = map(list, zip(*pairs))
+    all_rows = rows + cols
+    all_cols = cols + rows
+    data = np.ones(len(all_rows), dtype=np.float64)
+    return csr_matrix((data, (all_rows, all_cols)), shape=(n, n))
+
+
+def _compute_morans_i(
+    all_scores: np.ndarray,
+    pixel_coordinates: np.ndarray,
+    n_permutations: int = 999,
+    p_threshold: float = 0.05,
+    seed: Optional[int] = None,
+) -> pd.DataFrame:
+    """Compute Moran's I for every PC and apply two-gate selection.
+
+    Gate 1 — p-value:
+      N < SMALL_DATASET_THRESHOLD: one-sided permutation p-value < p_threshold.
+      N >= SMALL_DATASET_THRESHOLD: one-sided analytical z-test (H0: I = E[I]).
+
+    Gate 2 — absolute floor: I_observed >= MIN_MORANS_I.
+
+    Returns:
+        DataFrame with columns: pc, morans_i, p_value, p_method,
+        passes_p_gate, passes_morans_floor, passes_both.
+    """
+    N, K = all_scores.shape
+    rng = np.random.default_rng(seed)
+
+    W = _build_weight_matrix(pixel_coordinates)
+    S0 = float(W.sum())
+
+    if S0 == 0.0:
+        logger.warning(
+            "Moran's I: weight matrix has no edges (all pixels isolated) — "
+            "returning zero Moran's I for all %d PCs", K,
+        )
+        return pd.DataFrame({
+            "pc":                  np.arange(1, K + 1),
+            "morans_i":            np.zeros(K),
+            "p_value":             np.ones(K),
+            "p_method":            ["none"] * K,
+            "passes_p_gate":       np.zeros(K, dtype=bool),
+            "passes_morans_floor": np.zeros(K, dtype=bool),
+            "passes_both":         np.zeros(K, dtype=bool),
+        })
+
+    # Column-centre scores; denominator is invariant under row permutation
+    z = all_scores - all_scores.mean(axis=0)  # (N, K)
+    denom = (z * z).sum(axis=0)               # (K,)
+
+    zero_var = denom == 0
+    if zero_var.any():
+        logger.warning(
+            "Moran's I: %d constant PC(s) detected — Moran's I will be 0, will not pass gates",
+            int(zero_var.sum()),
+        )
+    safe_denom = np.where(zero_var, 1.0, denom)
+
+    I_observed = (N / S0) * (z * (W @ z)).sum(axis=0) / safe_denom  # (K,)
+
+    if N < SMALL_DATASET_THRESHOLD:
+        # Permutation null — one shuffle per iteration, all K PCs in one matmul
+        null_matrix = np.empty((n_permutations, K), dtype=np.float64)
+        for i in range(n_permutations):
+            perm = rng.permutation(N)
+            z_perm = z[perm]
+            null_matrix[i] = (N / S0) * (z_perm * (W @ z_perm)).sum(axis=0) / safe_denom
+
+        count_ge = (null_matrix >= I_observed).sum(axis=0)
+        p_value = (count_ge + 1) / (n_permutations + 1)
+        p_method = ["permutation"] * K
         logger.info(
-            "PCA: auto-selected %s components (%.3f cumulative variance at threshold %s)",
-            n_selected,
-            cumulative_variance[n_selected - 1],
-            variance_threshold,
+            "Moran's I: permutation null (N=%d < %d, %d iters)",
+            N, SMALL_DATASET_THRESHOLD, n_permutations,
+        )
+    else:
+        # Analytical one-sided z-test
+        # E[I] = -1/(N-1)
+        # For binary symmetric W: S1 = 2*S0, S2 = 4*sum(degree^2)
+        # Var[I] = [N^2*S1 - N*S2 + 3*S0^2] / [S0^2*(N^2-1)] - E[I]^2
+        E_I = -1.0 / (N - 1)
+        S1 = 2.0 * S0
+        degrees = np.asarray(W.sum(axis=1)).ravel()
+        S2 = 4.0 * float((degrees ** 2).sum())
+        var_I = (N ** 2 * S1 - N * S2 + 3 * S0 ** 2) / (S0 ** 2 * (N ** 2 - 1)) - E_I ** 2
+        std_I = np.sqrt(max(var_I, 0.0))
+        z_score = np.zeros(K) if std_I == 0.0 else (I_observed - E_I) / std_I
+        p_value = scipy_norm.sf(z_score)  # one-sided: P(Z > z)
+        p_method = ["analytical_z"] * K
+        logger.info(
+            "Moran's I: analytical z-test (N=%d >= %d)",
+            N, SMALL_DATASET_THRESHOLD,
         )
 
-    # Slice scores — no second fit needed
-    pc_scores = all_scores[:, :n_selected]
+    passes_p_gate       = p_value < p_threshold
+    passes_morans_floor = I_observed >= MIN_MORANS_I
+    passes_both         = passes_p_gate & passes_morans_floor
 
-    return pc_scores, cumulative_variance, n_selected
+    logger.info(
+        "Moran's I: %d/%d pass p-gate, %d/%d pass floor (>=%.2f), %d/%d pass both",
+        int(passes_p_gate.sum()), K,
+        int(passes_morans_floor.sum()), K, MIN_MORANS_I,
+        int(passes_both.sum()), K,
+    )
+
+    return pd.DataFrame({
+        "pc":                  np.arange(1, K + 1),
+        "morans_i":            I_observed,
+        "p_value":             p_value,
+        "p_method":            p_method,
+        "passes_p_gate":       passes_p_gate,
+        "passes_morans_floor": passes_morans_floor,
+        "passes_both":         passes_both,
+    })
 
 
 def _find_elbow(k_values: List[int], scores: List[float]) -> int:  # pylint: disable=too-many-locals
@@ -102,6 +221,25 @@ def _select_k_via_criterion(
 ) -> Tuple[int, Dict]:
 
     k_min, k_max = k_range
+
+    # Short-circuit: k_range may collapse to a single value when the PC-count
+    # clamping guard in run() sets new_k_max = max(k_min, n_selected_pcs) = k_min.
+    # _find_elbow cannot handle a single-element list, so bypass it here.
+    if k_min == k_max:
+        gmm = GaussianMixture(n_components=k_min, random_state=42)
+        gmm.fit(pc_scores)
+        score = gmm.bic(pc_scores) if criterion == "bic" else gmm.aic(pc_scores)
+        logger.info(
+            "GMM: k_range collapsed to single value — using k=%d (%s=%.2f)",
+            k_min, criterion.upper(), score,
+        )
+        return k_min, {
+            "k_values": [k_min],
+            "scores": [score],
+            "selected_k": k_min,
+            "criterion": criterion,
+        }
+
     k_values = list(range(k_min, k_max + 1))
     scores = []
 
@@ -181,23 +319,18 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
 
     def validate_parameters(self, parameters: dict) -> dict:  # pylint: disable=too-many-branches
         validated = {
+            # Kept for API compatibility — no longer used internally; PC selection
+            # is handled by the Moran's I permutation filter.
             "n_components": parameters.get("n_components", None),
             "variance_threshold": parameters.get("variance_threshold", 0.95),
             "k": parameters.get("k", None),
             "k_range": tuple(parameters.get("k_range", (2, 10))),
             "criterion": parameters.get("criterion", "bic"),
+            # Moran's I
+            "n_permutations": parameters.get("n_permutations", 999),
+            "p_threshold": parameters.get("p_threshold", 0.05),
+            "morans_seed": parameters.get("morans_seed", None),
         }
-
-        if validated["n_components"] is not None:
-            if not isinstance(validated["n_components"], int) or validated["n_components"] < 1:
-                raise ValueError(
-                    f"n_components must be a positive integer, " f"got {validated['n_components']}"
-                )
-
-        if not 0.0 < validated["variance_threshold"] <= 1.0:
-            raise ValueError(
-                f"variance_threshold must be in (0, 1], " f"got {validated['variance_threshold']}"
-            )
 
         if validated["k"] is not None:
             if not isinstance(validated["k"], int) or validated["k"] < 2:
@@ -212,6 +345,16 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
 
         if validated["criterion"] not in ("bic", "aic"):
             raise ValueError(f"criterion must be 'bic' or 'aic', got {validated['criterion']}")
+
+        if not isinstance(validated["n_permutations"], int) or validated["n_permutations"] < 1:
+            raise ValueError(
+                f"n_permutations must be a positive integer, got {validated['n_permutations']}"
+            )
+
+        if not 0.0 < validated["p_threshold"] < 1.0:
+            raise ValueError(
+                f"p_threshold must be in (0, 1), got {validated['p_threshold']}"
+            )
 
         return validated
 
@@ -230,13 +373,66 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
 
         # 1. PCA
         pca_start_time = time.time()
-        pc_scores, explained_variance, _ = _run_pca(
-            matrix=segmentation_input.intensity_matrix,
-            n_components=parameters["n_components"],
-            variance_threshold=parameters["variance_threshold"],
-        )
+        all_scores, explained_variance = _run_pca(segmentation_input.intensity_matrix)
         pca_time = time.time() - pca_start_time
         logger.info("[SEGMENTATION_PERF] PCA completed in %.3fs", pca_time)
+
+        # 1b. Moran's I on all computed PCs
+        morans_start_time = time.time()
+        morans_df = _compute_morans_i(
+            all_scores=all_scores,
+            pixel_coordinates=segmentation_input.pixel_coordinates,
+            n_permutations=parameters["n_permutations"],
+            p_threshold=parameters["p_threshold"],
+            seed=parameters["morans_seed"],
+        )
+        morans_i_result = {col: morans_df[col].tolist() for col in morans_df.columns}
+        morans_time = time.time() - morans_start_time
+        logger.info("[SEGMENTATION_PERF] Moran's I completed in %.3fs", morans_time)
+
+        # 1c. Select PCs that pass both gates, capped at MAX_GMM_PCS
+        selected_indices = np.where(morans_df["passes_both"].to_numpy())[0]
+        if len(selected_indices) == 0:
+            logger.warning(
+                "No PCs passed Moran's I filter — falling back to first 5 PCs"
+            )
+            selected_indices = np.arange(min(5, all_scores.shape[1]))
+        elif len(selected_indices) > MAX_GMM_PCS:
+            logger.warning(
+                "%d PCs passed Moran's I filter — capping to first %d",
+                len(selected_indices), MAX_GMM_PCS,
+            )
+            selected_indices = selected_indices[:MAX_GMM_PCS]
+        pc_scores = all_scores[:, selected_indices]
+        n_selected_pcs = pc_scores.shape[1]
+        logger.info(
+            "Moran's I PC selection: %d PCs selected for GMM (0-based indices: %s)",
+            n_selected_pcs,
+            selected_indices.tolist(),
+        )
+
+        # Guard: k cannot exceed the number of selected PCs
+        if parameters["k"] is not None:
+            if parameters["k"] > n_selected_pcs:
+                clamped_k = max(2, n_selected_pcs)
+                logger.warning(
+                    "Requested k=%d exceeds selected PCs (%d) — clamping k to %d",
+                    parameters["k"],
+                    n_selected_pcs,
+                    clamped_k,
+                )
+                parameters = {**parameters, "k": clamped_k}
+        else:
+            k_min, k_max = parameters["k_range"]
+            if k_max > n_selected_pcs:
+                new_k_max = max(k_min, n_selected_pcs)
+                logger.warning(
+                    "k_range upper bound %d exceeds selected PCs (%d) — clamping to %d",
+                    k_max,
+                    n_selected_pcs,
+                    new_k_max,
+                )
+                parameters = {**parameters, "k_range": (k_min, new_k_max)}
 
         # 2. k selection or fixed k
         k_selection_start_time = time.time()
@@ -285,4 +481,5 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
             explained_variance=explained_variance,
             spatial_weights=None,
             assignment_confidence_histogram=confidence_histogram,
+            morans_i=morans_i_result,
         )

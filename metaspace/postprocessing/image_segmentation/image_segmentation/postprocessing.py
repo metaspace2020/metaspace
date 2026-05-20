@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -154,6 +154,51 @@ def _extract_flat_labels(
     return label_map[y_idx, x_idx].astype(int)
 
 
+def _drop_empty_segments(
+    label_map: np.ndarray,
+    pixel_coordinates: np.ndarray,
+    n_segments: int,
+) -> Tuple[np.ndarray, np.ndarray, int]:
+    """Remove empty segments and remap labels to a contiguous range starting at 0.
+
+    Smoothing can absorb small segments entirely, leaving GMM cluster IDs with
+    no pixels. This remaps present IDs to 0…n_actual-1 so that n_segments,
+    the label map, and all downstream tables stay consistent.
+
+    Returns:
+        label_map:    Updated 2-D label map with remapped IDs.
+        flat_labels:  (n_pixels,) int array of per-pixel labels, already remapped.
+        n_segments:   Number of non-empty segments after remapping.
+    """
+    flat_labels = _extract_flat_labels(label_map, pixel_coordinates)
+    present_ids = np.unique(flat_labels)  # sorted ascending
+    n_actual = len(present_ids)
+
+    if n_actual == n_segments:
+        return label_map, flat_labels, n_segments
+
+    n_dropped = n_segments - n_actual
+    logger.warning(
+        "%d empty segment(s) removed after smoothing — relabelling %d → %d segments",
+        n_dropped,
+        n_segments,
+        n_actual,
+    )
+
+    # Build lookup: old_id → new_id (present_ids is sorted so IDs stay ordered)
+    remap = np.full(n_segments, -1, dtype=np.intp)
+    for new_id, old_id in enumerate(present_ids):
+        remap[old_id] = new_id
+
+    new_label_map = label_map.copy()
+    valid_mask = ~np.isnan(label_map)
+    new_label_map[valid_mask] = remap[label_map[valid_mask].astype(np.intp)]
+
+    new_flat_labels = remap[flat_labels]
+
+    return new_label_map, new_flat_labels, n_actual
+
+
 # --- Top-level postprocessor ---
 
 
@@ -204,24 +249,27 @@ def postprocess(
     segment_profiles: Optional[pd.DataFrame] = None
     segment_summary: Optional[List[dict]] = None
 
+    n_segments = raw_output.n_segments
+
     if raw_output.map_type == "unified":
-        flat_labels = _extract_flat_labels(
+        label_map, flat_labels, n_segments = _drop_empty_segments(
             label_map=label_map,
             pixel_coordinates=segmentation_input.pixel_coordinates,
+            n_segments=n_segments,
         )
 
         segment_profiles = _compute_enrichment_profiles(
             raw_intensity_matrix=raw_intensity_matrix,
             ion_labels=segmentation_input.ion_labels,
             labels=flat_labels,
-            n_segments=raw_output.n_segments,
+            n_segments=n_segments,
             min_presence_fraction=min_presence_fraction,
         )
 
         segment_summary = _compute_segment_summary(
             label_map=label_map,
             enrichment_profiles=segment_profiles,
-            n_segments=raw_output.n_segments,
+            n_segments=n_segments,
             top_n=top_n_ions,
         )
 
@@ -231,7 +279,7 @@ def postprocess(
         parameters_used=raw_output.parameters_used,
         map_type=raw_output.map_type,
         label_map=label_map,
-        n_segments=raw_output.n_segments,
+        n_segments=n_segments,
         segment_profiles=segment_profiles,
         segment_summary=segment_summary,
         diagnostics={
@@ -243,5 +291,6 @@ def postprocess(
             ),
             "spatial_weights": raw_output.spatial_weights,
             "assignment_confidence_histogram": raw_output.assignment_confidence_histogram,
+            "morans_i": raw_output.morans_i,
         },
     )

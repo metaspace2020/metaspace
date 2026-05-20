@@ -55,6 +55,7 @@ class RawAlgorithmOutput:  # pylint: disable=too-many-instance-attributes
     explained_variance: Optional[np.ndarray]
     spatial_weights: Optional[np.ndarray]
     assignment_confidence_histogram: Optional[dict] = None  # {"counts": [...], "bin_edges": [...]}
+    morans_i: Optional[dict] = None  # {"pc": [...], "morans_i": [...], "z_score": [...], "p_value": [...]}
 
 
 @dataclass
