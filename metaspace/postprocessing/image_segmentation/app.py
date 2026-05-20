@@ -154,7 +154,7 @@ def _run_and_callback(body):
             adducts=body.get('adducts'),
             min_mz=body.get('min_mz'),
             max_mz=body.get('max_mz'),
-            use_tic=body.get('use_tic', False),
+            use_tic=body.get('use_tic', True),
             off_sample=body.get('off_sample'),  # None = no filter
             smoothing=body.get('smoothing', True),
             window_size=body.get('window_size', 3),
