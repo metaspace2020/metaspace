@@ -41,6 +41,7 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
   simpleQuery: 'q',
   simpleFilter: 'f',
   datasetOwner: 'ds_owner',
+  visibility: 'vis',
   metadataType: 'mdtype',
   colocalizedWith: 'colo',
   colocalizationSamples: 'locs',

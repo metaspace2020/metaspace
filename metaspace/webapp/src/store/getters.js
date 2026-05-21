@@ -99,6 +99,7 @@ export default {
       compoundName,
       datasetOwner,
       opticalImage,
+      visibility,
     } = filter
     const level = getters.filterLevel
     const isLogged = state.currentUser && state.currentUser.id
@@ -107,6 +108,7 @@ export default {
       group: datasetOwner && datasetOwner !== 'my-datasets' && isLogged ? datasetOwner : group,
       project: project,
       submitter: datasetOwner === 'my-datasets' && isLogged ? state.currentUser.id : submitter,
+      visibility: datasetOwner === 'my-datasets' && visibility && isLogged ? visibility : undefined,
 
       // temporary workaround because of array-related bugs in apollo-client
       ids: datasetIds ? datasetIds.join('|') : null,
