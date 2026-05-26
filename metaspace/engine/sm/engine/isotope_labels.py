@@ -25,7 +25,7 @@ by the ion charge state).
 """
 
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
 from pyMSpec.pyisocalc.periodic_table import periodic_table
 
@@ -58,6 +58,12 @@ for _sym, _entry in _PERIODIC_TABLE_ENTRIES.items():
 # Formula helpers
 # ---------------------------------------------------------------------------
 
+# Per-symbol substitution patterns: match the symbol followed by an optional integer count.
+# Built once at import time and reused for every call.
+_LABEL_PATTERNS: Dict[str, re.Pattern] = {
+    sym: re.compile(rf'{re.escape(sym)}(\d*)') for sym in ISOTOPE_LABEL_ELEMENTS
+}
+
 _ELEM_RE = re.compile(r'([A-Z][a-z]*)([0-9]*)')
 
 
@@ -68,6 +74,11 @@ def extract_labeled_mass_shift(formula: str) -> Tuple[float, str]:
     a fixed mass offset with no isotope spread.  The isotope pattern of the full
     compound equals the natural-isotope pattern of the *remaining* atoms, with
     every centroid m/z shifted by ``mass_shift / |charge|``.
+
+    Uses ``re.sub`` to remove only the labeled-element tokens while leaving the
+    rest of the formula string intact.  This preserves any invalid characters
+    (leading numbers, sign prefixes, etc.) so that downstream parsers can still
+    reject ill-formed formulas as they did before.
 
     Args:
         formula: Ion formula string, e.g. ``'H13O6X6'``.
@@ -85,18 +96,22 @@ def extract_labeled_mass_shift(formula: str) -> Tuple[float, str]:
         (0.0, 'H13O6')
     """
     mass_shift = 0.0
-    remaining: List[str] = []
+    unlabeled = formula
 
-    for elem, n_str in _ELEM_RE.findall(formula):
-        n = int(n_str) if n_str else 1
-        if elem in ISOTOPE_LABEL_ELEMENTS:
-            mass_shift += ISOTOPE_LABEL_ELEMENTS[elem]['mass'] * n
-        else:
-            remaining.append(f'{elem}{n_str}')
+    for sym, pattern in _LABEL_PATTERNS.items():
+        elem_mass = ISOTOPE_LABEL_ELEMENTS[sym]['mass']
 
-    return mass_shift, ''.join(remaining)
+        def _replacer(m: re.Match, _mass: float = elem_mass) -> str:
+            nonlocal mass_shift
+            n = int(m.group(1)) if m.group(1) else 1
+            mass_shift += _mass * n
+            return ''
+
+        unlabeled = pattern.sub(_replacer, unlabeled)
+
+    return mass_shift, unlabeled
 
 
 def has_labeled_elements(formula: str) -> bool:
     """Return ``True`` if *formula* contains any isotope-label pseudo-elements."""
-    return any(elem in ISOTOPE_LABEL_ELEMENTS for elem, _ in _ELEM_RE.findall(formula))
+    return any(pattern.search(formula) for pattern in _LABEL_PATTERNS.values())
