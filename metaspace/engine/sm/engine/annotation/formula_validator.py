@@ -178,7 +178,7 @@ def make_compute_image_metrics(
                 )
                 if (doc.spatial or 0.0) > 0.0 or calc_all:
                     # with benchmark('chaos'):
-                    doc.chaos = chaos_metric(iso_imgs[0], n_levels)
+                    doc.chaos = chaos_metric(image_set.images[0], n_levels)
 
         doc.msm = (doc.chaos or 0.0) * (doc.spatial or 0.0) * (doc.spectral or 0.0)
 

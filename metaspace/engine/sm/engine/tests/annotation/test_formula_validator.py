@@ -37,7 +37,7 @@ def _test_compute_metrics():
 def test_formula_image_metrics(chaos_mock, spatial_mock, spectral_mock):
     spectral_mock.side_effect = lambda imgs_flat, *args: imgs_flat[0][0]
     spatial_mock.side_effect = lambda imgs_flat, *args, **kwargs: imgs_flat[0][1]
-    chaos_mock.side_effect = lambda img, *args: img[0, 2]
+    chaos_mock.side_effect = lambda img, *args: img.toarray()[0, 2]
 
     # Images 2 & 3 combine to equal image 1
     # First 3 intensities get used as spectral, spatial & chaos metrics
