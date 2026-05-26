@@ -78,8 +78,22 @@ class IsocalcWrapper:
             # noinspection PyPep8Naming
             cpyMSpec = cpyMSpec_0_4_2  # pylint: disable=invalid-name
 
+        # Isotope-labeled pseudo-elements (e.g. X = pure ¹³C) contribute a
+        # fixed mass shift with no isotope spread.  Strip them from the formula,
+        # compute the natural-isotope pattern for the remaining atoms with
+        # cpyMSpec, then shift each centroid m/z by the labeled-element mass
+        # divided by the charge state.
+        from sm.engine.isotope_labels import extract_labeled_mass_shift  # noqa: PLC0415
+        labeled_mass_shift, unlabeled_formula = extract_labeled_mass_shift(formula)
+        if labeled_mass_shift and not unlabeled_formula:
+            logger.warning(
+                f'{formula} - formula consists entirely of labeled elements; '
+                'cannot compute isotope pattern'
+            )
+            return None, None
+
         try:
-            iso_pattern = cpyMSpec.isotopePattern(str(formula))
+            iso_pattern = cpyMSpec.isotopePattern(str(unlabeled_formula or formula))
             iso_pattern.addCharge(int(self.charge))
             fwhm = self.sigma * SIGMA_TO_FWHM
 
@@ -96,6 +110,12 @@ class IsocalcWrapper:
             mzs_ = np.array(centr.masses)
             ints_ = 100.0 * np.array(centr.intensities)
             mzs_, ints_ = self._trim(mzs_, ints_, self.n_peaks)
+
+            # Only for labeled formulas: shift every centroid by the exact mass
+            # of the pure-isotope atoms (delta-function ⊗ natural pattern = shift).
+            # Dividing by |charge| converts Da → m/z units.
+            if labeled_mass_shift:
+                mzs_ += labeled_mass_shift / abs(int(self.charge))
 
             n = len(mzs_)
             mzs = np.zeros(self.n_peaks)

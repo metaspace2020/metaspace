@@ -1,6 +1,9 @@
 import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal
+from pyMSpec.pyisocalc.periodic_table import periodic_table
+
+import sm.engine.isotope_labels  # noqa: F401 — ensure periodic table is patched before tests
 
 from tests.conftest import ds_config
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper, mass_accuracy_half_width
@@ -28,6 +31,45 @@ def test_centroids_h20(ds_config):
 
     assert_array_almost_equal(mzs, np.array([19.018, 20.022, 20.024, 21.022]), decimal=3)
     assert_array_almost_equal(ints, np.array([1.00e02, 3.83e-02, 3.48e-02, 2.06e-01]), decimal=2)
+
+
+def test_centroids_labeled_element_mz_shift(ds_config):
+    """13C-labelled glucose [U-13C6] should be exactly 6 * (M_13C - M_12C) higher than
+    natural-isotope glucose in m/z."""
+    isocalc_wrapper = IsocalcWrapper(ds_config)
+
+    # Natural glucose +H: C6H12O6 → ion formula C6H13O6 (after adduct applied upstream)
+    # Labelled glucose +H: X6H12O6 → ion formula H13O6X6
+    mzs_natural, ints_natural = isocalc_wrapper.centroids('C6H13O6')
+    mzs_labeled, ints_labeled = isocalc_wrapper.centroids('H13O6X6')
+
+    assert mzs_natural is not None, 'natural glucose centroids should not be None'
+    assert mzs_labeled is not None, '13C-glucose centroids should not be None'
+
+    # Expected m/z shift: 6 × (M_13C − M_12C)
+    M_12C = periodic_table['C'][2][0]   # 12.0 (exactly)
+    M_13C = periodic_table['X'][2][0]   # 13.00335484
+    expected_shift = 6 * (M_13C - M_12C)
+
+    # The monoisotopic (highest-intensity) peak carries the shift.
+    mono_natural = mzs_natural[np.argmax(ints_natural)]
+    mono_labeled = mzs_labeled[np.argmax(ints_labeled)]
+    assert mono_labeled - mono_natural == pytest.approx(expected_shift, abs=1e-4)
+
+
+def test_centroids_unlabeled_formula_unchanged(ds_config):
+    """Formulas without X must produce the same centroids as before."""
+    isocalc_wrapper = IsocalcWrapper(ds_config)
+    mzs, ints = isocalc_wrapper.centroids('H2O+H')
+    assert_array_almost_equal(mzs, np.array([19.018, 20.022, 20.024, 21.022]), decimal=3)
+
+
+def test_centroids_all_labeled_returns_none(ds_config):
+    """A formula made entirely of labeled atoms has no natural-isotope backbone
+    and must return (None, None) rather than crash."""
+    isocalc_wrapper = IsocalcWrapper(ds_config)
+    mzs, ints = isocalc_wrapper.centroids('X6')
+    assert mzs is None and ints is None
 
 
 def test_mass_accuracy_half_width():
