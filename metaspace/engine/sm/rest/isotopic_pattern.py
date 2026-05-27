@@ -3,6 +3,8 @@ import logging
 import numpy as np
 from cpyMSpec import isotopePattern, InstrumentModel
 
+from sm.engine.isotope_labels import extract_labeled_mass_shift
+
 ISOTOPIC_PEAK_N = 4
 SIGMA_TO_FWHM = 2.3548200450309493  # 2 \sqrt{2 \log 2}
 
@@ -84,8 +86,6 @@ def generate(ion, instr, res_power, at_mz, charge):
     # mass offset with no isotope spread.  Strip them from the ion formula,
     # compute the natural-isotope pattern for the remaining atoms, then shift
     # every centroid by labeled_mass / |charge|.
-    from sm.engine.isotope_labels import extract_labeled_mass_shift  # noqa: PLC0415
-
     labeled_mass_shift, unlabeled_ion = extract_labeled_mass_shift(ion)
 
     if labeled_mass_shift and not unlabeled_ion:

@@ -7,6 +7,7 @@ import cpyMSpec as cpyMSpec_0_4_2
 import cpyMSpec_0_3_5
 
 from sm.engine.ds_config import DSConfig
+from sm.engine.isotope_labels import extract_labeled_mass_shift
 
 assert cpyMSpec_0_4_2.utils.VERSION == '0.4.2'
 assert cpyMSpec_0_3_5.utils.VERSION == '0.3.5'
@@ -83,7 +84,6 @@ class IsocalcWrapper:
         # compute the natural-isotope pattern for the remaining atoms with
         # cpyMSpec, then shift each centroid m/z by the labeled-element mass
         # divided by the charge state.
-        from sm.engine.isotope_labels import extract_labeled_mass_shift  # noqa: PLC0415
         labeled_mass_shift, unlabeled_formula = extract_labeled_mass_shift(formula)
         if labeled_mass_shift and not unlabeled_formula:
             logger.warning(
