@@ -1,11 +1,12 @@
+from itertools import product
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
+
 import numpy as np
 import pandas as pd
-from itertools import product
 from numpy.testing import assert_array_almost_equal
 
-from sm.engine.annotation.imzml_reader import FSImzMLReader
+from tests.conftest import make_imzml_reader_mock
 from sm.engine.annotation_spark.segmenter import (
     segment_centroids,
     define_ds_segments,
@@ -13,11 +14,10 @@ from sm.engine.annotation_spark.segmenter import (
     calculate_chunk_sp_n,
     fetch_chunk_spectra_data,
 )
-from tests.conftest import make_imzml_reader_mock
 
 
 def test_calculate_chunk_sp_n():
-    sample_mzs_bytes = 25 * 2**20
+    sample_mzs_bytes = 25 * 2 ** 20
     sample_sp_n = 10
     max_chunk_size_mb = 500
 
@@ -49,7 +49,7 @@ def test_define_ds_segments():
 
     mz_max = 100
     sample_mzs = np.linspace(0, mz_max, 100)
-    ds_segm_size_mb = 800 / (2**20)  # 1600 b total data size / 2 segments, converted to MB
+    ds_segm_size_mb = 800 / (2 ** 20)  # 1600 b total data size / 2 segments, converted to MB
     ds_segments = define_ds_segments(
         sample_mzs, sample_ratio=1, imzml_reader=imzml_reader, ds_segm_size_mb=ds_segm_size_mb
     )
@@ -71,7 +71,7 @@ def test_segment_ds(dump_mock):
     chunk_sp_n = 1000
     segment_ds(imzml_reader, chunk_sp_n, ds_segments, Path('/tmp/abc'))
 
-    for segm_i, ((sp_chunk_df, f), _) in enumerate(dump_mock.call_args_list):
+    for segm_i, ((sp_chunk_df, _f), _) in enumerate(dump_mock.call_args_list):
         min_mz, max_mz = ds_segments[segm_i]
 
         assert sp_chunk_df.shape == (50, 3)
