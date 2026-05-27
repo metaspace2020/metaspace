@@ -10,11 +10,19 @@ logger = logging.getLogger('api')
 
 
 class Centroids:
-    def __init__(self, isotope_pattern, instrument_model, pts_per_mz=None, n_peaks=ISOTOPIC_PEAK_N):
+    def __init__(
+        self,
+        isotope_pattern,
+        instrument_model,
+        pts_per_mz=None,
+        n_peaks=ISOTOPIC_PEAK_N,
+        mz_shift=0.0,
+    ):
         self._isotope_pattern = isotope_pattern
         self._instrument_model = instrument_model
         self._pts_per_mz = pts_per_mz
         self._n_peaks = n_peaks
+        self._mz_shift = mz_shift
 
         if isotope_pattern is not None:
             centroids = isotope_pattern.centroids(instrument_model)
@@ -43,10 +51,16 @@ class Centroids:
 
     def spectrum_chart(self):
         centr_mzs, _ = self._trim_centroids(self.mzs, self.ints, self._n_peaks)
-        min_mz = min(centr_mzs) - 0.25
-        max_mz = max(centr_mzs) + 0.25
+        # For isotope-labeled compounds, shift all display m/z values by the
+        # exact mass of the pure-isotope atoms divided by the charge state.
+        display_centr_mzs = centr_mzs + self._mz_shift
+        min_mz = min(display_centr_mzs) - 0.25
+        max_mz = max(display_centr_mzs) + 0.25
         prof_mzs = np.arange(min_mz, max_mz, 1.0 / self._pts_per_mz)
-        prof_ints = self._envelope(prof_mzs)
+        # The envelope function is defined in the unlabeled (natural) m/z space.
+        # Evaluate it at (display_mz - shift) so the profile curve lines up with the
+        # shifted centroids.
+        prof_ints = self._envelope(prof_mzs - self._mz_shift)
         nnz_idx = prof_ints > 1e-9
         prof_mzs = prof_mzs[nnz_idx]
         prof_ints = prof_ints[nnz_idx]
@@ -54,7 +68,7 @@ class Centroids:
         return {
             'mz_grid': {'min_mz': min_mz, 'max_mz': max_mz},
             'theor': {
-                'centroid_mzs': centr_mzs.tolist(),
+                'centroid_mzs': display_centr_mzs.tolist(),
                 'mzs': prof_mzs.tolist(),
                 'ints': (prof_ints * 100.0).tolist(),
             },
@@ -66,8 +80,24 @@ class Centroids:
 
 
 def generate(ion, instr, res_power, at_mz, charge):
-    isotopes = isotopePattern(ion)
+    # Isotope-labeled pseudo-elements (e.g. X = pure ¹³C) contribute a fixed
+    # mass offset with no isotope spread.  Strip them from the ion formula,
+    # compute the natural-isotope pattern for the remaining atoms, then shift
+    # every centroid by labeled_mass / |charge|.
+    from sm.engine.isotope_labels import extract_labeled_mass_shift  # noqa: PLC0415
+
+    labeled_mass_shift, unlabeled_ion = extract_labeled_mass_shift(ion)
+
+    if labeled_mass_shift and not unlabeled_ion:
+        raise ValueError(
+            f'{ion}: formula consists entirely of labeled elements; isotope pattern unavailable'
+        )
+
+    effective_ion = unlabeled_ion if labeled_mass_shift else ion
+    mz_shift = labeled_mass_shift / abs(int(charge)) if labeled_mass_shift else 0.0
+
+    isotopes = isotopePattern(effective_ion)
     isotopes.addCharge(int(charge))
     instrument = InstrumentModel(instr, float(res_power), float(at_mz))
-    centroids = Centroids(isotopes, instrument)
+    centroids = Centroids(isotopes, instrument, mz_shift=mz_shift)
     return centroids.spectrum_chart()

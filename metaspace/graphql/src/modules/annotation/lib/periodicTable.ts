@@ -131,4 +131,7 @@ export const periodicTable : any = {
     [0.000054, 0.007204, 0.992742]],
   Ee: [0, 0, [0.000548597], [1.0]],
   D: [1, 1, [1.007825032, 2.014101778], [0.001, 0.999]],
+  // Pseudo-element for isotope labeling: X = pure ¹³C (100 % abundance at 13.00335484 Da).
+  // Mirrors the entry added to pyMSpec's periodic_table in sm.engine.isotope_labels.
+  X: [6, -4, [13.00335484], [1.0]],
 }
