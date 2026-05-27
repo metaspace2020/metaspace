@@ -1,4 +1,5 @@
 """Tests for the isotopic_pattern REST helper, including labeled-element support."""
+
 import pytest
 import sm.engine.isotope_labels  # noqa: F401 — patches pyMSpec periodic_table
 
@@ -32,14 +33,16 @@ class TestGenerateUnlabeled:
 
     def test_unlabeled_produces_multiple_peaks(self):
         result = generate('C6H13O6', _INSTR, _RP, _AT_MZ, _CHARGE)
-        assert len(result['theor']['centroid_mzs']) > 1, 'Expected M+1, M+2, … peaks for natural glucose'
+        assert (
+            len(result['theor']['centroid_mzs']) > 1
+        ), 'Expected M+1, M+2, … peaks for natural glucose'
 
 
 class TestGenerateLabeled:
     def test_labeled_glucose_shift_equals_six_delta_masses(self):
-        """[U-¹³C6]-glucose + H = X6H13O6 must be exactly 6 × (¹³C − ¹²C) heavier than C6H13O6."""
+        """[U-¹³C6]-glucose + H = Cx6H13O6 must be exactly 6 × (¹³C − ¹²C) heavier than C6H13O6."""
         natural = generate('C6H13O6', _INSTR, _RP, _AT_MZ, _CHARGE)
-        labeled = generate('X6H13O6', _INSTR, _RP, _AT_MZ, _CHARGE)
+        labeled = generate('Cx6H13O6', _INSTR, _RP, _AT_MZ, _CHARGE)
 
         natural_mz0 = natural['theor']['centroid_mzs'][0]
         labeled_mz0 = labeled['theor']['centroid_mzs'][0]
@@ -49,33 +52,35 @@ class TestGenerateLabeled:
         # The M peak centroid is offset slightly by the M+1 tail, and this offset differs
         # between the natural compound (C contributes ~7 % M+1) and the labeled compound
         # (no C → much smaller M+1).  Allow 1 mDa of centroid-induced bias.
-        assert abs((labeled_mz0 - natural_mz0) - expected_shift) < 1e-3, (
-            f'Expected shift {expected_shift:.5f}, got {labeled_mz0 - natural_mz0:.5f}'
-        )
+        assert (
+            abs((labeled_mz0 - natural_mz0) - expected_shift) < 1e-3
+        ), f'Expected shift {expected_shift:.5f}, got {labeled_mz0 - natural_mz0:.5f}'
 
     def test_labeled_produces_multiple_peaks(self):
         """M+1, M+2 from unlabeled H/O atoms must still appear."""
-        result = generate('X6H13O6', _INSTR, _RP, _AT_MZ, _CHARGE)
-        assert len(result['theor']['centroid_mzs']) > 1, 'Expected isotope peaks from H/O natural isotopes'
+        result = generate('Cx6H13O6', _INSTR, _RP, _AT_MZ, _CHARGE)
+        assert (
+            len(result['theor']['centroid_mzs']) > 1
+        ), 'Expected isotope peaks from H/O natural isotopes'
 
     def test_profile_mzs_consistent_with_centroid_mzs(self):
         """Profile envelope must cover the same m/z range as the shifted centroids."""
-        result = generate('X6H13O6', _INSTR, _RP, _AT_MZ, _CHARGE)
+        result = generate('Cx6H13O6', _INSTR, _RP, _AT_MZ, _CHARGE)
         mz_min = result['mz_grid']['min_mz']
         mz_max = result['mz_grid']['max_mz']
         for mz in result['theor']['centroid_mzs']:
             assert mz_min < mz < mz_max, f'Centroid {mz} outside mz_grid [{mz_min}, {mz_max}]'
 
     def test_partial_label_shift(self):
-        """Partially labeled compound X2H4 should shift by 2 × (¹³C − ¹²C) vs C2H4."""
+        """Partially labeled compound Cx2H4 should shift by 2 × (¹³C − ¹²C) vs C2H4."""
         natural = generate('C2H4', _INSTR, _RP, _AT_MZ, _CHARGE)
-        labeled = generate('X2H4', _INSTR, _RP, _AT_MZ, _CHARGE)
+        labeled = generate('Cx2H4', _INSTR, _RP, _AT_MZ, _CHARGE)
         natural_mz0 = natural['theor']['centroid_mzs'][0]
         labeled_mz0 = labeled['theor']['centroid_mzs'][0]
         expected_shift = 2 * (M_13C - M_12C)
         assert abs((labeled_mz0 - natural_mz0) - expected_shift) < 5e-4
 
     def test_all_labeled_raises(self):
-        """A formula consisting entirely of X atoms has no natural isotope pattern."""
+        """A formula consisting entirely of labeled atoms has no natural isotope pattern."""
         with pytest.raises(ValueError, match='entirely of labeled elements'):
-            generate('X6', _INSTR, _RP, _AT_MZ, _CHARGE)
+            generate('Cx6', _INSTR, _RP, _AT_MZ, _CHARGE)

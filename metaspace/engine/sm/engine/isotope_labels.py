@@ -5,23 +5,39 @@ into pyMSpec's ``periodic_table`` at import time so that the rest of the
 pipeline (upload validation, mono-mass calculation, centroid generation)
 accepts them transparently.
 
-Currently supported labels
---------------------------
-``X``  –  pure ¹³C  (monoisotopic mass 13.00335484 Da)
+Each symbol uses the base-element letter followed by ``x`` (for "heavy
+isotope").  All entries have a single isotope at 100 % abundance (a
+delta-function mass), so the isotope pattern of a labeled compound equals
+the natural-isotope pattern of the *remaining* atoms with every centroid m/z
+shifted by ``total_labeled_mass / |charge|``.
+
+Supported labels
+----------------
+
++--------+---------+--------------------+--------------------------------------+
+| Symbol | Isotope | Mono. mass (Da)    | Typical use                          |
++--------+---------+--------------------+--------------------------------------+
+| ``Cx`` | ¹³C     | 13.00335484        | Carbon tracing (glucose, glutamine…) |
+| ``Nx`` | ¹⁵N     | 15.00010889        | Nitrogen labeling, amino acids       |
+| ``Hx`` | ²H      |  2.014101778       | Lipids, drugs, kinetic studies       |
+| ``Ox`` | ¹⁸O     | 17.99915961        | Proteomics, water labeling           |
+| ``Sx`` | ³⁴S     | 33.96786700        | Cysteine / methionine tracing        |
++--------+---------+--------------------+--------------------------------------+
 
 Usage in custom databases
 --------------------------
 Use the symbol exactly like a regular element in the database TSV::
 
-    id    name                  formula
-    1     [U-13C6]-glucose      X6H12O6
-    2     [1,2-13C2]-acetate    X2H3O2
+    id    name                    formula
+    1     [U-¹³C₆]-glucose        Cx6H12O6
+    2     [1,2-¹³C₂]-acetate      Cx2H3O2
+    3     [U-¹⁵N₂]-glutamine      Cx5H8Nx2O3
+    4     [U-²H₇]-cholesterol     C27H38HxO
 
 METASPACE computes the correct isotope pattern and m/z by treating each
-``X`` atom as a delta-function at 13.00335484 Da and convolving that with
-the natural-isotope pattern of the remaining atoms (which is equivalent to
-simply shifting every centroid m/z by the total labeled-element mass divided
-by the ion charge state).
+labeled atom as a delta-function at its exact isotopic mass and convolving
+that with the natural-isotope pattern of the remaining atoms (equivalent to
+a rigid m/z shift per unit charge).
 """
 
 import re
@@ -34,21 +50,27 @@ from pyMSpec.pyisocalc.periodic_table import periodic_table
 # ---------------------------------------------------------------------------
 
 #: Metadata for every pseudo-element symbol.
-#: ``mass`` is the exact monoisotopic mass used for the m/z shift.
+#: ``mass`` is the exact monoisotopic mass in Da used for the m/z shift.
+#: Masses are taken from the same source as pyMSpec's periodic_table entries
+#: (AME / IUPAC values, consistent with periodicTable.ts in the webapp).
 ISOTOPE_LABEL_ELEMENTS: Dict[str, dict] = {
-    'X': {
-        'description': 'pure ¹³C',
-        'natural_element': 'C',
-        'mass': 13.00335484,
-    },
+    'Cx': {'description': 'pure ¹³C',  'natural_element': 'C', 'mass': 13.00335484},
+    'Nx': {'description': 'pure ¹⁵N',  'natural_element': 'N', 'mass': 15.00010889},
+    'Hx': {'description': 'pure ²H',   'natural_element': 'H', 'mass':  2.014101778},
+    'Ox': {'description': 'pure ¹⁸O',  'natural_element': 'O', 'mass': 17.99915961},
+    'Sx': {'description': 'pure ³⁴S',  'natural_element': 'S', 'mass': 33.96786700},
 }
 
 # Register pseudo-elements into pyMSpec's periodic table.
 # Format: [atomic_number, valence, [mass_list], [abundance_list]]
-# Using a single-isotope entry (abundance = 1.0) so that parseSumFormula()
-# and calculate_mono_mz() both see the correct exact mass.
+# Single-isotope entry (abundance = 1.0) so parseSumFormula() and
+# calculate_mono_mz() both see the correct exact mass.
 _PERIODIC_TABLE_ENTRIES: Dict[str, list] = {
-    'X': [6, -4, [13.00335484], [1.0]],
+    'Cx': [6,  -4, [13.00335484],  [1.0]],
+    'Nx': [7,   5, [15.00010889],  [1.0]],
+    'Hx': [1,   1, [ 2.014101778], [1.0]],
+    'Ox': [8,  -2, [17.99915961],  [1.0]],
+    'Sx': [16, -2, [33.96786700],  [1.0]],
 }
 for _sym, _entry in _PERIODIC_TABLE_ENTRIES.items():
     if _sym not in periodic_table:
@@ -58,13 +80,11 @@ for _sym, _entry in _PERIODIC_TABLE_ENTRIES.items():
 # Formula helpers
 # ---------------------------------------------------------------------------
 
-# Per-symbol substitution patterns: match the symbol followed by an optional integer count.
-# Built once at import time and reused for every call.
+# Per-symbol substitution patterns: match the symbol followed by an optional
+# integer count.  Built once at import time and reused for every call.
 _LABEL_PATTERNS: Dict[str, re.Pattern] = {
     sym: re.compile(rf'{re.escape(sym)}(\d*)') for sym in ISOTOPE_LABEL_ELEMENTS
 }
-
-_ELEM_RE = re.compile(r'([A-Z][a-z]*)([0-9]*)')
 
 
 def extract_labeled_mass_shift(formula: str) -> Tuple[float, str]:
@@ -81,7 +101,7 @@ def extract_labeled_mass_shift(formula: str) -> Tuple[float, str]:
     reject ill-formed formulas as they did before.
 
     Args:
-        formula: Ion formula string, e.g. ``'H13O6X6'``.
+        formula: Ion formula string, e.g. ``'H13O6Cx6'``.
 
     Returns:
         ``(mass_shift, unlabeled_formula)`` where *mass_shift* is the total
@@ -90,7 +110,7 @@ def extract_labeled_mass_shift(formula: str) -> Tuple[float, str]:
 
     Examples::
 
-        >>> extract_labeled_mass_shift('H13O6X6')
+        >>> extract_labeled_mass_shift('H13O6Cx6')
         (78.02012904, 'H13O6')
         >>> extract_labeled_mass_shift('H13O6')
         (0.0, 'H13O6')

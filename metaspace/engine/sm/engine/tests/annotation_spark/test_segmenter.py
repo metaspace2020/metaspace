@@ -17,7 +17,7 @@ from tests.conftest import make_imzml_reader_mock
 
 
 def test_calculate_chunk_sp_n():
-    sample_mzs_bytes = 25 * 2 ** 20
+    sample_mzs_bytes = 25 * 2**20
     sample_sp_n = 10
     max_chunk_size_mb = 500
 
@@ -49,7 +49,7 @@ def test_define_ds_segments():
 
     mz_max = 100
     sample_mzs = np.linspace(0, mz_max, 100)
-    ds_segm_size_mb = 800 / (2 ** 20)  # 1600 b total data size / 2 segments, converted to MB
+    ds_segm_size_mb = 800 / (2**20)  # 1600 b total data size / 2 segments, converted to MB
     ds_segments = define_ds_segments(
         sample_mzs, sample_ratio=1, imzml_reader=imzml_reader, ds_segm_size_mb=ds_segm_size_mb
     )

@@ -131,7 +131,12 @@ export const periodicTable : any = {
     [0.000054, 0.007204, 0.992742]],
   Ee: [0, 0, [0.000548597], [1.0]],
   D: [1, 1, [1.007825032, 2.014101778], [0.001, 0.999]],
-  // Pseudo-element for isotope labeling: X = pure ¹³C (100 % abundance at 13.00335484 Da).
-  // Mirrors the entry added to pyMSpec's periodic_table in sm.engine.isotope_labels.
-  X: [6, -4, [13.00335484], [1.0]],
+  // Pseudo-elements for isotope labeling (100 % pure single isotope).
+  // Symbol convention: base-element letter + 'x'.  Mirrors the entries in
+  // sm.engine.isotope_labels (Python) which patches pyMSpec's periodic_table.
+  Cx: [6,  -4, [13.00335484],  [1.0]],  // ¹³C — carbon tracing
+  Nx: [7,   5, [15.00010889],  [1.0]],  // ¹⁵N — nitrogen labeling
+  Hx: [1,   1, [ 2.014101778], [1.0]],  // ²H  — lipids, drugs
+  Ox: [8,  -2, [17.99915961],  [1.0]],  // ¹⁸O  — proteomics / water labeling
+  Sx: [16, -2, [33.96786700],  [1.0]],  // ³⁴S  — cysteine / methionine tracing
 }

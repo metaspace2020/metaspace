@@ -39,16 +39,16 @@ def test_centroids_labeled_element_mz_shift(ds_config):
     isocalc_wrapper = IsocalcWrapper(ds_config)
 
     # Natural glucose +H: C6H12O6 → ion formula C6H13O6 (after adduct applied upstream)
-    # Labelled glucose +H: X6H12O6 → ion formula H13O6X6
+    # Labelled glucose +H: Cx6H12O6 → ion formula H13O6Cx6
     mzs_natural, ints_natural = isocalc_wrapper.centroids('C6H13O6')
-    mzs_labeled, ints_labeled = isocalc_wrapper.centroids('H13O6X6')
+    mzs_labeled, ints_labeled = isocalc_wrapper.centroids('H13O6Cx6')
 
     assert mzs_natural is not None, 'natural glucose centroids should not be None'
     assert mzs_labeled is not None, '13C-glucose centroids should not be None'
 
     # Expected m/z shift: 6 × (M_13C − M_12C)
-    M_12C = periodic_table['C'][2][0]   # 12.0 (exactly)
-    M_13C = periodic_table['X'][2][0]   # 13.00335484
+    M_12C = periodic_table['C'][2][0]  # 12.0 (exactly)
+    M_13C = periodic_table['Cx'][2][0]  # 13.00335484
     expected_shift = 6 * (M_13C - M_12C)
 
     # The monoisotopic (highest-intensity) peak carries the shift.
@@ -68,7 +68,7 @@ def test_centroids_all_labeled_returns_none(ds_config):
     """A formula made entirely of labeled atoms has no natural-isotope backbone
     and must return (None, None) rather than crash."""
     isocalc_wrapper = IsocalcWrapper(ds_config)
-    mzs, ints = isocalc_wrapper.centroids('X6')
+    mzs, ints = isocalc_wrapper.centroids('Cx6')
     assert mzs is None and ints is None
 
 

@@ -63,28 +63,28 @@ def test_generate_ion_formula_with_charge_only_adduct(formula, adduct):
 
 
 def test_generate_ion_formula_with_labeled_element():
-    # X = pure 13C; X6H12O6 is fully 13C-labelled glucose.
-    # After +H adduct the ion formula should contain X6, H13, O6 (in CHNOPS order).
-    ion_formula = generate_ion_formula('X6H12O6', '+H')
-    assert ion_formula == 'H13O6X6'
+    # Cx = pure ¹³C; Cx6H12O6 is fully ¹³C-labelled glucose.
+    # After +H adduct the ion formula should contain Cx6, H13, O6 (in CHNOPS order).
+    ion_formula = generate_ion_formula('Cx6H12O6', '+H')
+    assert ion_formula == 'H13O6Cx6'
 
 
 def test_generate_ion_formula_labeled_rejects_negative():
-    # Removing more X than are present should raise ParseFormulaError.
+    # Removing more Cx than are present should raise ParseFormulaError.
     with pytest.raises(ParseFormulaError):
-        generate_ion_formula('X2H6O', '-X3')
+        generate_ion_formula('Cx2H6O', '-Cx3')
 
 
 def test_calculate_mono_mz_labeled_element():
-    # [U-13C6]-glucose ion formula after +H adduct.
-    # Monoisotopic m/z = 6*M(13C) + 13*M(H) + 6*M(O) - M(electron)
-    M_13C = periodic_table['X'][2][0]   # 13.00335484
-    M_H = periodic_table['H'][2][0]     # 1.007825032
-    M_O = periodic_table['O'][2][0]     # 15.994914620
-    M_e = periodic_table['Ee'][2][0]    # 0.000548580
+    # [U-¹³C₆]-glucose ion formula after +H adduct.
+    # Monoisotopic m/z = 6*M(¹³C) + 13*M(H) + 6*M(O) - M(electron)
+    M_13C = periodic_table['Cx'][2][0]  # 13.00335484
+    M_H = periodic_table['H'][2][0]  # 1.007825032
+    M_O = periodic_table['O'][2][0]  # 15.994914620
+    M_e = periodic_table['Ee'][2][0]  # 0.000548580
 
     expected_mz = 6 * M_13C + 13 * M_H + 6 * M_O - M_e
-    assert calculate_mono_mz('H13O6X6', '+') == pytest.approx(expected_mz, rel=1e-6)
+    assert calculate_mono_mz('H13O6Cx6', '+') == pytest.approx(expected_mz, rel=1e-6)
 
 
 def test_format_ion_formula():

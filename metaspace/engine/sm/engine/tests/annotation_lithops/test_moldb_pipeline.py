@@ -8,6 +8,7 @@ from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, load_cobjs
 from sm.engine.annotation_lithops.moldb_pipeline import get_moldb_centroids
 
+
 # Mock CentroidsCacheEntry.lock so that a DB connection isn't needed
 @patch('sm.engine.annotation_lithops.moldb_pipeline.CentroidsCacheEntry.lock')
 def test_get_moldb_centroids(LockMock, executor: Executor, sm_config, ds_config):

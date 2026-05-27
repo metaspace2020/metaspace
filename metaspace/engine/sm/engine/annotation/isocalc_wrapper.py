@@ -79,8 +79,8 @@ class IsocalcWrapper:
             # noinspection PyPep8Naming
             cpyMSpec = cpyMSpec_0_4_2  # pylint: disable=invalid-name
 
-        # Isotope-labeled pseudo-elements (e.g. X = pure ¹³C) contribute a
-        # fixed mass shift with no isotope spread.  Strip them from the formula,
+        # Isotope-labeled pseudo-elements (e.g. Cx = pure ¹³C, Nx = pure ¹⁵N)
+        # contribute a fixed mass shift with no isotope spread.  Strip them from the formula,
         # compute the natural-isotope pattern for the remaining atoms with
         # cpyMSpec, then shift each centroid m/z by the labeled-element mass
         # divided by the charge state.

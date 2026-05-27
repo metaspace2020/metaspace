@@ -82,8 +82,8 @@ class Centroids:
 
 
 def generate(ion, instr, res_power, at_mz, charge):
-    # Isotope-labeled pseudo-elements (e.g. X = pure ¹³C) contribute a fixed
-    # mass offset with no isotope spread.  Strip them from the ion formula,
+    # Isotope-labeled pseudo-elements (e.g. Cx = pure ¹³C, Nx = pure ¹⁵N)
+    # contribute a fixed mass offset with no isotope spread.  Strip them from the ion formula,
     # compute the natural-isotope pattern for the remaining atoms, then shift
     # every centroid by labeled_mass / |charge|.
     labeled_mass_shift, unlabeled_ion = extract_labeled_mass_shift(ion)
