@@ -105,8 +105,8 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.validate_load_ds()
 
         # Check pixel limits
-        nz_pixel_limit = 700000
-        pixel_limit = 1000000
+        nz_pixel_limit = 2000000
+        pixel_limit = 4500000
         nz_pixels = self.imzml_reader.n_spectra
         n_pixels = self.imzml_reader.h * self.imzml_reader.w
 
