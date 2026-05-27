@@ -54,11 +54,11 @@ from pyMSpec.pyisocalc.periodic_table import periodic_table
 #: Masses are taken from the same source as pyMSpec's periodic_table entries
 #: (AME / IUPAC values, consistent with periodicTable.ts in the webapp).
 ISOTOPE_LABEL_ELEMENTS: Dict[str, dict] = {
-    'Cx': {'description': 'pure ¹³C',  'natural_element': 'C', 'mass': 13.00335484},
-    'Nx': {'description': 'pure ¹⁵N',  'natural_element': 'N', 'mass': 15.00010889},
-    'Hx': {'description': 'pure ²H',   'natural_element': 'H', 'mass':  2.014101778},
-    'Ox': {'description': 'pure ¹⁸O',  'natural_element': 'O', 'mass': 17.99915961},
-    'Sx': {'description': 'pure ³⁴S',  'natural_element': 'S', 'mass': 33.96786700},
+    'Cx': {'description': 'pure ¹³C', 'natural_element': 'C', 'mass': 13.00335484},
+    'Nx': {'description': 'pure ¹⁵N', 'natural_element': 'N', 'mass': 15.00010889},
+    'Hx': {'description': 'pure ²H', 'natural_element': 'H', 'mass': 2.014101778},
+    'Ox': {'description': 'pure ¹⁸O', 'natural_element': 'O', 'mass': 17.99915961},
+    'Sx': {'description': 'pure ³⁴S', 'natural_element': 'S', 'mass': 33.96786700},
 }
 
 # Register pseudo-elements into pyMSpec's periodic table.
@@ -66,11 +66,11 @@ ISOTOPE_LABEL_ELEMENTS: Dict[str, dict] = {
 # Single-isotope entry (abundance = 1.0) so parseSumFormula() and
 # calculate_mono_mz() both see the correct exact mass.
 _PERIODIC_TABLE_ENTRIES: Dict[str, list] = {
-    'Cx': [6,  -4, [13.00335484],  [1.0]],
-    'Nx': [7,   5, [15.00010889],  [1.0]],
-    'Hx': [1,   1, [ 2.014101778], [1.0]],
-    'Ox': [8,  -2, [17.99915961],  [1.0]],
-    'Sx': [16, -2, [33.96786700],  [1.0]],
+    'Cx': [6, -4, [13.00335484], [1.0]],
+    'Nx': [7, 5, [15.00010889], [1.0]],
+    'Hx': [1, 1, [2.014101778], [1.0]],
+    'Ox': [8, -2, [17.99915961], [1.0]],
+    'Sx': [16, -2, [33.96786700], [1.0]],
 }
 for _sym, _entry in _PERIODIC_TABLE_ENTRIES.items():
     if _sym not in periodic_table:
