@@ -1,12 +1,16 @@
 import pytest
 from itertools import product
 from pyMSpec.pyisocalc import pyisocalc
+from pyMSpec.pyisocalc.periodic_table import periodic_table
+
+import sm.engine.isotope_labels  # noqa: F401 — ensure periodic table is patched before tests
 
 from sm.engine.formula_parser import (
     generate_ion_formula,
     safe_generate_ion_formula,
     ParseFormulaError,
     format_ion_formula,
+    calculate_mono_mz,
 )
 
 
@@ -56,6 +60,31 @@ def test_generate_ion_formula_with_charge_only_adduct(formula, adduct):
     ion_formula = safe_generate_ion_formula(formula, adduct)
 
     assert ion_formula == formula
+
+
+def test_generate_ion_formula_with_labeled_element():
+    # Cx = pure ¹³C; Cx6H12O6 is fully ¹³C-labelled glucose.
+    # After +H adduct the ion formula should contain Cx6, H13, O6 (in CHNOPS order).
+    ion_formula = generate_ion_formula('Cx6H12O6', '+H')
+    assert ion_formula == 'H13O6Cx6'
+
+
+def test_generate_ion_formula_labeled_rejects_negative():
+    # Removing more Cx than are present should raise ParseFormulaError.
+    with pytest.raises(ParseFormulaError):
+        generate_ion_formula('Cx2H6O', '-Cx3')
+
+
+def test_calculate_mono_mz_labeled_element():
+    # [U-¹³C₆]-glucose ion formula after +H adduct.
+    # Monoisotopic m/z = 6*M(¹³C) + 13*M(H) + 6*M(O) - M(electron)
+    M_13C = periodic_table['Cx'][2][0]  # 13.00335484
+    M_H = periodic_table['H'][2][0]  # 1.007825032
+    M_O = periodic_table['O'][2][0]  # 15.994914620
+    M_e = periodic_table['Ee'][2][0]  # 0.000548580
+
+    expected_mz = 6 * M_13C + 13 * M_H + 6 * M_O - M_e
+    assert calculate_mono_mz('H13O6Cx6', '+') == pytest.approx(expected_mz, rel=1e-6)
 
 
 def test_format_ion_formula():
