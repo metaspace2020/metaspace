@@ -189,9 +189,11 @@ export const SegmentationVisualization = defineComponent({
       segmentOpacity: 1.0,
     })
 
-    // State for pan and zoom functionality
+    // State for pan and zoom functionality.
+    // `baseScale` is the fit-to-container scale; `scale` is the live transform scale.
     const canvasState = reactive({
       scale: 1,
+      baseScale: 1,
       translateX: 0,
       translateY: 0,
       isDragging: false,
@@ -207,6 +209,15 @@ export const SegmentationVisualization = defineComponent({
         console.error('Failed to parse segmentation data:', error)
         return null
       }
+    })
+
+    // Only show clusters that actually cover pixels — after smoothing/denoising a
+    // cluster can vanish, and an empty (0%) legend entry is misleading.
+    const visibleSegmentSummary = computed(() => {
+      if (!segmentationData.value) return []
+      return segmentationData.value.segment_summary.filter(
+        (segment) => segment.coverage_fraction > 0 && segment.size_px > 0
+      )
     })
 
     const labelMapImage = computed(() => {
@@ -359,7 +370,10 @@ export const SegmentationVisualization = defineComponent({
         const newScale = Math.max(canvasState.minScale, Math.min(canvasState.maxScale, canvasState.scale * scaleFactor))
 
         if (newScale !== canvasState.scale) {
-          // Zoom towards mouse position
+          // Zoom towards the cursor. The viewbox is anchored at the wrapper's
+          // top-left (transform-origin 0 0), so wrapper-relative mouse coords map
+          // directly to the translate space — keeping the point under the cursor
+          // fixed and avoiding diagonal drift.
           const scaleChange = newScale / canvasState.scale
           canvasState.translateX = mouseX - (mouseX - canvasState.translateX) * scaleChange
           canvasState.translateY = mouseY - (mouseY - canvasState.translateY) * scaleChange
@@ -380,11 +394,31 @@ export const SegmentationVisualization = defineComponent({
       viewBox.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`
     }
 
-    const resetCanvasTransform = () => {
-      canvasState.scale = 1
-      canvasState.translateX = 0
-      canvasState.translateY = 0
+    // Fit the label map to its wrapper and centre it, mirroring how ion images
+    // fill their container. Used on first render and on "Reset view" so the map
+    // doesn't end up tiny next to the legend.
+    const fitToContainer = () => {
+      const canvas = canvasRef.value
+      const viewBox = viewBoxRef.value
+      const wrapper = viewBox?.parentElement
+      if (!canvas || !wrapper || !canvas.width || !canvas.height) return
+
+      const containerW = wrapper.clientWidth
+      const containerH = wrapper.clientHeight
+      if (!containerW || !containerH) return
+
+      const fitScale = Math.min(containerW / canvas.width, containerH / canvas.height) * 0.95
+      canvasState.baseScale = fitScale
+      canvasState.minScale = fitScale * 0.2
+      canvasState.maxScale = fitScale * 12
+      canvasState.scale = fitScale
+      canvasState.translateX = (containerW - canvas.width * fitScale) / 2
+      canvasState.translateY = (containerH - canvas.height * fitScale) / 2
       updateCanvasTransform()
+    }
+
+    const resetCanvasTransform = () => {
+      fitToContainer()
     }
 
     const hexToRgb = (hex: string) => {
@@ -509,6 +543,7 @@ export const SegmentationVisualization = defineComponent({
         ;(canvas as any).segmentHeight = height
 
         renderSegmentationCanvas()
+        nextTick(() => fitToContainer())
       } catch (error) {
         console.error('Error loading segmentation image:', error)
         imageError.value = true
@@ -534,18 +569,19 @@ export const SegmentationVisualization = defineComponent({
       const alpha = Math.round(255 * opticalImageState.segmentOpacity)
       const imageData = ctx.createImageData(width, height)
 
-      const segmentColors =
-        segmentationData.value?.segment_summary.map((segment) => {
-          const color = getSegmentColor(segment.id)
-          return hexToRgb(color)
-        }) || []
+      // Look up colours by segment id (not array position) so non-contiguous ids —
+      // e.g. when an empty cluster was dropped — still render correctly.
+      const segmentColorById = new Map<number, { r: number; g: number; b: number }>()
+      segmentationData.value?.segment_summary.forEach((segment) => {
+        segmentColorById.set(segment.id, hexToRgb(getSegmentColor(segment.id)))
+      })
 
       for (let i = 0; i < segmentData.length; i++) {
         const segmentId = segmentData[i]
         const pixelIndex = i * 4
+        const color = segmentColorById.get(segmentId)
 
-        if (segmentId >= 0 && segmentId < segmentColors.length && !segmentState.hiddenSegments.has(segmentId)) {
-          const color = segmentColors[segmentId]
+        if (color && !segmentState.hiddenSegments.has(segmentId)) {
           imageData.data[pixelIndex] = color.r
           imageData.data[pixelIndex + 1] = color.g
           imageData.data[pixelIndex + 2] = color.b
@@ -574,22 +610,28 @@ export const SegmentationVisualization = defineComponent({
         const progressBarWidth = 60
         const legendWidth = 280
 
-        // Only count visible segments for height calculation
-        const visibleSegments = segmentationData.value.segment_summary.filter(
+        // Only count visible segments for height calculation (also drop empty clusters)
+        const visibleSegments = visibleSegmentSummary.value.filter(
           (segment) => !segmentState.hiddenSegments.has(segment.id)
         )
 
         const legendHeight = legendPadding * 2 + visibleSegments.length * (itemHeight + itemSpacing) - itemSpacing
 
-        // Set canvas size to accommodate both image and legend side by side
-        const imageWidth = canvas.width
-        const imageHeight = canvas.height
+        // Upscale the segmentation map so it dominates the exported image rather
+        // than the legend. Label maps are low-resolution, so without this the
+        // fixed-width legend ends up larger than the map itself. Never downscale.
+        const mapScale = Math.max(1, 700 / Math.max(canvas.width, canvas.height))
+        const imageWidth = canvas.width * mapScale
+        const imageHeight = canvas.height * mapScale
         const spacing = 20 // Space between image and legend
         const canvasWidth = imageWidth + spacing + legendWidth
         const canvasHeight = Math.max(imageHeight, legendHeight)
 
         compositeCanvas.width = canvasWidth
         compositeCanvas.height = canvasHeight
+
+        // Keep upscaled pixels crisp (label maps are categorical, not photographic)
+        ctx.imageSmoothingEnabled = false
 
         // Leave background transparent (no fill needed for transparency)
 
@@ -600,14 +642,12 @@ export const SegmentationVisualization = defineComponent({
         if (opticalImg && props.opticalImage?.url && props.showOpticalImage && !opticalImageError.value) {
           ctx.globalAlpha = opticalImageState.opticalOpacity
 
-          // Apply transformation if needed
+          ctx.setTransform(1, 0, 0, 1, 0, imageY)
+          ctx.scale(mapScale, mapScale)
+          // Apply optical→ion-image transformation on top of the map upscale
           if (props.opticalImage.transform) {
             const t = props.opticalImage.transform
-            // Adjust transformation to account for vertical centering
-            ctx.setTransform(t[0][0], t[1][0], t[0][1], t[1][1], t[0][2], t[1][2] + imageY)
-          } else {
-            // Just translate for centering if no transformation
-            ctx.setTransform(1, 0, 0, 1, 0, imageY)
+            ctx.transform(t[0][0], t[1][0], t[0][1], t[1][1], t[0][2], t[1][2])
           }
 
           ctx.drawImage(opticalImg, 0, 0)
@@ -617,9 +657,12 @@ export const SegmentationVisualization = defineComponent({
           ctx.globalAlpha = 1.0
         }
 
-        // Draw segmentation canvas (centered vertically)
+        // Draw segmentation canvas (centered vertically, upscaled)
         ctx.globalAlpha = opticalImageState.segmentOpacity
-        ctx.drawImage(canvas, 0, imageY)
+        ctx.setTransform(1, 0, 0, 1, 0, imageY)
+        ctx.scale(mapScale, mapScale)
+        ctx.drawImage(canvas, 0, 0)
+        ctx.setTransform(1, 0, 0, 1, 0, 0)
         ctx.globalAlpha = 1.0
 
         // Don't create legend if no visible segments
@@ -792,7 +835,7 @@ export const SegmentationVisualization = defineComponent({
       return (
         <div class="segmentation-legend">
           <div class="segments-list">
-            {segmentationData.value.segment_summary.map((segment) => (
+            {visibleSegmentSummary.value.map((segment) => (
               <div key={segment.id} class="segment-item">
                 <div class="segment-row">
                   <div class="segment-info">
