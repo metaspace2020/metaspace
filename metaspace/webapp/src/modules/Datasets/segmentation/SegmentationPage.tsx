@@ -14,7 +14,7 @@ import {
   ElOption,
   ElPopover,
 } from '../../../lib/element-plus'
-import { Loading, ArrowLeft } from '@element-plus/icons-vue'
+import { Loading, ArrowLeft, QuestionFilled } from '@element-plus/icons-vue'
 import './SegmentationPage.scss'
 import {
   getDatasetByIdQuery,
@@ -226,6 +226,22 @@ export default defineComponent({
       return (segmentation.name && segmentation.name.trim()) || `Cluster ${segmentation.segmentIndex + 1}`
     }
 
+    const renderHelpIcon = (text: string) => (
+      <ElPopover
+        trigger="hover"
+        placement="top"
+        width={260}
+        v-slots={{
+          reference: () => (
+            <ElIcon class="metadata-help-icon ml-1" onClick={(e: MouseEvent) => e.stopPropagation()}>
+              <QuestionFilled />
+            </ElIcon>
+          ),
+          default: () => <span class="text-sm">{text}</span>,
+        }}
+      />
+    )
+
     const renderTableWrapper = () => {
       if (!segmentationData.value) return null
 
@@ -314,8 +330,12 @@ export default defineComponent({
           class="ds-collapse el-collapse-item--no-padding relative"
           v-slots={{
             title: () => (
-              <div class="collapse-header">
+              <div class="collapse-header !justify-start">
                 <span class="collapse-title">Segmentation heatmap</span>
+                {renderHelpIcon(
+                  'Top 3 annotations per cluster, ranked by AUC score and scaled within each cluster using ' +
+                    'min-max normalization.'
+                )}
               </div>
             ),
           }}
@@ -323,7 +343,8 @@ export default defineComponent({
           <div class="collapse-content">
             <SegmentationHeatmap
               segmentationData={segmentationData.value}
-              isLoading={loading.value}
+              annotations={state.annotations}
+              isLoading={loading.value || state.isLoading}
               isVisible={true}
               segmentations={segmentations.value || []}
               onIonSelected={handleIonSelected}
@@ -417,8 +438,12 @@ export default defineComponent({
           class="ds-collapse el-collapse-item--no-padding relative"
           v-slots={{
             title: () => (
-              <div class="collapse-header">
+              <div class="collapse-header !justify-start">
                 <span class="collapse-title">Segmentation diagnostics</span>
+                {renderHelpIcon(
+                  'How confidently each pixel was assigned to a cluster by the GMM model. The dashed line shows ' +
+                    'the median confidence threshold.'
+                )}
               </div>
             ),
           }}
