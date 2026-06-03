@@ -518,7 +518,7 @@ export default defineComponent({
               <ElAlert
                 title="Error loading segmentation data"
                 type="error"
-                description={error.value.message}
+                description="Something went wrong while loading the segmentation results. Please try again later."
                 show-icon
                 closable={false}
               />
