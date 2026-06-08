@@ -24,7 +24,7 @@ psycopg2-binary==2.8.6
 cherrypy<9
 redis==5.0.8
 scikit-learn==0.23.2
-pyspark[sql]==3.0.1
+pyspark[sql]==3.4.4
 pyarrow==1.0.1
 pysparkling==0.6.0
 s3fs
