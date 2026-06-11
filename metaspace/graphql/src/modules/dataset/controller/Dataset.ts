@@ -30,6 +30,7 @@ import { DatasetEnrichment as DatasetEnrichmentModel, EnrichmentDB } from '../..
 import * as moment from 'moment/moment'
 import { getDeviceInfo, hashIp, performAction } from '../../plan/util/canPerformAction'
 import isRateLimited from '../../../utils/redis'
+import { resolveImageUrl } from '../../../utils/imageStorageUrl'
 
 interface DbDataset {
   id: string;
@@ -45,7 +46,7 @@ const getDbDatasetById = async(ctx: Context, id: string): Promise<DbDataset | nu
   const dataloader = ctx.contextCacheGet('getDbDatasetByIdDataLoader', [], () => {
     return new DataLoader(async(datasetIds: string[]): Promise<any[]> => {
       const results = await ctx.entityManager.query(`
-      SELECT ds.id, ds.thumbnail_url, ds.ion_thumbnail_url, 
+      SELECT ds.id, ds.thumbnail, ds.thumbnail_url, ds.ion_thumbnail, ds.ion_thumbnail_url,
              ds.transform, ds.roi, gds.external_links
       FROM public.dataset ds
       JOIN graphql.dataset gds on ds.id = gds.id
@@ -69,7 +70,12 @@ const getEnrichment = async(ctx: Context, datasetId: string): Promise<any> => {
 
 export const thumbnailOpticalImageUrl = async(ctx: Context, datasetId: string) => {
   const result = await getDbDatasetById(ctx, datasetId)
-  return result?.thumbnail_url ?? null
+  return resolveImageUrl({
+    imageType: 'optical',
+    dsId: datasetId,
+    imageId: result?.thumbnail,
+    storedUrl: result?.thumbnail_url,
+  })
 }
 
 export const checkIfPublishedOrUnderReview = async(dsId: string, ctx: Context) => {
@@ -419,9 +425,18 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   async opticalImages(ds, { type }: { type?: string }, ctx) {
     const opticalImages = await getOpticalImagesByDsId(ctx, ds._source.ds_id)
+    const resolved = opticalImages.map(img => ({
+      ...img,
+      url: resolveImageUrl({
+        imageType: 'optical',
+        dsId: ds._source.ds_id,
+        imageId: (img as any).id,
+        storedUrl: img.url,
+      }),
+    }))
     return type != null
-      ? opticalImages.filter(optImg => optImg.type === type)
-      : opticalImages
+      ? resolved.filter(optImg => optImg.type === type)
+      : resolved
   },
 
   async opticalImageTransform(ds, args, ctx) {
@@ -431,7 +446,12 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   async ionThumbnailUrl(ds, args, ctx) {
     const result = await getDbDatasetById(ctx, ds._source.ds_id)
-    return result?.ion_thumbnail_url ?? null
+    return resolveImageUrl({
+      imageType: 'thumb',
+      dsId: ds._source.ds_id,
+      imageId: result?.ion_thumbnail,
+      storedUrl: result?.ion_thumbnail_url,
+    })
   },
 
   async externalLinks(ds, args, ctx) {

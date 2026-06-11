@@ -232,12 +232,26 @@ get_ion_images_for_analysis: _GetIonImagesForAnalysis
 
 @retry_on_exception(ClientError)
 def configure_bucket(sm_config: Dict):
-    """Creates the image storage bucket if needed and sets the ACL."""
+    """Creates the image storage bucket if needed.
+
+    On AWS the bucket is private and served via CloudFront (Origin Access Control);
+    its bucket policy and Block Public Access are managed in AWS, NOT here, so we
+    must not (re)apply a public-read policy on daemon startup. For local MinIO we
+    keep the public-read policy so images load without CloudFront.
+    """
     bucket_name = sm_config['image_storage']['bucket']
     logger.info(f'Configuring image storage bucket: {bucket_name}')
 
     s3_client = get_s3_client(sm_config)
     create_bucket(bucket_name, s3_client)
+
+    is_s3_bucket = 'aws' in sm_config  # False when MinIO is used instead of AWS S3
+    if is_s3_bucket:
+        logger.info(
+            f'Bucket {bucket_name} is private and served via CloudFront; '
+            f'skipping public bucket policy/CORS (managed in AWS).'
+        )
+        return
 
     bucket_policy = {
         'Version': '2012-10-17',
@@ -251,20 +265,6 @@ def configure_bucket(sm_config: Dict):
         ],
     }
     s3_client.put_bucket_policy(Bucket=bucket_name, Policy=json.dumps(bucket_policy))
-
-    is_s3_bucket = 'aws' in sm_config  # False when minio is used instead of AWS S3
-    if is_s3_bucket:
-        cors_configuration = {
-            'CORSRules': [
-                {
-                    'AllowedHeaders': ['*'],
-                    'AllowedMethods': ['GET'],
-                    'AllowedOrigins': ['*'],
-                    'MaxAgeSeconds': 3000,
-                }
-            ]
-        }
-        s3_client.put_bucket_cors(Bucket=bucket_name, CORSConfiguration=cors_configuration)
 
 
 def init(sm_config: Dict):
