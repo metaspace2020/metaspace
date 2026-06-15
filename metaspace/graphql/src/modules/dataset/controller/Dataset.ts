@@ -17,7 +17,7 @@ import config from '../../../utils/config'
 import { Context } from '../../../context'
 import getGroupAdminNames from '../../group/util/getGroupAdminNames'
 import * as DataLoader from 'dataloader'
-import { esDatasetByID } from '../../../../esConnector'
+import { esCountResults, esDatasetByID } from '../../../../esConnector'
 import { ExternalLink } from '../../project/ExternalLink'
 import canViewEsDataset from '../operation/canViewEsDataset'
 import { MolecularDB } from '../../moldb/model'
@@ -343,15 +343,29 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
         el => ds._source.ds_moldb_ids?.includes(el.db.id)
               && visibleDatabaseIds.includes(el.db.id)
       )
+      const analysisVersion = ds._source.ds_config?.analysis_version ?? 1
+      const maxFdrLvl = Math.max(...inpFdrLvls)
       for (const el of annotCounts) {
         const filteredFdrLevels = el.counts.filter((lvlObj: any) => inpFdrLvls.includes(lvlObj.level))
         const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
           .findDatabaseById(ctx, el.db.id)
+        // Targeted databases have no FDR: their annotations are indexed with fdr=-1, so the
+        // pre-computed per-level counts above are all zero. They pass every FDR threshold, so the
+        // real count is recovered from the annotation index and exposed via `total`.
+        const isTargeted = !!database.targeted && analysisVersion === 1
+        const total = isTargeted
+          ? await esCountResults({
+              datasetFilter: { ids: ds._source.ds_id },
+              filter: { databaseId: el.db.id },
+            }, 'annotation', ctx.user)
+          : (filteredFdrLevels.find((c: any) => c.level === maxFdrLvl)?.n ?? 0)
         counts.push({
           databaseId: el.db.id,
           dbName: database.name,
           dbVersion: database.version,
           counts: filteredFdrLevels,
+          isTargeted,
+          total,
         })
       }
     }
@@ -390,12 +404,22 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       if (databaseId != null) {
         const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
           .findDatabaseById(ctx, databaseId)
+        const analysisVersion = ds._source.ds_config?.analysis_version ?? 1
+        const isTargeted = !!database.targeted && analysisVersion === 1
+        const total = isTargeted
+          ? await esCountResults({
+              datasetFilter: { ids: ds._source.ds_id },
+              filter: { databaseId },
+            }, 'annotation', ctx.user)
+          : Math.max(...outFdrCounts, 0)
         return {
           databaseId: databaseId,
           dbName: database.name,
           dbVersion: database.version,
           levels: outFdrLvls,
           counts: outFdrCounts,
+          isTargeted,
+          total,
         }
       }
     }

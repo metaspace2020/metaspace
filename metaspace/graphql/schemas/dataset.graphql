@@ -74,6 +74,8 @@ type FdrCounts {
   dbVersion: String!
   levels: [Float!]!
   counts: [Float!]!
+  isTargeted: Boolean!
+  total: Int!
 }
 
 type FdrSingleCount {
@@ -85,6 +87,8 @@ type AnnotationCounts {
   dbName: String!
   dbVersion: String!
   counts: [FdrSingleCount!]!
+  isTargeted: Boolean!
+  total: Int!
 }
 
 type Person {

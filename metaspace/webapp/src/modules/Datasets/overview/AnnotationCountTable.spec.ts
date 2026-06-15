@@ -27,6 +27,8 @@ describe('AnnotationCountTable', () => {
       databaseId: 1,
       dbName: 'HMDB',
       dbVersion: 'v4',
+      isTargeted: false,
+      total: 224,
       counts: [
         {
           level: 5,
@@ -50,6 +52,8 @@ describe('AnnotationCountTable', () => {
       databaseId: 6,
       dbName: 'ChEBI',
       dbVersion: '2018-01',
+      isTargeted: false,
+      total: 190,
       counts: [
         {
           level: 5,
@@ -110,7 +114,7 @@ describe('AnnotationCountTable', () => {
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.findAll('th').length).toBe(mockFdrLevels.length + 1)
+    expect(wrapper.findAll('th').length).toBe(mockFdrLevels.length + 2)
   })
 
   it('it should render the correct links to navigate to annotation', async () => {
@@ -132,8 +136,8 @@ describe('AnnotationCountTable', () => {
         row.findAll('.mock-router-link').forEach((col, colIndex) => {
           const toAttr = col.attributes('to')
           const toProp = JSON.parse(toAttr)
-          if (colIndex !== 0) {
-            // db name links do not filter by fdr
+          if (colIndex !== 0 && colIndex <= mockFdrLevels.length) {
+            // db name link (colIndex 0) and Total link (last) do not filter by a single fdr level
             expect(toProp.query.fdr).toBe((mockFdrLevels[colIndex - 1] / 100).toString())
           }
           expect(toProp.params.dataset_id).toBe('xxxx')
@@ -149,11 +153,13 @@ describe('AnnotationCountTable', () => {
       .forEach((col, colIndex) => {
         const toAttr = col.attributes('to')
         const toProp = JSON.parse(toAttr)
-        expect(toProp.query.fdr).toBe((mockFdrLevels[colIndex] / 100).toString())
+        if (colIndex < mockFdrLevels.length) {
+          expect(toProp.query.fdr).toBe((mockFdrLevels[colIndex] / 100).toString())
+        }
         expect(toProp.params.dataset_id).toBe('xxxx')
       })
 
-    expect(wrapper.findAll('th').length).toBe(mockFdrLevels.length + 1)
+    expect(wrapper.findAll('th').length).toBe(mockFdrLevels.length + 2)
     expect(JSON.parse(wrapper.findAll('.mock-router-link').at(1).attributes('to')).params.dataset_id).toBe('xxxx')
   })
 
@@ -188,8 +194,9 @@ describe('AnnotationCountTable', () => {
       .findAll('td')
       .slice(1)
       .forEach((footerItem, index) => {
+        // The last footer cell is the Total column — sum of per-database totals.
         const reducer = (accumulator: number, currentValue: DatasetAnnotationCount) => {
-          return accumulator + currentValue.counts[index].n
+          return accumulator + (index < mockFdrLevels.length ? currentValue.counts[index].n : currentValue.total)
         }
         const sum = mockAnnotationCounts.reduce(reducer, 0)
         expect(parseInt(footerItem.text(), 10)).toBe(sum)
@@ -213,8 +220,9 @@ describe('AnnotationCountTable', () => {
       .findAll('td')
       .slice(1)
       .forEach((footerItem, index) => {
+        // The last footer cell is the Total column — sum of per-database totals.
         const reducer = (accumulator: number, currentValue: DatasetAnnotationCount) => {
-          return accumulator + currentValue.counts[index].n
+          return accumulator + (index < mockFdrLevels.length ? currentValue.counts[index].n : currentValue.total)
         }
         const sum = mockAnnotationCounts.reduce(reducer, 0)
         expect(parseInt(footerItem.text(), 10)).toBe(sum)

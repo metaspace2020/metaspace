@@ -266,6 +266,8 @@ export const metadataExportQuery = gql`
         dbVersion
         levels
         counts
+        isTargeted
+        total
       }
       rawOpticalImageUrl
     }
