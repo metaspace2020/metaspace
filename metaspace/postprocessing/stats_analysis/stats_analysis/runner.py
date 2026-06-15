@@ -1,35 +1,12 @@
 """Orchestrate a real stats run from an engine-prepared payload.
 
-Inputs:
-  payload['prep']         -> { samples, intensities, ions_total, filterChain }
-                              samples are PER-REGION rows carrying regionKey,
-                              sampleId, datasetId, labelGroupName, condition,
-                              biologicalReplicateId, technicalReplicateId,
-                              batchId, tic.
-                              intensities is keyed by regionKey, not sampleId.
-  payload['label_groups'] -> [{ name, color }, ...] from the experiment row.
-  payload['filters']      -> { fdr, moldb_ids, adducts, min_detection }.
-  payload['datasets']     -> region metadata (used by `inferred_test` to
-                              pick a test from the design matrix).
-
-Output: { inferred_test, results, run_qc } per the engine callback contract.
-
-Test inference (subset of design1.csv):
-  - 2 conditions, paired by biologicalReplicateId across conditions
-                             -> WILCOXON_PAIRED
-  - 2 conditions, unpaired   -> WILCOXON_UNPAIRED  (Wilcoxon rank-sum)
-  - 3+ conditions            -> KRUSKAL_WALLIS
-  - degenerate (n<2 in any arm) -> NOT_ENOUGH_DATA, p/fdr emitted as NULL.
-
-A/B derivation (option 2, per design2.csv): for each label group, collect
-its regions (where `region.labelGroupName == lg.name`) and split by
-`region.metadata.condition`.
+Output shape: { inferred_test, results, run_qc } per the engine callback contract.
 """
 # pylint: disable=invalid-name  # short loop/stats vars (r, p, q, rk, lg, md, s) are conventional
 from __future__ import annotations
 
 import gzip
-import json as _json  # alias to avoid colliding with any local 'json' var
+import json as _json
 import math
 import os
 from collections import OrderedDict
@@ -38,17 +15,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from scipy import stats as _scistats
-
+from .limma_python import run_limma as _run_limma
 from .stats import (
     benjamini_hochberg,
     compute_sample_qc,
-    dunn_posthoc,
-    friedman_test,
-    nemenyi_posthoc,
     pca_2d,
-    welch_ttest,
-    wilcoxon_paired,
 )
 
 
@@ -96,7 +67,7 @@ def _infer_test(  # pylint: disable=too-many-return-statements
     groups: "OrderedDict[str, List[Dict]]",
     raw_regions: Optional[List[Dict]] = None,
 ) -> Tuple[str, List[str]]:
-    """Pick a test from the design1.csv matrix. Returns (test_name, warnings)."""
+    """Pick a test from the design matrix. Returns (test_name, warnings)."""
     cond_ids = list(groups.keys())
     warnings: List[str] = []
     if len(cond_ids) == 0 or any(len(rs) < 1 for rs in groups.values()):
@@ -119,56 +90,9 @@ def _infer_test(  # pylint: disable=too-many-return-statements
     fully_paired = bool(common) and all(s == common for s in bio_sets)
     partially_paired = bool(common) and not fully_paired
 
-    if len(cond_ids) >= 3:
-        if fully_paired:
-            return 'FRIEDMAN', warnings
-        return 'KRUSKAL_WALLIS', warnings
-    if fully_paired:
-        return 'WILCOXON_PAIRED', warnings
     if partially_paired:
         warnings.append('PARTIAL_PAIRING')
-        return 'WILCOXON_PAIRED_PARTIAL', warnings
-    return 'WILCOXON_UNPAIRED', warnings
-
-
-def _run_pair_test(  # pylint: disable=too-many-return-statements
-    test_kind: str, a_vals: np.ndarray, b_vals: np.ndarray
-) -> Tuple[float, float]:
-    """Return (statistic, p_value). NaN/NaN if degenerate."""
-    if a_vals.size < 2 or b_vals.size < 2:
-        return math.nan, math.nan
-    if a_vals.size == 0 or b_vals.size == 0:
-        return math.nan, math.nan
-    try:
-        if test_kind == 'WILCOXON_PAIRED':
-            if a_vals.size != b_vals.size:
-                return math.nan, math.nan
-            diffs = b_vals - a_vals
-            if np.all(diffs == 0):
-                return math.nan, math.nan
-            stat, p = _scistats.wilcoxon(a_vals, b_vals, zero_method='wilcox')
-            return float(stat), float(p)
-        if test_kind == 'WILCOXON_UNPAIRED':
-            if np.var(a_vals) == 0 and np.var(b_vals) == 0:
-                return math.nan, math.nan
-            stat, p = _scistats.ranksums(a_vals, b_vals)
-            return float(stat), float(p)
-        # Fallback: Welch (kept so callers can still request a parametric test).
-        return welch_ttest(a_vals, b_vals)
-    except (ValueError, ZeroDivisionError):
-        return math.nan, math.nan
-
-
-def _run_kruskal(group_arrays: List[np.ndarray]) -> Tuple[float, float]:
-    if any(g.size < 1 for g in group_arrays) or len(group_arrays) < 2:
-        return math.nan, math.nan
-    if all(np.var(g) == 0 for g in group_arrays):
-        return math.nan, math.nan
-    try:
-        stat, p = _scistats.kruskal(*group_arrays)
-        return float(stat), float(p)
-    except (ValueError, ZeroDivisionError):
-        return math.nan, math.nan
+    return 'LIMMA', warnings
 
 
 def _aggregate_regions_by_key(
@@ -177,19 +101,10 @@ def _aggregate_regions_by_key(
     key_fn,
     synth_prefix: str,
 ) -> Tuple[List[Dict], Dict[str, Dict[int, float]]]:
-    """Average regions sharing the same `key_fn` value into single synthetic regions.
+    """Average regions sharing the same key_fn value into synthetic regions.
 
-    Args:
-        regions: list of region metadata dicts.
-        intensities: regionKey -> {ion_id: intensity}. NOT mutated.
-        key_fn: callable(region_meta) -> hashable key, or None to skip aggregation
-            for that region.
-        synth_prefix: prefix for synthesized regionKey.
-
-    Returns:
-        (new_regions, new_intensities) where new_intensities is a fresh dict
-        containing only the (possibly synthesized) region keys; original
-        regions whose key_fn returns None pass through unchanged.
+    Regions where key_fn returns None pass through unchanged.
+    Returns (new_regions, new_intensities).
     """
     buckets: "OrderedDict[Any, List[Dict]]" = OrderedDict()
     pass_through: List[Dict] = []
@@ -215,7 +130,6 @@ def _aggregate_regions_by_key(
             if rk in intensities:
                 new_intensities[rk] = dict(intensities[rk])
             continue
-        # Average per-ion intensity across the bucket.
         all_ions: set = set()
         for r in group:
             all_ions.update((intensities.get(r.get('regionKey')) or {}).keys())
@@ -240,11 +154,7 @@ def _multi_region_aggregate(
 ) -> Tuple[List[Dict], Dict[str, Dict[int, float]], bool]:
     """Collapse regions sharing (biologicalReplicateId, condition) into one.
 
-    Used for scenarios 7/8 (multi-region or cross-dataset), where one
-    biological replicate contributes multiple regions to the same condition.
-
-    Returns:
-        (new_regions, new_intensities, did_collapse).
+    Returns (new_regions, new_intensities, did_collapse).
     """
 
     def key(r: Dict):
@@ -254,7 +164,6 @@ def _multi_region_aggregate(
             return None
         return (bio, cond)
 
-    # Detect whether any bucket has > 1 region — only aggregate then.
     buckets: Dict[Any, int] = {}
     for r in regions:
         k = key(r)
@@ -273,8 +182,7 @@ def _tech_rep_aggregate(
 ) -> Tuple[List[Dict], Dict[str, Dict[int, float]], bool]:
     """Collapse regions sharing (sampleId, technicalReplicateId) into one.
 
-    Returns:
-        (new_regions, new_intensities, did_collapse).
+    Returns (new_regions, new_intensities, did_collapse).
     """
 
     def key(r: Dict):
@@ -349,141 +257,189 @@ def _omnibus_row(
     }
 
 
-def _per_label_group_results(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+def _per_label_group_results(
     label_group_name: str,
     test_kind: str,
     groups: "OrderedDict[str, List[Dict]]",
     intensities: Dict[str, Dict[int, float]],
     surviving_ids: List[int],
 ) -> List[Dict[str, Any]]:
-    """Emit one row per (ion, contrast).
-
-    K=2 -> one PAIR row per ion.
-    K>=3 omnibus tests (KRUSKAL_WALLIS / FRIEDMAN) -> one OMNIBUS row + K*(K-1)/2 PAIR rows per ion.
-    FDR is scoped per contrast (and separately across the omnibus rows).
-    """
+    """Emit null pair rows for NOT_ENOUGH_DATA designs."""
     cond_ids = list(groups.keys())
-    if not cond_ids:
+    if len(cond_ids) < 2:
         return []
 
-    common_bios: set = set()
-    if test_kind in ('WILCOXON_PAIRED', 'WILCOXON_PAIRED_PARTIAL', 'FRIEDMAN'):
-        bio_sets = _bio_rep_sets(groups)
-        if all(bio_sets):
-            common_bios = set.intersection(*bio_sets)
+    ca, cb = cond_ids[0], cond_ids[1]
+    ca, cb = (ca, cb) if ca < cb else (cb, ca)
+    keys_a = [r['regionKey'] for r in groups[ca]]
+    keys_b = [r['regionKey'] for r in groups[cb]]
 
-    def _select(cond: str) -> List[Dict]:
-        regs = groups[cond]
-        if test_kind in ('WILCOXON_PAIRED', 'WILCOXON_PAIRED_PARTIAL', 'FRIEDMAN') and common_bios:
-            regs = [r for r in regs if r.get('biologicalReplicateId') in common_bios]
-            regs = sorted(regs, key=lambda r: r.get('biologicalReplicateId') or '')
-        return regs
-
-    regions_by_cond: "OrderedDict[str, List[Dict]]" = OrderedDict((c, _select(c)) for c in cond_ids)
-    keys_by_cond = {c: [r['regionKey'] for r in regs] for c, regs in regions_by_cond.items()}
-    K = len(cond_ids)  # pylint: disable=invalid-name
-    is_omnibus = K >= 3 and test_kind in ('KRUSKAL_WALLIS', 'FRIEDMAN')
-
-    omnibus_rows: List[Dict[str, Any]] = []
-    pair_rows_by_pair: Dict[Tuple[str, str], List[Dict[str, Any]]] = {}
-
+    pair_rows: List[Dict[str, Any]] = []
     for ion_id in surviving_ids:
-        vals_by_cond = {
-            c: np.array([intensities.get(rk, {}).get(ion_id, 0.0) for rk in keys])
-            for c, keys in keys_by_cond.items()
-        }
-
-        if test_kind == 'NOT_ENOUGH_DATA':
-            if len(cond_ids) < 2:
-                continue
-            ca, cb = cond_ids[0], cond_ids[1]
-            ca, cb = (ca, cb) if ca < cb else (cb, ca)
-            a_vals = vals_by_cond.get(ca, np.array([]))
-            b_vals = vals_by_cond.get(cb, np.array([]))
-            pair_rows_by_pair.setdefault((ca, cb), []).append(
-                _pair_row(
-                    ion_id,
-                    label_group_name,
-                    ca,
-                    cb,
-                    a_vals,
-                    b_vals,
-                    a_vals.size,
-                    b_vals.size,
-                    math.nan,
-                )
-            )
-            continue
-
-        if is_omnibus:
-            arms = [vals_by_cond[c] for c in cond_ids]
-            if test_kind == 'KRUSKAL_WALLIS':
-                _, p_omni = _run_kruskal(arms)
-                pair_p = dunn_posthoc(arms, cond_ids)
-            else:  # FRIEDMAN
-                _, p_omni = friedman_test(arms)
-                pair_p = nemenyi_posthoc(arms, cond_ids)
-            omnibus_rows.append(_omnibus_row(ion_id, label_group_name, p_omni))
-            for i in range(K):
-                for j in range(i + 1, K):
-                    ca, cb = cond_ids[i], cond_ids[j]
-                    ca, cb = (ca, cb) if ca < cb else (cb, ca)
-                    p = pair_p.get((ca, cb), math.nan)
-                    a_vals = vals_by_cond[ca]
-                    b_vals = vals_by_cond[cb]
-                    pair_rows_by_pair.setdefault((ca, cb), []).append(
-                        _pair_row(
-                            ion_id,
-                            label_group_name,
-                            ca,
-                            cb,
-                            a_vals,
-                            b_vals,
-                            a_vals.size,
-                            b_vals.size,
-                            p,
-                        )
-                    )
-            continue
-
-        # K=2 path
-        ca, cb = cond_ids[0], cond_ids[1]
-        ca, cb = (ca, cb) if ca < cb else (cb, ca)
-        a_vals = vals_by_cond[ca]
-        b_vals = vals_by_cond[cb]
-        if test_kind == 'WILCOXON_PAIRED_PARTIAL':
-            _, p = wilcoxon_paired(a_vals, b_vals)
-        else:
-            _, p = _run_pair_test(test_kind, a_vals, b_vals)
-        pair_rows_by_pair.setdefault((ca, cb), []).append(
-            _pair_row(
-                ion_id,
-                label_group_name,
-                ca,
-                cb,
-                a_vals,
-                b_vals,
-                a_vals.size,
-                b_vals.size,
-                p,
-            )
+        a_vals = np.array([intensities.get(rk, {}).get(ion_id, 0.0) for rk in keys_a])
+        b_vals = np.array([intensities.get(rk, {}).get(ion_id, 0.0) for rk in keys_b])
+        pair_rows.append(
+            _pair_row(ion_id, label_group_name, ca, cb, a_vals, b_vals,
+                      a_vals.size, b_vals.size, math.nan)
         )
 
-    if omnibus_rows:
-        ps = [r['p_value'] if r['p_value'] is not None else math.nan for r in omnibus_rows]
-        qs = benjamini_hochberg(ps)
-        for r, q in zip(omnibus_rows, qs):
-            r['fdr'] = None if (isinstance(q, float) and math.isnan(q)) else q
+    ps = [r['p_value'] if r['p_value'] is not None else math.nan for r in pair_rows]
+    qs = benjamini_hochberg(ps)
+    for r, q in zip(pair_rows, qs):
+        r['fdr'] = None if (isinstance(q, float) and math.isnan(q)) else q
 
-    flat_pairs: List[Dict[str, Any]] = []
-    for _, rows in pair_rows_by_pair.items():
-        ps = [r['p_value'] if r['p_value'] is not None else math.nan for r in rows]
-        qs = benjamini_hochberg(ps)
-        for r, q in zip(rows, qs):
-            r['fdr'] = None if (isinstance(q, float) and math.isnan(q)) else q
-        flat_pairs.extend(rows)
+    return pair_rows
 
-    return omnibus_rows + flat_pairs
+
+def _build_limma_inputs(
+    groups: "OrderedDict[str, List[Dict]]",
+    intensities: Dict[str, Dict[int, float]],
+    surviving_ids: List[int],
+) -> Tuple[np.ndarray, np.ndarray, List, np.ndarray, List[Tuple[str, str]]]:
+    """Build (Y, X, block_ids, contrasts, pair_labels) for run_limma."""
+    cond_order = list(groups.keys())
+    K = len(cond_order)
+    all_regions = [(cond, r) for cond in cond_order for r in groups[cond]]
+    n_samples = len(all_regions)
+    n_features = len(surviving_ids)
+
+    Y = np.zeros((n_features, n_samples), dtype=np.float64)
+    for j, (_, r) in enumerate(all_regions):
+        ion_map = intensities.get(r['regionKey']) or {}
+        for i, ion_id in enumerate(surviving_ids):
+            Y[i, j] = math.log2(ion_map.get(ion_id, 0.0) + 1.0)
+
+    X = np.zeros((n_samples, K), dtype=np.float64)
+    X[:, 0] = 1.0
+    sample_idx = 0
+    for ci, cond in enumerate(cond_order):
+        for _ in groups[cond]:
+            if ci > 0:
+                X[sample_idx, ci] = 1.0
+            sample_idx += 1
+
+    block_ids = []
+    for _, r in all_regions:
+        bio = r.get('biologicalReplicateId')
+        block_ids.append(bio if bio else r['regionKey'])
+
+    pair_labels: List[Tuple[str, str]] = []
+    contrast_rows: List[np.ndarray] = []
+    for i in range(K):
+        for j_idx in range(i + 1, K):
+            cond_i, cond_j = cond_order[i], cond_order[j_idx]
+            if cond_i < cond_j:
+                cond_a, cond_b, ci_a, ci_b = cond_i, cond_j, i, j_idx
+            else:
+                cond_a, cond_b, ci_a, ci_b = cond_j, cond_i, j_idx, i
+            c = np.zeros(K, dtype=np.float64)
+            if ci_a > 0:
+                c[ci_a] = -1.0
+            if ci_b > 0:
+                c[ci_b] = 1.0
+            contrast_rows.append(c)
+            pair_labels.append((cond_a, cond_b))
+
+    contrasts = np.array(contrast_rows, dtype=np.float64) if contrast_rows else np.zeros((1, K))
+    return Y, X, block_ids, contrasts, pair_labels
+
+
+def _null_pair_rows(
+    label_group_name: str,
+    cond_order: List[str],
+    groups: "OrderedDict[str, List[Dict]]",
+    intensities: Dict[str, Dict[int, float]],
+    surviving_ids: List[int],
+) -> List[Dict[str, Any]]:
+    """Null result rows used when limma fails — mirrors the limma output shape.
+
+    K=2: one null pair row per ion.
+    K≥3: one null omnibus row + K*(K-1)/2 null pair rows per ion.
+    """
+    K = len(cond_order)
+    if K < 2:
+        return []
+
+    all_rows: List[Dict[str, Any]] = []
+
+    if K >= 3:
+        for ion_id in surviving_ids:
+            all_rows.append(_omnibus_row(ion_id, label_group_name, math.nan))
+
+    for i in range(K):
+        for j in range(i + 1, K):
+            ci, cj = cond_order[i], cond_order[j]
+            ca, cb = (ci, cj) if ci < cj else (cj, ci)
+            keys_a = [r['regionKey'] for r in groups[ca]]
+            keys_b = [r['regionKey'] for r in groups[cb]]
+            for ion_id in surviving_ids:
+                a_vals = np.array([intensities.get(rk, {}).get(ion_id, 0.0) for rk in keys_a])
+                b_vals = np.array([intensities.get(rk, {}).get(ion_id, 0.0) for rk in keys_b])
+                all_rows.append(
+                    _pair_row(ion_id, label_group_name, ca, cb, a_vals, b_vals,
+                              len(keys_a), len(keys_b), math.nan)
+                )
+
+    return all_rows
+
+
+def _per_label_group_results_limma(
+    label_group_name: str,
+    groups: "OrderedDict[str, List[Dict]]",
+    intensities: Dict[str, Dict[int, float]],
+    surviving_ids: List[int],
+) -> List[Dict[str, Any]]:
+    """Run the limma GLS+eBayes pipeline and format results into the standard row schema.
+
+    K=2: one pair row per ion.
+    K≥3: one omnibus F row per ion, then one pair row per (ion, canonical pair).
+    Falls back to null pair rows if limma fails.
+    """
+    cond_order = list(groups.keys())
+    K = len(cond_order)
+
+    try:
+        Y, X, block_ids, contrasts, pair_labels = _build_limma_inputs(
+            groups, intensities, surviving_ids
+        )
+        result = _run_limma(Y, X, block_ids, contrasts)
+    except (ValueError, np.linalg.LinAlgError):
+        return _null_pair_rows(label_group_name, cond_order, groups, intensities, surviving_ids)
+
+    cond_rkeys = {c: [r['regionKey'] for r in regs] for c, regs in groups.items()}
+    all_rows: List[Dict[str, Any]] = []
+
+    if K >= 3:
+        for fi, ion_id in enumerate(surviving_ids):
+            p = float(result.f_pvalue[fi])
+            q = float(result.adj_f_pvalue[fi])
+            row = _omnibus_row(ion_id, label_group_name, p)
+            row['fdr'] = None if math.isnan(q) else q
+            all_rows.append(row)
+
+    pair_rows_by_pair: Dict[Tuple[str, str], List[Dict[str, Any]]] = {}
+    for pi, (cond_a, cond_b) in enumerate(pair_labels):
+        keys_a = cond_rkeys[cond_a]
+        keys_b = cond_rkeys[cond_b]
+        rows_for_pair = []
+        for fi, ion_id in enumerate(surviving_ids):
+            a_vals = np.array([intensities.get(rk, {}).get(ion_id, 0.0) for rk in keys_a])
+            b_vals = np.array([intensities.get(rk, {}).get(ion_id, 0.0) for rk in keys_b])
+            p = float(result.pvalue[pi, fi])
+            q = float(result.adj_pvalue[pi, fi])
+            row = _pair_row(
+                ion_id, label_group_name, cond_a, cond_b,
+                a_vals, b_vals, len(keys_a), len(keys_b), p,
+            )
+            row['lfc'] = float(result.log2FC[pi, fi])
+            row['fdr'] = None if math.isnan(q) else q
+            rows_for_pair.append(row)
+        pair_rows_by_pair[(cond_a, cond_b)] = rows_for_pair
+
+    for rows in pair_rows_by_pair.values():
+        all_rows.extend(rows)
+
+    return all_rows
 
 
 def _summarise_inferred_test(per_lg: List[str]) -> str:
@@ -511,7 +467,6 @@ def run_experiment_prep(  # pylint: disable=too-many-locals,too-many-branches,to
     region_keys = [s.get('regionKey') or s.get('sampleId') for s in samples_meta]
     ions = _ion_table(intensities)
 
-    # PREP filtered by fdr/moldb/adduct and recorded counts; append +detection here.
     chain = list(
         prep.get('filterChain')
         or [
@@ -617,22 +572,16 @@ def run_experiment_prep(  # pylint: disable=too-many-locals,too-many-branches,to
         warnings_per_lg[lg_name] = lg_warnings
         flat_warnings.extend(lg_warnings)
 
-        results.extend(
-            _per_label_group_results(
-                lg_name,
-                test_kind,
-                groups,
-                local_intensities,
-                surviving_ids,
+        if test_kind == 'NOT_ENOUGH_DATA':
+            results.extend(
+                _per_label_group_results(lg_name, test_kind, groups, local_intensities, surviving_ids)
             )
-        )
+        else:
+            results.extend(
+                _per_label_group_results_limma(lg_name, groups, local_intensities, surviving_ids)
+            )
 
-    # Experiment-wide fallback: when no label group yielded a usable test (e.g.
-    # the user used label groups as a replicate-cluster axis instead of a
-    # within-group comparison axis), pool all LG-assigned regions and run one
-    # experiment-wide test if ≥2 distinct conditions exist across the pool.
-    # Mirrors design1.csv scenarios #1/#8 where the comparison happens across
-    # conditions at the experiment level.
+    # Experiment-wide fallback when no label group yields a usable test.
     fallback_test: Optional[str] = None
     if label_groups and all(t == 'NOT_ENOUGH_DATA' for t in per_lg_tests):
         pooled: List[Dict] = []
@@ -657,13 +606,14 @@ def run_experiment_prep(  # pylint: disable=too-many-locals,too-many-branches,to
             fallback_test = test_kind
             warnings_per_lg['__experiment__'] = fb_warnings
             flat_warnings.extend(fb_warnings)
-            results = _per_label_group_results(
-                '__experiment__',
-                test_kind,
-                groups,
-                local_intensities,
-                surviving_ids,
-            )
+            if test_kind == 'NOT_ENOUGH_DATA':
+                results = _per_label_group_results(
+                    '__experiment__', test_kind, groups, local_intensities, surviving_ids
+                )
+            else:
+                results = _per_label_group_results_limma(
+                    '__experiment__', groups, local_intensities, surviving_ids
+                )
 
     per_lg_map = dict(zip([lg['name'] for lg in label_groups], per_lg_tests))
     if fallback_test is not None:
@@ -692,16 +642,13 @@ def _load_postprocessing_config() -> Dict[str, Any]:
     # pylint: disable=import-outside-toplevel,import-error
     from postprocessing_shared import load_config
 
-    # stats_analysis/stats_analysis/runner.py -> postprocessing/conf/config.json
     default_path = Path(__file__).resolve().parents[2] / 'conf' / 'config.json'
     path = os.environ.get('POSTPROCESSING_CONFIG') or default_path
     return load_config(path)
 
 
 def _build_s3_client(cfg: Dict[str, Any]):
-    """Build an S3 client from the postprocessing config (aws creds in prod,
-    storage.endpoint_url + access keys for the local MinIO dev stack).
-    Mirrors :func:`image_segmentation.loader._get_s3_client`."""
+    """Build an S3 client from the postprocessing config."""
     import boto3  # pylint: disable=import-outside-toplevel
 
     boto_config = boto3.session.Config(signature_version='s3v4')
@@ -725,14 +672,7 @@ def _build_s3_client(cfg: Dict[str, Any]):
 
 
 def _fetch_intensity_blob(s3_key: str) -> List[Dict[str, Any]]:
-    """Read the gzipped intensity blob from S3 and return the row list.
-
-    The blob shape is a flat list of {'ion_id', 'region_key', 'intensity'} dicts
-    as written by the engine's ExperimentManager._write_intensity_blob. The
-    bucket is read from this service's own ``conf/config.json``
-    (``image_storage.bucket``) so engine and postprocessing each own their
-    deployment config independently.
-    """
+    """Read the gzipped intensity blob from S3 and return the row list."""
     cfg = _load_postprocessing_config()
     try:
         bucket = cfg['image_storage']['bucket']
@@ -754,8 +694,7 @@ def _reconstruct_prep_from_blob(
 ) -> Dict[str, Any]:
     """Rebuild the minimum 'prep' block run_experiment_prep expects.
 
-    Drops rows whose region's sampleId is in excluded_samples. tic is unknown
-    without re-querying ES and is emitted as 0.0 (downstream QC tolerates this).
+    Drops rows whose region's sampleId is in excluded_samples.
     """
     excluded = set(excluded_samples or [])
     samples: List[Dict[str, Any]] = []
@@ -803,16 +742,10 @@ def run_experiment_stats(
     run_generation: int,
     payload: Dict,
 ) -> Dict[str, Any]:
-    """Stats-only entry: fetch blob, reconstruct prep, run stats, strip intensity_rows.
+    """Fetch intensity blob, reconstruct prep, run stats, and strip intensity_rows.
 
-    The returned dict deliberately omits ``intensity_rows`` so the engine
-    callback handler does not rewrite the persisted S3 blob.
-
-    The reconstructed prep has no per-ion FDR/adduct/moldb metadata (the
-    intensity blob only carries ion_id/region_key/intensity), so the resulting
-    ``run_qc.allIons`` would be empty. We drop the key entirely; the engine
-    callback handler merges the new run_qc into the existing row, so the
-    previous ``allIons`` snapshot from the full-prep run is preserved.
+    Omits intensity_rows so the engine callback does not rewrite the S3 blob.
+    Drops allIons from run_qc when empty so the previous snapshot is preserved.
     """
     blob_rows = _fetch_intensity_blob(payload['intensity_blob_s3_key'])
     prep = _reconstruct_prep_from_blob(
@@ -839,10 +772,7 @@ def _build_all_ions(
     intensities: Dict[str, Dict[int, float]],
     region_keys: List[str],
 ) -> List[Dict[str, Any]]:
-    """Enrich the prep all_ions snapshot with a detection_rate per ion.
-
-    detection_rate = fraction of region_keys where intensity > 0.
-    """
+    """Enrich the prep all_ions snapshot with detection_rate per ion."""
     n_regions = max(1, len(region_keys))
     out: List[Dict[str, Any]] = []
     for entry in all_ions:

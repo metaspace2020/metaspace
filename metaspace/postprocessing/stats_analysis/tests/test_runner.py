@@ -34,8 +34,7 @@ def _assert_results_have_pvalue(out):
 
 def test_run_experiment_returns_full_run_qc_shape():
     out = run_experiment_prep('exp-1', 1, make_payload())
-    # 4 unpaired regions across 2 conditions, 2 per arm -> Wilcoxon rank-sum.
-    assert out['inferred_test'] == 'WILCOXON_UNPAIRED'
+    assert out['inferred_test'] == 'LIMMA'
 
     qc = out['run_qc']
     region_keys = {s['regionKey'] for s in qc['samples']}
@@ -56,9 +55,8 @@ def test_run_experiment_returns_full_run_qc_shape():
     assert qc['filterChain'][0]['count'] == 5
     assert qc['filterChain'][-1]['name'] == '+FDR <= 0.1'
     assert set(qc['coverage'].keys()) == region_keys
-    assert qc['inferredTestPerLabelGroup'] == {'auto_1': 'WILCOXON_UNPAIRED'}
+    assert qc['inferredTestPerLabelGroup'] == {'auto_1': 'LIMMA'}
 
-    # 1 label group x 3 surviving ions = 3 result rows.
     assert len(out['results']) == 3
     row = out['results'][0]
     assert set(row.keys()) >= {
@@ -73,14 +71,12 @@ def test_run_experiment_returns_full_run_qc_shape():
         'n_b',
     }
     assert row['n_a'] == 2 and row['n_b'] == 2
-    # With clear separation between control and tumor on ion 1, p should be small.
     ion1 = next(r for r in out['results'] if r['ion_id'] == 1)
     assert ion1['p_value'] is not None
     assert ion1['p_value'] < 0.5
 
 
 def test_run_experiment_skips_label_group_with_single_condition():
-    # Only one condition exists across the entire experiment -> no fallback either.
     payload = build_payload(
         [
             _region('r-1', 's1', 'control', bio='m1', base=10.0),
@@ -97,9 +93,6 @@ def test_run_experiment_skips_label_group_with_single_condition():
 
 
 def test_run_experiment_falls_back_to_experiment_wide_when_lgs_are_single_condition():
-    # User's control/innoculated layout: two label groups, each carrying a single
-    # condition. Per-LG inference is NOT_ENOUGH_DATA but the experiment as a
-    # whole has 2 conditions -> pool and run WILCOXON_UNPAIRED.
     payload = build_payload(
         [
             _region('r-1', 's1', 'control', bio='m1', base=1.0, lg='control'),
@@ -116,8 +109,8 @@ def test_run_experiment_falls_back_to_experiment_wide_when_lgs_are_single_condit
     per_lg = out['run_qc']['inferredTestPerLabelGroup']
     assert per_lg['control'] == 'NOT_ENOUGH_DATA'
     assert per_lg['innoculated'] == 'NOT_ENOUGH_DATA'
-    assert per_lg['__experiment__'] == 'WILCOXON_UNPAIRED'
-    assert out['inferred_test'] == 'WILCOXON_UNPAIRED'
+    assert per_lg['__experiment__'] == 'LIMMA'
+    assert out['inferred_test'] == 'LIMMA'
     assert 'EXPERIMENT_WIDE_FALLBACK' in out['run_qc']['warnings']
     fb_rows = [r for r in out['results'] if r['label_group_name'] == '__experiment__']
     assert fb_rows, 'expected experiment-wide fallback result rows'
@@ -133,8 +126,7 @@ def test_run_experiment_emits_null_p_when_not_enough_replicates():
     keep_keys = {s['regionKey'] for s in prep['samples']}
     prep['intensities'] = {k: v for k, v in prep['intensities'].items() if k in keep_keys}
     out = run_experiment_prep('exp-1', 1, payload)
-    assert out['inferred_test'] == 'WILCOXON_UNPAIRED'
-    # Degenerate cases emit p_value=NULL and fdr=NULL.
+    assert out['inferred_test'] == 'LIMMA'
     assert len(out['results']) > 0
     assert all(r['p_value'] is None and r['fdr'] is None for r in out['results'])
     assert all(r['n_a'] == 1 and r['n_b'] == 1 for r in out['results'])
@@ -148,11 +140,8 @@ def test_run_experiment_emits_intensity_rows_skipping_zeros():
     assert 'intensity_rows' in out
     rows = out['intensity_rows']
     assert all(r['intensity'] != 0.0 for r in rows)
-    # No row should reference (ion=1, region=r-ctrl-1) since we zeroed it.
     assert not any(r['ion_id'] == 1 and r['region_key'] == 'r-ctrl-1' for r in rows)
-    # Some rows should still be emitted for other (ion, region) combos.
     assert any(r['ion_id'] == 1 and r['region_key'] == 'r-tum-1' for r in rows)
-    # Each row has the expected keys.
     for r in rows:
         assert set(r.keys()) == {'ion_id', 'region_key', 'intensity'}
 
@@ -164,12 +153,10 @@ def test_run_experiment_emits_all_ions_with_detection_rate():
     assert 'allIons' in qc
     rows = qc['allIons']
     assert len(rows) == 5
-    # Required fields per AllIonRow contract.
     expected_keys = {'ion_id', 'fdr', 'adduct', 'moldb_id', 'moldb_name', 'detection_rate'}
     for row in rows:
         assert expected_keys <= set(row.keys())
         assert 0.0 <= row['detection_rate'] <= 1.0
-    # Ion 1 is detected in all 4 regions in the fixture (intensity > 0).
     by_id = {r['ion_id']: r for r in rows}
     assert by_id[1]['detection_rate'] == 1.0
     assert by_id[1]['adduct'] == '+H'
@@ -188,13 +175,7 @@ def test_run_experiment_picks_paired_when_bio_reps_match():
     for s in payload['prep']['samples']:
         s['biologicalReplicateId'] = bio_map[s['regionKey']]
     out = run_experiment_prep('exp-1', 1, payload)
-    assert out['inferred_test'] == 'WILCOXON_PAIRED'
-
-
-# ---------------------------------------------------------------------------
-# Track C — design1.csv scenarios 1–13. One test per scenario.
-# Each asserts (a) inferred_test, (b) warnings emitted, (c) p-values run.
-# ---------------------------------------------------------------------------
+    assert out['inferred_test'] == 'LIMMA'
 
 
 def test_scenario_1_two_conditions_one_region_per_sample():
@@ -205,7 +186,7 @@ def test_scenario_1_two_conditions_one_region_per_sample():
         for i in range(1, 4)
     ]
     out = run_experiment_prep('e', 1, build_payload(samples))
-    assert out['inferred_test'] == 'WILCOXON_UNPAIRED'
+    assert out['inferred_test'] == 'LIMMA'
     assert out['run_qc']['warnings'] == []
     _assert_results_have_pvalue(out)
 
@@ -218,7 +199,7 @@ def test_scenario_2_three_conditions_kruskal():
                 _region(f'r-{cond}-{i}', f's-{cond}-{i}', cond, bio=f'{cond}m{i}', base=base + i)
             )
     out = run_experiment_prep('e', 1, build_payload(samples))
-    assert out['inferred_test'] == 'KRUSKAL_WALLIS'
+    assert out['inferred_test'] == 'LIMMA'
     _assert_results_have_pvalue(out)
 
 
@@ -232,7 +213,7 @@ def test_scenario_3_unbalanced_n():
         _region('r-t-4', 's6', 'tumor', bio='m6', base=108.0),
     ]
     out = run_experiment_prep('e', 1, build_payload(samples))
-    assert out['inferred_test'] == 'WILCOXON_UNPAIRED'
+    assert out['inferred_test'] == 'LIMMA'
     assert 'UNBALANCED_N' in out['run_qc']['warnings']
     _assert_results_have_pvalue(out)
 
@@ -243,7 +224,7 @@ def test_scenario_4_fully_paired():
         samples.append(_region(f'r-c-{i}', f'sc{i}', 'control', bio=f'm{i}', base=10.0 + i))
         samples.append(_region(f'r-t-{i}', f'st{i}', 'tumor', bio=f'm{i}', base=50.0 + i))
     out = run_experiment_prep('e', 1, build_payload(samples))
-    assert out['inferred_test'] == 'WILCOXON_PAIRED'
+    assert out['inferred_test'] == 'LIMMA'
     _assert_results_have_pvalue(out)
 
 
@@ -258,7 +239,7 @@ def test_scenario_5_partially_paired():
         _region('r-t-3', 's6', 'tumor', bio='m4', base=53.0),
     ]
     out = run_experiment_prep('e', 1, build_payload(samples))
-    assert out['inferred_test'] == 'WILCOXON_PAIRED_PARTIAL'
+    assert out['inferred_test'] == 'LIMMA'
     assert 'PARTIAL_PAIRING' in out['run_qc']['warnings']
     _assert_results_have_pvalue(out)
 
@@ -272,12 +253,11 @@ def test_scenario_6_friedman_longitudinal():
                 _region(f'r-{cond}-{i}', f's-{cond}-{i}', cond, bio=f'm{i}', base=base + i * 0.5)
             )
     out = run_experiment_prep('e', 1, build_payload(samples))
-    assert out['inferred_test'] == 'FRIEDMAN'
+    assert out['inferred_test'] == 'LIMMA'
     _assert_results_have_pvalue(out)
 
 
 def test_scenario_7_multi_region_within_one_dataset():
-    # Two regions per (bio, condition) — multi-region, must aggregate.
     samples = []
     for i in range(1, 4):
         for ridx in (1, 2):
@@ -293,15 +273,13 @@ def test_scenario_7_multi_region_within_one_dataset():
             )
     out = run_experiment_prep('e', 1, build_payload(samples))
     assert 'MULTI_REGION_AGGREGATED' in out['run_qc']['warnings']
-    # After aggregation the bio_reps overlap fully across conditions -> paired.
-    assert out['inferred_test'] == 'WILCOXON_PAIRED'
+    assert out['inferred_test'] == 'LIMMA'
     _assert_results_have_pvalue(out)
 
 
 def test_scenario_8_multi_region_cross_dataset():
     samples = []
     for i in range(1, 4):
-        # Same bio_rep contributes from two datasets in the same condition.
         samples.append(
             _region(f'r-c-{i}-a', f's-c-{i}a', 'control', bio=f'm{i}', ds='ds-A', base=10.0 + i)
         )
@@ -316,12 +294,11 @@ def test_scenario_8_multi_region_cross_dataset():
         )
     out = run_experiment_prep('e', 1, build_payload(samples))
     assert 'MULTI_REGION_AGGREGATED' in out['run_qc']['warnings']
-    assert out['inferred_test'] == 'WILCOXON_PAIRED'
+    assert out['inferred_test'] == 'LIMMA'
     _assert_results_have_pvalue(out)
 
 
 def test_scenario_9_same_region_label_across_datasets():
-    # Single label group, regions drawn from multiple datasets -> normal split.
     samples = [
         _region('r-c-1', 's1', 'control', bio='m1', ds='ds-A', base=10.0),
         _region('r-c-2', 's2', 'control', bio='m2', ds='ds-B', base=11.0),
@@ -331,13 +308,12 @@ def test_scenario_9_same_region_label_across_datasets():
         _region('r-t-3', 's6', 'tumor', bio='m6', ds='ds-C', base=85.0),
     ]
     out = run_experiment_prep('e', 1, build_payload(samples))
-    assert out['inferred_test'] == 'WILCOXON_UNPAIRED'
+    assert out['inferred_test'] == 'LIMMA'
     assert out['run_qc']['warnings'] == []
     _assert_results_have_pvalue(out)
 
 
 def test_scenario_10_different_region_labels_per_condition():
-    # Two label groups, each with its own arrangement.
     samples = []
     for cond, base, lg, bio_prefix in [
         ('control', 10.0, 'auto_1', 'lg1c'),
@@ -376,8 +352,8 @@ def test_scenario_10_different_region_labels_per_condition():
     ]
     out = run_experiment_prep('e', 1, payload)
     per_lg = out['run_qc']['inferredTestPerLabelGroup']
-    assert per_lg['auto_1'] == 'WILCOXON_UNPAIRED'
-    assert per_lg['auto_2'] == 'WILCOXON_UNPAIRED'
+    assert per_lg['auto_1'] == 'LIMMA'
+    assert per_lg['auto_2'] == 'LIMMA'
     _assert_results_have_pvalue(out)
 
 
@@ -395,9 +371,8 @@ def test_scenario_11_tech_reps_one_condition():
             _region(f'r-t-{i}', f'st{i}', 'tumor', bio=f'm{10 + i}', tech=f'tt{i}', base=80.0 + i)
         )
     out = run_experiment_prep('e', 1, build_payload(samples))
-    # Tech-reps fully populated so no PARTIAL warning expected.
     assert 'TECH_REPS_PARTIAL' not in out['run_qc']['warnings']
-    assert out['inferred_test'] == 'WILCOXON_UNPAIRED'
+    assert out['inferred_test'] == 'LIMMA'
     _assert_results_have_pvalue(out)
 
 
@@ -416,13 +391,8 @@ def test_scenario_12_tech_reps_across_conditions():
             )
     out = run_experiment_prep('e', 1, build_payload(samples))
     assert 'TECH_REPS_PARTIAL' not in out['run_qc']['warnings']
-    assert out['inferred_test'] == 'WILCOXON_UNPAIRED'
+    assert out['inferred_test'] == 'LIMMA'
     _assert_results_have_pvalue(out)
-
-
-# ---------------------------------------------------------------------------
-# Task 2 — row-per-contrast refactor of _per_label_group_results.
-# ---------------------------------------------------------------------------
 
 
 def _build_payload_k2_simple():
@@ -498,7 +468,7 @@ def _build_payload_k3_kruskal_many_ions(n_ions: int = 10):
 
 
 def test_k2_emits_single_pair_row_per_ion():
-    """K=2 (Wilcoxon) — one PAIR row per (ion, label_group), no omnibus."""
+    """K=2 (LIMMA) — one pair row per (ion, label_group), no omnibus."""
     payload = _build_payload_k2_simple()
     out = run_experiment_prep('exp', 1, payload)
     rows = out['results']
@@ -603,3 +573,81 @@ def test_scenario_13_tech_reps_partial():
     out = run_experiment_prep('e', 1, build_payload(samples))
     assert 'TECH_REPS_PARTIAL' in out['run_qc']['warnings']
     _assert_results_have_pvalue(out)
+
+
+def test_limma_pvalue_small_for_well_separated_conditions():
+    """With large effect size, moderated t p-value must be < 0.05."""
+    samples = [
+        _region(f'r-c-{i}', f's-c-{i}', 'control', bio=f'm{i}', base=10.0) for i in range(1, 5)
+    ] + [
+        _region(f'r-t-{i}', f's-t-{i}', 'tumor', bio=f'm{10 + i}', base=200.0) for i in range(1, 5)
+    ]
+    out = run_experiment_prep('e', 1, build_payload(samples))
+    ion1 = next(r for r in out['results'] if r['ion_id'] == 1 and r['cond_a'] is not None)
+    assert ion1['p_value'] is not None
+    assert ion1['p_value'] < 0.05, f"expected p < 0.05 for large effect, got {ion1['p_value']}"
+
+
+def test_limma_lfc_sign_matches_condition_ordering():
+    """log2FC must be positive when cond_b mean > cond_a mean.
+
+    Alphabetically 'control' < 'tumor', so cond_a=control, cond_b=tumor.
+    tumor intensities are much higher, so lfc must be > 0.
+    """
+    samples = [
+        _region(f'r-c-{i}', f's-c-{i}', 'control', bio=f'm{i}', base=10.0) for i in range(1, 5)
+    ] + [
+        _region(f'r-t-{i}', f's-t-{i}', 'tumor', bio=f'm{10 + i}', base=80.0) for i in range(1, 5)
+    ]
+    out = run_experiment_prep('e', 1, build_payload(samples))
+    pair_rows = [r for r in out['results'] if r['cond_a'] is not None]
+    assert pair_rows
+    for r in pair_rows:
+        assert r['cond_a'] == 'control' and r['cond_b'] == 'tumor'
+        assert r['lfc'] > 0, f"expected lfc > 0 (tumor > control), got {r['lfc']}"
+
+
+def test_limma_rho_positive_for_paired_design():
+    """Block correlation must be > 0 when the same bio-rep appears in both conditions."""
+    from collections import OrderedDict as _OD
+    from stats_analysis.runner import _build_limma_inputs
+    from stats_analysis.limma_python import run_limma as _run_limma
+
+    samples = [
+        _region(f'r-c-{i}', f'sc{i}', 'control', bio=f'm{i}', base=10.0 + i)
+        for i in range(1, 5)
+    ] + [
+        _region(f'r-t-{i}', f'st{i}', 'tumor', bio=f'm{i}', base=50.0 + i)
+        for i in range(1, 5)
+    ]
+    payload = build_payload(samples)
+    prep = payload['prep']
+    intensities = prep['intensities']
+    groups: _OD = _OD()
+    for s in prep['samples']:
+        groups.setdefault(s['condition'], []).append(s)
+    surviving_ids = sorted({iid for rk_map in intensities.values() for iid in rk_map})
+
+    Y, X, block_ids, contrasts, _ = _build_limma_inputs(groups, intensities, surviving_ids)
+    result = _run_limma(Y, X, block_ids, contrasts)
+    assert result.rho > 0.0, f'expected rho > 0 for paired design, got {result.rho}'
+
+
+def test_null_fallback_k3_emits_all_pairs_and_omnibus():
+    """K=3 with n=1 per arm: limma fails, fallback emits 1 omnibus + 3 null pair rows per ion."""
+    samples = [
+        _region('r-a', 'sa', 'A', bio='m1', base=10.0),
+        _region('r-b', 'sb', 'B', bio='m2', base=50.0),
+        _region('r-c', 'sc', 'C', bio='m3', base=100.0),
+    ]
+    out = run_experiment_prep('e', 1, build_payload(samples))
+    assert out['inferred_test'] == 'LIMMA'
+
+    omnibus = [r for r in out['results'] if r['cond_a'] is None]
+    pairs = [r for r in out['results'] if r['cond_a'] is not None]
+    n_ions = len({r['ion_id'] for r in out['results']})
+
+    assert len(omnibus) == n_ions, f'expected {n_ions} omnibus rows, got {len(omnibus)}'
+    assert len(pairs) == 3 * n_ions, f'expected {3 * n_ions} pair rows, got {len(pairs)}'
+    assert all(r['p_value'] is None for r in out['results'])
+    assert all(r['cond_a'] < r['cond_b'] for r in pairs)
