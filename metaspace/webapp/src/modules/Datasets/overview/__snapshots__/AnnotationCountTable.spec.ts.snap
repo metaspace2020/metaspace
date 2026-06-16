@@ -200,7 +200,7 @@ exports[`AnnotationCountTable > it should match snapshot 1`] = `
               </td>
               <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_6 is-leaf\\">
                 <div class=\\"cell\\">
-                  <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;ds&quot;:&quot;xxxx&quot;}}\\" from=\\"dataset-overview\\">414</div>
+                  <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.5&quot;}}\\" from=\\"dataset-overview\\">414</div>
                 </div>
               </td>
             </tr>

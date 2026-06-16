@@ -163,6 +163,121 @@ describe('AnnotationCountTable', () => {
     expect(JSON.parse(wrapper.findAll('.mock-router-link').at(1).attributes('to')).params.dataset_id).toBe('xxxx')
   })
 
+  it('it should scope Total Annotations FDR links to the non-targeted database when targeted DBs exist', async () => {
+    const mixedData = [
+      {
+        databaseId: 1,
+        dbName: 'HMDB',
+        dbVersion: 'v4',
+        isTargeted: false,
+        total: 224,
+        counts: [
+          { level: 5, n: 55 },
+          { level: 10, n: 104 },
+          { level: 20, n: 196 },
+          { level: 50, n: 224 },
+        ],
+      },
+      {
+        databaseId: 99,
+        dbName: 'Custom',
+        dbVersion: '1',
+        isTargeted: true,
+        total: 300,
+        counts: [
+          { level: 5, n: 0 },
+          { level: 10, n: 0 },
+          { level: 20, n: 0 },
+          { level: 50, n: 0 },
+        ],
+      },
+    ]
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router, ElementPlus],
+        stubs,
+      },
+      props: { data: mixedData, id, header: mockFdrLevels },
+    })
+    await flushPromises()
+    await nextTick()
+
+    const footerLinks = wrapper.findAll('tfoot').at(0).findAll('.mock-router-link')
+    footerLinks.forEach((col, colIndex) => {
+      const toProp = JSON.parse(col.attributes('to'))
+      expect(toProp.params.dataset_id).toBe('xxxx')
+      if (colIndex < mockFdrLevels.length) {
+        // FDR-level summary cells exclude targeted DBs by scoping to the single non-targeted DB
+        expect(toProp.query.db_id).toBe('1')
+        expect(toProp.query.fdr).toBe((mockFdrLevels[colIndex] / 100).toString())
+      } else {
+        // Total column links to all databases at the highest FDR level
+        expect(toProp.query.db_id).toBeUndefined()
+        expect(toProp.query.fdr).toBe('0.5')
+      }
+    })
+  })
+
+  it('should not link Total FDR cells when targeted mixes with multiple non-targeted DBs', async () => {
+    const multiNonTargeted = [
+      {
+        databaseId: 1,
+        dbName: 'HMDB',
+        dbVersion: 'v4',
+        isTargeted: false,
+        total: 101,
+        counts: [
+          { level: 5, n: 42 },
+          { level: 10, n: 71 },
+          { level: 20, n: 101 },
+          { level: 50, n: 101 },
+        ],
+      },
+      {
+        databaseId: 6,
+        dbName: 'SwissLipids',
+        dbVersion: '2018-02-02',
+        isTargeted: false,
+        total: 138,
+        counts: [
+          { level: 5, n: 4 },
+          { level: 10, n: 74 },
+          { level: 20, n: 125 },
+          { level: 50, n: 138 },
+        ],
+      },
+      {
+        databaseId: 33,
+        dbName: 'Test',
+        dbVersion: '1',
+        isTargeted: true,
+        total: 118,
+        counts: [
+          { level: 5, n: 0 },
+          { level: 10, n: 0 },
+          { level: 20, n: 0 },
+          { level: 50, n: 0 },
+        ],
+      },
+    ]
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router, ElementPlus],
+        stubs,
+      },
+      props: { data: multiNonTargeted, id, header: mockFdrLevels },
+    })
+    await flushPromises()
+    await nextTick()
+
+    // Only the Total column summary remains a link (all databases at the highest FDR level).
+    const footerLinks = wrapper.findAll('tfoot').at(0).findAll('.mock-router-link')
+    expect(footerLinks.length).toBe(1)
+    const toProp = JSON.parse(footerLinks.at(0).attributes('to'))
+    expect(toProp.query.db_id).toBeUndefined()
+    expect(toProp.query.fdr).toBe('0.5')
+  })
+
   it('it should render with no data warning when props empty', async () => {
     const wrapper = mount(testHarness, {
       global: {
