@@ -121,6 +121,15 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
                 f'The bounding box area exceeds the maximum allowed pixel count of ({pixel_limit}). Contact contact@metaspace2020.org.'
             )
 
+        sparsity_ratio = nz_pixels / n_pixels
+        if sparsity_ratio < 0.05:
+            logger.warning(
+                f'Low pixel density detected: {nz_pixels} spectra in a '
+                f'{self.imzml_reader.h}×{self.imzml_reader.w} bounding box '
+                f'(density={sparsity_ratio:.3f}). This dataset may have isolated blobs '
+                f'with large empty areas.'
+            )
+
         self.segment_centroids(use_cache=use_cache)
         if debug_validate:
             self.validate_segment_centroids()
