@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.8.6",
-    "@babel/core": "^7.0.0",
+    "@babel/core": "^7.29.6",
     "@element-plus/icons-vue": "^2.1.0",
     "@graphql-tools/mock": "^9.0.0",
     "@graphql-tools/schema": "^10.0.2",
