@@ -40,6 +40,7 @@ exports[`DatasetOverviewPage > should match snapshot when dataset exist 1`] = `
               <div></div>
               <div></div>
               <div></div>
+              <div></div>
             </div>
             <div class=\\"el-table__header-wrapper\\">
               <table class=\\"el-table__header\\" border=\\"0\\" cellpadding=\\"0\\" cellspacing=\\"0\\">
@@ -49,6 +50,7 @@ exports[`DatasetOverviewPage > should match snapshot when dataset exist 1`] = `
                   <col name=\\"el-table_1_column_3\\" width=\\"80\\">
                   <col name=\\"el-table_1_column_4\\" width=\\"80\\">
                   <col name=\\"el-table_1_column_5\\" width=\\"80\\">
+                  <col name=\\"el-table_1_column_6\\" width=\\"80\\">
                 </colgroup>
                 <thead class=\\"\\">
                   <tr class=\\"\\">
@@ -77,6 +79,11 @@ exports[`DatasetOverviewPage > should match snapshot when dataset exist 1`] = `
                         <!---->
                       </div>
                     </th>
+                    <th class=\\"el-table_1_column_6 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                      <div class=\\"cell\\">Total<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                        <!---->
+                      </div>
+                    </th>
                   </tr>
                 </thead>
               </table>
@@ -92,6 +99,7 @@ exports[`DatasetOverviewPage > should match snapshot when dataset exist 1`] = `
                         <col name=\\"el-table_1_column_3\\" width=\\"80\\">
                         <col name=\\"el-table_1_column_4\\" width=\\"80\\">
                         <col name=\\"el-table_1_column_5\\" width=\\"80\\">
+                        <col name=\\"el-table_1_column_6\\" width=\\"80\\">
                       </colgroup>
                       <!--v-if-->
                       <tbody tabindex=\\"-1\\"></tbody>
@@ -117,6 +125,7 @@ exports[`DatasetOverviewPage > should match snapshot when dataset exist 1`] = `
                   <col name=\\"el-table_1_column_3\\" width=\\"80\\">
                   <col name=\\"el-table_1_column_4\\" width=\\"80\\">
                   <col name=\\"el-table_1_column_5\\" width=\\"80\\">
+                  <col name=\\"el-table_1_column_6\\" width=\\"80\\">
                 </colgroup>
                 <tfoot>
                   <tr>
@@ -139,6 +148,11 @@ exports[`DatasetOverviewPage > should match snapshot when dataset exist 1`] = `
                       </div>
                     </td>
                     <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_5 is-leaf\\">
+                      <div class=\\"cell\\">
+                        <div from=\\"dataset-overview\\">0</div>
+                      </div>
+                    </td>
+                    <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_6 is-leaf\\">
                       <div class=\\"cell\\">
                         <div from=\\"dataset-overview\\">0</div>
                       </div>

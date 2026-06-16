@@ -9,7 +9,8 @@ import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
 import CopyButton from '../../../components/CopyButton.vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
-import { ElDropdown, ElDropdownMenu, ElDropdownItem } from '../../../lib/element-plus'
+import { ElDropdown, ElDropdownMenu, ElDropdownItem, ElTooltip, ElIcon } from '../../../lib/element-plus'
+import { QuestionFilled } from '@element-plus/icons-vue'
 
 type FilterField = keyof DatasetDetailItem | 'analyzerType'
 
@@ -35,6 +36,9 @@ const DatasetItemMetadata = defineComponent({
         version: props.dataset.fdrCounts.dbVersion,
       })
     )
+
+    const targetedTooltip =
+      'Targeted database (fewer than 1000 molecules): FDR is not calculated, so the full annotation count is shown.'
 
     const addFilter = (field: FilterField) => {
       const filter = Object.assign({}, store.getters.filter)
@@ -138,13 +142,27 @@ const DatasetItemMetadata = defineComponent({
           </div>
           {dataset.status === 'FINISHED' && dataset.fdrCounts && (
             <div class="ds-item-line">
-              <span>
-                <FilterLink filter={{ database: dataset.fdrCounts.databaseId, datasetIds: [dataset.id] }}>
-                  {plural(dataset.fdrCounts.counts.join(', '), 'annotation', 'annotations')}
-                </FilterLink>
-                {' @ FDR '}
-                {dataset.fdrCounts.levels.join(', ')}% ({databaseLabel.value})
-              </span>
+              {dataset.fdrCounts.isTargeted ? (
+                <span class="inline-flex items-center gap-1">
+                  <FilterLink filter={{ database: dataset.fdrCounts.databaseId, datasetIds: [dataset.id] }}>
+                    {plural(dataset.fdrCounts.total, 'annotation', 'annotations')}
+                  </FilterLink>
+                  {` (${databaseLabel.value})`}
+                  <ElTooltip content={targetedTooltip} placement="top" popperClass="max-w-xs">
+                    <ElIcon class="text-gray-400 cursor-help">
+                      <QuestionFilled />
+                    </ElIcon>
+                  </ElTooltip>
+                </span>
+              ) : (
+                <span>
+                  <FilterLink filter={{ database: dataset.fdrCounts.databaseId, datasetIds: [dataset.id] }}>
+                    {plural(dataset.fdrCounts.counts.join(', '), 'annotation', 'annotations')}
+                  </FilterLink>
+                  {' @ FDR '}
+                  {dataset.fdrCounts.levels.join(', ')}% ({databaseLabel.value})
+                </span>
+              )}
             </div>
           )}
         </div>
