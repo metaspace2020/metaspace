@@ -133,34 +133,57 @@ export const AnnotationCountTable = defineComponent({
 
     const getSummaries = (param: any) => {
       const { columns, data } = param
+      const { header } = props
+      const maxFdr = Math.max(...header.map(Number)) / 100
+      const nonTargeted = data.filter((row: any) => !row?.isTargeted)
+      const hasTargeted = data.some((row: any) => row?.isTargeted)
+      // The per-FDR-level sums exclude targeted (no-FDR) databases, but a dataset-wide FDR filter
+      // would include their fdr=-1 annotations, and the annotation browser only filters by a single
+      // database. So an FDR-level summary link can only be made accurate when either:
+      //  - there are no targeted DBs (a dataset-wide FDR filter is exact), or
+      //  - there is exactly one non-targeted DB (scope the link to it).
+      // Otherwise (targeted DBs mixed with zero or several non-targeted DBs) no single link reproduces
+      // the displayed count, so the FDR-level cells are shown as plain text. Targeted annotations are
+      // represented only in the Total column (which links to "all databases at the highest FDR level").
+      const canLinkFdrSummary = !hasTargeted || nonTargeted.length === 1
+      const fdrSummaryDbId = hasTargeted && nonTargeted.length === 1 ? nonTargeted[0].id : undefined
       return columns.map((col: any, colIndex: number) => {
         if (colIndex === 0) {
           return props.sumRowLabel
         }
 
-        // Total column (last column) — sum the per-database totals.
+        // Total column (last column) — sum the per-database totals. This equals "all databases at
+        // the highest FDR level" (targeted annotations, fdr=-1, pass every threshold), so the
+        // linked annotation list matches the displayed number.
         if (col?.property === 'total') {
           const total = data.reduce((acc: number, row: any) => acc + (row?.total || 0), 0)
           return (
-            <RouterLink key={colIndex} from="dataset-overview" to={annotationsLink(props.id?.toString())}>
+            <RouterLink
+              key={colIndex}
+              from="dataset-overview"
+              to={annotationsLink(props.id?.toString(), undefined, maxFdr)}
+            >
               {total}
             </RouterLink>
           )
         }
 
         const currentFDR = props.header[colIndex - 1]
+        const sum = data.reduce((acc: number, row: any) => acc + (row[currentFDR] || 0), 0)
 
-        const reducer = (accumulator: number, currentValue: any) => {
-          return accumulator + (currentValue[currentFDR] || 0)
+        // No single annotation-browser link can reproduce this per-level sum (see above) — render
+        // plain text instead of a link that would open a mismatching count.
+        if (!canLinkFdrSummary) {
+          return <span>{sum}</span>
         }
 
         return (
           <RouterLink
             key={colIndex}
             from="dataset-overview"
-            to={annotationsLink(props.id?.toString(), undefined, parseInt(currentFDR, 10) / 100)}
+            to={annotationsLink(props.id?.toString(), fdrSummaryDbId, parseInt(currentFDR, 10) / 100)}
           >
-            {data.reduce(reducer, 0)}
+            {sum}
           </RouterLink>
         )
       })
