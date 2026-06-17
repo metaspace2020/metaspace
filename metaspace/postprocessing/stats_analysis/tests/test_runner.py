@@ -596,9 +596,7 @@ def test_limma_lfc_sign_matches_condition_ordering():
     """
     samples = [
         _region(f'r-c-{i}', f's-c-{i}', 'control', bio=f'm{i}', base=10.0) for i in range(1, 5)
-    ] + [
-        _region(f'r-t-{i}', f's-t-{i}', 'tumor', bio=f'm{10 + i}', base=80.0) for i in range(1, 5)
-    ]
+    ] + [_region(f'r-t-{i}', f's-t-{i}', 'tumor', bio=f'm{10 + i}', base=80.0) for i in range(1, 5)]
     out = run_experiment_prep('e', 1, build_payload(samples))
     pair_rows = [r for r in out['results'] if r['cond_a'] is not None]
     assert pair_rows
@@ -614,12 +612,8 @@ def test_limma_rho_positive_for_paired_design():
     from stats_analysis.limma_python import run_limma as _run_limma
 
     samples = [
-        _region(f'r-c-{i}', f'sc{i}', 'control', bio=f'm{i}', base=10.0 + i)
-        for i in range(1, 5)
-    ] + [
-        _region(f'r-t-{i}', f'st{i}', 'tumor', bio=f'm{i}', base=50.0 + i)
-        for i in range(1, 5)
-    ]
+        _region(f'r-c-{i}', f'sc{i}', 'control', bio=f'm{i}', base=10.0 + i) for i in range(1, 5)
+    ] + [_region(f'r-t-{i}', f'st{i}', 'tumor', bio=f'm{i}', base=50.0 + i) for i in range(1, 5)]
     payload = build_payload(samples)
     prep = payload['prep']
     intensities = prep['intensities']

@@ -6,7 +6,9 @@ import requests
 logger = logging.getLogger(__name__)
 
 
-def wait_for_api_ready(engine_url: str, max_wait_seconds: int = 300, check_interval: int = 5) -> bool:
+def wait_for_api_ready(
+    engine_url: str, max_wait_seconds: int = 300, check_interval: int = 5
+) -> bool:
     """Wait for an HTTP service to be ready by polling its /health endpoint.
 
     Returns True once a 200 or 404 is received (404 = service up, no /health route),

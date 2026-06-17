@@ -87,3 +87,35 @@ def test_reconstruct_prep_drops_excluded_samples(fetch):
     assert sample_ids == ['B']
     assert 'r1' not in prep['intensities']
     assert 'r2' in prep['intensities']
+
+
+def test_reconstruct_prep_computes_tic_from_blob():
+    """TIC must be summed from the intensity blob, not zeroed.
+
+    The full PREP step computes ``tic`` as the sum of per-ion mean
+    intensities. The stats-only re-run rebuilds prep from the blob; if it
+    leaves ``tic`` at 0.0 the persisted run_qc wipes the TIC chart that the
+    first run populated (detectionRate/cv/pca are recomputed, so only TIC
+    breaks).
+    """
+    from stats_analysis.runner import _reconstruct_prep_from_blob
+
+    blob = [
+        {'ion_id': 1, 'region_key': 'r1', 'intensity': 10.0},
+        {'ion_id': 2, 'region_key': 'r1', 'intensity': 5.0},
+        {'ion_id': 1, 'region_key': 'r2', 'intensity': 20.0},
+    ]
+    datasets = [
+        {
+            'dataset_id': 'd',
+            'region_source': 'WHOLE',
+            'regions': [
+                {'regionKey': 'r1', 'metadata': {'sampleId': 'A'}},
+                {'regionKey': 'r2', 'metadata': {'sampleId': 'B'}},
+            ],
+        },
+    ]
+    prep = _reconstruct_prep_from_blob(blob, datasets, [])
+    tic_by_sample = {s['sampleId']: s['tic'] for s in prep['samples']}
+    assert tic_by_sample['A'] == 15.0
+    assert tic_by_sample['B'] == 20.0

@@ -11,9 +11,9 @@ import time
 
 import bottle
 import requests
+from postprocessing_shared import sanitize
 
 from image_segmentation.segm_pipeline import run_segmentation
-from postprocessing_shared import sanitize
 
 logger = logging.getLogger(__name__)
 

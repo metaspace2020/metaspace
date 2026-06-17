@@ -22,11 +22,12 @@ from pathlib import Path
 
 import bottle
 
+from postprocessing_shared import load_config
+
 from image_segmentation.app import app as segmentation_app
 from image_segmentation.restart import (
     delayed_restart_pending_jobs as delayed_restart_pending_segmentation_jobs,
 )
-from postprocessing_shared import load_config
 from stats_analysis.app import app as stats_analysis_app
 from stats_analysis.restart import (
     delayed_restart_pending_jobs as delayed_restart_pending_experiment_jobs,

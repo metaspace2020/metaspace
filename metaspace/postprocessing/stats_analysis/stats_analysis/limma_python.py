@@ -15,17 +15,17 @@ from statsmodels.stats.multitest import multipletests
 
 @dataclass
 class FeatureClassification:
-    tier1_idx: np.ndarray    # (n_tier1,)    int
-    tier2_idx: np.ndarray    # (n_tier2,)    int
-    feat_means: np.ndarray   # (n_features,) float64
-    feat_cv: np.ndarray      # (n_features,) float64
+    tier1_idx: np.ndarray  # (n_tier1,)    int
+    tier2_idx: np.ndarray  # (n_tier2,)    int
+    feat_means: np.ndarray  # (n_features,) float64
+    feat_cv: np.ndarray  # (n_features,) float64
     intensity_threshold: float
 
 
 @dataclass
 class GlsFitResult:
-    beta: np.ndarray     # (n_params, n_features) float64
-    sigma2: np.ndarray   # (n_features,)          float64
+    beta: np.ndarray  # (n_params, n_features) float64
+    sigma2: np.ndarray  # (n_features,)          float64
     df_res: int
     XtX_inv: np.ndarray  # (n_params, n_params)   float64
 
@@ -45,30 +45,30 @@ class ModeratedVariance:
 
 @dataclass
 class TestResult:
-    log2FC: np.ndarray     # (n_contrasts, n_features)
-    t_stat: np.ndarray     # (n_contrasts, n_features)
-    pvalue: np.ndarray     # (n_contrasts, n_features)
-    adj_pvalue: np.ndarray # (n_contrasts, n_features)
+    log2FC: np.ndarray  # (n_contrasts, n_features)
+    t_stat: np.ndarray  # (n_contrasts, n_features)
+    pvalue: np.ndarray  # (n_contrasts, n_features)
+    adj_pvalue: np.ndarray  # (n_contrasts, n_features)
 
 
 @dataclass
-class LimmaResult:
-    log2FC: np.ndarray       # (n_contrasts, n_features)
-    t_stat: np.ndarray       # (n_contrasts, n_features)
-    pvalue: np.ndarray       # (n_contrasts, n_features)
-    adj_pvalue: np.ndarray   # (n_contrasts, n_features)
-    f_stat: np.ndarray       # (n_features,) omnibus F across all contrasts
-    f_pvalue: np.ndarray     # (n_features,)
-    adj_f_pvalue: np.ndarray # (n_features,) BH-adjusted
-    s2_post: np.ndarray      # (n_features,)
+class LimmaResult:  # pylint: disable=too-many-instance-attributes
+    log2FC: np.ndarray  # (n_contrasts, n_features)
+    t_stat: np.ndarray  # (n_contrasts, n_features)
+    pvalue: np.ndarray  # (n_contrasts, n_features)
+    adj_pvalue: np.ndarray  # (n_contrasts, n_features)
+    f_stat: np.ndarray  # (n_features,) omnibus F across all contrasts
+    f_pvalue: np.ndarray  # (n_features,)
+    adj_f_pvalue: np.ndarray  # (n_features,) BH-adjusted
+    s2_post: np.ndarray  # (n_features,)
     rho: float
     s2_prior: float
     df_prior: float
     df_res: int
-    tier1_idx: np.ndarray    # (n_tier1,)
-    tier2_idx: np.ndarray    # (n_tier2,)
-    feat_means: np.ndarray   # (n_features,)
-    feat_cv: np.ndarray      # (n_features,)
+    tier1_idx: np.ndarray  # (n_tier1,)
+    tier2_idx: np.ndarray  # (n_tier2,)
+    feat_means: np.ndarray  # (n_features,)
+    feat_cv: np.ndarray  # (n_features,)
 
 
 def classify_features(
@@ -106,7 +106,7 @@ def classify_features(
     )
 
 
-def duplicate_correlation(
+def duplicate_correlation(  # pylint: disable=too-many-locals
     Y: np.ndarray,
     X: np.ndarray,
     block_ids,
@@ -126,17 +126,17 @@ def duplicate_correlation(
     rank_X = int(np.linalg.matrix_rank(X))
 
     SS_between = np.zeros(n_features, dtype=np.float64)
-    SS_within  = np.zeros(n_features, dtype=np.float64)
+    SS_within = np.zeros(n_features, dtype=np.float64)
     B = len(unique_blocks)
     k_multi = []  # sizes of blocks with ≥ 2 members
 
     for b in unique_blocks:
         idx = np.where(block_arr == b)[0]
         k = idx.size
-        block_res  = residuals[idx, :]
+        block_res = residuals[idx, :]
         block_mean = block_res.mean(axis=0)
         SS_between += k * (block_mean ** 2)
-        SS_within  += ((block_res - block_mean) ** 2).sum(axis=0)
+        SS_within += ((block_res - block_mean) ** 2).sum(axis=0)
         if k >= 2:
             k_multi.append(k)
 
@@ -147,14 +147,14 @@ def duplicate_correlation(
     Z_mat = np.zeros((N, B), dtype=np.float64)
     for _bi, _b in enumerate(unique_blocks):
         Z_mat[block_arr == _b, _bi] = 1.0
-    rank_XZ  = int(np.linalg.matrix_rank(np.hstack([X, Z_mat])))
+    rank_XZ = int(np.linalg.matrix_rank(np.hstack([X, Z_mat])))
     df_between = rank_XZ - rank_X
-    df_within  = N - rank_XZ
+    df_within = N - rank_XZ
     if df_between <= 0 or df_within <= 0:
         return 0.0
 
     # Effective block size for unbalanced designs (Searle 1971).
-    k_arr  = np.array(k_multi, dtype=np.float64)
+    k_arr = np.array(k_multi, dtype=np.float64)
     n_multi_total = float(k_arr.sum())
     n_multi_blocks = len(k_multi)
     k0 = (
@@ -164,14 +164,14 @@ def duplicate_correlation(
     )
 
     MS_between = SS_between / df_between
-    MS_within  = SS_within  / df_within
+    MS_within = SS_within / df_within
 
     denom = MS_between + (k0 - 1.0) * MS_within
     valid = denom > 0
-    icc   = np.where(valid, (MS_between - MS_within) / denom, 0.0)
-    icc   = np.clip(icc, 0.0, 1.0 - 1e-10)
+    icc = np.where(valid, (MS_between - MS_within) / denom, 0.0)
+    icc = np.clip(icc, 0.0, 1.0 - 1e-10)
 
-    z   = np.arctanh(icc)
+    z = np.arctanh(icc)
     rho = float(np.tanh(_trim_mean(z, 0.15)))
     return rho
 
@@ -225,7 +225,7 @@ def estimate_prior(
         lo, hi = np.percentile(s, [5.0, 95.0])
         s = np.clip(s, lo, hi)
 
-    dig  = float(_special.digamma(df_res / 2.0))
+    dig = float(_special.digamma(df_res / 2.0))
     trig = float(_special.polygamma(1, df_res / 2.0))
 
     m = float(np.mean(s - dig + np.log(df_res / 2.0)))
@@ -235,14 +235,13 @@ def estimate_prior(
         # Sampling noise alone explains observed variance; use infinite shrinkage.
         df_prior = 1e6
     else:
+
         def _trigamma_eq(d0: float) -> float:
             return float(_special.polygamma(1, d0 / 2.0)) - v
 
         df_prior = float(_optimize.brentq(_trigamma_eq, 1e-6, 1e5))
 
-    s2_prior = float(
-        np.exp(m + _special.digamma(df_prior / 2.0) - np.log(df_prior / 2.0))
-    )
+    s2_prior = float(np.exp(m + _special.digamma(df_prior / 2.0) - np.log(df_prior / 2.0)))
 
     return EBPrior(s2_prior=s2_prior, df_prior=df_prior, df_res=df_res)
 
@@ -284,7 +283,7 @@ def moderated_ttest(
     return TestResult(log2FC=log2FC, t_stat=t_stat, pvalue=pvalue, adj_pvalue=adj_pvalue)
 
 
-def run_limma(
+def run_limma(  # pylint: disable=too-many-locals
     Y: np.ndarray,
     X: np.ndarray,
     block_ids,

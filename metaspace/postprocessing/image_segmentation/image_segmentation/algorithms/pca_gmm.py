@@ -36,16 +36,15 @@ def _run_pca(
     if n_components is not None:
         n_selected = min(n_components, max_components)
         n_selected = min(n_selected, MAX_ALLOWED_COMPONENTS)
-        logger.info("PCA: using fixed n_components=%s", n_selected)
+        logger.info(f"PCA: using fixed n_components={n_selected}")
     else:
         n_selected = int(np.searchsorted(cumulative_variance, variance_threshold) + 1)
         n_selected = min(n_selected, max_components)
         n_selected = min(n_selected, MAX_ALLOWED_COMPONENTS)
         logger.info(
-            "PCA: auto-selected %s components (%.3f cumulative variance at threshold %s)",
-            n_selected,
-            cumulative_variance[n_selected - 1],
-            variance_threshold,
+            f"PCA: auto-selected {n_selected} components "
+            f"({cumulative_variance[n_selected - 1]:.3f} cumulative variance "
+            f"at threshold {variance_threshold})"
         )
 
     # Slice scores — no second fit needed
@@ -87,9 +86,7 @@ def _find_elbow(k_values: List[int], scores: List[float]) -> int:  # pylint: dis
 
     dist_str = ", ".join(f"{d:.3f}" for d in distances)
     logger.info(
-        "[SEGMENTATION_PERF] Elbow detection: selected k=%s (distances=[%s])",
-        elbow_k,
-        dist_str,
+        f"[SEGMENTATION_PERF] Elbow detection: selected k={elbow_k} (distances=[{dist_str}])"
     )
 
     return elbow_k
@@ -110,11 +107,11 @@ def _select_k_via_criterion(
         gmm.fit(pc_scores)
         score = gmm.bic(pc_scores) if criterion == "bic" else gmm.aic(pc_scores)
         scores.append(score)
-        logger.debug("GMM k=%s: %s=%.2f", k, criterion.upper(), score)
+        logger.debug(f"GMM k={k}: {criterion.upper()}={score:.2f}")
 
     # best_k = k_values[int(np.argmin(scores))]
     best_k = _find_elbow(k_values, scores)
-    logger.info("GMM: auto-selected k=%s via %s", best_k, criterion.upper())
+    logger.info(f"GMM: auto-selected k={best_k} via {criterion.upper()}")
 
     curve = {
         "k_values": k_values,
@@ -145,10 +142,8 @@ def _run_gmm(
     }
 
     logger.info(
-        "GMM: fitted k=%s, unique labels=%s, mean confidence=%.3f",
-        k,
-        np.unique(labels),
-        float(confidence.mean()),
+        f"GMM: fitted k={k}, unique labels={np.unique(labels)}, "
+        f"mean confidence={float(confidence.mean()):.3f}"
     )
     return labels, confidence_histogram
 
@@ -222,10 +217,8 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
         parameters = self.validate_parameters(parameters)
 
         logger.info(
-            "Dataset %s: running PCA+GMM on %s pixels x %s ions",
-            segmentation_input.dataset_id,
-            segmentation_input.n_pixels,
-            segmentation_input.n_ions,
+            f"Dataset {segmentation_input.dataset_id}: running PCA+GMM on "
+            f"{segmentation_input.n_pixels} pixels x {segmentation_input.n_ions} ions"
         )
 
         # 1. PCA
@@ -236,14 +229,14 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
             variance_threshold=parameters["variance_threshold"],
         )
         pca_time = time.time() - pca_start_time
-        logger.info("[SEGMENTATION_PERF] PCA completed in %.3fs", pca_time)
+        logger.info(f"[SEGMENTATION_PERF] PCA completed in {pca_time:.3f}s")
 
         # 2. k selection or fixed k
         k_selection_start_time = time.time()
         bic_curve = None
         if parameters["k"] is not None:
             k = parameters["k"]
-            logger.info("GMM: using fixed k=%s", k)
+            logger.info(f"GMM: using fixed k={k}")
         else:
             k, bic_curve = _select_k_via_criterion(
                 pc_scores=pc_scores,
@@ -251,13 +244,13 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
                 criterion=parameters["criterion"],
             )
         k_selection_time = time.time() - k_selection_start_time
-        logger.info("[SEGMENTATION_PERF] k selection completed in %.3fs", k_selection_time)
+        logger.info(f"[SEGMENTATION_PERF] k selection completed in {k_selection_time:.3f}s")
 
         # 3. GMM
         gmm_start_time = time.time()
         labels, confidence_histogram = _run_gmm(pc_scores, k)
         gmm_time = time.time() - gmm_start_time
-        logger.info("[SEGMENTATION_PERF] GMM completed in %.3fs", gmm_time)
+        logger.info(f"[SEGMENTATION_PERF] GMM completed in {gmm_time:.3f}s")
 
         # 4. Reconstruct label map
         label_map_start_time = time.time()
@@ -268,12 +261,11 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
         )
         label_map_time = time.time() - label_map_start_time
         logger.info(
-            "[SEGMENTATION_PERF] Label map reconstruction completed in %.3fs",
-            label_map_time,
+            f"[SEGMENTATION_PERF] Label map reconstruction completed in {label_map_time:.3f}s"
         )
 
         total_time = time.time() - start_time
-        logger.info("[SEGMENTATION_PERF] Total algorithm time: %.3fs", total_time)
+        logger.info(f"[SEGMENTATION_PERF] Total algorithm time: {total_time:.3f}s")
 
         return RawAlgorithmOutput(
             map_type="unified",

@@ -46,20 +46,15 @@ def dispatch(
 
     algo = ALGORITHM_REGISTRY[algorithm]
 
-    logger.info(
-        "Dataset %s: dispatching to algorithm '%s'",
-        segmentation_input.dataset_id,
-        algorithm,
-    )
+    logger.info(f"Dataset {segmentation_input.dataset_id}: dispatching to algorithm '{algorithm}'")
 
     # validate_parameters fills defaults and raises on bad inputs
     param_validation_start = time.time()
     validated_parameters = algo.validate_parameters(parameters)
     param_validation_time = time.time() - param_validation_start
     logger.info(
-        "[SEGMENTATION_PERF] Parameter validation completed in %.3fs for %s",
-        param_validation_time,
-        algorithm,
+        f"[SEGMENTATION_PERF] Parameter validation completed in {param_validation_time:.3f}s "
+        f"for {algorithm}"
     )
 
     algorithm_start_time = time.time()
@@ -69,9 +64,7 @@ def dispatch(
     )
     algorithm_time = time.time() - algorithm_start_time
     logger.info(
-        "[SEGMENTATION_PERF] Algorithm %s execution completed in %.3fs",
-        algorithm,
-        algorithm_time,
+        f"[SEGMENTATION_PERF] Algorithm {algorithm} execution completed in {algorithm_time:.3f}s"
     )
 
     return result

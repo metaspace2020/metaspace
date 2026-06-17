@@ -257,7 +257,7 @@ def _omnibus_row(
     }
 
 
-def _per_label_group_results(
+def _per_label_group_results(  # pylint: disable=unused-argument
     label_group_name: str,
     test_kind: str,
     groups: "OrderedDict[str, List[Dict]]",
@@ -279,8 +279,9 @@ def _per_label_group_results(
         a_vals = np.array([intensities.get(rk, {}).get(ion_id, 0.0) for rk in keys_a])
         b_vals = np.array([intensities.get(rk, {}).get(ion_id, 0.0) for rk in keys_b])
         pair_rows.append(
-            _pair_row(ion_id, label_group_name, ca, cb, a_vals, b_vals,
-                      a_vals.size, b_vals.size, math.nan)
+            _pair_row(
+                ion_id, label_group_name, ca, cb, a_vals, b_vals, a_vals.size, b_vals.size, math.nan
+            )
         )
 
     ps = [r['p_value'] if r['p_value'] is not None else math.nan for r in pair_rows]
@@ -291,7 +292,7 @@ def _per_label_group_results(
     return pair_rows
 
 
-def _build_limma_inputs(
+def _build_limma_inputs(  # pylint: disable=too-many-locals
     groups: "OrderedDict[str, List[Dict]]",
     intensities: Dict[str, Dict[int, float]],
     surviving_ids: List[int],
@@ -376,14 +377,23 @@ def _null_pair_rows(
                 a_vals = np.array([intensities.get(rk, {}).get(ion_id, 0.0) for rk in keys_a])
                 b_vals = np.array([intensities.get(rk, {}).get(ion_id, 0.0) for rk in keys_b])
                 all_rows.append(
-                    _pair_row(ion_id, label_group_name, ca, cb, a_vals, b_vals,
-                              len(keys_a), len(keys_b), math.nan)
+                    _pair_row(
+                        ion_id,
+                        label_group_name,
+                        ca,
+                        cb,
+                        a_vals,
+                        b_vals,
+                        len(keys_a),
+                        len(keys_b),
+                        math.nan,
+                    )
                 )
 
     return all_rows
 
 
-def _per_label_group_results_limma(
+def _per_label_group_results_limma(  # pylint: disable=too-many-locals
     label_group_name: str,
     groups: "OrderedDict[str, List[Dict]]",
     intensities: Dict[str, Dict[int, float]],
@@ -428,8 +438,15 @@ def _per_label_group_results_limma(
             p = float(result.pvalue[pi, fi])
             q = float(result.adj_pvalue[pi, fi])
             row = _pair_row(
-                ion_id, label_group_name, cond_a, cond_b,
-                a_vals, b_vals, len(keys_a), len(keys_b), p,
+                ion_id,
+                label_group_name,
+                cond_a,
+                cond_b,
+                a_vals,
+                b_vals,
+                len(keys_a),
+                len(keys_b),
+                p,
             )
             row['lfc'] = float(result.log2FC[pi, fi])
             row['fdr'] = None if math.isnan(q) else q
@@ -574,7 +591,9 @@ def run_experiment_prep(  # pylint: disable=too-many-locals,too-many-branches,to
 
         if test_kind == 'NOT_ENOUGH_DATA':
             results.extend(
-                _per_label_group_results(lg_name, test_kind, groups, local_intensities, surviving_ids)
+                _per_label_group_results(
+                    lg_name, test_kind, groups, local_intensities, surviving_ids
+                )
             )
         else:
             results.extend(
@@ -726,6 +745,12 @@ def _reconstruct_prep_from_blob(
         if rk not in keep_region_keys:
             continue
         intensities.setdefault(rk, {})[int(row['ion_id'])] = float(row['intensity'])
+
+    # Recompute TIC per region from the blob — it is the sum of the per-ion
+    # mean intensities, matching the full PREP step (experiment_prep.py). Without
+    # this the stats-only re-run would persist tic=0.0 and blank the TIC chart.
+    for sample in samples:
+        sample['tic'] = float(sum((intensities.get(sample['regionKey']) or {}).values()))
 
     ions_total = len({int(r['ion_id']) for r in blob_rows})
     return {

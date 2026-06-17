@@ -122,9 +122,7 @@ def _canonical_pair(a: str, b: str) -> Tuple[str, str]:
     return (a, b) if a < b else (b, a)
 
 
-def dunn_posthoc(
-    arms: List[np.ndarray], conditions: List[str]
-) -> Dict[Tuple[str, str], float]:
+def dunn_posthoc(arms: List[np.ndarray], conditions: List[str]) -> Dict[Tuple[str, str], float]:
     """Dunn's test with Bonferroni correction across pairs.
 
     Post-hoc for Kruskal-Wallis. Each returned p-value is already adjusted
@@ -190,9 +188,7 @@ def _studentized_range_sf_inf(q: float, k: int) -> float:
     return max(0.0, min(1.0, 1.0 - cdf))
 
 
-def nemenyi_posthoc(
-    arms: List[np.ndarray], conditions: List[str]
-) -> Dict[Tuple[str, str], float]:
+def nemenyi_posthoc(arms: List[np.ndarray], conditions: List[str]) -> Dict[Tuple[str, str], float]:
     """Nemenyi post-hoc for Friedman test (paired k>=3).
 
     Arms must be aligned by block (same length, arm[i][j] is the same
