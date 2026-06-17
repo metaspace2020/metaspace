@@ -637,6 +637,15 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
           }
           return {
             ...diag,
+            images: (diag.images || []).map(img => ({
+              ...img,
+              url: resolveImageUrl({
+                imageType: 'diag',
+                dsId: diag.datasetId,
+                imageId: img.image_id,
+                storedUrl: img.url,
+              }),
+            })),
             data: JSON.stringify(diag.data),
             database,
             updatedDT: diag.updatedDT.toISOString(),
