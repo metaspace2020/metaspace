@@ -143,6 +143,204 @@ describe('ExperimentEditPage', () => {
     expect(wrapper.find('[data-test-key="dataset-card-d1"]').exists()).toBe(true)
   })
 
+  it('seeds variable options from the hydrated experiment', async () => {
+    mockRoute = { params: { projectId: 'p1', id: 'e1' } }
+    setupQueries({ experiment: sampleExperiment })
+
+    const wrapper = mountPage()
+    await flushPromises()
+    await nextTick()
+
+    const vm: any = wrapper.vm
+    expect(vm.variableOptions.condition).toContain('control')
+    expect(vm.variableOptions.biologicalReplicateId).toContain('m1')
+  })
+
+  it('bulk-assigns a value to every region of the selected datasets', async () => {
+    mockRoute = { params: { projectId: 'p1' } }
+    setupQueries()
+
+    const wrapper = mountPage()
+    await flushPromises()
+    await nextTick()
+
+    const vm: any = wrapper.vm
+    vm.setDraft({
+      name: 'X',
+      description: null,
+      matchMode: 'NAME',
+      labelGroups: [],
+      datasets: [
+        {
+          datasetId: 'd1',
+          regionSource: 'WHOLE',
+          regions: [
+            {
+              regionKey: 'k1',
+              sourceKind: 'whole',
+              roiId: null,
+              segmentationId: null,
+              labelGroupName: null,
+              included: true,
+              metadata: {
+                condition: '',
+                biologicalReplicateId: '',
+                sampleId: '',
+                technicalReplicateId: null,
+                batchId: null,
+              },
+            },
+          ],
+        },
+        {
+          datasetId: 'd2',
+          regionSource: 'ROI',
+          regions: [
+            {
+              regionKey: 'k2',
+              sourceKind: 'roi',
+              roiId: 10,
+              segmentationId: null,
+              labelGroupName: null,
+              included: true,
+              metadata: {
+                condition: '',
+                biologicalReplicateId: '',
+                sampleId: '',
+                technicalReplicateId: null,
+                batchId: null,
+              },
+            },
+            {
+              regionKey: 'k3',
+              sourceKind: 'roi',
+              roiId: 11,
+              segmentationId: null,
+              labelGroupName: null,
+              included: true,
+              metadata: {
+                condition: '',
+                biologicalReplicateId: '',
+                sampleId: '',
+                technicalReplicateId: null,
+                batchId: null,
+              },
+            },
+          ],
+        },
+      ],
+    })
+    await nextTick()
+
+    vm.onBulkAssign({ key: 'condition', value: 'treated', datasetIds: ['d2'] })
+    await nextTick()
+
+    expect(vm.draft.datasets[0].regions[0].metadata.condition).toBe('') // d1 untouched
+    expect(vm.draft.datasets[1].regions.map((r: any) => r.metadata.condition)).toEqual(['treated', 'treated'])
+    // assigned value is now an option
+    expect(vm.variableOptions.condition).toContain('treated')
+  })
+
+  it('keeps an in-use value in the options when a remove is attempted, but drops an unused manual value', async () => {
+    mockRoute = { params: { projectId: 'p1' } }
+    setupQueries()
+
+    const wrapper = mountPage()
+    await flushPromises()
+    await nextTick()
+
+    const vm: any = wrapper.vm
+    vm.setDraft({
+      name: 'X',
+      description: null,
+      matchMode: 'NAME',
+      labelGroups: [],
+      datasets: [
+        {
+          datasetId: 'd1',
+          regionSource: 'WHOLE',
+          regions: [
+            {
+              regionKey: 'k1',
+              sourceKind: 'whole',
+              roiId: null,
+              segmentationId: null,
+              labelGroupName: null,
+              included: true,
+              metadata: {
+                condition: 'control',
+                biologicalReplicateId: 'm1',
+                sampleId: 's1',
+                technicalReplicateId: null,
+                batchId: null,
+              },
+            },
+          ],
+        },
+      ],
+    })
+    await nextTick()
+
+    // 'control' is in use -> cannot be removed
+    vm.onVariableChange({ key: 'condition', values: [] })
+    await nextTick()
+    expect(vm.variableOptions.condition).toContain('control')
+
+    // add an unused manual value then remove it
+    vm.onBulkAddValue({ key: 'batchId', value: 'b1' })
+    await nextTick()
+    expect(vm.variableOptions.batchId).toContain('b1')
+    vm.onVariableChange({ key: 'batchId', values: [] })
+    await nextTick()
+    expect(vm.variableOptions.batchId).not.toContain('b1')
+  })
+
+  it('keeps the variable option order stable as values are assigned and reassigned', async () => {
+    mockRoute = { params: { projectId: 'p1' } }
+    setupQueries()
+
+    const wrapper = mountPage()
+    await flushPromises()
+    await nextTick()
+
+    const vm: any = wrapper.vm
+    const wholeRegion = (key: string) => ({
+      regionKey: key,
+      sourceKind: 'whole',
+      roiId: null,
+      segmentationId: null,
+      labelGroupName: null,
+      included: true,
+      metadata: { condition: '', biologicalReplicateId: '', sampleId: '', technicalReplicateId: null, batchId: null },
+    })
+    vm.setDraft({
+      name: 'X',
+      description: null,
+      matchMode: 'NAME',
+      labelGroups: [],
+      datasets: [
+        { datasetId: 'd1', regionSource: 'WHOLE', regions: [wholeRegion('k1')] },
+        { datasetId: 'd2', regionSource: 'WHOLE', regions: [wholeRegion('k2')] },
+      ],
+    })
+    await nextTick()
+
+    // Define values in a specific order.
+    vm.onBulkAddValue({ key: 'condition', value: 'treated' })
+    vm.onBulkAddValue({ key: 'condition', value: 'inoculated' })
+    vm.onBulkAddValue({ key: 'condition', value: 'control' })
+    await nextTick()
+    expect(vm.variableOptions.condition).toEqual(['treated', 'inoculated', 'control'])
+
+    // Assignments that, with the old seed-first ordering, would have reshuffled the chips.
+    vm.onBulkAssign({ key: 'condition', value: 'control', datasetIds: ['d1'] })
+    await nextTick()
+    vm.onBulkAssign({ key: 'condition', value: 'treated', datasetIds: ['d2'] })
+    await nextTick()
+
+    expect(vm.variableOptions.condition).toEqual(['treated', 'inoculated', 'control'])
+  })
+
   it('calls createExperiment with the right input shape and routes back to project on Save', async () => {
     mockRoute = { params: { projectId: 'p1' } }
     setupQueries()

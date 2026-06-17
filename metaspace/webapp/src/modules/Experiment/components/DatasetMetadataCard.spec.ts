@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, ref, nextTick } from 'vue'
 import DatasetMetadataCard, { RoiOption, SegmentationOption } from './DatasetMetadataCard'
 import type { ExperimentDraftDataset } from '../api'
@@ -170,12 +170,87 @@ describe('DatasetMetadataCard', () => {
     const wrapper = mount(Wrapper)
     expect(wrapper.find('[data-test-key="ion-image-tic"]').exists()).toBe(true)
     const previewWrapper = wrapper.find('[data-test-key="ion-preview-wrapper-d1"]')
-    expect(previewWrapper.classes()).toContain('grid-rows-[1fr]')
+    // Ion image preview is collapsed by default now.
+    expect(previewWrapper.classes()).toContain('grid-rows-[0fr]')
     await wrapper.find('[data-test-key="toggle-ion-image-d1"]').trigger('click')
     await nextTick()
-    // The preview stays mounted (so the image is preserved between toggles); only
-    // the wrapper's grid-rows class flips, driving a CSS drawer transition.
-    expect(previewWrapper.classes()).toContain('grid-rows-[0fr]')
+    // Clicking the toggle expands it; the preview stays mounted so the image is preserved.
+    expect(previewWrapper.classes()).toContain('grid-rows-[1fr]')
     expect(wrapper.find('[data-test-key="ion-image-tic"]').exists()).toBe(true)
+  })
+
+  it('renders a subtitle summarising the assigned values', () => {
+    const draft: ExperimentDraftDataset = {
+      datasetId: 'd1',
+      regionSource: 'WHOLE',
+      regions: [
+        {
+          regionKey: 'k0',
+          sourceKind: 'whole',
+          roiId: null,
+          segmentationId: null,
+          labelGroupName: null,
+          included: true,
+          metadata: {
+            condition: 'Cond2',
+            biologicalReplicateId: 'A3',
+            sampleId: 's1',
+            technicalReplicateId: 'S1',
+            batchId: null,
+          },
+        },
+      ],
+    }
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(DatasetMetadataCard, {
+            dataset,
+            modelValue: draft,
+            rois,
+            segmentations,
+            labelGroups: [],
+            'onUpdate:modelValue': () => {},
+          })
+      },
+    })
+    const wrapper = mount(Wrapper)
+    const subtitle = wrapper.find('[data-test-key="dataset-subtitle-d1"]')
+    expect(subtitle.exists()).toBe(true)
+    expect(subtitle.text()).toContain('Cond2')
+    expect(subtitle.text()).toContain('A3')
+  })
+
+  it('renders metadata dropdowns fed from the variables prop and emits the chosen value', async () => {
+    const value = ref<ExperimentDraftDataset>(defaultDraft)
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(DatasetMetadataCard, {
+            dataset,
+            modelValue: value.value,
+            rois,
+            segmentations,
+            labelGroups: [],
+            variables: {
+              condition: ['Cond1', 'Cond2'],
+              biologicalReplicateId: [],
+              batchId: [],
+              technicalReplicateId: [],
+            },
+            'onUpdate:modelValue': (v: ExperimentDraftDataset) => {
+              value.value = v
+            },
+          })
+      },
+    })
+    const wrapper = mount(Wrapper)
+    // ElTable renders its scoped-slot cells asynchronously; wait for them.
+    await flushPromises()
+    await nextTick()
+    const conditionSelect = wrapper.findComponent('[data-test-key="condition-select-d1-0"]') as any
+    expect(conditionSelect.exists()).toBe(true)
+    await conditionSelect.vm.$emit('change', 'Cond2')
+    expect(value.value.regions[0].metadata.condition).toBe('Cond2')
   })
 })

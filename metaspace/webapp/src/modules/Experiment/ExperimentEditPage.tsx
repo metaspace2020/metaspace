@@ -25,9 +25,24 @@ import DatasetMetadataCard, { RoiOption, SegmentationOption } from './components
 import RegionMappingBoard, { BoardColumn, BoardEdge } from './components/RegionMappingBoard'
 import MatchModeSelector, { MatchMode } from './components/MatchModeSelector'
 import RegionMappingGroups from './components/RegionMappingGroups'
+import ExperimentVariablesCard from './components/ExperimentVariablesCard'
+import BulkAssignPanel from './components/BulkAssignPanel'
 import { resolveRenameTarget, seedNameModeGroups } from './composables/groupNaming'
 import { buildSegmentationMasks } from './composables/useSegmentationMasks'
 import { isRegionValid, conditionCoverageWarning } from './composables/useRegionValidation'
+import {
+  emptyVariables,
+  seedVariablesFromDraft,
+  mergeVariables,
+  addVariableValue,
+  removeVariableValue,
+  assignVariableToDatasets,
+  datasetSummary,
+  isDatasetFullyAssigned,
+  variableUsageCount,
+  VARIABLE_KEYS,
+} from './composables/experimentVariables'
+import type { ExperimentVariables, VariableKey } from './composables/experimentVariables'
 import { getDatasetDiagnosticsQuery } from '../../api/dataset'
 
 interface IonPreviewCacheEntry {
@@ -61,6 +76,19 @@ export default defineComponent({
 
     const draft = ref<ExperimentDraft>(emptyDraft())
     const hydrated = ref(false)
+
+    // Stable, ordered palette of values for the dropdowns/bulk chips
+    const variableOptions = ref<ExperimentVariables>(emptyVariables())
+    watch(
+      () => seedVariablesFromDraft(draft.value),
+      (seed) => {
+        const merged = mergeVariables(variableOptions.value, seed)
+        if (VARIABLE_KEYS.some((k) => merged[k].length !== variableOptions.value[k].length)) {
+          variableOptions.value = merged
+        }
+      },
+      { immediate: true }
+    )
 
     const { result: expResult, onResult: onExpResult } = useQuery<{ experiment: any }>(
       experimentQuery,
@@ -284,6 +312,45 @@ export default defineComponent({
     const datasetInfo = (datasetId: string): CandidateDataset => {
       const found = candidates.value.find((c) => c.id === datasetId)
       return found ?? { id: datasetId, name: datasetId, polarity: null }
+    }
+
+    /** Datasets in a shape the bulk-assign panel can render as selectable chips. */
+    const bulkDatasets = computed(() =>
+      draft.value.datasets.map((d) => ({
+        id: d.datasetId,
+        name: datasetInfo(d.datasetId).name,
+        values: datasetSummary(d),
+      }))
+    )
+    const assignedCount = computed(() => draft.value.datasets.filter(isDatasetFullyAssigned).length)
+
+    /** Apply tag add/remove from the variables card. Removing a value that is in use is vetoed. */
+    const onVariableChange = (payload: { key: VariableKey; values: string[] }): void => {
+      const { key, values } = payload
+      const current = variableOptions.value[key]
+      for (const v of values) {
+        if (!current.includes(v)) variableOptions.value = addVariableValue(variableOptions.value, key, v)
+      }
+      for (const v of current) {
+        if (!values.includes(v)) {
+          const used = variableUsageCount(draft.value, key, v)
+          if (used > 0) {
+            ElMessage.warning(`"${v}" is used by ${used} region(s) — change those first`)
+          } else {
+            variableOptions.value = removeVariableValue(variableOptions.value, key, v)
+          }
+        }
+      }
+    }
+
+    /** Set a value on every region of the selected datasets. */
+    const onBulkAssign = (payload: { key: VariableKey; value: string; datasetIds: string[] }): void => {
+      draft.value = assignVariableToDatasets(draft.value, payload.datasetIds, payload.key, payload.value)
+    }
+
+    /** Add a brand-new value (typed in the bulk panel) to the palette without assigning it yet. */
+    const onBulkAddValue = (payload: { key: VariableKey; value: string }): void => {
+      variableOptions.value = addVariableValue(variableOptions.value, payload.key, payload.value)
     }
 
     /** Build the columns for RegionMappingBoard from the current draft. */
@@ -598,6 +665,10 @@ export default defineComponent({
       setDraft: (d: ExperimentDraft) => {
         draft.value = d
       },
+      variableOptions,
+      onVariableChange,
+      onBulkAssign,
+      onBulkAddValue,
       onAddEdge,
       detachRegionFromGroup,
       renameGroup,
@@ -653,6 +724,18 @@ export default defineComponent({
               />
             </ElCard>
 
+            <ExperimentVariablesCard modelValue={variableOptions.value} onChange-variable={onVariableChange} />
+
+            {draft.value.datasets.length > 0 && (
+              <BulkAssignPanel
+                datasets={bulkDatasets.value}
+                variables={variableOptions.value}
+                assignedCount={assignedCount.value}
+                onAssign={onBulkAssign}
+                onAdd-value={onBulkAddValue}
+              />
+            )}
+
             {draft.value.datasets.map((d, idx) => {
               const preview = ionImageByDataset.value[d.datasetId] ?? {
                 ionImageUrl: null,
@@ -665,6 +748,7 @@ export default defineComponent({
                   key={d.datasetId}
                   dataset={datasetInfo(d.datasetId)}
                   modelValue={d}
+                  variables={variableOptions.value}
                   rois={roisByDataset.value[d.datasetId] ?? []}
                   segmentations={segmentationsByDataset.value[d.datasetId] ?? []}
                   labelGroups={labelGroupOptions.value}

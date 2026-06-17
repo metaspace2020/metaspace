@@ -3,6 +3,8 @@ import { ElCard, ElSelect, ElOption, ElInput, ElTable, ElTableColumn, ElCheckbox
 import { View, Close } from '@element-plus/icons-vue'
 import { generateRegionKey, regionLabel as sharedRegionLabel, paletteColor } from '../api'
 import type { ExperimentDraftDataset, ExperimentDraftRegion } from '../api'
+import { datasetSummary, emptyVariables, VARIABLE_LABELS } from '../composables/experimentVariables'
+import type { ExperimentVariables, VariableKey } from '../composables/experimentVariables'
 import DatasetIonImagePreview, { IonPreviewOverlay } from './DatasetIonImagePreview'
 
 export interface DatasetCardInfo {
@@ -50,10 +52,11 @@ export default defineComponent({
     imageWidth: { type: Number as PropType<number | null>, default: null },
     imageHeight: { type: Number as PropType<number | null>, default: null },
     segmentationMasks: { type: Object as PropType<Record<string, string>>, default: () => ({}) },
+    variables: { type: Object as PropType<ExperimentVariables>, default: () => emptyVariables() },
   },
   emits: ['update:modelValue', 'remove'],
   setup(props, { emit }) {
-    const shownIonImage = ref(true)
+    const shownIonImage = ref(false)
 
     const update = (patch: Partial<ExperimentDraftDataset>): void => {
       emit('update:modelValue', { ...props.modelValue, ...patch })
@@ -153,6 +156,45 @@ export default defineComponent({
       ...props.labelGroups.map((lg) => ({ value: lg.name, label: lg.name })),
     ])
 
+    const SELECT_TEST_PREFIX: Record<VariableKey, string> = {
+      condition: 'condition',
+      biologicalReplicateId: 'biorep',
+      technicalReplicateId: 'techrep',
+      batchId: 'batch',
+    }
+
+    /** Compact one-line summary of a dataset's assigned values for the card header. */
+    const subtitleText = (v: ExperimentDraftDataset): string => {
+      const s = datasetSummary(v)
+      const show = (val: string | null): string => (val == null ? '—' : val)
+      return [
+        show(s.condition),
+        show(s.biologicalReplicateId),
+        `tech ${show(s.technicalReplicateId)}`,
+        `batch ${show(s.batchId)}`,
+      ].join(' · ')
+    }
+
+    /** Reusable allow-create dropdown for a metadata field. Optional fields are clearable and store '' as null. */
+    const metadataSelect = (row: ExperimentDraftRegion, index: number, key: VariableKey, optional: boolean) => (
+      <ElSelect
+        modelValue={(row.metadata[key] as string | null) ?? ''}
+        filterable
+        allow-create
+        default-first-option
+        clearable={optional}
+        placeholder={VARIABLE_LABELS[key]}
+        data-test-key={`${SELECT_TEST_PREFIX[key]}-select-${props.dataset.id}-${index}`}
+        onChange={(val: string) =>
+          updateMetadata(index, { [key]: optional ? val || null : val } as Partial<ExperimentDraftRegion['metadata']>)
+        }
+      >
+        {props.variables[key].map((opt) => (
+          <ElOption key={opt} value={opt} label={opt} />
+        ))}
+      </ElSelect>
+    )
+
     return () => {
       const ds = props.dataset
       const v = props.modelValue
@@ -162,8 +204,13 @@ export default defineComponent({
             header: () => (
               <div class="flex justify-between items-center gap-4">
                 <div>
-                  <strong>{ds.name}</strong>
-                  <span class="text-xs text-gray-500 ml-2">{ds.polarity ?? ''}</span>
+                  <div>
+                    <strong>{ds.name}</strong>
+                    <span class="text-xs text-gray-500 ml-2">{ds.polarity ?? ''}</span>
+                  </div>
+                  <div class="text-xs text-gray-400 mt-1" data-test-key={`dataset-subtitle-${ds.id}`}>
+                    {subtitleText(v)}
+                  </div>
                 </div>
                 <button
                   class="bg-transparent border-0 p-0 text-gray-400 
@@ -257,22 +304,14 @@ export default defineComponent({
                   </ElTableColumn>
                   <ElTableColumn label="Condition">
                     {{
-                      default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) => (
-                        <ElInput
-                          modelValue={row.metadata.condition}
-                          onUpdate:modelValue={(val: string) => updateMetadata($index, { condition: val })}
-                        />
-                      ),
+                      default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) =>
+                        metadataSelect(row, $index, 'condition', false),
                     }}
                   </ElTableColumn>
                   <ElTableColumn label="Bio rep">
                     {{
-                      default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) => (
-                        <ElInput
-                          modelValue={row.metadata.biologicalReplicateId}
-                          onUpdate:modelValue={(val: string) => updateMetadata($index, { biologicalReplicateId: val })}
-                        />
-                      ),
+                      default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) =>
+                        metadataSelect(row, $index, 'biologicalReplicateId', false),
                     }}
                   </ElTableColumn>
                   <ElTableColumn label="Sample ID">
@@ -287,24 +326,14 @@ export default defineComponent({
                   </ElTableColumn>
                   <ElTableColumn label="Tech rep">
                     {{
-                      default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) => (
-                        <ElInput
-                          modelValue={row.metadata.technicalReplicateId ?? ''}
-                          onUpdate:modelValue={(val: string) =>
-                            updateMetadata($index, { technicalReplicateId: val || null })
-                          }
-                        />
-                      ),
+                      default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) =>
+                        metadataSelect(row, $index, 'technicalReplicateId', true),
                     }}
                   </ElTableColumn>
                   <ElTableColumn label="Batch">
                     {{
-                      default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) => (
-                        <ElInput
-                          modelValue={row.metadata.batchId ?? ''}
-                          onUpdate:modelValue={(val: string) => updateMetadata($index, { batchId: val || null })}
-                        />
-                      ),
+                      default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) =>
+                        metadataSelect(row, $index, 'batchId', true),
                     }}
                   </ElTableColumn>
                   <ElTableColumn label="Label group" width="160">
