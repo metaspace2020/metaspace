@@ -227,19 +227,12 @@ export default defineComponent({
                       key={o.id}
                       class="absolute inset-0 w-full h-full pointer-events-none"
                       viewBox={viewBox}
-                      // Match the ion image's `object-contain` letterboxing: when the
-                      // element box isn't the same aspect ratio as the grid 
                       preserveAspectRatio="xMidYMid meet"
                       data-test-key={`overlay-${o.id}-svg`}
                     >
-                      {/* Smooth translucent fill of the ROI polygon (no stroke — the
-                          outline is drawn separately as a continuous pixel boundary). */}
                       {rings.map((ring, i) => (
                         <polygon key={i} points={ring.points} fill={o.color} fill-opacity={0.8} stroke="none" />
                       ))}
-                      {/* Pixel border tracing the drawn edges, mirroring the annotation
-                          viewer's pixel brush — continuous, no tail, no gap, and faithful
-                          to the polygon's straight sides. */}
                       {borderPath && (
                         <path d={borderPath} fill={o.color} stroke="none" data-test-key={`overlay-${o.id}-border`} />
                       )}
