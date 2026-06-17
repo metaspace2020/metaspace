@@ -5,10 +5,13 @@ import {
   doQuery, onAfterAll, onAfterEach, onBeforeAll, onBeforeEach,
   setupTestUsers, testEntityManager, testUser,
 } from '../../../tests/graphqlTestEnvironment'
-import { createTestProject } from '../../../tests/testDataCreation'
+import {
+  createTestProject, createTestJob, createTestMolecularDB, createTestDatasetWithEngineDataset,
+} from '../../../tests/testDataCreation'
 import { UserProject, UserProjectRoleOptions as UPRO } from '../../project/model'
-import { Experiment, ExperimentResult } from '../model'
+import { Experiment, ExperimentDataset, ExperimentResult } from '../model'
 import { Ion } from '../../annotation/model'
+import { Annotation } from '../../engine/model'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const mockEs = _mockEsConnector as jest.Mocked<typeof _mockEsConnector>
@@ -143,6 +146,80 @@ describe('experiment queries', () => {
       { id: exp.id })
     expect(rows).toHaveLength(1)
     expect(rows[0].pValue).toBeCloseTo(0.001, 6)
+  })
+
+  it('experimentResults — database filter is scoped to the experiment\'s own datasets', async() => {
+    // Regression: the ion-membership lookup used to scan annotation⨝job across
+    // the ENTIRE platform for the selected moldb (WHERE j.moldb_id IN (...)),
+    // which on production scanned hundreds of millions of rows and took minutes.
+    // It must be scoped to this experiment's datasets, so an ion that belongs to
+    // the same database only in an UNRELATED dataset does not leak in.
+    const { exp } = await seed() as any
+    const db = await createTestMolecularDB()
+
+    // Two datasets sharing the same molecular DB: one inside the experiment, one outside.
+    const { engineDataset: dsIn } = await createTestDatasetWithEngineDataset({ userId: testUser.id })
+    const { engineDataset: dsOut } = await createTestDatasetWithEngineDataset({ userId: testUser.id })
+    await testEntityManager.save(ExperimentDataset, {
+      experimentId: exp.id, datasetId: dsIn.id, regionSource: 'whole', regions: [],
+    } as any)
+
+    const jobIn = await createTestJob({ datasetId: dsIn.id, moldbId: db.id })
+    const jobOut = await createTestJob({ datasetId: dsOut.id, moldbId: db.id })
+    const ionIn: any = await testEntityManager.save(Ion, {
+      ion: 'In+H+', formula: 'C1H2', adduct: '+H', ionFormula: 'C1H3', charge: 1,
+    } as any)
+    const ionOut: any = await testEntityManager.save(Ion, {
+      ion: 'Out+H+', formula: 'C2H2', adduct: '+H', ionFormula: 'C2H3', charge: 1,
+    } as any)
+    const annotation = (jobId: number, ionId: number, formula: string) =>
+      testEntityManager.save(Annotation, {
+        jobId,
+        ionId,
+        formula,
+        chemMod: '',
+        neutralLoss: '',
+        adduct: '+H',
+        msm: 0.9,
+        fdr: 0.1,
+        stats: {},
+        isoImageIds: [],
+      } as any)
+    await annotation(jobIn.id, ionIn.id, 'C1H2')
+    await annotation(jobOut.id, ionOut.id, 'C2H2')
+
+    // Result rows exist for BOTH ions in the experiment.
+    const result = (ionId: number, pValue: number) =>
+      testEntityManager.save(ExperimentResult, {
+        experimentId: exp.id,
+        runGeneration: 1,
+        ionId,
+        labelGroupName: 'tumor',
+        condA: 'control',
+        condB: 'treated',
+        lfc: 1.0,
+        pValue,
+        fdr: 1.0,
+        nA: 3,
+        nB: 3,
+        meanA: 1.0,
+        meanB: 2.0,
+        detectionRateA: 1,
+        detectionRateB: 1,
+      } as any)
+    await result(ionIn.id, 0.01)
+    await result(ionOut.id, 0.02)
+
+    const rows = await doQuery<any[]>(
+      `query($id: ID!, $db: Int!){ experimentResults(
+        experimentId: $id, filter: { databases: [$db] }, limit: 500
+      ) { ion { id } pValue } }`,
+      { id: exp.id, db: db.id })
+
+    // Only the ion annotated under the DB *within this experiment's dataset*
+    // survives. ionOut belongs to the same DB but only in an unrelated dataset.
+    expect(rows).toHaveLength(1)
+    expect(rows[0].ion.id).toBe(ionIn.id)
   })
 })
 

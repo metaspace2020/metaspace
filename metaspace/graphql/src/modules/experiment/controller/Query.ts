@@ -3,7 +3,7 @@ import fetch from 'node-fetch'
 import { FieldResolversFor } from '../../../bindingTypes'
 import { Query } from '../../../binding'
 import { Context } from '../../../context'
-import { Experiment, ExperimentResult } from '../model'
+import { Experiment, ExperimentDataset, ExperimentResult } from '../model'
 import { Ion } from '../../annotation/model'
 import { Annotation } from '../../engine/model'
 import { assertCanAccessProject } from '../operation/permissions'
@@ -115,7 +115,18 @@ const QueryResolvers: FieldResolversFor<Query, any> = {
       const ionQb = ctx.entityManager.getRepository(Annotation)
         .createQueryBuilder('a').select('DISTINCT a.ion_id', 'ion_id')
       if (databases.length) {
-        ionQb.innerJoin('a.job', 'j').andWhere('j.moldb_id IN (:...dbs)', { dbs: databases })
+        // Scope the membership scan to THIS experiment's datasets
+        ionQb.innerJoin('a.job', 'j')
+          .andWhere('j.moldb_id IN (:...dbs)', { dbs: databases })
+          .andWhere(qb => {
+            const sub = qb.subQuery()
+              .select('ed.dataset_id')
+              .from(ExperimentDataset, 'ed')
+              .where('ed.experiment_id = :expId')
+              .getQuery()
+            return 'j.ds_id IN ' + sub
+          })
+          .setParameter('expId', id)
       }
       const allowedIons = new Set<number>(
         (await ionQb.getRawMany()).map(r => Number(r.ion_id))
