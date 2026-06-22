@@ -441,8 +441,8 @@ export default defineComponent({
               <div class="collapse-header !justify-start">
                 <span class="collapse-title">Segmentation diagnostics</span>
                 {renderHelpIcon(
-                  'How confidently each pixel was assigned to a cluster by the GMM model. The dashed line shows ' +
-                    'the median confidence threshold.'
+                  'How confidently each pixel was assigned to a cluster by the GMM model. The dashed line marks ' +
+                    'the most common confidence bin (peak).'
                 )}
               </div>
             ),
