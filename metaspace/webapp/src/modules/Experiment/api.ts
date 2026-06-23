@@ -342,6 +342,12 @@ export const datasetSegmentationsQuery = gql`
   }
 `
 
+export const copyRoisToDatasetsMutation = gql`
+  mutation copyRoisToDatasets($sourceDatasetId: String!, $targetDatasetIds: [String!]!) {
+    copyRoisToDatasets(sourceDatasetId: $sourceDatasetId, targetDatasetIds: $targetDatasetIds)
+  }
+`
+
 /** A single sample's metadata row in a draft. */
 export interface ExperimentDraftRegion {
   regionKey: string
@@ -498,7 +504,7 @@ export const serializeDraft = (
         labelGroupName: r.labelGroupName,
         metadata: {
           ...r.metadata,
-          sampleId: r.metadata.sampleId?.trim() || ds.datasetId,
+          sampleId: r.metadata.sampleId?.trim() || r.regionKey || ds.datasetId,
         },
       })),
   })),

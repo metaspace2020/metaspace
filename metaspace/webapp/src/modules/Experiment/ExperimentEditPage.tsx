@@ -7,6 +7,7 @@ import {
   createExperimentMutation,
   updateExperimentMutation,
   runExperimentPrepMutation,
+  copyRoisToDatasetsMutation,
   projectCandidateDatasetsQuery,
   datasetRoisQuery,
   datasetSegmentationsQuery,
@@ -15,13 +16,15 @@ import {
   draftFromExperiment,
   serializeDraft,
   regionLabel as sharedRegionLabel,
+  generateRegionKey,
   paletteColor,
   REGION_PALETTE,
   ExperimentDraft,
   ExperimentDraftDataset,
+  ExperimentDraftRegion,
 } from './api'
 import DatasetSelector, { CandidateDataset } from './components/DatasetSelector'
-import DatasetMetadataCard, { RoiOption, SegmentationOption } from './components/DatasetMetadataCard'
+import DatasetMetadataCard, { RoiOption, SegmentationOption, CopyableSource } from './components/DatasetMetadataCard'
 import RegionMappingBoard, { BoardColumn, BoardEdge } from './components/RegionMappingBoard'
 import MatchModeSelector, { MatchMode } from './components/MatchModeSelector'
 import RegionMappingGroups from './components/RegionMappingGroups'
@@ -185,6 +188,55 @@ export default defineComponent({
       },
       { immediate: true }
     )
+
+    const onCopyRoisFrom = async (targetDatasetId: string, sourceDatasetId: string): Promise<void> => {
+      try {
+        await apolloClient.mutate({
+          mutation: copyRoisToDatasetsMutation,
+          variables: { sourceDatasetId, targetDatasetIds: [targetDatasetId] },
+        })
+        // Force-refetch the target's ROI list from the server.
+        const { [targetDatasetId]: _dropped, ...rest } = roisByDataset.value
+        roisByDataset.value = rest
+        const res = await apolloClient.query({
+          query: datasetRoisQuery,
+          variables: { datasetId: targetDatasetId },
+          fetchPolicy: 'network-only',
+        })
+        const newRois: RoiOption[] = res.data?.rois ?? []
+        roisByDataset.value = { ...roisByDataset.value, [targetDatasetId]: newRois }
+
+        // Rebuild the target dataset's regions from the new ROI list,
+        // preserving whatever metadata and label group the first region had.
+        draft.value = {
+          ...draft.value,
+          datasets: draft.value.datasets.map((ds) => {
+            if (ds.datasetId !== targetDatasetId) return ds
+            const preserved = ds.regions[0]
+            const regions: ExperimentDraftRegion[] = newRois.map((roi) => ({
+              regionKey: generateRegionKey(ds.datasetId, { sourceKind: 'roi', roiId: Number(roi.id) }),
+              sourceKind: 'roi',
+              roiId: Number(roi.id),
+              segmentationId: null,
+              labelGroupName: preserved?.labelGroupName ?? null,
+              included: true,
+              metadata: preserved?.metadata ?? {
+                condition: '',
+                biologicalReplicateId: '',
+                sampleId: '',
+                technicalReplicateId: null,
+                batchId: null,
+              },
+            }))
+            return { ...ds, regions }
+          }),
+        }
+
+        ElMessage.success('ROIs copied successfully')
+      } catch (e: any) {
+        ElMessage.error(e?.message ?? 'Failed to copy ROIs')
+      }
+    }
 
     /**
      * Lazily build segmentation cluster overlay masks for a dataset.
@@ -743,6 +795,14 @@ export default defineComponent({
                 imageWidth: null,
                 imageHeight: null,
               }
+              const copyableSources: CopyableSource[] = draft.value.datasets
+                .filter((other) => other.datasetId !== d.datasetId)
+                .map((other) => ({
+                  datasetId: other.datasetId,
+                  name: datasetInfo(other.datasetId).name,
+                  roiCount: roisByDataset.value[other.datasetId]?.length ?? 0,
+                }))
+                .filter((s) => s.roiCount > 0)
               return (
                 <DatasetMetadataCard
                   key={d.datasetId}
@@ -757,8 +817,10 @@ export default defineComponent({
                   imageWidth={preview.imageWidth}
                   imageHeight={preview.imageHeight}
                   segmentationMasks={segmentationMasksByDataset.value[d.datasetId] ?? {}}
+                  copyableSources={copyableSources}
                   onUpdate:modelValue={(v: ExperimentDraftDataset) => onCardChange(idx, v)}
                   onRemove={() => onCardRemove(idx)}
+                  onCopyRoisFrom={(sourceId: string) => onCopyRoisFrom(d.datasetId, sourceId)}
                 />
               )
             })}

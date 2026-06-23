@@ -1,5 +1,5 @@
 import { defineComponent, PropType, computed, ref } from 'vue'
-import { ElCard, ElSelect, ElOption, ElInput, ElTable, ElTableColumn, ElCheckbox } from '../../../lib/element-plus'
+import { ElCard, ElSelect, ElOption, ElInput, ElTable, ElTableColumn, ElCheckbox, ElButton } from '../../../lib/element-plus'
 import { View, Close } from '@element-plus/icons-vue'
 import { generateRegionKey, regionLabel as sharedRegionLabel, paletteColor } from '../api'
 import type { ExperimentDraftDataset, ExperimentDraftRegion } from '../api'
@@ -31,6 +31,12 @@ export interface LabelGroupOption {
   color: string
 }
 
+export interface CopyableSource {
+  datasetId: string
+  name: string
+  roiCount: number
+}
+
 const emptyMetadata = (): ExperimentDraftRegion['metadata'] => ({
   condition: '',
   biologicalReplicateId: '',
@@ -53,10 +59,12 @@ export default defineComponent({
     imageHeight: { type: Number as PropType<number | null>, default: null },
     segmentationMasks: { type: Object as PropType<Record<string, string>>, default: () => ({}) },
     variables: { type: Object as PropType<ExperimentVariables>, default: () => emptyVariables() },
+    copyableSources: { type: Array as PropType<CopyableSource[]>, default: () => [] },
   },
-  emits: ['update:modelValue', 'remove'],
+  emits: ['update:modelValue', 'remove', 'copyRoisFrom'],
   setup(props, { emit }) {
     const shownIonImage = ref(false)
+    const copySourceId = ref<string | null>(null)
 
     const update = (patch: Partial<ExperimentDraftDataset>): void => {
       emit('update:modelValue', { ...props.modelValue, ...patch })
@@ -72,46 +80,92 @@ export default defineComponent({
       updateRegion(idx, { metadata: { ...region.metadata, ...patch } })
     }
 
+    /** Build a deterministic default sampleId: "{datasetName}_{regionLabel}".
+     *  Uses the existing value if the user has already typed one. */
+    const inferSampleId = (
+      existingSampleId: string,
+      r: { sourceKind: string; roiId?: number | null; segmentationId?: string | null },
+      roisArg: typeof props.rois,
+      segsArg: typeof props.segmentations
+    ): string => {
+      if (existingSampleId.trim()) return existingSampleId
+      const dsName = props.dataset.name.replace(/\s+/g, '_').slice(0, 40)
+      let suffix = ''
+      if (r.sourceKind === 'whole') {
+        suffix = 'whole'
+      } else if (r.sourceKind === 'roi') {
+        const roi = roisArg.find((x) => Number(x.id) === r.roiId)
+        suffix = roi ? roi.name.replace(/\s+/g, '_') : `roi${r.roiId ?? ''}`
+      } else {
+        const seg = segsArg.find((s) => s.id === r.segmentationId)
+        suffix = seg ? `cluster${seg.segmentIndex}` : 'cluster'
+      }
+      return `${dsName}_${suffix}`
+    }
+
     const onRegionSourceChange = (regionSource: ExperimentDraftDataset['regionSource']): void => {
       let regions: ExperimentDraftRegion[]
       const datasetId = props.modelValue.datasetId
+      // Preserve the global metadata fields from the first existing region so that
+      // switching region source (e.g. WHOLE → ROI → WHOLE) never wipes condition/bioRep/etc.
+      const preservedMeta = props.modelValue.regions[0]?.metadata ?? emptyMetadata()
+      const preserved = {
+        metadata: preservedMeta,
+        labelGroupName: props.modelValue.regions[0]?.labelGroupName ?? null,
+      }
       if (regionSource === 'WHOLE') {
+        const r = { sourceKind: 'whole' as const }
         regions = [
           {
             regionKey: generateRegionKey(datasetId, { sourceKind: 'whole' }),
             sourceKind: 'whole',
             roiId: null,
             segmentationId: null,
-            labelGroupName: null,
+            labelGroupName: preserved.labelGroupName,
             included: true,
-            metadata: emptyMetadata(),
+            metadata: {
+              ...preserved.metadata,
+              sampleId: inferSampleId(preserved.metadata.sampleId, r, props.rois, props.segmentations),
+            },
           },
         ]
       } else if (regionSource === 'ROI') {
-        regions = props.rois.map((roi) => ({
-          regionKey: generateRegionKey(datasetId, { sourceKind: 'roi', roiId: Number(roi.id) }),
-          sourceKind: 'roi',
-          roiId: Number(roi.id),
-          segmentationId: null,
-          labelGroupName: null,
-          included: true,
-          metadata: emptyMetadata(),
-        }))
+        regions = props.rois.map((roi) => {
+          const r = { sourceKind: 'roi' as const, roiId: Number(roi.id) }
+          return {
+            regionKey: generateRegionKey(datasetId, { sourceKind: 'roi', roiId: Number(roi.id) }),
+            sourceKind: 'roi',
+            roiId: Number(roi.id),
+            segmentationId: null,
+            labelGroupName: preserved.labelGroupName,
+            included: true,
+            metadata: {
+              ...preserved.metadata,
+              sampleId: inferSampleId('', r, props.rois, props.segmentations),
+            },
+          }
+        })
       } else {
         regions = props.segmentations
           .filter((seg) => !seg.stale)
-          .map((seg) => ({
-            regionKey: generateRegionKey(datasetId, {
+          .map((seg) => {
+            const r = { sourceKind: 'segmentation_cluster' as const, segmentationId: seg.id }
+            return {
+              regionKey: generateRegionKey(datasetId, {
+                sourceKind: 'segmentation_cluster',
+                segmentationId: seg.id,
+              }),
               sourceKind: 'segmentation_cluster',
+              roiId: null,
               segmentationId: seg.id,
-            }),
-            sourceKind: 'segmentation_cluster',
-            roiId: null,
-            segmentationId: seg.id,
-            labelGroupName: null,
-            included: true,
-            metadata: emptyMetadata(),
-          }))
+              labelGroupName: preserved.labelGroupName,
+              included: true,
+              metadata: {
+                ...preserved.metadata,
+                sampleId: inferSampleId('', r, props.rois, props.segmentations),
+              },
+            }
+          })
       }
       emit('update:modelValue', {
         ...props.modelValue,
@@ -248,6 +302,49 @@ export default defineComponent({
                     <View class="w-4 h-4" />
                   </a>
                 </div>
+                {v.regionSource === 'ROI' && props.copyableSources.length > 0 && (
+                  <div class="flex items-center gap-2 flex-wrap" data-test-key={`copy-rois-row-${ds.id}`}>
+                    <ElSelect
+                      modelValue={copySourceId.value ?? ''}
+                      placeholder="Copy ROIs from another dataset…"
+                      clearable
+                      size="small"
+                      style={{ width: '260px' }}
+                      data-test-key={`copy-rois-select-${ds.id}`}
+                      onChange={(val: string) => { copySourceId.value = val || null }}
+                      onClear={() => { copySourceId.value = null }}
+                    >
+                      {props.copyableSources.map((s) => (
+                        <ElOption
+                          key={s.datasetId}
+                          value={s.datasetId}
+                          label={`${s.name} (${s.roiCount} ROI${s.roiCount !== 1 ? 's' : ''})`}
+                        />
+                      ))}
+                    </ElSelect>
+                    {copySourceId.value && (
+                      <>
+                        {props.rois.length > 0 && (
+                          <span class="text-xs text-orange-600" data-test-key={`copy-rois-overwrite-warn-${ds.id}`}>
+                            Will overwrite {props.rois.length} existing ROI{props.rois.length !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                        <ElButton
+                          size="small"
+                          type="primary"
+                          data-test-key={`copy-rois-confirm-${ds.id}`}
+                          onClick={() => {
+                            emit('copyRoisFrom', copySourceId.value)
+                            copySourceId.value = null
+                          }}
+                        >
+                          Copy
+                        </ElButton>
+                      </>
+                    )}
+                    <span class="text-xs text-gray-400">ROIs are copied as-is; ensure datasets share the same pixel dimensions.</span>
+                  </div>
+                )}
                 <div
                   data-test-key={`ion-preview-wrapper-${ds.id}`}
                   class={[
