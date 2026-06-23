@@ -117,8 +117,7 @@ export default defineComponent({
       return {
         tooltip: {
           trigger: 'item',
-          formatter: (p: any) =>
-            `${p.data?.sampleId ?? ''} / ${p.data?.regionKey ?? ''}<br/>${p.data?.value?.[1] ?? ''}`,
+          formatter: (p: any) => `${p.data?.sampleId ?? ''}<br/>${p.data?.value?.[1] ?? ''}`,
         },
         legend: {
           top: 4,
@@ -145,9 +144,10 @@ export default defineComponent({
         yAxis: {
           type: 'value',
           name: 'INTENSITY (NORM.)',
-          nameLocation: 'end',
-          nameGap: 12,
-          nameTextStyle: { color: '#909399', fontSize: 10, align: 'left' },
+          nameLocation: 'middle',
+          nameRotate: 90,
+          nameGap: 48,
+          nameTextStyle: { color: '#909399', fontSize: 10 },
           axisLine: { show: false },
           axisLabel: { color: '#606266', fontSize: 10 },
           splitLine: { lineStyle: { type: 'dashed', color: '#ebeef5' } },
