@@ -15,6 +15,7 @@ Config path resolution:
     1. ``$POSTPROCESSING_CONFIG`` if set
     2. ``<repo>/metaspace/postprocessing/conf/config.json`` (dev fallback)
 """
+
 import logging
 import os
 import threading
@@ -44,13 +45,16 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Route stats_analysis logs to their own file when STATS_ANALYSIS_LOG is set.
-_stats_log_path = os.environ.get('STATS_ANALYSIS_LOG')
-if _stats_log_path:
-    _stats_handler = logging.FileHandler(_stats_log_path)
-    _stats_handler.setFormatter(
-        logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+_STATS_LOG_PATH = os.environ.get('STATS_ANALYSIS_LOG')
+if _STATS_LOG_PATH:
+    _STATS_HANDLER = logging.FileHandler(_STATS_LOG_PATH)
+    _STATS_HANDLER.setFormatter(
+        logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S',
+        )
     )
-    logging.getLogger('stats_analysis').addHandler(_stats_handler)
+    logging.getLogger('stats_analysis').addHandler(_STATS_HANDLER)
 
 app = bottle.Bottle()
 app.mount('/segmentation', segmentation_app)

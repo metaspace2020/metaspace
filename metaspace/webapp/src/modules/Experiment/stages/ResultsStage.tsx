@@ -207,7 +207,7 @@ export default defineComponent({
     // Strip fdrMax from the parent filter so ExploreStage's threshold doesn't
     // leak into ResultsStage — results are unfiltered by default here.
     const serverFilter = computed(() => {
-      const { fdrMax: _dropped, ...rest } = props.filter ?? {}
+      const rest = Object.fromEntries(Object.entries(props.filter ?? {}).filter(([k]) => k !== 'fdrMax'))
       return {
         ...rest,
         ...(localFdrMax.value != null ? { fdrMax: localFdrMax.value } : {}),
@@ -607,8 +607,14 @@ export default defineComponent({
             size="small"
             style={{ width: '90px' }}
             data-test-key="filter-fdr-max"
-            onChange={(v: string) => { localFdrMax.value = v ? Number(v) : null; page.value = 1 }}
-            onClear={() => { localFdrMax.value = null; page.value = 1 }}
+            onChange={(v: string) => {
+              localFdrMax.value = v ? Number(v) : null
+              page.value = 1
+            }}
+            onClear={() => {
+              localFdrMax.value = null
+              page.value = 1
+            }}
           >
             <ElOption value="0.05" label="5%" />
             <ElOption value="0.1" label="10%" />
@@ -620,7 +626,10 @@ export default defineComponent({
           <span class="text-sm text-gray-600">|LFC| ≥</span>
           <ElInputNumber
             modelValue={localLfcAbsMin.value ?? undefined}
-            onUpdate:modelValue={(v: number | undefined) => { localLfcAbsMin.value = v ?? null; page.value = 1 }}
+            onUpdate:modelValue={(v: number | undefined) => {
+              localLfcAbsMin.value = v ?? null
+              page.value = 1
+            }}
             min={0}
             step={0.5}
             precision={1}

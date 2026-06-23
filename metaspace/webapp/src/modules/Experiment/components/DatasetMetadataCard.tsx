@@ -1,5 +1,14 @@
 import { defineComponent, PropType, computed, ref } from 'vue'
-import { ElCard, ElSelect, ElOption, ElInput, ElTable, ElTableColumn, ElCheckbox, ElButton } from '../../../lib/element-plus'
+import {
+  ElCard,
+  ElSelect,
+  ElOption,
+  ElInput,
+  ElTable,
+  ElTableColumn,
+  ElCheckbox,
+  ElButton,
+} from '../../../lib/element-plus'
 import { View, Close } from '@element-plus/icons-vue'
 import { generateRegionKey, regionLabel as sharedRegionLabel, paletteColor } from '../api'
 import type { ExperimentDraftDataset, ExperimentDraftRegion } from '../api'
@@ -311,8 +320,12 @@ export default defineComponent({
                       size="small"
                       style={{ width: '260px' }}
                       data-test-key={`copy-rois-select-${ds.id}`}
-                      onChange={(val: string) => { copySourceId.value = val || null }}
-                      onClear={() => { copySourceId.value = null }}
+                      onChange={(val: string) => {
+                        copySourceId.value = val || null
+                      }}
+                      onClear={() => {
+                        copySourceId.value = null
+                      }}
                     >
                       {props.copyableSources.map((s) => (
                         <ElOption
@@ -342,7 +355,9 @@ export default defineComponent({
                         </ElButton>
                       </>
                     )}
-                    <span class="text-xs text-gray-400">ROIs are copied as-is; ensure datasets share the same pixel dimensions.</span>
+                    <span class="text-xs text-gray-400">
+                      ROIs are copied as-is; ensure datasets share the same pixel dimensions.
+                    </span>
                   </div>
                 )}
                 <div

@@ -196,7 +196,9 @@ export default defineComponent({
           variables: { sourceDatasetId, targetDatasetIds: [targetDatasetId] },
         })
         // Force-refetch the target's ROI list from the server.
-        const { [targetDatasetId]: _dropped, ...rest } = roisByDataset.value
+        const rest = Object.fromEntries(
+          Object.entries(roisByDataset.value).filter(([k]) => k !== targetDatasetId)
+        ) as Record<string, RoiOption[]>
         roisByDataset.value = rest
         const res = await apolloClient.query({
           query: datasetRoisQuery,
