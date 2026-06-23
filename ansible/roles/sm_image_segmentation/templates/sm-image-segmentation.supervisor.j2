@@ -2,7 +2,7 @@
 
 [program:{{ sm_image_segmentation_app_name }}]
 process_name = {{ sm_image_segmentation_app_name }}
-environment = PATH="{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin",POSTPROCESSING_CONFIG="{{ metaspace_home }}/metaspace/postprocessing/conf/config.json"
+environment = PATH="{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin",POSTPROCESSING_CONFIG="{{ metaspace_home }}/metaspace/postprocessing/conf/config.json",STATS_ANALYSIS_LOG="{{ sm_home }}/logs/sm_stats_analysis.log"
 directory = {{ metaspace_home }}/metaspace/postprocessing
 command = {{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python -m postprocessing_server.app
 redirect_stderr = true
