@@ -217,8 +217,8 @@ describe('DatasetMetadataCard', () => {
     const wrapper = mount(Wrapper)
     const subtitle = wrapper.find('[data-test-key="dataset-subtitle-d1"]')
     expect(subtitle.exists()).toBe(true)
+    expect(subtitle.text()).toContain('Whole')
     expect(subtitle.text()).toContain('Cond2')
-    expect(subtitle.text()).toContain('A3')
   })
 
   it('renders metadata dropdowns fed from the variables prop and emits the chosen value', async () => {
