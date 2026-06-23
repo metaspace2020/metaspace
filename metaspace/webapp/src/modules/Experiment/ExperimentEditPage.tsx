@@ -25,6 +25,7 @@ import {
 } from './api'
 import DatasetSelector, { CandidateDataset } from './components/DatasetSelector'
 import DatasetMetadataCard, { RoiOption, SegmentationOption, CopyableSource } from './components/DatasetMetadataCard'
+import type { BulkCopyRoisSource } from './components/BulkAssignPanel'
 import RegionMappingBoard, { BoardColumn, BoardEdge } from './components/RegionMappingBoard'
 import MatchModeSelector, { MatchMode } from './components/MatchModeSelector'
 import RegionMappingGroups from './components/RegionMappingGroups'
@@ -220,7 +221,7 @@ export default defineComponent({
               sourceKind: 'roi',
               roiId: Number(roi.id),
               segmentationId: null,
-              labelGroupName: preserved?.labelGroupName ?? null,
+              labelGroupName: roi.name,
               included: true,
               metadata: preserved?.metadata ?? {
                 condition: '',
@@ -235,6 +236,61 @@ export default defineComponent({
         }
 
         ElMessage.success('ROIs copied successfully')
+      } catch (e: any) {
+        ElMessage.error(e?.message ?? 'Failed to copy ROIs')
+      }
+    }
+
+    const onBulkCopyRois = async (payload: { sourceDatasetId: string; targetDatasetIds: string[] }): Promise<void> => {
+      try {
+        await apolloClient.mutate({
+          mutation: copyRoisToDatasetsMutation,
+          variables: { sourceDatasetId: payload.sourceDatasetId, targetDatasetIds: payload.targetDatasetIds },
+        })
+        // Drop cached ROI lists for all targets so they are force-refetched.
+        roisByDataset.value = Object.fromEntries(
+          Object.entries(roisByDataset.value).filter(([k]) => !payload.targetDatasetIds.includes(k))
+        ) as Record<string, RoiOption[]>
+        const results = await Promise.all(
+          payload.targetDatasetIds.map((targetDatasetId) =>
+            apolloClient.query({
+              query: datasetRoisQuery,
+              variables: { datasetId: targetDatasetId },
+              fetchPolicy: 'network-only',
+            })
+          )
+        )
+        const newRoisByTarget = new Map<string, RoiOption[]>(
+          payload.targetDatasetIds.map((id, i) => [id, (results[i].data?.rois ?? []) as RoiOption[]])
+        )
+        roisByDataset.value = { ...roisByDataset.value, ...Object.fromEntries(newRoisByTarget) }
+        draft.value = {
+          ...draft.value,
+          datasets: draft.value.datasets.map((ds) => {
+            const newRois = newRoisByTarget.get(ds.datasetId)
+            if (!newRois) return ds
+            const preserved = ds.regions[0]
+            const regions: ExperimentDraftRegion[] = newRois.map((roi) => ({
+              regionKey: generateRegionKey(ds.datasetId, { sourceKind: 'roi', roiId: Number(roi.id) }),
+              sourceKind: 'roi',
+              roiId: Number(roi.id),
+              segmentationId: null,
+              labelGroupName: roi.name,
+              included: true,
+              metadata: preserved?.metadata ?? {
+                condition: '',
+                biologicalReplicateId: '',
+                sampleId: '',
+                technicalReplicateId: null,
+                batchId: null,
+              },
+            }))
+            return { ...ds, regionSource: 'ROI', regions }
+          }),
+        }
+        ElMessage.success(
+          `ROIs copied to ${payload.targetDatasetIds.length} dataset${payload.targetDatasetIds.length !== 1 ? 's' : ''}`
+        )
       } catch (e: any) {
         ElMessage.error(e?.message ?? 'Failed to copy ROIs')
       }
@@ -367,6 +423,17 @@ export default defineComponent({
       const found = candidates.value.find((c) => c.id === datasetId)
       return found ?? { id: datasetId, name: datasetId, polarity: null }
     }
+
+    /** Datasets that already have ROIs loaded — used as copy sources in the bulk panel. */
+    const copyRoisSources = computed<BulkCopyRoisSource[]>(() =>
+      draft.value.datasets
+        .map((d) => ({
+          datasetId: d.datasetId,
+          name: datasetInfo(d.datasetId).name,
+          roiCount: roisByDataset.value[d.datasetId]?.length ?? 0,
+        }))
+        .filter((s) => s.roiCount > 0)
+    )
 
     /** Datasets in a shape the bulk-assign panel can render as selectable chips. */
     const bulkDatasets = computed(() =>
@@ -638,6 +705,37 @@ export default defineComponent({
       { flush: 'post' }
     )
 
+    // Auto-populate draft.value.labelGroups from labelGroupName values on regions.
+    // Runs whenever a new group name appears that isn't yet registered in the palette.
+    watch(
+      () => {
+        const names: string[] = []
+        for (const ds of draft.value.datasets) {
+          for (const r of ds.regions) {
+            if (r.labelGroupName) names.push(r.labelGroupName)
+          }
+        }
+        return [...new Set(names)].sort().join('|')
+      },
+      () => {
+        const usedNames = new Set<string>()
+        for (const ds of draft.value.datasets) {
+          for (const r of ds.regions) {
+            if (r.labelGroupName) usedNames.add(r.labelGroupName)
+          }
+        }
+        const existing = new Set(draft.value.labelGroups.map((g) => g.name))
+        const toAdd = [...usedNames].filter((n) => !existing.has(n))
+        if (toAdd.length === 0) return
+        const newGroups = [...draft.value.labelGroups]
+        for (const name of toAdd) {
+          newGroups.push({ name, color: paletteColor(newGroups.length) })
+        }
+        draft.value = { ...draft.value, labelGroups: newGroups }
+      },
+      { flush: 'post' }
+    )
+
     const noNamesMatched = computed(() => {
       if (draft.value.matchMode !== 'NAME') return false
       if (draft.value.datasets.length < 2) return false
@@ -785,8 +883,10 @@ export default defineComponent({
                 datasets={bulkDatasets.value}
                 variables={variableOptions.value}
                 assignedCount={assignedCount.value}
+                copyRoisSources={copyRoisSources.value}
                 onAssign={onBulkAssign}
                 onAdd-value={onBulkAddValue}
+                onCopy-rois={onBulkCopyRois}
               />
             )}
 
