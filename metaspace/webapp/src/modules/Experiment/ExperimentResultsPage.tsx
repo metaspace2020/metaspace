@@ -501,6 +501,7 @@ export default defineComponent({
             <ResultsStage
               experimentId={e.id}
               filter={currentFilters.value}
+              labelGroups={e.labelGroups ?? []}
               {...{
                 'onUpdate:selectedRow': (r: Record<string, unknown>) => {
                   selectedRow.value = r

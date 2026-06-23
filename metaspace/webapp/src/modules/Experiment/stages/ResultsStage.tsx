@@ -165,6 +165,7 @@ export default defineComponent({
   props: {
     experimentId: { type: String, required: true },
     filter: { type: Object as () => Record<string, unknown> | null, default: null },
+    labelGroups: { type: Array as () => { name: string; color: string }[], default: () => [] },
   },
   emits: ['update:selectedRow'],
   setup(props, { emit }) {
@@ -198,11 +199,13 @@ export default defineComponent({
     //   { condA, condB }   -> specific pair
     const contrast = ref<{ omnibus: true } | { condA: string; condB: string } | null>(null)
 
-    // Client-owned FDR/LFC filters — local state not sourced from ExploreStage.
+    // Client-owned FDR/LFC/labelGroup filters — local state not sourced from ExploreStage.
     // fdrMax: null = no filter; otherwise restrict to rows where fdr <= fdrMax.
     // lfcAbsMin: null = no filter; otherwise restrict to |lfc| >= lfcAbsMin.
+    // localLabelGroup: null = all groups; otherwise restrict to a single label group.
     const localFdrMax = ref<number | null>(null)
     const localLfcAbsMin = ref<number | null>(null)
+    const localLabelGroup = ref<string | null>(null)
 
     // Strip fdrMax from the parent filter so ExploreStage's threshold doesn't
     // leak into ResultsStage — results are unfiltered by default here.
@@ -212,6 +215,7 @@ export default defineComponent({
         ...rest,
         ...(localFdrMax.value != null ? { fdrMax: localFdrMax.value } : {}),
         ...(localLfcAbsMin.value != null ? { lfcAbsMin: localLfcAbsMin.value } : {}),
+        ...(localLabelGroup.value != null ? { labelGroupName: localLabelGroup.value } : {}),
         ...(contrast.value ? { contrast: contrast.value } : {}),
       }
     })
@@ -254,6 +258,8 @@ export default defineComponent({
       offset: 0,
     }))
     const volcanoRows = computed<ResultRow[]>(() => volcanoResult.value?.experimentResults ?? [])
+
+    const showLabelGroupSelector = computed(() => props.labelGroups.length >= 2)
 
     // Available conditions — discovered from the full volcano dataset so the
     // contrast selector shows all conditions, not just the current page.
@@ -640,6 +646,31 @@ export default defineComponent({
             data-test-key="filter-lfc-min"
           />
         </div>
+        {showLabelGroupSelector.value && (
+          <div class="flex items-center gap-1">
+            <span class="text-sm text-gray-600">Region:</span>
+            <ElSelect
+              modelValue={localLabelGroup.value ?? ''}
+              placeholder="All regions"
+              clearable
+              size="small"
+              style={{ width: '160px' }}
+              data-test-key="filter-label-group"
+              onChange={(v: string) => {
+                localLabelGroup.value = v || null
+                page.value = 1
+              }}
+              onClear={() => {
+                localLabelGroup.value = null
+                page.value = 1
+              }}
+            >
+              {props.labelGroups.map((g) => (
+                <ElOption key={g.name} value={g.name} label={g.name} />
+              ))}
+            </ElSelect>
+          </div>
+        )}
       </div>
     )
 
