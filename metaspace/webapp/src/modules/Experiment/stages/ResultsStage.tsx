@@ -12,6 +12,7 @@ import {
   ElCollapseItem,
   ElSelect,
   ElOption,
+  ElInputNumber,
 } from '../../../lib/element-plus'
 import { ArrowDown, Check, Download } from '@element-plus/icons-vue'
 import * as FileSaver from 'file-saver'
@@ -197,31 +198,31 @@ export default defineComponent({
     //   { condA, condB }   -> specific pair
     const contrast = ref<{ omnibus: true } | { condA: string; condB: string } | null>(null)
 
+    // Client-owned FDR/LFC filters — local state not sourced from ExploreStage.
+    // fdrMax: null = no filter; otherwise restrict to rows where fdr <= fdrMax.
+    // lfcAbsMin: null = no filter; otherwise restrict to |lfc| >= lfcAbsMin.
+    const localFdrMax = ref<number | null>(null)
+    const localLfcAbsMin = ref<number | null>(null)
+
+    // Strip fdrMax from the parent filter so ExploreStage's threshold doesn't
+    // leak into ResultsStage — results are unfiltered by default here.
+    const serverFilter = computed(() => {
+      const { fdrMax: _dropped, ...rest } = props.filter ?? {}
+      return {
+        ...rest,
+        ...(localFdrMax.value != null ? { fdrMax: localFdrMax.value } : {}),
+        ...(localLfcAbsMin.value != null ? { lfcAbsMin: localLfcAbsMin.value } : {}),
+        ...(contrast.value ? { contrast: contrast.value } : {}),
+      }
+    })
+
     const { result, loading } = useQuery(experimentResultsQuery, () => ({
       experimentId: props.experimentId,
-      filter: {
-        ...(props.filter ?? {}),
-        ...(contrast.value ? { contrast: contrast.value } : {}),
-      },
+      filter: serverFilter.value,
       orderBy: orderBy.value,
       limit: pageSize.value,
       offset: offset.value,
     }))
-
-    // Available conditions — discovered from fetched rows.
-    const availableConditions = computed<string[]>(() => {
-      const rows = ((result.value as any)?.experimentResults ?? []) as Array<{
-        condA?: string | null
-        condB?: string | null
-      }>
-      const set = new Set<string>()
-      for (const r of rows) {
-        if (r.condA) set.add(r.condA)
-        if (r.condB) set.add(r.condB)
-      }
-      return Array.from(set).sort()
-    })
-    const showContrastSelector = computed(() => availableConditions.value.length >= 3)
 
     // Live rows from Apollo for the *current* query. May briefly resolve to
     // `[]` while a new page is fetching, depending on cache state.
@@ -244,10 +245,7 @@ export default defineComponent({
     const VOLCANO_LIMIT = 10000
     const { result: volcanoResult }: any = useQuery(experimentResultsQuery, () => ({
       experimentId: props.experimentId,
-      filter: {
-        ...(props.filter ?? {}),
-        ...(contrast.value ? { contrast: contrast.value } : {}),
-      },
+      filter: serverFilter.value,
       // Mirror the table's sort so `volcanoRows.findIndex(...)` yields the
       // row's absolute position under the current ordering — needed to jump
       // the table to the correct page when a volcano dot is clicked.
@@ -256,6 +254,19 @@ export default defineComponent({
       offset: 0,
     }))
     const volcanoRows = computed<ResultRow[]>(() => volcanoResult.value?.experimentResults ?? [])
+
+    // Available conditions — discovered from the full volcano dataset so the
+    // contrast selector shows all conditions, not just the current page.
+    const availableConditions = computed<string[]>(() => {
+      const all = volcanoRows.value as Array<{ condA?: string | null; condB?: string | null }>
+      const set = new Set<string>()
+      for (const r of all) {
+        if (r.condA) set.add(r.condA)
+        if (r.condB) set.add(r.condB)
+      }
+      return Array.from(set).sort()
+    })
+    const showContrastSelector = computed(() => availableConditions.value.length >= 3)
 
     const visibleCols = ref<string[]>(COLUMNS.filter((c) => c.id !== 'nA' && c.id !== 'nB').map((c) => c.id))
     const selectedRow = ref<any | null>(null)
@@ -424,12 +435,14 @@ export default defineComponent({
     }
 
     const exportCsv = (): void => {
+      // Export all rows from the volcano query (up to VOLCANO_LIMIT), not just the current page.
+      const allRows = volcanoRows.value.length > 0 ? volcanoRows.value : rows.value
       const cols = COLUMNS.filter((c) => visibleCols.value.includes(c.id))
       const header = cols.map((c) => c.label)
       let csv = formatCsvRow(header)
-      for (const r of rows.value) {
+      for (const r of allRows) {
         const cells = cols.map((c) => {
-          if (c.id === 'ion') return r.ion?.ion ?? ''
+          if (c.id === 'ion') return (r as any).ion?.ion ?? ''
           if (c.formatter) {
             const v = c.formatter(r)
             return typeof v === 'string' ? v : String(v ?? '')
@@ -583,8 +596,47 @@ export default defineComponent({
       )
     }
 
+    const renderFilterBar = () => (
+      <div class="flex items-center gap-4 flex-wrap mb-2" data-test-key="results-filter-bar">
+        <div class="flex items-center gap-1">
+          <span class="text-sm text-gray-600">FDR ≤</span>
+          <ElSelect
+            modelValue={localFdrMax.value === null ? '' : String(localFdrMax.value)}
+            placeholder="Any"
+            clearable
+            size="small"
+            style={{ width: '90px' }}
+            data-test-key="filter-fdr-max"
+            onChange={(v: string) => { localFdrMax.value = v ? Number(v) : null; page.value = 1 }}
+            onClear={() => { localFdrMax.value = null; page.value = 1 }}
+          >
+            <ElOption value="0.05" label="5%" />
+            <ElOption value="0.1" label="10%" />
+            <ElOption value="0.2" label="20%" />
+            <ElOption value="0.5" label="50%" />
+          </ElSelect>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="text-sm text-gray-600">|LFC| ≥</span>
+          <ElInputNumber
+            modelValue={localLfcAbsMin.value ?? undefined}
+            onUpdate:modelValue={(v: number | undefined) => { localLfcAbsMin.value = v ?? null; page.value = 1 }}
+            min={0}
+            step={0.5}
+            precision={1}
+            controls={false}
+            size="small"
+            placeholder="any"
+            style={{ width: '80px' }}
+            data-test-key="filter-lfc-min"
+          />
+        </div>
+      </div>
+    )
+
     const renderTableWrapper = () => (
       <div class="results-table-wrapper" v-loading={loading.value}>
+        {renderFilterBar()}
         {renderContrastSelector()}
         <ElTable
           ref={tableRef}
@@ -716,6 +768,7 @@ export default defineComponent({
                   <div class="px-2">
                     <VolcanoPlot
                       rows={volcanoRows.value}
+                      fdrThreshold={localFdrMax.value ?? 0.05}
                       selectedIonId={selectedRow.value?.ion?.id ?? null}
                       onSelect={onVolcanoSelect}
                     />
