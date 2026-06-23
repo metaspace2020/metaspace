@@ -20,13 +20,13 @@ For each annotated ion, the analysis computes two effect-size metrics: **log₂ 
 
 Follow the steps in this video:
 
-<YouTubeEmbed id="VIDEO_ID" />
+<YouTubeEmbed id="Y_NukUznWYQ" />
 
 ## What results look like
 
-Once the analysis is complete, you are taken to the results page. It contains four interconnected components: a ranked results table, a LogFC x AUC plot, a heatmap, and an ion image viewer.
+Once the analysis is complete, you are taken to the results page. It contains four interconnected components: a ranked results table, an ion image viewer, a LogFC x AUC plot, and a heatmap.
 
 <!-- ![Results page layout](/screenshots/diff-analysis-layout.png) -->
-<!-- _Results page layout: ① ranked table, ② LogFC x AUC plot, ③ heatmap, ④ ion image viewer. Source: [dataset](#)_ -->
+<!-- _Results page layout: ① ranked table, ② ion image viewer, ③ LogFC x AUC plot, ④ ion image viewer. Source: [dataset](#)_ -->
 
 For a detailed explanation of each component, see the [interpretation guide](/guides/interpreting-results/understanding-differential-analysis).

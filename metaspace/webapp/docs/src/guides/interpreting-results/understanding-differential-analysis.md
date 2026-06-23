@@ -19,7 +19,7 @@ Once the analysis completes, you are redirected to a dedicated results page. The
 The table lists all annotated ions sorted by log₂ fold change and AUC by default. Each row shows the ion's formula, adduct, and both metrics for each ROI.
 
 <!-- ![Results table](/screenshots/diff-analysis-table.png) -->
-<!-- _Results table with ① the log₂ fold change column and ② the AUC column highlighted. Source: [dataset](#)_ -->
+<!-- _Results table with the log₂ fold change column and the AUC column. Source: [dataset](#)_ -->
 
 The two metrics measure different things and can sometimes point in different directions:
 

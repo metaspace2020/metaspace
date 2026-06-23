@@ -20,7 +20,7 @@ Spatial Segmentation automatically partitions every pixel in your dataset into c
 
 Follow the steps in this video:
 
-<YouTubeEmbed id="VIDEO_ID" />
+<YouTubeEmbed id="DBaTpDQmJtM" />
 
 ## What results look like
 
