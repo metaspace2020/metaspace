@@ -24,16 +24,13 @@ Follow the steps in this video:
 
 ## What results look like
 
-Once processing completes, the results are displayed as an interactive overlay on the dataset viewer. Each color in the segment map represents a distinct molecular region identified from the data.
+Once processing completes, the results open on a dedicated results page. Each color in the segmentation map represents a distinct molecular region identified from the data.
 
-<!-- ![Segment map overlay](/screenshots/spatial-seg-map-overlay.png) -->
-<!-- _Spatial segmentation map overlaid on the tissue section, with each color representing a distinct molecular region. Source: [dataset](#)_ -->
+![Spatial segmentation results page](/screenshots/spatial-seg-results-page.png)
+_Spatial segmentation results page, with each color representing a distinct molecular region. Source: [dataset](https://metaspace2020.org/dataset/2021-12-10_00h52m21s)_
 
-Clicking any segment on the map opens a collapsible panel listing the top marker ions for that segment, ranked by how strongly each is enriched in that region, along with their ion images.
+The cluster markers panel lets you choose any cluster using the cluster selector and displays its top marker ions, ranked by how strongly each is enriched in that region, along with their ion images.
 
-<!-- ![Marker ion images panel](/screenshots/spatial-seg-marker-ions.png) -->
-<!-- _Collapsible panel showing the top marker ion images for the selected segment. Source: [dataset](#)_ -->
+A heatmap provides a side-by-side view of the top marker ions across all clusters, making it easy to spot which ions are specific to one cluster and which appear across several.
 
-A heatmap provides a side-by-side view of the top marker ions across all segments, making it easy to spot which ions are specific to one segment and which appear across several.
-
-The diagnostics panel shows the BIC curve used to select the optimal number of segments, and a confidence score histogram reflecting how clearly each pixel belongs to its segment. For a detailed explanation of both, see the [interpretation guide](/guides/interpreting-results/understanding-spatial-segmentation).
+The diagnostics panel shows a confidence score histogram reflecting how clearly each pixel belongs to its cluster. When you let the algorithm choose the number of clusters automatically, it also shows the BIC curve used to make that selection. For a detailed explanation of both, see the [interpretation guide](/guides/interpreting-results/understanding-spatial-segmentation).

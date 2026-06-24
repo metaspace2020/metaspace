@@ -18,8 +18,8 @@ Once the analysis completes, you are redirected to a dedicated results page. The
 
 The table lists all annotated ions sorted by log₂ fold change and AUC by default. Each row shows the ion's formula, adduct, and both metrics for each ROI.
 
-<!-- ![Results table](/screenshots/diff-analysis-table.png) -->
-<!-- _Results table with the log₂ fold change column and the AUC column. Source: [dataset](#)_ -->
+![Results table](/screenshots/diff-analysis-table.png)
+_Results table with the log₂ fold change column and the AUC column._
 
 The two metrics measure different things and can sometimes point in different directions:
 
@@ -34,8 +34,8 @@ The LogFC x AUC plot shows each ion as a dot based on a one-vs-all comparison fo
 
 Ions in the top-right quadrant are both strongly enriched and highly discriminative and are your strongest candidates for region-specific markers.
 
-<!-- ![LogFC x AUC plot](/screenshots/diff-analysis-scatter.png) -->
-<!-- _LogFC x AUC plot: ① top-right quadrant (strong enrichment, high AUC), ② ions near the x-axis (fold change without consistent discriminability), ③ selected ion highlighted. Source: [dataset](#)_ -->
+![LogFC x AUC plot](/screenshots/diff-analysis-scatter.png)
+_LogFC x AUC plot showing the top-right quadrant of strongly enriched ions, ions near the x-axis with fold change but low discriminability, and the selected ion highlighted._
 
 Clicking any point in the LogFC x AUC plot highlights the corresponding ion in the results table and loads its ion image in the viewer.
 
@@ -43,15 +43,15 @@ Clicking any point in the LogFC x AUC plot highlights the corresponding ion in t
 
 The heatmap shows the top 5 ions across all ROIs, selected based on AUC. Each row is an ion (as listed in the results table) and each column is an ROI. Both the cell color and the cell label show log₂ fold change (log2FC). Use the log2FC slider to adjust the threshold; applying a minimum absolute AUC filter can further refine the results. Any selections or filters applied here are reflected in the table. Unlike the LogFC x AUC plot, which is best read one ROI at a time, the heatmap highlights top ions across all ROIs simultaneously, making it useful for spotting which ions are co-regulated across regions and which are specific to just one.
 
-<!-- ![Differential analysis heatmap](/screenshots/diff-analysis-heatmap.png) -->
-<!-- _Heatmap: ① ions specific to one ROI, ② ions enriched across multiple ROIs, ③ depleted ions. Source: [dataset](#)_ -->
+![Differential analysis heatmap](/screenshots/diff-analysis-heatmap.png)
+_Heatmap showing ions specific to one ROI, ions enriched across multiple ROIs, and depleted ions._
 
 ### The ion image viewer
 
 Selecting any ion from the table, LogFC x AUC plot, or heatmap loads its ion image in the viewer with the ROI boundaries superimposed. This is the ground truth check: always visually confirm that the spatial pattern behind the numbers matches what you expect biologically before drawing conclusions.
 
-<!-- ![Ion image with ROI boundaries](/screenshots/diff-analysis-ion-image.png) -->
-<!-- _Ion image viewer with ROI boundaries overlaid on the selected ion. Source: [dataset](#)_ -->
+![Ion image with ROI boundaries](/screenshots/diff-analysis-ion-image.png)
+_Ion image viewer with ROI boundaries overlaid on the selected ion._
 
 ## Common patterns and pitfalls
 
