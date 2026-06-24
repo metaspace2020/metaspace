@@ -1034,6 +1034,11 @@ export default defineComponent({
         return null
       }
 
+      const normType = store.getters.settings?.annotationView?.normalization
+      if (!normType) {
+        return null
+      }
+
       try {
         const resp = await apolloClient.query({
           query: getDatasetDiagnosticsQuery,
@@ -1043,20 +1048,27 @@ export default defineComponent({
           fetchPolicy: 'cache-first',
         })
         const dataset = resp.data.dataset
-        const tics = dataset.diagnostics.filter((diagnostic) => diagnostic?.type === 'TIC')
-        const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
-        const { data, shape } = await readNpy(tic[0].url)
-        const metadata = safeJsonParse(tics[0].data)
-        metadata.maxTic = metadata.max_tic
-        metadata.minTic = metadata.min_tic
-        delete metadata.max_tic
-        delete metadata.min_tic
+        const matchingDiagnostics = dataset.diagnostics.filter((diagnostic) => diagnostic?.type === normType)
+        const normImage = matchingDiagnostics[0].images.filter(
+          (image) => image.key === normType && image.format === 'NPY'
+        )
+        const { data, shape } = await readNpy(normImage[0].url)
+        const metadata = safeJsonParse(matchingDiagnostics[0].data)
+
+        const fieldMap = { TIC: 'tic', RMS: 'rms', Median: 'median' }
+        const key = fieldMap[normType] || 'tic'
+        metadata.maxNorm = metadata[`max_${key}`]
+        metadata.minNorm = metadata[`min_${key}`]
+        if (normType === 'TIC') {
+          metadata.maxTic = metadata.max_tic
+          metadata.minTic = metadata.min_tic
+        }
 
         store.commit('setNormalizationMatrix', {
           data,
           shape,
           metadata: metadata,
-          type: 'TIC',
+          type: normType,
           showFullTIC: false,
           error: false,
         })
@@ -1066,7 +1078,7 @@ export default defineComponent({
           shape: null,
           metadata: null,
           showFullTIC: null,
-          type: 'TIC',
+          type: normType,
           error: true,
         })
       }
@@ -1590,6 +1602,11 @@ export default defineComponent({
 
     watch(datasetIds, () => {
       updateDatasetColumns()
+    })
+
+    watch(isNormalized, () => {
+      const currentAnnotation = store.state.annotation
+      setNormalizationData(currentAnnotation)
     })
 
     watch(
