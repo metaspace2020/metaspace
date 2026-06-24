@@ -21,6 +21,8 @@ class DiagnosticType(str, Enum):
     """Should match the enum in metaspace/graphql/src/modules/engine/model.ts"""
 
     TIC = 'TIC'
+    RMS = 'RMS'
+    MEDIAN = 'MEDIAN'
     IMZML_METADATA = 'IMZML_METADATA'
     FDR_RESULTS = 'FDR_RESULTS'
     SEGMENTATION = 'SEGMENTATION'
@@ -29,6 +31,10 @@ class DiagnosticType(str, Enum):
 class DiagnosticImageKey(str, Enum):
     # if type == DiagnosticType.TIC:
     TIC = 'TIC'
+    # if type == DiagnosticType.RMS:
+    RMS = 'RMS'
+    # if type == DiagnosticType.MEDIAN:
+    MEDIAN = 'MEDIAN'
     # if type == DiagnosticType.IMZML_METADATA
     MASK = 'MASK'
     # if type == DiagnosticType.FDR_RESULTS
@@ -298,12 +304,12 @@ def extract_dataset_diagnostics(
                 'n_spectra': imzml_reader.n_spectra,
                 'min_coords': imzml_reader.raw_coord_bounds[0].tolist(),
                 'max_coords': imzml_reader.raw_coord_bounds[1].tolist(),
-                'min_mz': np.asscalar(imzml_reader.min_mz)
-                if np.isfinite(imzml_reader.min_mz)
-                else 0,
-                'max_mz': np.asscalar(imzml_reader.max_mz)
-                if np.isfinite(imzml_reader.max_mz)
-                else 0,
+                'min_mz': (
+                    np.asscalar(imzml_reader.min_mz) if np.isfinite(imzml_reader.min_mz) else 0
+                ),
+                'max_mz': (
+                    np.asscalar(imzml_reader.max_mz) if np.isfinite(imzml_reader.max_mz) else 0
+                ),
                 'metadata': imzml_reader.metadata_summary,
             },
             'images': [mask_image],
@@ -324,11 +330,37 @@ def extract_dataset_diagnostics(
             'images': [tic_image],
         }
 
+    def rms_diagnostic():
+        rms = imzml_reader.rms_image()
+        rms_vals = rms[~np.isnan(rms)]
+        rms_image_obj = save_diagnostic_image(ds_id, rms, key=DiagnosticImageKey.RMS)
+        return {
+            'data': {
+                'min_rms': np.nan_to_num(np.min(rms_vals).item()) if len(rms_vals) else 0,
+                'max_rms': np.nan_to_num(np.max(rms_vals).item()) if len(rms_vals) else 0,
+            },
+            'images': [rms_image_obj],
+        }
+
+    def median_diagnostic():
+        med = imzml_reader.median_image()
+        med_vals = med[~np.isnan(med)]
+        med_image_obj = save_diagnostic_image(ds_id, med, key=DiagnosticImageKey.MEDIAN)
+        return {
+            'data': {
+                'min_median': np.nan_to_num(np.min(med_vals).item()) if len(med_vals) else 0,
+                'max_median': np.nan_to_num(np.max(med_vals).item()) if len(med_vals) else 0,
+            },
+            'images': [med_image_obj],
+        }
+
     logger.debug(f'Extracting dataset diagnostics for {ds_id}')
 
     return [
         _run_diagnostic_fn(ds_id, DiagnosticType.IMZML_METADATA, metadata_diagnostic),
         _run_diagnostic_fn(ds_id, DiagnosticType.TIC, tic_diagnostic),
+        _run_diagnostic_fn(ds_id, DiagnosticType.RMS, rms_diagnostic),
+        _run_diagnostic_fn(ds_id, DiagnosticType.MEDIAN, median_diagnostic),
     ]
 
 
