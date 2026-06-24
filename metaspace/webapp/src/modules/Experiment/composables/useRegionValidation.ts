@@ -32,3 +32,46 @@ export function conditionCoverageWarning(regions: ExperimentDraftRegion[]): Cond
   if (conditions.size >= 2) return null
   return { conditions: [...conditions] }
 }
+
+export interface SingleReplicateWarning {
+  /** Per (label group, condition) pairs where effective replicate count < 2. */
+  affected: Array<{ labelGroup: string; condition: string; n: number }>
+  /** True when no region has a biologicalReplicateId — softer informational note. */
+  missingBioReps: boolean
+}
+
+/**
+ * Warns when any (labelGroup, condition) pair has fewer than 2 effective replicates.
+ * "Effective replicates" = distinct biologicalReplicateId values, or the regionKey
+ * when biologicalReplicateId is absent (matching the backend's aggregation logic).
+ * Only considers regions that have a labelGroupName assigned.
+ */
+export function singleReplicateWarning(regions: ExperimentDraftRegion[]): SingleReplicateWarning | null {
+  const included = regions.filter((r) => r.included !== false && r.labelGroupName)
+  if (included.length === 0) return null
+
+  const anyBioRep = included.some((r) => r.metadata.biologicalReplicateId?.trim())
+
+  // Map (labelGroupName + condition) → set of effective replicate identifiers.
+  const groups = new Map<string, Set<string>>()
+  for (const r of included) {
+    const lg = r.labelGroupName!
+    const cond = r.metadata.condition?.trim()
+    if (!cond) continue
+    const key = `${lg}\0${cond}`
+    if (!groups.has(key)) groups.set(key, new Set())
+    const repId = r.metadata.biologicalReplicateId?.trim() || r.regionKey
+    groups.get(key)!.add(repId)
+  }
+
+  const affected: SingleReplicateWarning['affected'] = []
+  for (const [key, ids] of groups) {
+    if (ids.size < 2) {
+      const sep = key.indexOf('\0')
+      affected.push({ labelGroup: key.slice(0, sep), condition: key.slice(sep + 1), n: ids.size })
+    }
+  }
+
+  if (affected.length === 0) return null
+  return { affected, missingBioReps: !anyBioRep }
+}

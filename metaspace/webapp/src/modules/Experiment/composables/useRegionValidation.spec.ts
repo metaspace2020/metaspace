@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isRegionValid, conditionCoverageWarning } from './useRegionValidation'
+import { isRegionValid, conditionCoverageWarning, singleReplicateWarning } from './useRegionValidation'
 import type { ExperimentDraftRegion } from '../api'
 
 const region = (over: Partial<ExperimentDraftRegion> = {}): ExperimentDraftRegion => ({
@@ -88,5 +88,86 @@ describe('conditionCoverageWarning', () => {
   it('warns with empty conditions when no region has a condition set', () => {
     const regions = [region({ metadata: { ...region().metadata, condition: '' } })]
     expect(conditionCoverageWarning(regions)).toEqual({ conditions: [] })
+  })
+})
+
+describe('singleReplicateWarning', () => {
+  it('returns null when all conditions have ≥2 replicates', () => {
+    const regions = [
+      region({
+        regionKey: 'r1',
+        metadata: { ...region().metadata, condition: 'control', biologicalReplicateId: 'm1' },
+      }),
+      region({
+        regionKey: 'r2',
+        metadata: { ...region().metadata, condition: 'control', biologicalReplicateId: 'm2' },
+      }),
+      region({ regionKey: 'r3', metadata: { ...region().metadata, condition: 'tumor', biologicalReplicateId: 'm1' } }),
+      region({ regionKey: 'r4', metadata: { ...region().metadata, condition: 'tumor', biologicalReplicateId: 'm2' } }),
+    ]
+    expect(singleReplicateWarning(regions)).toBeNull()
+  })
+
+  it('warns when a condition has only one biological replicate', () => {
+    const regions = [
+      region({
+        regionKey: 'r1',
+        metadata: { ...region().metadata, condition: 'control', biologicalReplicateId: 'm1' },
+      }),
+      region({ regionKey: 'r2', metadata: { ...region().metadata, condition: 'tumor', biologicalReplicateId: 'm1' } }),
+    ]
+    const w = singleReplicateWarning(regions)
+    expect(w).not.toBeNull()
+    expect(w!.affected).toHaveLength(2)
+    expect(w!.affected).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ condition: 'control', n: 1 }),
+        expect.objectContaining({ condition: 'tumor', n: 1 }),
+      ])
+    )
+    expect(w!.missingBioReps).toBe(false)
+  })
+
+  it('sets missingBioReps=true when no biologicalReplicateId is set anywhere', () => {
+    const regions = [
+      region({ regionKey: 'r1', metadata: { ...region().metadata, condition: 'control', biologicalReplicateId: '' } }),
+      region({ regionKey: 'r2', metadata: { ...region().metadata, condition: 'tumor', biologicalReplicateId: '' } }),
+    ]
+    const w = singleReplicateWarning(regions)
+    expect(w).not.toBeNull()
+    expect(w!.missingBioReps).toBe(true)
+  })
+
+  it('uses regionKey as fallback replicate id when biologicalReplicateId is blank', () => {
+    // r1 and r2 are two distinct regions in the same condition — they count as n=2
+    const regions = [
+      region({ regionKey: 'r1', metadata: { ...region().metadata, condition: 'control', biologicalReplicateId: '' } }),
+      region({ regionKey: 'r2', metadata: { ...region().metadata, condition: 'control', biologicalReplicateId: '' } }),
+      region({ regionKey: 'r3', metadata: { ...region().metadata, condition: 'tumor', biologicalReplicateId: '' } }),
+      region({ regionKey: 'r4', metadata: { ...region().metadata, condition: 'tumor', biologicalReplicateId: '' } }),
+    ]
+    // Each condition has 2 distinct regionKeys → no warning
+    expect(singleReplicateWarning(regions)).toBeNull()
+  })
+
+  it('ignores regions without a labelGroupName', () => {
+    const regions = [
+      region({
+        regionKey: 'r1',
+        labelGroupName: null,
+        metadata: { ...region().metadata, condition: 'control', biologicalReplicateId: 'm1' },
+      }),
+      region({
+        regionKey: 'r2',
+        labelGroupName: null,
+        metadata: { ...region().metadata, condition: 'tumor', biologicalReplicateId: 'm1' },
+      }),
+    ]
+    // No label group assigned — should not warn
+    expect(singleReplicateWarning(regions)).toBeNull()
+  })
+
+  it('returns null when no regions are included', () => {
+    expect(singleReplicateWarning([])).toBeNull()
   })
 })
