@@ -37,23 +37,18 @@
           </el-option>
         </el-select>
       </el-form-item>
-      <el-form-item v-if="!hideNormalization" label="">
-        <el-checkbox :checked="normalization" @change="onNormalizationChange" :teleported="false">
-          <div class="font-thin flex flex-row items-center">
-            TIC normalization
-            <el-popover trigger="hover" placement="right">
-              <template v-slot:reference>
-                <div>
-                  <i class="el-icon-question cursor-pointer ml-1" />
-                </div>
-              </template>
-              <div class="max-w-xs">
-                This ion image was TIC-normalized. The intensities were divided by the TIC value and then scaled by
-                multiplying by 1e+6.
-              </div>
-            </el-popover>
-          </div>
-        </el-checkbox>
+      <el-form-item v-if="!hideNormalization" label="Normalization">
+        <el-select
+          :model-value="normalization || ''"
+          style="width: 300px"
+          :teleported="false"
+          @change="onNormalizationChange"
+        >
+          <el-option value="" label="None" />
+          <el-option value="TIC" label="TIC" />
+          <el-option value="RMS" label="RMS" />
+          <el-option value="Median" label="Median" />
+        </el-select>
       </el-form-item>
       <el-form-item label="Colormap">
         <el-select
@@ -121,7 +116,7 @@ export default defineComponent({
     defaultColormap: String,
     defaultScaleType: String,
     defaultScaleBarColor: String,
-    defaultNormalization: Boolean,
+    defaultNormalization: String,
     hideNormalization: Boolean,
     defaultLockTemplate: String,
     lockTemplateOptions: Array,
@@ -163,7 +158,7 @@ export default defineComponent({
     const colormap = computed(() => props.defaultColormap || store.getters.settings.annotationView.colormap)
     const scaleType = computed(() => props.defaultScaleType || store.getters.settings.annotationView.scaleType)
     const normalization = computed(
-      () => props.defaultNormalization || store.getters.settings.annotationView.normalization
+      () => props.defaultNormalization || store.getters.settings.annotationView.normalization || ''
     )
     const selectedTemplate = computed(
       () => props.defaultLockTemplate || store.getters.settings.annotationView.lockTemplate
@@ -185,8 +180,8 @@ export default defineComponent({
     }
 
     const onNormalizationChange = (value) => {
-      store.commit('setNormalization', value)
-      emit('normalizationChange', value)
+      store.commit('setNormalization', value || false)
+      emit('normalizationChange', value || false)
     }
 
     const onTemplateChange = (dsId) => {
