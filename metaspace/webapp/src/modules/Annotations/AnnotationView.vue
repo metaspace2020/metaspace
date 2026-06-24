@@ -68,7 +68,7 @@
             :toggle-optical-image="toggleOpticalImage"
             :is-active="activeSections.includes('images')"
             :normalization-text="
-              ticData === 'RMS' ? 'RMS normalized' : ticData === 'Median' ? 'Median normalized' : 'TIC normalized'
+              ticData === 'RMS' ? 'RMS normalized' : ticData === 'MEDIAN' ? 'Median normalized' : 'TIC normalized'
             "
             @scaleBarColorChange="setScaleBarColor"
           />

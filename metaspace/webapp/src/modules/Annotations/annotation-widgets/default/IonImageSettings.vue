@@ -47,7 +47,7 @@
           <el-option value="" label="None" />
           <el-option value="TIC" label="TIC" />
           <el-option value="RMS" label="RMS" />
-          <el-option value="Median" label="Median" />
+          <el-option value="MEDIAN" label="Median" />
         </el-select>
       </el-form-item>
       <el-form-item label="Colormap">

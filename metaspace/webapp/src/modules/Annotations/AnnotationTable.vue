@@ -1055,7 +1055,7 @@ export default defineComponent({
         const { data, shape } = await readNpy(normImage[0].url)
         const metadata = safeJsonParse(matchingDiagnostics[0].data)
 
-        const fieldMap = { TIC: 'tic', RMS: 'rms', Median: 'median' }
+        const fieldMap = { TIC: 'tic', RMS: 'rms', MEDIAN: 'median' }
         const key = fieldMap[normType] || 'tic'
         metadata.maxNorm = metadata[`max_${key}`]
         metadata.minNorm = metadata[`min_${key}`]
