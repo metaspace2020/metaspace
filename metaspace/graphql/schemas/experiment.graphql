@@ -64,6 +64,8 @@ type ExperimentRun {
   error: String
   startedAt: DateTime
   finishedAt: DateTime
+  warnings: [String!]!
+  warningsPerLabelGroup: JSON
 }
 
 type ExperimentResultRow {

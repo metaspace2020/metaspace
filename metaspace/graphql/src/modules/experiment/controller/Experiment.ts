@@ -3,7 +3,7 @@ import { Experiment as ExperimentBinding } from '../../../binding'
 import { Experiment as ExperimentEntity } from '../model'
 
 const ExperimentResolvers: FieldResolversFor<ExperimentBinding, ExperimentEntity> = {
-  matchMode: (parent) => parent.matchMode.toUpperCase() as any,
+  matchMode: (parent) => parent.matchMode.toUpperCase(),
   labelGroups: (parent) => parent.labelGroups,
   datasets: (parent) => parent.datasets ?? [],
   run: (parent) => {
@@ -18,6 +18,8 @@ const ExperimentResolvers: FieldResolversFor<ExperimentBinding, ExperimentEntity
       error: parent.runError,
       startedAt: parent.runStartedAt,
       finishedAt: parent.runFinishedAt,
+      warnings: (parent.runQc?.warnings ?? []) as string[],
+      warningsPerLabelGroup: (parent.runQc?.warningsPerLabelGroup ?? {}) as Record<string, string[]>,
     } as any
   },
 }
