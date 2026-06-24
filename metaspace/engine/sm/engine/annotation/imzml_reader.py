@@ -88,6 +88,8 @@ class ImzMLReader:  # pylint: disable=too-many-instance-attributes
             self._sp_tic = np.array(tic_metadata, dtype='f')
         else:
             self._sp_tic = np.full(self.n_spectra, np.nan, dtype='f')
+        self._sp_rms = np.full(self.n_spectra, np.nan, dtype='f')
+        self._sp_median = np.full(self.n_spectra, np.nan, dtype='f')
 
     def spectrum_vals_to_image(self, values):
         image = coo_matrix((values, (self.ys, self.xs)), shape=(self.h, self.w)).toarray()
@@ -99,6 +101,14 @@ class ImzMLReader:  # pylint: disable=too-many-instance-attributes
             assert (~np.isnan(self._sp_tic)).all(), 'Read all spectra before calling tic_image'
         return self.spectrum_vals_to_image(self._sp_tic)
 
+    def rms_image(self):
+        assert (~np.isnan(self._sp_rms)).all(), 'Read all spectra before calling rms_image'
+        return self.spectrum_vals_to_image(self._sp_rms)
+
+    def median_image(self):
+        assert (~np.isnan(self._sp_median)).all(), 'Read all spectra before calling median_image'
+        return self.spectrum_vals_to_image(self._sp_median)
+
     def _process_spectrum(self, idx, mzs, ints):
         # Remove zero-intensity peaks, as some export processes generate them in large numbers,
         # but they add no value at all.
@@ -109,6 +119,14 @@ class ImzMLReader:  # pylint: disable=too-many-instance-attributes
         # Populate TIC
         if not self.is_tic_from_metadata:
             self._sp_tic[idx] = np.sum(ints)
+
+        # Populate RMS and Median
+        if len(ints) > 0:
+            self._sp_rms[idx] = float(np.sqrt(np.mean(ints**2)))
+            self._sp_median[idx] = float(np.median(ints))
+        else:
+            self._sp_rms[idx] = np.nan
+            self._sp_median[idx] = np.nan
 
         # Populate min/max m/zs
         if len(mzs) and not self.is_mz_from_metadata:
