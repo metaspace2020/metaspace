@@ -436,7 +436,7 @@
 <script>
 import { defineComponent, ref, reactive, computed, onMounted, watch, defineAsyncComponent, nextTick, inject } from 'vue'
 import { useStore } from 'vuex'
-import { ElIcon, ElRow, ElTable, ElTableColumn, ElPagination, ElButton } from '../../lib/element-plus'
+import { ElIcon, ElRow, ElTable, ElTableColumn, ElPagination, ElButton, ElMessage } from '../../lib/element-plus'
 import isSnapshot from '../../lib/isSnapshot'
 import { readNpy } from '../../lib/npyHandler'
 import safeJsonParse from '../../lib/safeJsonParse'
@@ -1049,6 +1049,14 @@ export default defineComponent({
         })
         const dataset = resp.data.dataset
         const matchingDiagnostics = dataset.diagnostics.filter((diagnostic) => diagnostic?.type === normType)
+
+        if (!matchingDiagnostics.length) {
+          store.commit('setNormalization', false)
+          store.commit('setNormalizationMatrix', undefined)
+          ElMessage.warning(`${normType} normalization is not available for this dataset. Please reprocess it.`)
+          return
+        }
+
         const normImage = matchingDiagnostics[0].images.filter(
           (image) => image.key === normType && image.format === 'NPY'
         )
