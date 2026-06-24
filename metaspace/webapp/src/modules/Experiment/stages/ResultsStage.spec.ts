@@ -317,4 +317,35 @@ describe('ResultsStage', () => {
     expect(strip.props('ionId')).toBe(4)
     expect(strip.props('fdr')).toBe(0.005)
   })
+
+  it('shows warning banner for each label group that has warnings', async () => {
+    const wrapper = mount(ResultsStage, {
+      props: {
+        experimentId: 'e1',
+        warningsPerLabelGroup: {
+          Main: ['PARTIAL_PAIRING', 'UNBALANCED_N'],
+          Secondary: ['TECH_REPS_PARTIAL'],
+        },
+      },
+      global: { provide: { [DefaultApolloClient]: mockClient } },
+    })
+    await flushPromises()
+    await nextTick()
+
+    const banner = wrapper.find('[data-test-key="results-warning-banner"]')
+    expect(banner.exists()).toBe(true)
+    expect(banner.text()).toContain('Main')
+    expect(banner.text()).toContain('Some biological replicates are paired')
+    expect(banner.text()).toContain('Conditions have unequal')
+    expect(banner.text()).toContain('Secondary')
+    expect(banner.text()).toContain('technical replicate IDs')
+  })
+
+  it('shows no warning banner when warningsPerLabelGroup is empty', async () => {
+    const wrapper = mountStage()
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.find('[data-test-key="results-warning-banner"]').exists()).toBe(false)
+  })
 })

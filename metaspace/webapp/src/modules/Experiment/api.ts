@@ -268,6 +268,7 @@ export const experimentRunStatusQuery = gql`
           name
         }
         regions {
+          labelGroupName
           metadata {
             sampleId
             condition
@@ -284,6 +285,8 @@ export const experimentRunStatusQuery = gql`
         excludedSamples
         startedAt
         finishedAt
+        warnings
+        warningsPerLabelGroup
       }
     }
   }

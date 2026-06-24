@@ -13,6 +13,7 @@ import {
   ElSelect,
   ElOption,
   ElInputNumber,
+  ElAlert,
 } from '../../../lib/element-plus'
 import { ArrowDown, Check, Download } from '@element-plus/icons-vue'
 import * as FileSaver from 'file-saver'
@@ -166,9 +167,26 @@ export default defineComponent({
     experimentId: { type: String, required: true },
     filter: { type: Object as () => Record<string, unknown> | null, default: null },
     labelGroups: { type: Array as () => { name: string; color: string }[], default: () => [] },
+    sampleIdToLabelGroup: { type: Object as () => Record<string, string>, default: () => ({}) },
+    warningsPerLabelGroup: {
+      type: Object as () => Record<string, string[]>,
+      default: () => ({}),
+    },
   },
   emits: ['update:selectedRow'],
   setup(props, { emit }) {
+    const WARNING_MESSAGES: Record<string, string> = {
+      PARTIAL_PAIRING:
+        'Some biological replicates are paired across conditions but not all — pairing was applied where possible.',
+      UNBALANCED_N: 'Conditions have unequal numbers of replicates.',
+      TECH_REPS_PARTIAL: "Some regions have technical replicate IDs but others don't — identified reps were averaged.",
+      MULTI_REGION_AGGREGATED: 'Multiple regions per biological replicate were averaged into a single sample.',
+      EXPERIMENT_WIDE_FALLBACK: 'Insufficient data per label group — all regions were analysed together.',
+    }
+
+    // Tracks which label group banners the user has dismissed this session.
+    const dismissedGroups = ref<Set<string>>(new Set())
+
     // Sort state shared between the table (display) and the page query.
     // `orderBy` is what we send to the resolver. The resolver was extended to
     // accept "<col> ASC" / "<col> DESC" — see the experimentResults Query
@@ -206,6 +224,20 @@ export default defineComponent({
     const localFdrMax = ref<number | null>(null)
     const localLfcAbsMin = ref<number | null>(null)
     const localLabelGroup = ref<string | null>(null)
+
+    // Active warnings to show: either the selected label group's or all groups.
+    const visibleWarnings = computed<Array<{ group: string; messages: string[] }>>(() => {
+      const wplg = props.warningsPerLabelGroup
+      if (!wplg || Object.keys(wplg).length === 0) return []
+      const activeKey = localLabelGroup.value
+      const keys = activeKey ? [activeKey] : Object.keys(wplg)
+      return keys
+        .filter((k) => !dismissedGroups.value.has(k) && (wplg[k] ?? []).length > 0)
+        .map((k) => ({
+          group: k === '__experiment__' ? 'All regions' : k,
+          messages: (wplg[k] ?? []).map((code) => WARNING_MESSAGES[code] ?? code),
+        }))
+    })
 
     // Strip fdrMax from the parent filter so ExploreStage's threshold doesn't
     // leak into ResultsStage — results are unfiltered by default here.
@@ -602,6 +634,34 @@ export default defineComponent({
       )
     }
 
+    const renderWarningBanner = () => {
+      if (visibleWarnings.value.length === 0) return null
+      return (
+        <div class="mb-3" data-test-key="results-warning-banner">
+          {visibleWarnings.value.map((w) => (
+            <ElAlert
+              key={w.group}
+              type="warning"
+              showIcon
+              closable
+              class="mb-2"
+              onClose={() => dismissedGroups.value.add(w.group)}
+              v-slots={{
+                title: () => <span>{w.group}</span>,
+                default: () => (
+                  <ul class="mt-1 mb-0 pl-4 text-sm">
+                    {w.messages.map((msg, i) => (
+                      <li key={i}>{msg}</li>
+                    ))}
+                  </ul>
+                ),
+              }}
+            />
+          ))}
+        </div>
+      )
+    }
+
     const renderFilterBar = () => (
       <div class="flex items-center gap-4 flex-wrap mb-2" data-test-key="results-filter-bar">
         <div class="flex items-center gap-1">
@@ -676,6 +736,7 @@ export default defineComponent({
 
     const renderTableWrapper = () => (
       <div class="results-table-wrapper" v-loading={loading.value}>
+        {renderWarningBanner()}
         {renderFilterBar()}
         {renderContrastSelector()}
         <ElTable
@@ -794,6 +855,10 @@ export default defineComponent({
                       experimentId={props.experimentId}
                       ionId={selectedRow.value?.ion?.id ?? null}
                       fdr={selectedRow.value?.fdr ?? null}
+                      {...{
+                        sampleIdToLabelGroup: props.sampleIdToLabelGroup,
+                        labelGroupFilter: localLabelGroup.value,
+                      }}
                     />
                   </div>
                 ),

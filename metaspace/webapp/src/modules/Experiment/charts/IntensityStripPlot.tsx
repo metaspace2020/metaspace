@@ -44,6 +44,8 @@ export default defineComponent({
     experimentId: { type: String, required: true },
     ionId: { type: Number as unknown as () => number | null, default: null },
     fdr: { type: Number as unknown as () => number | null, default: null },
+    sampleIdToLabelGroup: { type: Object as () => Record<string, string>, default: () => ({}) },
+    labelGroupFilter: { type: String as unknown as () => string | null, default: null },
   },
   setup(props) {
     const enabled = computed(() => props.ionId != null)
@@ -53,7 +55,13 @@ export default defineComponent({
       () => ({ enabled: enabled.value, fetchPolicy: 'cache-and-network' as const })
     )
 
-    const data = computed<IntensityRow[]>(() => result.value?.experimentIonIntensities ?? [])
+    const allData = computed<IntensityRow[]>(() => result.value?.experimentIonIntensities ?? [])
+    const data = computed<IntensityRow[]>(() => {
+      if (!props.labelGroupFilter) return allData.value
+      return allData.value.filter(
+        (r) => r.sampleId != null && props.sampleIdToLabelGroup[r.sampleId] === props.labelGroupFilter
+      )
+    })
     const conditions = computed(() =>
       Array.from(new Set(data.value.map((r) => r.condition).filter((c): c is string => !!c)))
     )

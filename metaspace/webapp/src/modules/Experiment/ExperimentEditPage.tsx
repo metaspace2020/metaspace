@@ -33,7 +33,7 @@ import ExperimentVariablesCard from './components/ExperimentVariablesCard'
 import BulkAssignPanel from './components/BulkAssignPanel'
 import { resolveRenameTarget, seedNameModeGroups } from './composables/groupNaming'
 import { buildSegmentationMasks } from './composables/useSegmentationMasks'
-import { isRegionValid, conditionCoverageWarning } from './composables/useRegionValidation'
+import { isRegionValid, conditionCoverageWarning, singleReplicateWarning } from './composables/useRegionValidation'
 import {
   emptyVariables,
   seedVariablesFromDraft,
@@ -402,6 +402,47 @@ export default defineComponent({
 
     const saveBlocked = computed(() => draft.value.datasets.some((ds) => ds.regions.some((r) => !isRegionValid(r).ok)))
     const conditionWarning = computed(() => conditionCoverageWarning(draft.value.datasets.flatMap((ds) => ds.regions)))
+    const replicateWarning = computed(() => singleReplicateWarning(draft.value.datasets.flatMap((ds) => ds.regions)))
+
+    interface ContrastPreviewPair {
+      condA: string
+      condB: string
+      nA: number
+      nB: number
+    }
+    interface LabelGroupPreview {
+      name: string
+      color: string
+      pairs: ContrastPreviewPair[]
+    }
+
+    const analysisPreview = computed<LabelGroupPreview[]>(() => {
+      const allRegions = draft.value.datasets.flatMap((ds) => ds.regions).filter((r) => r.included !== false)
+      return draft.value.labelGroups.map((lg) => {
+        const lgRegions = allRegions.filter((r) => r.labelGroupName === lg.name)
+        // Count distinct effective replicates per condition.
+        const condMap = new Map<string, Set<string>>()
+        for (const r of lgRegions) {
+          const cond = r.metadata.condition?.trim()
+          if (!cond) continue
+          if (!condMap.has(cond)) condMap.set(cond, new Set())
+          condMap.get(cond)!.add(r.metadata.biologicalReplicateId?.trim() || r.regionKey)
+        }
+        const conditions = Array.from(condMap.keys()).sort()
+        const pairs: ContrastPreviewPair[] = []
+        for (let i = 0; i < conditions.length; i++) {
+          for (let j = i + 1; j < conditions.length; j++) {
+            pairs.push({
+              condA: conditions[i],
+              condB: conditions[j],
+              nA: condMap.get(conditions[i])!.size,
+              nB: condMap.get(conditions[j])!.size,
+            })
+          }
+        }
+        return { name: lg.name, color: lg.color, pairs }
+      })
+    })
 
     const labelGroupOptions = computed(() => draft.value.labelGroups.map((lg) => ({ name: lg.name, color: lg.color })))
 
@@ -944,6 +985,34 @@ export default defineComponent({
                 )}
               </div>
             )}
+            {replicateWarning.value && draft.value?.datasets?.length > 0 && (
+              <div
+                class="bg-yellow-50 border border-yellow-300 rounded p-2 text-sm mb-4"
+                data-test-key="single-replicate-warning"
+              >
+                {replicateWarning.value.missingBioReps ? (
+                  <div>
+                    No biological replicate IDs are set — each region will be treated as an independent replicate.
+                    Results will not be statistically meaningful without true biological replicates.
+                  </div>
+                ) : (
+                  <div>
+                    <div class="mb-1">
+                      The following conditions have only one biological replicate — statistical results will not be
+                      meaningful:
+                    </div>
+                    <ul class="pl-4 mb-0">
+                      {replicateWarning.value.affected.map((a, i) => (
+                        <li key={i}>
+                          <strong>{a.condition}</strong>
+                          {a.labelGroup !== '__none__' ? ` (label group: ${a.labelGroup})` : ''} — {a.n} replicate
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
 
             <ElCard class="mb-6" shadow="never">
               <h2 class="text-lg mb-2">Region mapping</h2>
@@ -1036,6 +1105,41 @@ export default defineComponent({
                 />
               )}
             </ElCard>
+
+            {analysisPreview.value.length > 0 && (
+              <div class="mb-6" data-test-key="analysis-preview">
+                <h3 class="text-base font-medium mb-2">Analysis preview</h3>
+                {analysisPreview.value.map((lg) => (
+                  <div key={lg.name} class="mb-3">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="inline-block w-3 h-3 rounded-full flex-shrink-0" style={{ background: lg.color }} />
+                      <span class="text-sm font-medium">{lg.name}</span>
+                    </div>
+                    {lg.pairs.length === 0 ? (
+                      <p class="text-sm text-gray-400 ml-5">Needs ≥ 2 conditions to run a comparison.</p>
+                    ) : (
+                      <ul class="list-none ml-5 mb-0">
+                        {lg.pairs.map((p, i) => (
+                          <li key={i} class="text-sm text-gray-700">
+                            <span class="font-medium">{p.condA}</span>
+                            <span class="text-gray-400 mx-1">({p.nA})</span>
+                            <span class="text-gray-500 mx-1">vs</span>
+                            <span class="font-medium">{p.condB}</span>
+                            <span class="text-gray-400 mx-1">({p.nB})</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+                {analysisPreview.value.every((lg) => lg.pairs.length === 0) && (
+                  <p class="text-sm text-gray-400 mt-1" data-test-key="analysis-preview-fallback">
+                    No label group has ≥ 2 conditions — all regions will be analysed together if the experiment-wide
+                    pool has ≥ 2 conditions.
+                  </p>
+                )}
+              </div>
+            )}
 
             <div class="flex gap-2 justify-end">
               <ElButton onClick={() => router.push(`/project/${projectId}`)}>Cancel</ElButton>
