@@ -173,6 +173,23 @@ export default defineComponent({
       }
     })
 
+    /** sampleId → labelGroupName. Built from the experiment's region list so the
+     *  strip plot can filter points by the active label group without needing a
+     *  separate query. First-wins is fine — a sampleId belongs to one region. */
+    const sampleIdToLabelGroup = computed<Record<string, string>>(() => {
+      const e = exp.value
+      const map: Record<string, string> = {}
+      if (!e) return map
+      for (const ed of e.datasets ?? []) {
+        for (const r of ed.regions ?? []) {
+          const sid = r.metadata?.sampleId
+          const lg = (r as any).labelGroupName
+          if (sid && lg) map[sid] = lg
+        }
+      }
+      return map
+    })
+
     /** sampleId → dataset name. A sample belongs to exactly one dataset in
      *  practice, so first-wins is fine. Used to label exclude options with the
      *  human-readable dataset name instead of the raw metadata sampleId. */
@@ -503,6 +520,8 @@ export default defineComponent({
               filter={currentFilters.value}
               labelGroups={e.labelGroups ?? []}
               {...{
+                sampleIdToLabelGroup: sampleIdToLabelGroup.value,
+                warningsPerLabelGroup: (run?.warningsPerLabelGroup ?? {}) as Record<string, string[]>,
                 'onUpdate:selectedRow': (r: Record<string, unknown>) => {
                   selectedRow.value = r
                 },
