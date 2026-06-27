@@ -202,7 +202,7 @@ export const DatasetActionsDropdown = defineComponent({
             lockScroll: false,
             type: 'warning',
             confirmButtonText: 'Go to segmentation',
-            cancelButtonText: 'Change  parameters',
+            cancelButtonText: 'Change parameters',
           }
         )
           .then(() => {

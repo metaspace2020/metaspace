@@ -13,6 +13,7 @@ import {
   ElInputNumber,
   ElTooltip,
   ElIcon,
+  ElNotification,
 } from '../../../lib/element-plus'
 import { ErrorLabelText } from '../../../components/Form'
 import { DefaultApolloClient } from '@vue/apollo-composable'
@@ -152,8 +153,7 @@ export const SegmentationDialog = defineComponent({
     }
 
     const validateThirdStep = () => {
-      // K is optional, but if provided, it must be between 2 and 10
-      if (state.numSegments !== null && (state.numSegments < 2 || state.numSegments > 50)) {
+      if (state.numSegments !== null && (state.numSegments < 2 || state.numSegments > 15)) {
         state.thirdStepError = true
         return false
       }
@@ -185,7 +185,7 @@ export const SegmentationDialog = defineComponent({
         })
         state.annotationCount = data.countAnnotations
 
-        if (state.annotationCount > 50) {
+        if (state.annotationCount >= 50) {
           setTimeout(
             () => {
               state.workflowStep = 2
@@ -236,12 +236,10 @@ export const SegmentationDialog = defineComponent({
         })
 
         emit('close')
-        // TODO: Add success notification
-        // ElNotification.success('Segmentation job started successfully')
+        ElNotification.success('Segmentation job queued — results will appear on the segmentation page once complete.')
       } catch (error) {
         console.error('Segmentation failed:', error)
-        // TODO: Add error notification
-        // ElNotification.error('Failed to start segmentation job')
+        ElNotification.error('Failed to start segmentation job. Please try again.')
       } finally {
         state.loading = false
       }
@@ -481,7 +479,7 @@ export const SegmentationDialog = defineComponent({
                   </div>
 
                   <ErrorLabelText class="mt-2" style={{ visibility: state.thirdStepError ? '' : 'hidden' }}>
-                    If specified, number of segments must be between 2 and 10.
+                    If specified, number of segments must be between 2 and 15.
                   </ErrorLabelText>
 
                   <div class="step-buttons">
