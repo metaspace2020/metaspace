@@ -61,8 +61,13 @@ class ImzMLReader:  # pylint: disable=too-many-instance-attributes
         # Positions are assigned in ascending pixel_index order to match the semantics of
         # mask.flatten()[sample_area_mask_flat] used elsewhere in the pipeline.
         # -1 for pixels that have no spectrum.
+        # NOTE: the masked-flat array is indexed by *unique pixel*, not by spectrum. Some exporters
+        # emit multiple spectra at the same coordinate, so n_spectra can exceed the number of
+        # unique pixels (sample_area_mask.sum()); those duplicates collapse onto one position here
+        # and are summed back together downstream (see formula_validator._coo_to_flat).
+        n_unique_pixels = np.count_nonzero(sample_area_mask)
         self.pixel_to_flat_idx = np.full(self.h * self.w, -1, dtype=np.intp)
-        self.pixel_to_flat_idx[sample_area_mask] = np.arange(self.n_spectra)
+        self.pixel_to_flat_idx[sample_area_mask] = np.arange(n_unique_pixels)
 
         # raw_coord_bounds is the RAW min/max coordinates, purely for diagnostics
         self.raw_coord_bounds = (
