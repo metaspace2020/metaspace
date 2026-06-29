@@ -137,9 +137,11 @@ export class Job {
 }
 
 // Should match the literal in metaspace/engine/sm/engine/annotation/diagnostics.py
-export type DiagnosticType = 'TIC' | 'IMZML_METADATA' | 'FDR_RESULTS' | 'SEGMENTATION'
+export type DiagnosticType = 'TIC' | 'RMS' | 'MEDIAN' | 'IMZML_METADATA' | 'FDR_RESULTS' | 'SEGMENTATION'
 export const DiagnosticTypeOptions: {[k in DiagnosticType]: k} = {
   TIC: 'TIC',
+  RMS: 'RMS',
+  MEDIAN: 'MEDIAN',
   IMZML_METADATA: 'IMZML_METADATA',
   FDR_RESULTS: 'FDR_RESULTS',
   SEGMENTATION: 'SEGMENTATION',
