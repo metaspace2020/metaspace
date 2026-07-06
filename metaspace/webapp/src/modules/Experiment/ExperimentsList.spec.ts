@@ -6,7 +6,7 @@ import router from '../../router'
 import { vi } from 'vitest'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import ExperimentsList from './ExperimentsList'
-import { ElTag } from '../../lib/element-plus'
+import { ElTag, ElNotification, ElMessageBox } from '../../lib/element-plus'
 
 vi.mock('@vue/apollo-composable', () => ({
   useQuery: vi.fn(),
@@ -14,6 +14,10 @@ vi.mock('@vue/apollo-composable', () => ({
 }))
 
 const graphqlData = {
+  // Creating an experiment now requires an active Pro subscription (or admin) on top
+  // of canEdit. The shared mock returns this object for every useQuery call, so the
+  // permissions composable reads `activeUserSubscription` from here too.
+  activeUserSubscription: { isActive: true },
   experimentsByProject: [
     {
       id: 'exp-1',
@@ -61,7 +65,7 @@ describe('ExperimentsList', () => {
     })
   })
 
-  it('renders all experiment names and a Create button when canEdit', async () => {
+  it('renders all experiment names and a Create button when canEdit and Pro', async () => {
     ;(useQuery as any).mockReturnValue({
       result: ref(graphqlData),
       loading: ref(false),
@@ -103,6 +107,212 @@ describe('ExperimentsList', () => {
     await nextTick()
 
     expect(wrapper.find('[data-test-key="create-experiment"]').exists()).toBe(false)
+  })
+
+  it('keeps the Create button when canEdit but not Pro, and prompts to upgrade on click', async () => {
+    ;(useQuery as any).mockReturnValue({
+      result: ref({
+        experimentsByProject: graphqlData.experimentsByProject,
+        activeUserSubscription: { isActive: false },
+      }),
+      loading: ref(false),
+      onResult: vi.fn(),
+      refetch: vi.fn(),
+    })
+    const notifySpy = vi.spyOn(ElNotification, 'warning').mockImplementation(() => ({}) as any)
+    const pushSpy = vi.spyOn(router, 'push').mockResolvedValue(undefined as any)
+
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router],
+        provide: { [DefaultApolloClient]: mockClient },
+      },
+      props: propsData,
+    })
+    await flushPromises()
+    await nextTick()
+
+    const btn = wrapper.find('[data-test-key="create-experiment"]')
+    expect(btn.exists()).toBe(true)
+
+    await btn.trigger('click')
+    await nextTick()
+
+    expect(notifySpy).toHaveBeenCalledTimes(1)
+    const notifyArg = notifySpy.mock.calls[0][0] as any
+    expect(notifyArg.message).toContain('/plans')
+    expect(pushSpy).not.toHaveBeenCalled()
+
+    notifySpy.mockRestore()
+    pushSpy.mockRestore()
+  })
+
+  it('navigates to the create page on click for an admin even without Pro', async () => {
+    ;(useQuery as any).mockReturnValue({
+      result: ref({
+        experimentsByProject: graphqlData.experimentsByProject,
+        activeUserSubscription: { isActive: false },
+        currentUser: { role: 'admin' },
+      }),
+      loading: ref(false),
+      onResult: vi.fn(),
+      refetch: vi.fn(),
+    })
+    const notifySpy = vi.spyOn(ElNotification, 'warning').mockImplementation(() => ({}) as any)
+    const pushSpy = vi.spyOn(router, 'push').mockResolvedValue(undefined as any)
+
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router],
+        provide: { [DefaultApolloClient]: mockClient },
+      },
+      props: propsData,
+    })
+    await flushPromises()
+    await nextTick()
+
+    const btn = wrapper.find('[data-test-key="create-experiment"]')
+    expect(btn.exists()).toBe(true)
+
+    await btn.trigger('click')
+    await nextTick()
+
+    expect(pushSpy).toHaveBeenCalledWith('/project/project-id-1/experiment/new')
+    expect(notifySpy).not.toHaveBeenCalled()
+
+    notifySpy.mockRestore()
+    pushSpy.mockRestore()
+  })
+
+  it('shows a cannot-delete alert when the user is neither creator nor manager nor admin', async () => {
+    ;(useQuery as any).mockReturnValue({
+      result: ref({
+        experimentsByProject: graphqlData.experimentsByProject,
+        activeUserSubscription: { isActive: true },
+        currentUser: { id: 'other-user', role: 'user' },
+        project: { currentUserRole: 'MEMBER' },
+      }),
+      loading: ref(false),
+      onResult: vi.fn(),
+      refetch: vi.fn(),
+    })
+    const alertSpy = vi.spyOn(ElMessageBox, 'alert').mockResolvedValue(undefined as any)
+    const confirmSpy = vi.spyOn(ElMessageBox, 'confirm').mockRejectedValue('cancel')
+
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router],
+        provide: { [DefaultApolloClient]: mockClient },
+      },
+      props: propsData,
+    })
+    await flushPromises()
+    await nextTick()
+
+    await wrapper.find('[data-test-key="delete-exp-1"]').trigger('click')
+    await flushPromises()
+
+    expect(alertSpy).toHaveBeenCalledTimes(1)
+    expect(alertSpy.mock.calls[0][0]).toContain('cannot delete')
+    expect(confirmSpy).not.toHaveBeenCalled()
+
+    alertSpy.mockRestore()
+    confirmSpy.mockRestore()
+  })
+
+  it('lets the experiment creator delete (opens confirm, not the cannot-delete alert)', async () => {
+    ;(useQuery as any).mockReturnValue({
+      result: ref({
+        experimentsByProject: graphqlData.experimentsByProject,
+        activeUserSubscription: { isActive: true },
+        currentUser: { id: 'u1', role: 'user' }, // u1 is exp-1's createdBy
+        project: { currentUserRole: 'MEMBER' },
+      }),
+      loading: ref(false),
+      onResult: vi.fn(),
+      refetch: vi.fn(),
+    })
+    const alertSpy = vi.spyOn(ElMessageBox, 'alert').mockResolvedValue(undefined as any)
+    // Reject the confirm so no real deletion happens; we only assert which dialog opened.
+    const confirmSpy = vi.spyOn(ElMessageBox, 'confirm').mockRejectedValue('cancel')
+
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router],
+        provide: { [DefaultApolloClient]: mockClient },
+      },
+      props: propsData,
+    })
+    await flushPromises()
+    await nextTick()
+
+    await wrapper.find('[data-test-key="delete-exp-1"]').trigger('click')
+    await flushPromises()
+
+    expect(confirmSpy).toHaveBeenCalledTimes(1)
+    expect(alertSpy).not.toHaveBeenCalled()
+
+    alertSpy.mockRestore()
+    confirmSpy.mockRestore()
+  })
+
+  it('lets a project manager delete an experiment they did not create', async () => {
+    ;(useQuery as any).mockReturnValue({
+      result: ref({
+        experimentsByProject: graphqlData.experimentsByProject,
+        activeUserSubscription: { isActive: true },
+        currentUser: { id: 'manager-user', role: 'user' },
+        project: { currentUserRole: 'MANAGER' },
+      }),
+      loading: ref(false),
+      onResult: vi.fn(),
+      refetch: vi.fn(),
+    })
+    const alertSpy = vi.spyOn(ElMessageBox, 'alert').mockResolvedValue(undefined as any)
+    const confirmSpy = vi.spyOn(ElMessageBox, 'confirm').mockRejectedValue('cancel')
+
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router],
+        provide: { [DefaultApolloClient]: mockClient },
+      },
+      props: propsData,
+    })
+    await flushPromises()
+    await nextTick()
+
+    await wrapper.find('[data-test-key="delete-exp-1"]').trigger('click')
+    await flushPromises()
+
+    expect(confirmSpy).toHaveBeenCalledTimes(1)
+    expect(alertSpy).not.toHaveBeenCalled()
+
+    alertSpy.mockRestore()
+    confirmSpy.mockRestore()
+  })
+
+  it('shows only the Browse analysis action (no manage/delete) when not a project editor', async () => {
+    ;(useQuery as any).mockReturnValue({
+      result: ref({ experimentsByProject: graphqlData.experimentsByProject }),
+      loading: ref(false),
+      onResult: vi.fn(),
+      refetch: vi.fn(),
+    })
+
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router],
+        provide: { [DefaultApolloClient]: mockClient },
+      },
+      props: { projectId: 'project-id-1', canEdit: false },
+    })
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.find('[data-test-key="browse-exp-1"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test-key="delete-exp-1"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test-key="create-experiment"]').exists()).toBe(false)
+    expect(wrapper.html()).not.toContain('Manage experiment')
   })
 
   it('shows empty state when no experiments', async () => {

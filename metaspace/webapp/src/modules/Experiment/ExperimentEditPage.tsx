@@ -9,6 +9,7 @@ import {
   runExperimentPrepMutation,
   copyRoisToDatasetsMutation,
   projectCandidateDatasetsQuery,
+  experimentProjectRoleQuery,
   datasetRoisQuery,
   datasetSegmentationsQuery,
   datasetIonImagePreviewQuery,
@@ -31,6 +32,8 @@ import MatchModeSelector, { MatchMode } from './components/MatchModeSelector'
 import RegionMappingGroups from './components/RegionMappingGroups'
 import ExperimentVariablesCard from './components/ExperimentVariablesCard'
 import BulkAssignPanel from './components/BulkAssignPanel'
+import { useExperimentPermissions, promptExperimentProUpgrade } from './composables/experimentPermissions'
+import { ProjectRoleOptions } from '../../api/project'
 import { resolveRenameTarget, seedNameModeGroups } from './composables/groupNaming'
 import { buildSegmentationMasks } from './composables/useSegmentationMasks'
 import { isRegionValid, conditionCoverageWarning, singleReplicateWarning } from './composables/useRegionValidation'
@@ -120,6 +123,20 @@ export default defineComponent({
       projectId,
     }))
     const candidates = computed<CandidateDataset[]>(() => dsResult.value?.allDatasets ?? [])
+
+    // Creating an experiment requires admin, or a project member/manager with an active
+    // Pro subscription. Editing an existing one is unaffected by this gate.
+    const { result: projectRoleResult } = useQuery<{ project: { currentUserRole: string | null } | null }>(
+      experimentProjectRoleQuery,
+      () => ({ projectId }),
+      () => ({ enabled: !!projectId })
+    )
+    const canEditProject = computed(() => {
+      const role = projectRoleResult.value?.project?.currentUserRole
+      return role === ProjectRoleOptions.MANAGER || role === ProjectRoleOptions.MEMBER
+    })
+    const { canCreateExperiment } = useExperimentPermissions()
+    const canCreate = canCreateExperiment(canEditProject)
 
     const roisByDataset = ref<Record<string, RoiOption[]>>({})
     const segmentationsByDataset = ref<Record<string, SegmentationOption[]>>({})
@@ -400,6 +417,9 @@ export default defineComponent({
 
     const saving = computed(() => creating.value || updating.value)
 
+    // Creating is Pro-gated; editing an existing experiment stays allowed. Rather than
+    // disabling the buttons, non-Pro editors are prompted to upgrade on click.
+    const createBlocked = computed(() => !isEdit.value && !canCreate.value)
     const saveBlocked = computed(() => draft.value.datasets.some((ds) => ds.regions.some((r) => !isRegionValid(r).ok)))
     const conditionWarning = computed(() => conditionCoverageWarning(draft.value.datasets.flatMap((ds) => ds.regions)))
     const replicateWarning = computed(() => singleReplicateWarning(draft.value.datasets.flatMap((ds) => ds.regions)))
@@ -822,6 +842,10 @@ export default defineComponent({
     }
 
     const onSave = async (): Promise<void> => {
+      if (createBlocked.value) {
+        promptExperimentProUpgrade()
+        return
+      }
       try {
         if (isEdit.value && id.value) {
           await updateMut({ id: id.value, input: serializeDraft(draft.value) })
@@ -836,6 +860,10 @@ export default defineComponent({
     }
 
     const onRun = async (): Promise<void> => {
+      if (createBlocked.value) {
+        promptExperimentProUpgrade()
+        return
+      }
       try {
         let runId = id.value
         if (!runId) {

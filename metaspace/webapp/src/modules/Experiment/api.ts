@@ -308,6 +308,15 @@ export const projectCandidateDatasetsQuery = gql`
   }
 `
 
+export const experimentProjectRoleQuery = gql`
+  query experimentProjectRole($projectId: ID!) {
+    project(projectId: $projectId) {
+      id
+      currentUserRole
+    }
+  }
+`
+
 export const datasetIonImagePreviewQuery = gql`
   query datasetIonImagePreview($datasetId: String!) {
     dataset(id: $datasetId) {

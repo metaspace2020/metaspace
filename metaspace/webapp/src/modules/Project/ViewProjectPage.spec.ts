@@ -6,6 +6,7 @@ import { vi } from 'vitest'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import router from '../../router'
 import store from '../../store'
+import config from '../../lib/config'
 
 vi.mock('@vue/apollo-composable', () => ({
   useQuery: vi.fn(),
@@ -116,8 +117,14 @@ describe('ViewProjectPage', () => {
     updated() {},
   }
 
+  // These tests assert on the full tab set, including the flag-gated Experiments tab.
+  const originalExperimentFlag = config.features.experiment
   beforeAll(async () => {
+    config.features.experiment = true
     await mockGraphql(defaultParams)
+  })
+  afterAll(() => {
+    config.features.experiment = originalExperimentFlag
   })
 
   beforeEach(async () => {

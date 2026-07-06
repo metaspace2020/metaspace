@@ -6,6 +6,7 @@ import { initMockGraphqlClient } from '../../tests/utils/mockGraphqlClient'
 import store from '../../store'
 import router from '../../router'
 import ExperimentEditPage from './ExperimentEditPage'
+import { ElNotification } from '../../lib/element-plus'
 import { serializeDraft } from './api'
 import type { ExperimentDraft } from './api'
 
@@ -72,7 +73,19 @@ const sampleExperiment = {
 let mockClient: any
 let mutateSpy: any
 
-const setupQueries = (overrides?: { experiment?: any; datasets?: any }) => {
+const setupQueries = (overrides?: {
+  experiment?: any
+  datasets?: any
+  // Permission inputs for the "Create experiment" gate. Default to an authorized
+  // caller (project manager with an active Pro subscription) so create-flow tests
+  // are unaffected by the gate.
+  projectRole?: string | null
+  isPro?: boolean
+  userRole?: string
+}) => {
+  const projectRole = overrides?.projectRole === undefined ? 'MANAGER' : overrides.projectRole
+  const isPro = overrides?.isPro === undefined ? true : overrides.isPro
+  const userRole = overrides?.userRole ?? 'user'
   ;(useQuery as any).mockImplementation((doc: any) => {
     const docName = doc?.definitions?.[0]?.name?.value ?? ''
     if (docName === 'experiment') {
@@ -91,7 +104,26 @@ const setupQueries = (overrides?: { experiment?: any; datasets?: any }) => {
         onResult: vi.fn(),
       }
     }
-    return { result: ref(null), loading: ref(false), onResult: vi.fn() }
+    if (docName === 'experimentProjectRole') {
+      return {
+        result: ref({ project: { id: 'p1', currentUserRole: projectRole } }),
+        loading: ref(false),
+        onResult: vi.fn(),
+      }
+    }
+    if (docName === 'UserProfileQuery') {
+      return {
+        result: ref({ currentUser: { id: 'u1', role: userRole } }),
+        loading: ref(false),
+        onResult: vi.fn(),
+      }
+    }
+    // Anonymous subscription query (getActiveUserSubscriptionQuery).
+    return {
+      result: ref({ activeUserSubscription: { isActive: isPro } }),
+      loading: ref(false),
+      onResult: vi.fn(),
+    }
   })
 }
 
@@ -416,6 +448,183 @@ describe('ExperimentEditPage', () => {
       ],
     })
     expect(routerPush).toHaveBeenCalledWith({ path: '/project/p1', query: { tab: 'experiments' } })
+  })
+
+  it('blocks create when the user is not Pro and not admin, even as project manager', async () => {
+    mockRoute = { params: { projectId: 'p1' } }
+    setupQueries({ projectRole: 'MANAGER', isPro: false, userRole: 'user' })
+    const createMutate = vi.fn().mockResolvedValue({ data: { createExperiment: { id: 'new-id' } } })
+    mockClient.mutate = vi.fn(({ mutation, variables }: any) => {
+      const name = mutation?.definitions?.[0]?.name?.value ?? ''
+      if (name === 'createExperiment') return createMutate(variables)
+      return Promise.resolve({ data: {} })
+    })
+
+    const wrapper = mountPage()
+    await flushPromises()
+    await nextTick()
+
+    const vm: any = wrapper.vm
+    vm.setDraft({
+      name: 'My exp',
+      description: null,
+      matchMode: 'NAME',
+      labelGroups: [],
+      datasets: [
+        {
+          datasetId: 'd1',
+          regionSource: 'WHOLE',
+          regions: [
+            {
+              regionKey: 'k1',
+              sourceKind: 'whole',
+              roiId: null,
+              segmentationId: null,
+              labelGroupName: null,
+              included: true,
+              metadata: {
+                condition: 'control',
+                biologicalReplicateId: 'm1',
+                sampleId: 's1',
+                technicalReplicateId: null,
+                batchId: null,
+              },
+            },
+          ],
+        },
+      ],
+    })
+    await nextTick()
+
+    const notifySpy = vi.spyOn(ElNotification, 'warning').mockImplementation(() => ({}) as any)
+
+    // The Save button stays enabled; the Pro gate is enforced on click.
+    const saveBtn = wrapper.find('[data-test-key="experiment-save"]')
+    expect(saveBtn.attributes('disabled')).toBeUndefined()
+
+    await saveBtn.trigger('click')
+    await flushPromises()
+
+    expect(createMutate).not.toHaveBeenCalled()
+    expect(notifySpy).toHaveBeenCalledTimes(1)
+    const notifyArg = notifySpy.mock.calls[0][0] as any
+    expect(notifyArg.message).toContain('/plans')
+
+    notifySpy.mockRestore()
+  })
+
+  it('allows create for an admin even without a Pro subscription', async () => {
+    mockRoute = { params: { projectId: 'p1' } }
+    setupQueries({ projectRole: null, isPro: false, userRole: 'admin' })
+    const createMutate = vi.fn().mockResolvedValue({ data: { createExperiment: { id: 'new-id' } } })
+    mockClient.mutate = vi.fn(({ mutation, variables }: any) => {
+      const name = mutation?.definitions?.[0]?.name?.value ?? ''
+      if (name === 'createExperiment') return createMutate(variables)
+      return Promise.resolve({ data: {} })
+    })
+
+    const wrapper = mountPage()
+    await flushPromises()
+    await nextTick()
+
+    const notifySpy = vi.spyOn(ElNotification, 'warning').mockImplementation(() => ({}) as any)
+
+    const vm: any = wrapper.vm
+    vm.setDraft({
+      name: 'My exp',
+      description: null,
+      matchMode: 'NAME',
+      labelGroups: [],
+      datasets: [
+        {
+          datasetId: 'd1',
+          regionSource: 'WHOLE',
+          regions: [
+            {
+              regionKey: 'k1',
+              sourceKind: 'whole',
+              roiId: null,
+              segmentationId: null,
+              labelGroupName: null,
+              included: true,
+              metadata: {
+                condition: 'control',
+                biologicalReplicateId: 'm1',
+                sampleId: 's1',
+                technicalReplicateId: null,
+                batchId: null,
+              },
+            },
+          ],
+        },
+      ],
+    })
+    await nextTick()
+
+    await wrapper.find('[data-test-key="experiment-save"]').trigger('click')
+    await flushPromises()
+
+    expect(createMutate).toHaveBeenCalledTimes(1)
+    expect(notifySpy).not.toHaveBeenCalled()
+
+    notifySpy.mockRestore()
+  })
+
+  it('allows create for a project member with an active Pro subscription', async () => {
+    mockRoute = { params: { projectId: 'p1' } }
+    setupQueries({ projectRole: 'MEMBER', isPro: true, userRole: 'user' })
+    const createMutate = vi.fn().mockResolvedValue({ data: { createExperiment: { id: 'new-id' } } })
+    mockClient.mutate = vi.fn(({ mutation, variables }: any) => {
+      const name = mutation?.definitions?.[0]?.name?.value ?? ''
+      if (name === 'createExperiment') return createMutate(variables)
+      return Promise.resolve({ data: {} })
+    })
+
+    const wrapper = mountPage()
+    await flushPromises()
+    await nextTick()
+
+    const notifySpy = vi.spyOn(ElNotification, 'warning').mockImplementation(() => ({}) as any)
+
+    const vm: any = wrapper.vm
+    vm.setDraft({
+      name: 'My exp',
+      description: null,
+      matchMode: 'NAME',
+      labelGroups: [],
+      datasets: [
+        {
+          datasetId: 'd1',
+          regionSource: 'WHOLE',
+          regions: [
+            {
+              regionKey: 'k1',
+              sourceKind: 'whole',
+              roiId: null,
+              segmentationId: null,
+              labelGroupName: null,
+              included: true,
+              metadata: {
+                condition: 'control',
+                biologicalReplicateId: 'm1',
+                sampleId: 's1',
+                technicalReplicateId: null,
+                batchId: null,
+              },
+            },
+          ],
+        },
+      ],
+    })
+    await nextTick()
+
+    await wrapper.find('[data-test-key="experiment-save"]').trigger('click')
+    await flushPromises()
+
+    expect(createMutate).toHaveBeenCalledTimes(1)
+    expect(notifySpy).not.toHaveBeenCalled()
+
+    notifySpy.mockRestore()
   })
 
   it('renders the mapping board with one column per dataset in the draft', async () => {

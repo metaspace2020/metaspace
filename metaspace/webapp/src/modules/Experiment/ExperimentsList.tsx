@@ -3,7 +3,9 @@ import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { useRouter } from 'vue-router'
 import { ElButton, ElCard, ElIcon, ElMessage, ElMessageBox, ElTag } from '../../lib/element-plus'
 import { PictureFilled, EditPen, Delete } from '@element-plus/icons-vue'
-import { experimentsByProjectQuery, deleteExperimentMutation } from './api'
+import { experimentsByProjectQuery, deleteExperimentMutation, experimentProjectRoleQuery } from './api'
+import { useExperimentPermissions, promptExperimentProUpgrade } from './composables/experimentPermissions'
+import { ProjectRoleOptions } from '../../api/project'
 import CopyButton from '../../components/CopyButton.vue'
 import ElapsedTime from '../../components/ElapsedTime'
 
@@ -50,6 +52,30 @@ export default defineComponent({
   },
   setup(props) {
     const router = useRouter()
+    const { isAdmin, currentUserId, canCreateExperiment } = useExperimentPermissions()
+    // Create is allowed for admins, or project editors with an active Pro subscription.
+    // The button stays visible for any project editor; non-Pro users are prompted to
+    // upgrade on click rather than having the button hidden.
+    const canCreate = canCreateExperiment(() => props.canEdit)
+
+    // Delete is more restricted than edit: only the experiment creator, a project
+    // manager, or an admin may delete. Project managers are distinguished from plain
+    // members via the project role.
+    const { result: projectRoleResult } = useQuery<{ project: { currentUserRole: string | null } | null }>(
+      experimentProjectRoleQuery,
+      () => ({ projectId: props.projectId })
+    )
+    const isManager = computed(() => projectRoleResult.value?.project?.currentUserRole === ProjectRoleOptions.MANAGER)
+    const canDeleteExperiment = (exp: ExperimentSummary): boolean =>
+      isAdmin.value || isManager.value || (!!currentUserId.value && exp.createdBy?.id === currentUserId.value)
+
+    const onCreate = (): void => {
+      if (canCreate.value) {
+        router.push(`/project/${props.projectId}/experiment/new`)
+      } else {
+        promptExperimentProUpgrade()
+      }
+    }
     const { result, loading, refetch } = useQuery<{ experimentsByProject: ExperimentSummary[] }>(
       experimentsByProjectQuery,
       () => ({ projectId: props.projectId }),
@@ -63,7 +89,19 @@ export default defineComponent({
     const deleteExperiment = (variables: any): Promise<any> =>
       apolloClient.mutate({ mutation: deleteExperimentMutation, variables })
 
-    const onDelete = async (id: string): Promise<void> => {
+    const onDelete = async (exp: ExperimentSummary): Promise<void> => {
+      if (!canDeleteExperiment(exp)) {
+        try {
+          await ElMessageBox.alert(
+            'You cannot delete this experiment. Only the experiment creator or a project manager can delete it.',
+            'Cannot delete',
+            { type: 'warning' }
+          )
+        } catch (dismissed) {
+          // alert dismissed — nothing to do
+        }
+        return
+      }
       try {
         await ElMessageBox.confirm('Delete this experiment? This cannot be undone.', 'Confirm', {
           type: 'warning',
@@ -72,7 +110,7 @@ export default defineComponent({
         return
       }
       try {
-        await deleteExperiment({ id })
+        await deleteExperiment({ id: exp.id })
         await refetch()
         ElMessage.success('Experiment deleted')
       } catch (e) {
@@ -84,11 +122,7 @@ export default defineComponent({
       <div class="space-y-4">
         {props.canEdit && (
           <div class="flex justify-end">
-            <ElButton
-              type="primary"
-              data-test-key="create-experiment"
-              onClick={() => router.push(`/project/${props.projectId}/experiment/new`)}
-            >
+            <ElButton type="primary" data-test-key="create-experiment" onClick={onCreate}>
               Create experiment
             </ElButton>
           </div>
@@ -161,7 +195,7 @@ export default defineComponent({
                         data-test-key={`delete-${exp.id}`}
                         onClick={(e) => {
                           e.preventDefault()
-                          onDelete(exp.id)
+                          onDelete(exp)
                         }}
                       >
                         Delete experiment
