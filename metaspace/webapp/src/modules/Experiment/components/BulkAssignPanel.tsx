@@ -20,6 +20,10 @@ export interface BulkCopyRoisSource {
 const DATASET_CHIP_CLASS =
   'px-3 py-1 text-sm rounded-full border cursor-pointer select-none inline-flex items-center gap-1'
 
+// Numbered step badge for the source-first Copy ROIs flow.
+const STEP_BADGE_CLASS =
+  'w-[18px] h-[18px] rounded-full bg-blue-500 text-white text-xs font-bold inline-flex items-center justify-center'
+
 export default defineComponent({
   name: 'BulkAssignPanel',
   props: {
@@ -66,16 +70,103 @@ export default defineComponent({
       showCopyRois.value = false
       activeKey.value = key
     }
+    // Highlighted scope button (or null once the selection no longer matches any scope exactly).
+    const activeScope = ref<VariableKey | 'all' | null>(null)
+
     const switchToCopyRois = (): void => {
       showCopyRois.value = true
       selected.value = new Set()
       copySourceId.value = null
+      activeScope.value = null
     }
     const doCopyRois = (): void => {
       if (!copySourceId.value || selected.value.size === 0) return
       emit('copy-rois', { sourceDatasetId: copySourceId.value, targetDatasetIds: [...selected.value] })
       selected.value = new Set()
       copySourceId.value = null
+      activeScope.value = null
+    }
+
+    // Datasets that already hold ROIs — copying into one overwrites it.
+    const roiTargetIds = (): Set<string> => new Set(props.copyRoisSources.map((s) => s.datasetId))
+    const copySourceValues = (): Record<VariableKey, string | null> | undefined =>
+      props.datasets.find((d) => d.id === copySourceId.value)?.values
+
+    /** Target datasets matching a scope: every other dataset ('all'), or those sharing the
+     *  source's value for one variable. The source itself is always excluded. */
+    const scopeMembers = (key: VariableKey | 'all'): string[] => {
+      const vals = copySourceValues()
+      return props.datasets
+        .filter((d) => {
+          if (d.id === copySourceId.value) return false
+          if (key === 'all') return true
+          return vals != null && d.values?.[key] != null && d.values[key] === vals[key]
+        })
+        .map((d) => d.id)
+    }
+    // One scope per variable for which the source has a value.
+    const availableScopes = (): VariableKey[] => {
+      const vals = copySourceValues()
+      return vals ? VARIABLE_KEYS.filter((k) => vals[k] != null) : []
+    }
+    const scopeKeys = (): (VariableKey | 'all')[] => ['all', ...availableScopes()]
+
+    const setsEqual = (a: Set<string>, b: string[]): boolean => a.size === b.length && b.every((x) => a.has(x))
+    // Keep a scope highlighted only while the selection still equals it exactly.
+    const syncActiveScope = (): void => {
+      activeScope.value =
+        scopeKeys().find((k) => selected.value.size > 0 && setsEqual(selected.value, scopeMembers(k))) ?? null
+    }
+
+    const applyScope = (key: VariableKey | 'all'): void => {
+      activeScope.value = key
+      selected.value = new Set(scopeMembers(key))
+    }
+    // Targets use click-to-toggle; the source is locked out of the target grid.
+    const toggleTarget = (id: string): void => {
+      if (id === copySourceId.value) return
+      toggle(id)
+      syncActiveScope()
+    }
+    const onSourceChange = (val: string): void => {
+      copySourceId.value = val || null
+      selected.value = new Set()
+      activeScope.value = null
+    }
+    const overwriteCount = (): number => [...selected.value].filter((id) => roiTargetIds().has(id)).length
+
+    // Scope buttons share the dataset chips' palette. Explicit border + appearance reset so the
+    // native <button> UA border doesn't show through as a dark outline.
+    const scopeChipStyle = (isActive: boolean): Record<string, string> => {
+      const base = { appearance: 'none', WebkitAppearance: 'none', outline: 'none' }
+      return isActive
+        ? {
+            ...base,
+            color: '#409EFF',
+            border: '1px solid #409EFF',
+            backgroundColor: '#ecf5ff',
+            boxShadow: '0 0 0 1px #409EFF',
+          }
+        : { ...base, color: '#606266', border: '1px solid #dcdfe6', backgroundColor: '#ffffff' }
+    }
+
+    // Copy-mode chip colours: locked amber source, blue ring on selected targets, plain otherwise.
+    const copyChipStyle = (d: BulkDataset): Record<string, string> => {
+      if (d.id === copySourceId.value) {
+        return {
+          color: '#E6A23C',
+          borderColor: '#E6A23C',
+          backgroundColor: '#fdf6ec',
+          boxShadow: '0 0 0 2px #E6A23C',
+          cursor: 'default',
+        }
+      }
+      const isSel = selected.value.has(d.id)
+      const style: Record<string, string> = isSel
+        ? { color: '#409EFF', borderColor: '#409EFF', backgroundColor: '#ecf5ff' }
+        : { color: '#606266', borderColor: '#dcdfe6', backgroundColor: '#ffffff' }
+      if (isSel) style.boxShadow = '0 0 0 2px #409EFF'
+      return style
     }
 
     // Give each value its own colour (shared with the region/label-group palette) so values are
@@ -158,37 +249,21 @@ export default defineComponent({
 
             {showCopyRois.value ? (
               <div>
-                <p class="text-sm text-gray-400 mb-2">
-                  Select target datasets below, then choose a source and click Copy.
-                </p>
-                <div
-                  class="flex flex-wrap gap-2 p-2 bg-gray-50 border border-gray-200 rounded mb-3"
-                  data-test-key="bulk-ds-chips"
-                >
-                  {props.datasets.map((d) => (
-                    <span
-                      key={d.id}
-                      class={DATASET_CHIP_CLASS}
-                      style={datasetChipStyle(d)}
-                      data-test-key={`bulk-chip-${d.id}`}
-                      onClick={() => toggle(d.id)}
-                    >
-                      {d.name}
-                    </span>
-                  ))}
-                </div>
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-sm text-gray-600">Copy from:</span>
+                {/* Step 1 — pick the dataset whose ROIs will be copied (source-first). */}
+                <div class="mb-4">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class={STEP_BADGE_CLASS}>1</span>
+                    <span class="text-sm font-medium text-gray-700">Copy from</span>
+                    <span class="text-xs text-gray-400">— the dataset whose ROIs you drew</span>
+                  </div>
                   <ElSelect
                     modelValue={copySourceId.value ?? ''}
                     placeholder="Select source dataset…"
                     clearable
                     size="small"
-                    style={{ width: '260px' }}
+                    style={{ width: '280px' }}
                     data-test-key="bulk-copy-rois-source"
-                    onChange={(val: string) => {
-                      copySourceId.value = val || null
-                    }}
+                    onChange={onSourceChange}
                   >
                     {props.copyRoisSources.map((s) => (
                       <ElOption
@@ -198,23 +273,87 @@ export default defineComponent({
                       />
                     ))}
                   </ElSelect>
-                  <ElButton
-                    size="small"
-                    type="primary"
-                    disabled={selected.value.size === 0 || !copySourceId.value}
-                    data-test-key="bulk-copy-rois-confirm"
-                    onClick={doCopyRois}
-                  >
-                    Copy to {selected.value.size > 0 ? selected.value.size : ''} selected
-                  </ElButton>
-                  <ElButton size="small" data-test-key="bulk-clear" onClick={clear}>
-                    Clear selection
-                  </ElButton>
                 </div>
-                {selected.value.size > 0 && copySourceId.value && (
-                  <p class="text-xs text-orange-600 mt-2" data-test-key="bulk-copy-rois-warn">
-                    Existing ROIs on the selected datasets will be overwritten.
-                  </p>
+
+                {/* Step 2 — appears only once a source is chosen. */}
+                {copySourceId.value && (
+                  <div data-test-key="bulk-copy-to">
+                    <div class="flex items-center gap-2 mb-2">
+                      <span class={STEP_BADGE_CLASS}>2</span>
+                      <span class="text-sm font-medium text-gray-700">Copy to</span>
+                      <span class="text-xs text-gray-400">— pick a group, or tweak below</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                      {scopeKeys().map((key) => {
+                        const isActive = activeScope.value === key
+                        const value = key === 'all' ? null : copySourceValues()?.[key]
+                        return (
+                          <button
+                            key={key}
+                            class={DATASET_CHIP_CLASS}
+                            style={scopeChipStyle(isActive)}
+                            data-test-key={`bulk-scope-${key}`}
+                            onClick={() => applyScope(key)}
+                          >
+                            {key === 'all' ? 'All datasets' : `Same ${VARIABLE_LABELS[key].toLowerCase()}`}
+                            {value && <span class="font-semibold"> · {value}</span>}{' '}
+                            <span style={{ opacity: '0.6' }}>({scopeMembers(key).length})</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    <div
+                      class="flex flex-wrap gap-2 p-2 bg-gray-50 border border-gray-200 rounded mb-3"
+                      data-test-key="bulk-ds-chips"
+                    >
+                      {props.datasets.map((d) => {
+                        const isSource = d.id === copySourceId.value
+                        const willOverwrite = selected.value.has(d.id) && roiTargetIds().has(d.id)
+                        return (
+                          <span
+                            key={d.id}
+                            class={DATASET_CHIP_CLASS}
+                            style={copyChipStyle(d)}
+                            data-test-key={`bulk-chip-${d.id}`}
+                            onClick={() => toggleTarget(d.id)}
+                          >
+                            {isSource && <span class="leading-none">★</span>}
+                            <span>{d.name}</span>
+                            {isSource && <span class="text-[10px] uppercase tracking-wide opacity-70">source</span>}
+                            {willOverwrite && (
+                              <span class="text-orange-500 leading-none" data-test-key={`bulk-chip-warn-${d.id}`}>
+                                ⚠
+                              </span>
+                            )}
+                          </span>
+                        )
+                      })}
+                    </div>
+
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <ElButton
+                        size="small"
+                        type="primary"
+                        disabled={selected.value.size === 0 || !copySourceId.value}
+                        data-test-key="bulk-copy-rois-confirm"
+                        onClick={doCopyRois}
+                      >
+                        Copy to {selected.value.size > 0 ? selected.value.size : ''}{' '}
+                        {selected.value.size === 1 ? 'dataset' : 'datasets'}
+                      </ElButton>
+                      <ElButton size="small" data-test-key="bulk-clear" onClick={clear}>
+                        Clear selection
+                      </ElButton>
+                    </div>
+
+                    {overwriteCount() > 0 && (
+                      <p class="text-xs text-orange-600 mt-2" data-test-key="bulk-copy-rois-warn">
+                        Existing ROIs on {overwriteCount()} selected dataset
+                        {overwriteCount() !== 1 ? 's' : ''} will be overwritten.
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             ) : (

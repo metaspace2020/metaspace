@@ -1,14 +1,5 @@
 import { defineComponent, PropType, computed, ref } from 'vue'
-import {
-  ElCard,
-  ElSelect,
-  ElOption,
-  ElInput,
-  ElTable,
-  ElTableColumn,
-  ElCheckbox,
-  ElButton,
-} from '../../../lib/element-plus'
+import { ElCard, ElSelect, ElOption, ElInput, ElTable, ElTableColumn, ElCheckbox } from '../../../lib/element-plus'
 import { View, Close, ArrowDown } from '@element-plus/icons-vue'
 import { generateRegionKey, regionLabel as sharedRegionLabel, paletteColor } from '../api'
 import type { ExperimentDraftDataset, ExperimentDraftRegion } from '../api'
@@ -40,12 +31,6 @@ export interface LabelGroupOption {
   color: string
 }
 
-export interface CopyableSource {
-  datasetId: string
-  name: string
-  roiCount: number
-}
-
 const emptyMetadata = (): ExperimentDraftRegion['metadata'] => ({
   condition: '',
   biologicalReplicateId: '',
@@ -68,13 +53,12 @@ export default defineComponent({
     imageHeight: { type: Number as PropType<number | null>, default: null },
     segmentationMasks: { type: Object as PropType<Record<string, string>>, default: () => ({}) },
     variables: { type: Object as PropType<ExperimentVariables>, default: () => emptyVariables() },
-    copyableSources: { type: Array as PropType<CopyableSource[]>, default: () => [] },
+    initialCollapsed: { type: Boolean, default: true },
   },
-  emits: ['update:modelValue', 'remove', 'copyRoisFrom'],
+  emits: ['update:modelValue', 'remove'],
   setup(props, { emit }) {
     const shownIonImage = ref(false)
-    const copySourceId = ref<string | null>(null)
-    const collapsed = ref(true)
+    const collapsed = ref(props.initialCollapsed)
 
     const update = (patch: Partial<ExperimentDraftDataset>): void => {
       emit('update:modelValue', { ...props.modelValue, ...patch })
@@ -254,7 +238,7 @@ export default defineComponent({
       const ds = props.dataset
       const v = props.modelValue
       return (
-        <ElCard class="mb-4" shadow="never" data-test-key={`dataset-card-${ds.id}`}>
+        <ElCard class="mb-4" shadow="never" body-style={{ padding: '0' }} data-test-key={`dataset-card-${ds.id}`}>
           {{
             header: () => (
               <div
@@ -292,179 +276,144 @@ export default defineComponent({
               </div>
             ),
             default: () => (
-              <div
-                class={[
-                  'grid transition-[grid-template-rows] duration-300 ease-in-out -mx-5 -mb-5',
-                  collapsed.value ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]',
-                ]}
-              >
-                <div class="min-h-0 overflow-hidden px-5 pb-5">
-                  <div class="space-y-3 pt-1">
-                    <div class="flex items-center gap-2">
-                      <label class="text-sm w-32">Region source:</label>
-                      <ElSelect
-                        modelValue={v.regionSource}
-                        data-test-key={`region-source-${ds.id}`}
-                        onChange={onRegionSourceChange}
-                      >
-                        <ElOption value="WHOLE" label="Whole dataset" />
-                        <ElOption value="ROI" label="ROI" />
-                        <ElOption value="SEGMENTATION" label="Segmentation cluster" />
-                      </ElSelect>
-                      <a
-                        class="ml-auto text-blue-600 hover:text-blue-700 text-sm
-                     inline-flex items-center gap-1 cursor-pointer select-none"
-                        data-test-key={`toggle-ion-image-${ds.id}`}
-                        onClick={() => {
-                          shownIonImage.value = !shownIonImage.value
-                        }}
-                      >
-                        <span class="underline">Show/hide ion image</span>
-                        <View class="w-4 h-4" />
-                      </a>
-                    </div>
-                    {v.regionSource === 'ROI' && props.copyableSources.length > 0 && (
-                      <div class="flex items-center gap-2 flex-wrap" data-test-key={`copy-rois-row-${ds.id}`}>
+              <>
+                <div
+                  data-test-key={`dataset-card-body-${ds.id}`}
+                  class={[
+                    'transition-[max-height] duration-300 ease-in-out overflow-hidden',
+                    collapsed.value ? 'max-h-[0px]' : 'max-h-[3000px]',
+                  ]}
+                >
+                  <div class="min-h-0 overflow-hidden px-5 pt-5 pb-5">
+                    <div class="space-y-3 pt-1">
+                      <div class="flex items-center gap-2">
+                        <label class="text-sm w-32">Region source:</label>
                         <ElSelect
-                          modelValue={copySourceId.value ?? ''}
-                          placeholder="Copy ROIs from another dataset…"
-                          clearable
-                          size="small"
-                          style={{ width: '260px' }}
-                          data-test-key={`copy-rois-select-${ds.id}`}
-                          onChange={(val: string) => {
-                            copySourceId.value = val || null
-                          }}
-                          onClear={() => {
-                            copySourceId.value = null
+                          modelValue={v.regionSource}
+                          data-test-key={`region-source-${ds.id}`}
+                          onChange={onRegionSourceChange}
+                        >
+                          <ElOption value="WHOLE" label="Whole dataset" />
+                          <ElOption value="ROI" label="ROI" />
+                          <ElOption value="SEGMENTATION" label="Segmentation cluster" />
+                        </ElSelect>
+                        <a
+                          class="ml-auto text-blue-600 hover:text-blue-700 text-sm
+                     inline-flex items-center gap-1 cursor-pointer select-none"
+                          data-test-key={`toggle-ion-image-${ds.id}`}
+                          onClick={() => {
+                            shownIonImage.value = !shownIonImage.value
                           }}
                         >
-                          {props.copyableSources.map((s) => (
-                            <ElOption
-                              key={s.datasetId}
-                              value={s.datasetId}
-                              label={`${s.name} (${s.roiCount} ROI${s.roiCount !== 1 ? 's' : ''})`}
-                            />
-                          ))}
-                        </ElSelect>
-                        {copySourceId.value && (
-                          <>
-                            {props.rois.length > 0 && (
-                              <span class="text-xs text-orange-600" data-test-key={`copy-rois-overwrite-warn-${ds.id}`}>
-                                Will overwrite {props.rois.length} existing ROI{props.rois.length !== 1 ? 's' : ''}
-                              </span>
-                            )}
-                            <ElButton
-                              size="small"
-                              type="primary"
-                              data-test-key={`copy-rois-confirm-${ds.id}`}
-                              onClick={() => {
-                                emit('copyRoisFrom', copySourceId.value)
-                                copySourceId.value = null
-                              }}
-                            >
-                              Copy
-                            </ElButton>
-                          </>
-                        )}
-                        <span class="text-xs text-gray-400">
-                          ROIs are copied as-is; ensure datasets share the same pixel dimensions.
-                        </span>
+                          <span class="underline">Show/hide ion image</span>
+                          <View class="w-4 h-4" />
+                        </a>
                       </div>
-                    )}
-                    <div
-                      data-test-key={`ion-preview-wrapper-${ds.id}`}
-                      class={[
-                        'grid transition-[grid-template-rows] duration-500 ease-in-out',
-                        shownIonImage.value ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
-                      ]}
-                    >
                       <div
+                        data-test-key={`ion-preview-wrapper-${ds.id}`}
                         class={[
-                          'min-h-0 overflow-hidden bg-gray-100 border-2 border-dashed border-gray-300 rounded p-2',
-                          shownIonImage.value ? '' : '!border-0 bg-white',
+                          'grid transition-[grid-template-rows] duration-500 ease-in-out',
+                          shownIonImage.value ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
                         ]}
                       >
-                        <div class="flex gap-3 items-start">
-                          <div class="flex-1 min-w-0">
-                            <DatasetIonImagePreview
-                              shown={true}
-                              ionImageUrl={props.ionImageUrl}
-                              opticalImageUrl={props.opticalImageUrl}
-                              imageWidth={props.imageWidth}
-                              imageHeight={props.imageHeight}
-                              overlays={overlays.value}
-                              hideIonImage={v.regionSource === 'SEGMENTATION'}
-                            />
-                          </div>
-                          {overlays.value.length > 0 && (
-                            <div
-                              class="flex flex-col gap-1 text-sm py-2 min-w-[140px] bg-white rounded p-2"
-                              data-test-key={`overlay-toggles-${ds.id}`}
-                            >
-                              {overlays.value.map((o, idx) => (
-                                <label key={o.id} class="flex items-center gap-2 cursor-pointer">
-                                  <ElCheckbox
-                                    modelValue={o.visible}
-                                    onChange={(val: boolean) => updateRegion(idx, { included: val })}
-                                    data-test-key={`overlay-toggle-${o.id}`}
-                                  />
-                                  <span
-                                    class="inline-block w-3 h-3 rounded-sm border border-gray-300"
-                                    style={{ backgroundColor: o.color }}
-                                  />
-                                  <span class="truncate">{o.label}</span>
-                                </label>
-                              ))}
+                        <div
+                          class={[
+                            'min-h-0 overflow-hidden bg-gray-100 border-2 border-dashed border-gray-300 rounded p-2',
+                            shownIonImage.value ? '' : '!border-0 bg-white',
+                          ]}
+                        >
+                          <div class="flex gap-3 items-start">
+                            <div class="flex-1 min-w-0">
+                              <DatasetIonImagePreview
+                                shown={true}
+                                ionImageUrl={props.ionImageUrl}
+                                opticalImageUrl={props.opticalImageUrl}
+                                imageWidth={props.imageWidth}
+                                imageHeight={props.imageHeight}
+                                overlays={overlays.value}
+                                hideIonImage={v.regionSource === 'SEGMENTATION'}
+                              />
                             </div>
-                          )}
+                            {overlays.value.length > 0 && (
+                              <div
+                                class="flex flex-col gap-1 text-sm py-2 min-w-[140px] bg-white rounded p-2"
+                                data-test-key={`overlay-toggles-${ds.id}`}
+                              >
+                                {overlays.value.map((o, idx) => (
+                                  <label key={o.id} class="flex items-center gap-2 cursor-pointer">
+                                    <ElCheckbox
+                                      modelValue={o.visible}
+                                      onChange={(val: boolean) => updateRegion(idx, { included: val })}
+                                      data-test-key={`overlay-toggle-${o.id}`}
+                                    />
+                                    <span
+                                      class="inline-block w-3 h-3 rounded-sm border border-gray-300"
+                                      style={{ backgroundColor: o.color }}
+                                    />
+                                    <span class="truncate">{o.label}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
+                      <ElTable data={v.regions} size="small" data-test-key={`region-table-${ds.id}`}>
+                        <ElTableColumn label="Region" width="180">
+                          {{
+                            default: ({ row }: { row: ExperimentDraftRegion }) => regionLabel(row),
+                          }}
+                        </ElTableColumn>
+                        <ElTableColumn label="Condition">
+                          {{
+                            default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) =>
+                              metadataSelect(row, $index, 'condition', false),
+                          }}
+                        </ElTableColumn>
+                        <ElTableColumn label="Bio rep">
+                          {{
+                            default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) =>
+                              metadataSelect(row, $index, 'biologicalReplicateId', false),
+                          }}
+                        </ElTableColumn>
+                        <ElTableColumn label="Sample ID">
+                          {{
+                            default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) => (
+                              <ElInput
+                                modelValue={row.metadata.sampleId}
+                                onUpdate:modelValue={(val: string) => updateMetadata($index, { sampleId: val })}
+                              />
+                            ),
+                          }}
+                        </ElTableColumn>
+                        <ElTableColumn label="Tech rep">
+                          {{
+                            default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) =>
+                              metadataSelect(row, $index, 'technicalReplicateId', true),
+                          }}
+                        </ElTableColumn>
+                        <ElTableColumn label="Batch">
+                          {{
+                            default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) =>
+                              metadataSelect(row, $index, 'batchId', true),
+                          }}
+                        </ElTableColumn>
+                      </ElTable>
                     </div>
-                    <ElTable data={v.regions} size="small" data-test-key={`region-table-${ds.id}`}>
-                      <ElTableColumn label="Region" width="180">
-                        {{
-                          default: ({ row }: { row: ExperimentDraftRegion }) => regionLabel(row),
-                        }}
-                      </ElTableColumn>
-                      <ElTableColumn label="Condition">
-                        {{
-                          default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) =>
-                            metadataSelect(row, $index, 'condition', false),
-                        }}
-                      </ElTableColumn>
-                      <ElTableColumn label="Bio rep">
-                        {{
-                          default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) =>
-                            metadataSelect(row, $index, 'biologicalReplicateId', false),
-                        }}
-                      </ElTableColumn>
-                      <ElTableColumn label="Sample ID">
-                        {{
-                          default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) => (
-                            <ElInput
-                              modelValue={row.metadata.sampleId}
-                              onUpdate:modelValue={(val: string) => updateMetadata($index, { sampleId: val })}
-                            />
-                          ),
-                        }}
-                      </ElTableColumn>
-                      <ElTableColumn label="Tech rep">
-                        {{
-                          default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) =>
-                            metadataSelect(row, $index, 'technicalReplicateId', true),
-                        }}
-                      </ElTableColumn>
-                      <ElTableColumn label="Batch">
-                        {{
-                          default: ({ row, $index }: { row: ExperimentDraftRegion; $index: number }) =>
-                            metadataSelect(row, $index, 'batchId', true),
-                        }}
-                      </ElTableColumn>
-                    </ElTable>
                   </div>
                 </div>
-              </div>
+                {collapsed.value && (
+                  <div
+                    class="h-8 flex items-center justify-center cursor-pointer select-none
+                    bg-gradient-to-b from-transparent to-gray-100 hover:to-gray-200 transition-colors"
+                    data-test-key={`dataset-card-collapsed-hint-${ds.id}`}
+                    aria-label="Expand dataset"
+                    onClick={() => (collapsed.value = false)}
+                  >
+                    <ArrowDown class="w-4 h-4 text-gray-400" />
+                  </div>
+                )}
+              </>
             ),
           }}
         </ElCard>

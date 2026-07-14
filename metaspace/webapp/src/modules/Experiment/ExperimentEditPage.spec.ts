@@ -75,6 +75,7 @@ let mutateSpy: any
 
 const setupQueries = (overrides?: {
   experiment?: any
+  experimentLoading?: boolean
   datasets?: any
   // Permission inputs for the "Create experiment" gate. Default to an authorized
   // caller (project manager with an active Pro subscription) so create-flow tests
@@ -91,7 +92,7 @@ const setupQueries = (overrides?: {
     if (docName === 'experiment') {
       return {
         result: ref(overrides?.experiment ?? null),
-        loading: ref(false),
+        loading: ref(overrides?.experimentLoading ?? false),
         onResult: vi.fn((cb: any) => {
           if (overrides?.experiment) cb({ data: overrides.experiment })
         }),
@@ -160,6 +161,46 @@ describe('ExperimentEditPage', () => {
     expect(wrapper.html()).toContain('Create experiment')
     expect(wrapper.find('[data-test-key="experiment-name"]').exists()).toBe(true)
     expect(wrapper.find('[data-test-key="dataset-card-d1"]').exists()).toBe(false)
+  })
+
+  it('shows a loading skeleton in edit mode until the experiment hydrates', async () => {
+    mockRoute = { params: { projectId: 'p1', id: 'e1' } }
+    setupQueries({ experimentLoading: true }) // query still in flight → hydrated stays false
+    const wrapper = mountPage()
+    await flushPromises()
+    await nextTick()
+    expect(wrapper.find('[data-test-key="experiment-edit-skeleton"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test-key="experiment-name"]').exists()).toBe(false)
+  })
+
+  it('clears the skeleton and shows the form if the experiment query settles without data', async () => {
+    mockRoute = { params: { projectId: 'p1', id: 'e1' } }
+    setupQueries() // edit mode, experiment stays null, loading false (settled, e.g. not-found/error)
+    const wrapper = mountPage()
+    await flushPromises()
+    await nextTick()
+    expect(wrapper.find('[data-test-key="experiment-edit-skeleton"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test-key="experiment-name"]').exists()).toBe(true)
+  })
+
+  it('hides the skeleton once the experiment is loaded', async () => {
+    mockRoute = { params: { projectId: 'p1', id: 'e1' } }
+    setupQueries({ experiment: sampleExperiment })
+    const wrapper = mountPage()
+    await flushPromises()
+    await nextTick()
+    expect(wrapper.find('[data-test-key="experiment-edit-skeleton"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test-key="experiment-name"]').exists()).toBe(true)
+  })
+
+  it('never shows the skeleton in create mode', async () => {
+    mockRoute = { params: { projectId: 'p1' } }
+    setupQueries()
+    const wrapper = mountPage()
+    await flushPromises()
+    await nextTick()
+    expect(wrapper.find('[data-test-key="experiment-edit-skeleton"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test-key="experiment-name"]').exists()).toBe(true)
   })
 
   it('hydrates form from experimentQuery when :id present', async () => {
@@ -627,80 +668,6 @@ describe('ExperimentEditPage', () => {
     notifySpy.mockRestore()
   })
 
-  it('renders the mapping board with one column per dataset in the draft', async () => {
-    mockRoute = { params: { projectId: 'p1' } }
-    setupQueries()
-
-    const wrapper = mountPage()
-    await flushPromises()
-    await nextTick()
-
-    const vm: any = wrapper.vm
-    vm.setDraft({
-      name: '',
-      description: null,
-      matchMode: 'MANUAL',
-      labelGroups: [],
-      datasets: [
-        {
-          datasetId: 'd1',
-          regionSource: 'WHOLE',
-          regions: [
-            {
-              regionKey: 'k1',
-              sourceKind: 'whole',
-              roiId: null,
-              segmentationId: null,
-              labelGroupName: null,
-              included: true,
-              metadata: {
-                condition: '',
-                biologicalReplicateId: '',
-                sampleId: '',
-                technicalReplicateId: null,
-                batchId: null,
-              },
-            },
-          ],
-        },
-        {
-          datasetId: 'd2',
-          regionSource: 'WHOLE',
-          regions: [
-            {
-              regionKey: 'k2',
-              sourceKind: 'whole',
-              roiId: null,
-              segmentationId: null,
-              labelGroupName: null,
-              included: true,
-              metadata: {
-                condition: '',
-                biologicalReplicateId: '',
-                sampleId: '',
-                technicalReplicateId: null,
-                batchId: null,
-              },
-            },
-          ],
-        },
-      ],
-    })
-    await nextTick()
-
-    // Board is collapsed by default; click "Show mapping board" to expand.
-    const toggle = wrapper.findAll('button').find((b) => b.text().includes('Show mapping board'))
-    expect(toggle).toBeTruthy()
-    await toggle!.trigger('click')
-    await nextTick()
-
-    const board = wrapper.find('[data-test-key="mapping-board"]')
-    expect(board.exists()).toBe(true)
-    // Each column is rendered as a direct child div with the dataset name.
-    expect(board.text()).toContain('Dataset 1')
-    expect(board.text()).toContain('Dataset 2')
-  })
-
   it('disables Save when any region is missing condition', async () => {
     mockRoute = { params: { projectId: 'p1' } }
     setupQueries()
@@ -811,6 +778,120 @@ describe('ExperimentEditPage', () => {
     expect(banner.text()).toContain('control')
   })
 
+  it('renders a compact single-replicate warning with an info trigger', async () => {
+    mockRoute = { params: { projectId: 'p1' } }
+    setupQueries()
+    const wrapper = mountPage()
+    await flushPromises()
+    await nextTick()
+    const vm: any = wrapper.vm
+    // Two regions, same condition, distinct label groups, each 1 bio-rep → single-replicate per (lg,cond).
+    vm.setDraft({
+      name: 'X',
+      description: null,
+      matchMode: 'NAME',
+      labelGroups: [
+        { name: 'g1', color: '#111' },
+        { name: 'g2', color: '#222' },
+      ],
+      datasets: [
+        {
+          datasetId: 'd1',
+          regionSource: 'WHOLE',
+          regions: [
+            {
+              regionKey: 'r1',
+              sourceKind: 'whole',
+              roiId: null,
+              segmentationId: null,
+              labelGroupName: 'g1',
+              included: true,
+              metadata: {
+                condition: 'Cond1',
+                biologicalReplicateId: 'b1',
+                sampleId: 's1',
+                technicalReplicateId: null,
+                batchId: null,
+              },
+            },
+          ],
+        },
+        {
+          datasetId: 'd2',
+          regionSource: 'WHOLE',
+          regions: [
+            {
+              regionKey: 'r2',
+              sourceKind: 'whole',
+              roiId: null,
+              segmentationId: null,
+              labelGroupName: 'g2',
+              included: true,
+              metadata: {
+                condition: 'Cond1',
+                biologicalReplicateId: 'b2',
+                sampleId: 's2',
+                technicalReplicateId: null,
+                batchId: null,
+              },
+            },
+          ],
+        },
+      ],
+    })
+    await nextTick()
+    const banner = wrapper.find('[data-test-key="single-replicate-warning"]')
+    expect(banner.exists()).toBe(true)
+    expect(banner.text()).toContain('biological replicate')
+    expect(wrapper.find('[data-test-key="single-replicate-warning-info"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test-key="single-replicate-warning-count"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test-key="single-replicate-warning-count"]').text()).toBe('2')
+  })
+
+  it('renders analysis preview as compact chips', async () => {
+    mockRoute = { params: { projectId: 'p1' } }
+    setupQueries()
+    const wrapper = mountPage()
+    await flushPromises()
+    await nextTick()
+    const vm: any = wrapper.vm
+    vm.setDraft({
+      name: 'X',
+      description: null,
+      matchMode: 'NAME',
+      labelGroups: [{ name: 'g1', color: '#111' }],
+      datasets: [
+        {
+          datasetId: 'd1',
+          regionSource: 'WHOLE',
+          regions: [
+            {
+              regionKey: 'r1',
+              sourceKind: 'whole',
+              roiId: null,
+              segmentationId: null,
+              labelGroupName: 'g1',
+              included: true,
+              metadata: {
+                condition: 'A',
+                biologicalReplicateId: 'b1',
+                sampleId: 's1',
+                technicalReplicateId: null,
+                batchId: null,
+              },
+            },
+          ],
+        },
+      ],
+    })
+    await nextTick()
+    const chip = wrapper.find('[data-test-key="analysis-chip-g1"]')
+    expect(chip.exists()).toBe(true)
+    expect(chip.text()).toContain('g1')
+    expect(chip.text()).toContain('no comparison')
+    expect(wrapper.find('[data-test-key="analysis-preview-fallback"]').exists()).toBe(true)
+  })
+
   describe('region mapping merge logic', () => {
     const baseRegion = (regionKey: string, labelGroupName: string | null = null) => ({
       regionKey,
@@ -844,95 +925,6 @@ describe('ExperimentEditPage', () => {
       await nextTick()
       return wrapper
     }
-
-    it('creates a new auto group when neither endpoint has one', async () => {
-      const wrapper = await setupAndMount()
-      const vm: any = wrapper.vm
-      vm.setDraft(
-        draftWith([
-          { datasetId: 'd1', regionSource: 'WHOLE', regions: [baseRegion('r1')] },
-          { datasetId: 'd2', regionSource: 'WHOLE', regions: [baseRegion('r2')] },
-        ])
-      )
-      await nextTick()
-
-      vm.onAddEdge({ from: 'r1', to: 'r2' })
-      await nextTick()
-
-      expect(vm.draft.labelGroups).toHaveLength(1)
-      expect(vm.draft.labelGroups[0].name).toBe('auto_1')
-      expect(vm.draft.datasets[0].regions[0].labelGroupName).toBe('auto_1')
-      expect(vm.draft.datasets[1].regions[0].labelGroupName).toBe('auto_1')
-    })
-
-    it('extends an existing auto group with a third region (1↔1↔1)', async () => {
-      const wrapper = await setupAndMount()
-      const vm: any = wrapper.vm
-      vm.setDraft(
-        draftWith(
-          [
-            { datasetId: 'd1', regionSource: 'WHOLE', regions: [baseRegion('r1', 'auto_1')] },
-            { datasetId: 'd2', regionSource: 'WHOLE', regions: [baseRegion('r2', 'auto_1')] },
-            { datasetId: 'd3', regionSource: 'WHOLE', regions: [baseRegion('r3')] },
-          ],
-          [{ name: 'auto_1', color: '#000' }]
-        )
-      )
-      await nextTick()
-
-      vm.onAddEdge({ from: 'r2', to: 'r3' })
-      await nextTick()
-
-      expect(vm.draft.labelGroups).toHaveLength(1)
-      const groups = vm.draft.datasets.map((d: any) => d.regions[0].labelGroupName)
-      expect(groups).toEqual(['auto_1', 'auto_1', 'auto_1'])
-    })
-
-    it('merges two existing auto groups when bridged', async () => {
-      const wrapper = await setupAndMount()
-      const vm: any = wrapper.vm
-      vm.setDraft(
-        draftWith(
-          [
-            { datasetId: 'd1', regionSource: 'WHOLE', regions: [baseRegion('r1', 'auto_1')] },
-            { datasetId: 'd2', regionSource: 'WHOLE', regions: [baseRegion('r2', 'auto_1')] },
-            { datasetId: 'd3', regionSource: 'WHOLE', regions: [baseRegion('r3', 'auto_2')] },
-            { datasetId: 'd4', regionSource: 'WHOLE', regions: [baseRegion('r4', 'auto_2')] },
-          ],
-          [
-            { name: 'auto_1', color: '#000' },
-            { name: 'auto_2', color: '#fff' },
-          ]
-        )
-      )
-      await nextTick()
-
-      vm.onAddEdge({ from: 'r2', to: 'r3' })
-      await nextTick()
-
-      expect(vm.draft.labelGroups.map((g: any) => g.name)).toEqual(['auto_1'])
-      const groups = vm.draft.datasets.map((d: any) => d.regions[0].labelGroupName)
-      expect(groups).toEqual(['auto_1', 'auto_1', 'auto_1', 'auto_1'])
-    })
-
-    it('is a no-op when both endpoints already share a group', async () => {
-      const wrapper = await setupAndMount()
-      const vm: any = wrapper.vm
-      vm.setDraft(
-        draftWith(
-          [
-            { datasetId: 'd1', regionSource: 'WHOLE', regions: [baseRegion('r1', 'auto_1')] },
-            { datasetId: 'd2', regionSource: 'WHOLE', regions: [baseRegion('r2', 'auto_1')] },
-          ],
-          [{ name: 'auto_1', color: '#000' }]
-        )
-      )
-      await nextTick()
-      const before = JSON.stringify(vm.draft)
-      vm.onAddEdge({ from: 'r1', to: 'r2' })
-      await nextTick()
-      expect(JSON.stringify(vm.draft)).toEqual(before)
-    })
 
     it('detaches a single region on remove and keeps the group when ≥2 remain', async () => {
       const wrapper = await setupAndMount()

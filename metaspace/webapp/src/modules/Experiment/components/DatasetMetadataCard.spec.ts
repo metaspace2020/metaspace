@@ -253,4 +253,102 @@ describe('DatasetMetadataCard', () => {
     await conditionSelect.vm.$emit('change', 'Cond2')
     expect(value.value.regions[0].metadata.condition).toBe('Cond2')
   })
+
+  it('starts collapsed by default', () => {
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(DatasetMetadataCard, {
+            dataset,
+            modelValue: defaultDraft,
+            rois,
+            segmentations,
+            labelGroups: [],
+            'onUpdate:modelValue': () => {},
+          })
+      },
+    })
+    const wrapper = mount(Wrapper)
+    const body = wrapper.find('[data-test-key="dataset-card-body-d1"]')
+    expect(body.classes()).toContain('max-h-[0px]')
+  })
+
+  it('starts expanded when initialCollapsed is false', () => {
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(DatasetMetadataCard, {
+            dataset,
+            modelValue: defaultDraft,
+            rois,
+            segmentations,
+            labelGroups: [],
+            initialCollapsed: false,
+            'onUpdate:modelValue': () => {},
+          })
+      },
+    })
+    const wrapper = mount(Wrapper)
+    const body = wrapper.find('[data-test-key="dataset-card-body-d1"]')
+    expect(body.classes()).toContain('max-h-[3000px]')
+  })
+
+  it('shows a bottom expand hint when collapsed', () => {
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(DatasetMetadataCard, {
+            dataset,
+            modelValue: defaultDraft,
+            rois,
+            segmentations,
+            labelGroups: [],
+            'onUpdate:modelValue': () => {},
+          })
+      },
+    })
+    const wrapper = mount(Wrapper)
+    expect(wrapper.find('[data-test-key="dataset-card-collapsed-hint-d1"]').exists()).toBe(true)
+  })
+
+  it('hides the bottom expand hint when expanded', () => {
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(DatasetMetadataCard, {
+            dataset,
+            modelValue: defaultDraft,
+            rois,
+            segmentations,
+            labelGroups: [],
+            initialCollapsed: false,
+            'onUpdate:modelValue': () => {},
+          })
+      },
+    })
+    const wrapper = mount(Wrapper)
+    expect(wrapper.find('[data-test-key="dataset-card-collapsed-hint-d1"]').exists()).toBe(false)
+  })
+
+  it('clicking the bottom hint expands the card', async () => {
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(DatasetMetadataCard, {
+            dataset,
+            modelValue: defaultDraft,
+            rois,
+            segmentations,
+            labelGroups: [],
+            'onUpdate:modelValue': () => {},
+          })
+      },
+    })
+    const wrapper = mount(Wrapper)
+    await wrapper.find('[data-test-key="dataset-card-collapsed-hint-d1"]').trigger('click')
+    await nextTick()
+    const body = wrapper.find('[data-test-key="dataset-card-body-d1"]')
+    expect(body.classes()).toContain('max-h-[3000px]')
+    expect(wrapper.find('[data-test-key="dataset-card-collapsed-hint-d1"]').exists()).toBe(false)
+  })
 })
