@@ -208,6 +208,49 @@ export const experimentResultsQuery = gql`
         formula
         adduct
       }
+      annotation {
+        id
+        ion
+        sumFormula
+        fdrLevel
+        databaseDetails {
+          id
+        }
+        possibleCompounds {
+          name
+        }
+      }
+      labelGroupName
+      condA
+      condB
+      lfc
+      pValue
+      fdr
+      nA
+      nB
+      meanA
+      meanB
+      detectionRateA
+      detectionRateB
+    }
+  }
+`
+
+export const experimentResultsPlotQuery = gql`
+  query experimentResultsPlot(
+    $experimentId: ID!
+    $filter: ExperimentResultsFilter
+    $orderBy: String
+    $limit: Int
+    $offset: Int
+  ) {
+    experimentResults(experimentId: $experimentId, filter: $filter, orderBy: $orderBy, limit: $limit, offset: $offset) {
+      ion {
+        id
+        ion
+        formula
+        adduct
+      }
       labelGroupName
       condA
       condB

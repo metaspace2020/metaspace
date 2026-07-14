@@ -22,6 +22,7 @@ vi.mock('echarts/components', () => ({
   LegendComponent: {},
   TitleComponent: {},
   MarkLineComponent: {},
+  ToolboxComponent: {},
   MarkAreaComponent: {},
 }))
 
@@ -120,7 +121,7 @@ describe('ResultsStage', () => {
     ;(useQuery as any).mockImplementation((doc: any, variablesFn: any) => {
       const vars = typeof variablesFn === 'function' ? variablesFn() : variablesFn
       const opName = doc?.definitions?.[0]?.name?.value
-      if (opName === 'experimentResults') {
+      if (opName === 'experimentResults' || opName === 'experimentResultsPlot') {
         lastVariables = vars
         return {
           result: ref({ experimentResults: mockRows }),
@@ -136,12 +137,19 @@ describe('ResultsStage', () => {
     })
   })
 
+  // AnnotationTableMolName pulls in the global Vuex store (useStore / useFilter)
+  // and the ImageViewer channel state, none of which are relevant to the
+  // ResultsStage logic under test — stub it out so mounting doesn't require the
+  // whole store to be wired up.
+  const globalOpts = {
+    provide: { [DefaultApolloClient]: mockClient },
+    stubs: { AnnotationTableMolName: true },
+  }
+
   const mountStage = () =>
     mount(ResultsStage, {
       props: { experimentId: 'e1' },
-      global: {
-        provide: { [DefaultApolloClient]: mockClient },
-      },
+      global: globalOpts,
     })
 
   it('renders the volcano plot using only non-null pValue rows', async () => {
@@ -165,9 +173,10 @@ describe('ResultsStage', () => {
 
     const html = wrapper.html()
     expect(html).toContain('Annotation')
+    expect(html).toContain('Group')
     expect(html).toContain('LFC')
     expect(html).toContain('p-Value')
-    expect(html).toContain('FDR')
+    expect(html).toContain('Q-value')
     expect(html).toContain('det. A')
     expect(html).toContain('det. B')
   })
@@ -246,7 +255,7 @@ describe('ResultsStage', () => {
     }
     ;(useQuery as any).mockImplementation((doc: any) => {
       const opName = doc?.definitions?.[0]?.name?.value
-      if (opName === 'experimentResults') {
+      if (opName === 'experimentResults' || opName === 'experimentResultsPlot') {
         return { result: ref({ experimentResults: [omnibusRow] }), loading: ref(false), error: ref(null) }
       }
       return { result: ref({ experimentIonIntensities: [] }), loading: ref(false), error: ref(null) }
@@ -273,7 +282,7 @@ describe('ResultsStage', () => {
     ]
     ;(useQuery as any).mockImplementation((doc: any) => {
       const opName = doc?.definitions?.[0]?.name?.value
-      if (opName === 'experimentResults') {
+      if (opName === 'experimentResults' || opName === 'experimentResultsPlot') {
         return { result: ref({ experimentResults: rowsK3 }), loading: ref(false), error: ref(null) }
       }
       return { result: ref({ experimentIonIntensities: [] }), loading: ref(false), error: ref(null) }
@@ -290,7 +299,7 @@ describe('ResultsStage', () => {
     const rowsK2 = mockRows.map((r) => ({ ...r, condA: 'ctrl', condB: 'trt' }))
     ;(useQuery as any).mockImplementation((doc: any) => {
       const opName = doc?.definitions?.[0]?.name?.value
-      if (opName === 'experimentResults') {
+      if (opName === 'experimentResults' || opName === 'experimentResultsPlot') {
         return { result: ref({ experimentResults: rowsK2 }), loading: ref(false), error: ref(null) }
       }
       return { result: ref({ experimentIonIntensities: [] }), loading: ref(false), error: ref(null) }
@@ -318,7 +327,7 @@ describe('ResultsStage', () => {
     expect(strip.props('fdr')).toBe(0.005)
   })
 
-  it('shows warning banner for each label group that has warnings', async () => {
+  it('shows a compact warning indicator with per-group details in its popover', async () => {
     const wrapper = mount(ResultsStage, {
       props: {
         experimentId: 'e1',
@@ -327,25 +336,28 @@ describe('ResultsStage', () => {
           Secondary: ['TECH_REPS_PARTIAL'],
         },
       },
-      global: { provide: { [DefaultApolloClient]: mockClient } },
+      global: globalOpts,
     })
     await flushPromises()
     await nextTick()
 
-    const banner = wrapper.find('[data-test-key="results-warning-banner"]')
-    expect(banner.exists()).toBe(true)
-    expect(banner.text()).toContain('Main')
-    expect(banner.text()).toContain('Some biological replicates are paired')
-    expect(banner.text()).toContain('Conditions have unequal')
-    expect(banner.text()).toContain('Secondary')
-    expect(banner.text()).toContain('technical replicate IDs')
+    // The compact indicator's full per-group text lives in the popover content
+    // (the reference chip itself is dropped by the Element-Plus test mock, but
+    // the popover's default slot renders inline, which is what we assert on).
+    const content = wrapper.find('[data-test-key="results-warning-content"]')
+    expect(content.exists()).toBe(true)
+    expect(content.text()).toContain('Main')
+    expect(content.text()).toContain('Some biological replicates are paired')
+    expect(content.text()).toContain('Conditions have unequal')
+    expect(content.text()).toContain('Secondary')
+    expect(content.text()).toContain('technical replicate IDs')
   })
 
-  it('shows no warning banner when warningsPerLabelGroup is empty', async () => {
+  it('shows no warning indicator when warningsPerLabelGroup is empty', async () => {
     const wrapper = mountStage()
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.find('[data-test-key="results-warning-banner"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test-key="results-warning-content"]').exists()).toBe(false)
   })
 })

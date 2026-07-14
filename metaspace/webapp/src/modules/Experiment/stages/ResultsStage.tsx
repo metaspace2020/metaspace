@@ -13,15 +13,18 @@ import {
   ElSelect,
   ElOption,
   ElInputNumber,
-  ElAlert,
 } from '../../../lib/element-plus'
-import { ArrowDown, Check, Download } from '@element-plus/icons-vue'
+import { ArrowDown, Check, TopRight, WarningFilled } from '@element-plus/icons-vue'
+import { RouterLink } from 'vue-router'
 import * as FileSaver from 'file-saver'
 import formatCsvRow from '../../../lib/formatCsvRow'
 import MolecularFormula from '../../../components/MolecularFormula'
+import AnnotationTableMolName from '../../Annotations/AnnotationTableMolName.vue'
+import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import CopyButton from '../../../components/CopyButton.vue'
+import { encodeParams } from '../../Filters'
 import { calculateMzFromFormula } from '../../../lib/formulaParser'
-import { experimentResultsQuery } from '../api'
+import { experimentResultsQuery, experimentResultsPlotQuery } from '../api'
 import VolcanoPlot, { ResultRow } from '../charts/VolcanoPlot'
 import IntensityStripPlot from '../charts/IntensityStripPlot'
 import './ResultsStage.scss'
@@ -70,6 +73,13 @@ const formatScientific = (v: number | null | undefined): string => {
 // are marked non-sortable to avoid showing arrows that don't do anything.
 const COLUMNS: ColumnDef[] = [
   { id: 'ion', prop: 'ion', label: 'Annotation', sortable: false },
+  {
+    id: 'labelGroup',
+    prop: 'labelGroupName',
+    label: 'Group',
+    width: '120',
+    formatter: (row) => (row.labelGroupName === '__experiment__' ? 'All groups' : row.labelGroupName || '—'),
+  },
   {
     id: 'condA',
     prop: 'condA',
@@ -128,13 +138,13 @@ const COLUMNS: ColumnDef[] = [
     width: '60',
     formatter: (row) => (row.nB == null ? '—' : String(row.nB)),
   },
-  // FDR is the last column (per mockup) so the colored cell sits at the
-  // right edge of the table.
+  // Q-value (FDR) is the last column (per mockup) so the colored cell sits at
+  // the right edge of the table.
   {
     id: 'fdr',
     prop: 'fdr',
-    label: 'FDR',
-    width: '80',
+    label: 'Q-value',
+    width: '90',
     className: 'fdr-cell',
     sortable: true,
     formatter: (row) => formatFdrPercent(row.fdr),
@@ -166,6 +176,7 @@ export default defineComponent({
   props: {
     experimentId: { type: String, required: true },
     filter: { type: Object as () => Record<string, unknown> | null, default: null },
+    datasetIds: { type: Array as () => string[], default: () => [] },
     labelGroups: { type: Array as () => { name: string; color: string }[], default: () => [] },
     sampleIdToLabelGroup: { type: Object as () => Record<string, string>, default: () => ({}) },
     warningsPerLabelGroup: {
@@ -183,9 +194,6 @@ export default defineComponent({
       MULTI_REGION_AGGREGATED: 'Multiple regions per biological replicate were averaged into a single sample.',
       EXPERIMENT_WIDE_FALLBACK: 'Insufficient data per label group — all regions were analysed together.',
     }
-
-    // Tracks which label group banners the user has dismissed this session.
-    const dismissedGroups = ref<Set<string>>(new Set())
 
     // Sort state shared between the table (display) and the page query.
     // `orderBy` is what we send to the resolver. The resolver was extended to
@@ -232,9 +240,9 @@ export default defineComponent({
       const activeKey = localLabelGroup.value
       const keys = activeKey ? [activeKey] : Object.keys(wplg)
       return keys
-        .filter((k) => !dismissedGroups.value.has(k) && (wplg[k] ?? []).length > 0)
+        .filter((k) => (wplg[k] ?? []).length > 0)
         .map((k) => ({
-          group: k === '__experiment__' ? 'All regions' : k,
+          group: k === '__experiment__' ? 'All groups' : k,
           messages: (wplg[k] ?? []).map((code) => WARNING_MESSAGES[code] ?? code),
         }))
     })
@@ -252,13 +260,20 @@ export default defineComponent({
       }
     })
 
-    const { result, loading } = useQuery(experimentResultsQuery, () => ({
-      experimentId: props.experimentId,
-      filter: serverFilter.value,
-      orderBy: orderBy.value,
-      limit: pageSize.value,
-      offset: offset.value,
-    }))
+    const { result, loading } = useQuery(
+      experimentResultsQuery,
+      () => ({
+        experimentId: props.experimentId,
+        filter: serverFilter.value,
+        orderBy: orderBy.value,
+        limit: pageSize.value,
+        offset: offset.value,
+      }),
+      // `annotation` is a best-effort per-row field; a failure on one row must
+      // not blank the whole table. errorPolicy 'all' keeps the returned rows
+      // (with that row's annotation null) instead of discarding all data.
+      { errorPolicy: 'all' }
+    )
 
     // Live rows from Apollo for the *current* query. May briefly resolve to
     // `[]` while a new page is fetching, depending on cache state.
@@ -279,7 +294,7 @@ export default defineComponent({
     // Separate, unbounded query for the volcano plot so it always shows the
     // full population — independent of the table's pagination + sort.
     const VOLCANO_LIMIT = 10000
-    const { result: volcanoResult }: any = useQuery(experimentResultsQuery, () => ({
+    const { result: volcanoResult }: any = useQuery(experimentResultsPlotQuery, () => ({
       experimentId: props.experimentId,
       filter: serverFilter.value,
       // Mirror the table's sort so `volcanoRows.findIndex(...)` yields the
@@ -493,13 +508,40 @@ export default defineComponent({
       FileSaver.saveAs(blob, 'experiment_results.csv')
     }
 
+    const annotationFor = (row: any) =>
+      row?.annotation ?? {
+        id: row?.ion?.id,
+        ion: row?.ion?.ion ?? '',
+        sumFormula: row?.ion?.formula ?? '',
+        possibleCompounds: [],
+      }
+
+    const annotationsLinkFor = (row: any) => {
+      const ann = row?.annotation
+      const formula = ann?.sumFormula ?? row?.ion?.formula ?? ''
+      const q: Record<string, unknown> = { datasetIds: [...props.datasetIds], compoundName: formula }
+      if (ann?.databaseDetails?.id) q.database = ann.databaseDetails.id
+      return { name: 'annotations', query: encodeParams(q, '/annotations') }
+    }
     const renderAnnotationCell = (row: any) => {
       if (!row?.ion?.ion) return <span>—</span>
+      const canLink = props.datasetIds.length > 0 && !!(row?.annotation?.sumFormula ?? row?.ion?.formula)
       return (
-        <div class="cell-wrapper">
-          <span class="cell-span">
-            <MolecularFormula ion={row.ion.ion} />
-          </span>
+        <div class="exp-annotation-cell">
+          <AnnotationTableMolName annotation={annotationFor(row)} hideFilter />
+          {canLink && (
+            <RouterLink
+              to={annotationsLinkFor(row)}
+              target="_blank"
+              class="exp-annotation-link"
+              title="Open in annotations (filtered to this experiment's datasets)"
+              onClick={(e: Event) => e.stopPropagation()}
+            >
+              <ElIcon>
+                <TopRight />
+              </ElIcon>
+            </RouterLink>
+          )}
         </div>
       )
     }
@@ -538,9 +580,14 @@ export default defineComponent({
         <div class="selected-annotation-header">
           <div class="flex flex-col items-center justify-between gap-3 flex-wrap">
             <div class="av-header-items">
-              <span class="sf-big text-2xl">
+              <CandidateMoleculesPopover
+                class="sf-big text-2xl"
+                placement="bottom"
+                possibleCompounds={r.annotation?.possibleCompounds ?? []}
+                limit={10}
+              >
                 <MolecularFormula ion={r.ion?.ion ?? ''} />
-              </span>
+              </CandidateMoleculesPopover>
               <CopyButton class="ml-1" text={r.ion?.ion ?? ''}>
                 Copy ion to clipboard
               </CopyButton>
@@ -573,7 +620,7 @@ export default defineComponent({
               <span class="sa-stat-value">{pStr}</span>
             </div>
             <div>
-              <span class="sa-stat-label">FDR</span>
+              <span class="sa-stat-label">Q-value</span>
               <span class={['sa-stat-value', significant ? 'is-significant' : '']}>
                 {fdrStr}
                 {significant && ' *'}
@@ -611,8 +658,7 @@ export default defineComponent({
       page.value = 1
     }
 
-    const renderContrastSelector = () => {
-      if (!showContrastSelector.value) return null
+    const contrastPairOptions = computed(() => {
       const conds = availableConditions.value
       const pairOptions: any[] = []
       for (let i = 0; i < conds.length; i++) {
@@ -622,131 +668,144 @@ export default defineComponent({
           pairOptions.push(<ElOption key={`${ca}::${cb}`} value={`${ca}::${cb}`} label={`${ca} vs ${cb}`} />)
         }
       }
-      return (
-        <div class="contrast-selector mb-2 flex items-center" data-test-key="contrast-selector">
-          <span class="mr-2">Contrast:</span>
-          <ElSelect modelValue={contrastSelectValue.value} onChange={onContrastChange} size="small">
-            <ElOption value="all_pairs" label="All pair rows" />
-            <ElOption value="omnibus" label="Omnibus (any-difference)" />
-            {pairOptions}
-          </ElSelect>
-        </div>
-      )
-    }
+      return pairOptions
+    })
 
-    const renderWarningBanner = () => {
+    const renderWarningIndicator = () => {
       if (visibleWarnings.value.length === 0) return null
+      const total = visibleWarnings.value.reduce((n, w) => n + w.messages.length, 0)
       return (
-        <div class="mb-3" data-test-key="results-warning-banner">
-          {visibleWarnings.value.map((w) => (
-            <ElAlert
-              key={w.group}
-              type="warning"
-              showIcon
-              closable
-              class="mb-2"
-              onClose={() => dismissedGroups.value.add(w.group)}
-              v-slots={{
-                title: () => <span>{w.group}</span>,
-                default: () => (
-                  <ul class="mt-1 mb-0 pl-4 text-sm">
-                    {w.messages.map((msg, i) => (
-                      <li key={i}>{msg}</li>
-                    ))}
-                  </ul>
-                ),
-              }}
-            />
-          ))}
-        </div>
+        <ElPopover
+          placement="bottom-start"
+          width={380}
+          trigger="hover"
+          teleported={false}
+          v-slots={{
+            reference: () => (
+              <span class="results-warning-chip" data-test-key="results-warning-banner" tabindex="0">
+                <ElIcon>
+                  <WarningFilled />
+                </ElIcon>
+                <span>These results have {total === 1 ? 'a warning' : `${total} warnings`}</span>
+              </span>
+            ),
+            default: () => (
+              <div class="results-warning-popover" data-test-key="results-warning-content">
+                {visibleWarnings.value.map((w) => (
+                  <div key={w.group} class="mb-2 last:mb-0">
+                    <div class="font-medium text-gray-800">{w.group}</div>
+                    <ul class="mt-1 mb-0 pl-4 text-sm text-gray-600">
+                      {w.messages.map((msg, i) => (
+                        <li key={i}>{msg}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ),
+          }}
+        />
       )
     }
 
-    const renderFilterBar = () => (
-      <div class="flex items-center gap-4 flex-wrap mb-2" data-test-key="results-filter-bar">
-        <div class="flex items-center gap-1">
-          <span class="text-sm text-gray-600">FDR ≤</span>
-          <ElSelect
-            modelValue={localFdrMax.value === null ? '' : String(localFdrMax.value)}
-            placeholder="Any"
-            clearable
-            size="small"
-            style={{ width: '90px' }}
-            data-test-key="filter-fdr-max"
-            onChange={(v: string) => {
-              localFdrMax.value = v ? Number(v) : null
-              page.value = 1
-            }}
-            onClear={() => {
-              localFdrMax.value = null
-              page.value = 1
-            }}
-          >
-            <ElOption value="0.05" label="5%" />
-            <ElOption value="0.1" label="10%" />
-            <ElOption value="0.2" label="20%" />
-            <ElOption value="0.5" label="50%" />
-          </ElSelect>
-        </div>
-        <div class="flex items-center gap-1">
-          <span class="text-sm text-gray-600">|LFC| ≥</span>
-          <ElInputNumber
-            modelValue={localLfcAbsMin.value ?? undefined}
-            onUpdate:modelValue={(v: number | undefined) => {
-              localLfcAbsMin.value = v ?? null
-              page.value = 1
-            }}
-            min={0}
-            step={0.5}
-            precision={1}
-            controls={false}
-            size="small"
-            placeholder="any"
-            style={{ width: '80px' }}
-            data-test-key="filter-lfc-min"
-          />
-        </div>
-        {showLabelGroupSelector.value && (
-          <div class="flex items-center gap-1">
-            <span class="text-sm text-gray-600">Region:</span>
+    const renderTopFilterBar = () => (
+      <div class="results-filter-bar" data-test-key="results-filter-bar">
+        <div class="rfb-filters">
+          <div class="rfb-item">
+            <span class="rfb-label">Q-value ≤</span>
             <ElSelect
-              modelValue={localLabelGroup.value ?? ''}
-              placeholder="All regions"
+              modelValue={localFdrMax.value === null ? '' : String(localFdrMax.value)}
+              placeholder="Any"
               clearable
               size="small"
-              style={{ width: '160px' }}
-              data-test-key="filter-label-group"
+              style={{ width: '90px' }}
+              data-test-key="filter-fdr-max"
               onChange={(v: string) => {
-                localLabelGroup.value = v || null
+                localFdrMax.value = v ? Number(v) : null
                 page.value = 1
               }}
               onClear={() => {
-                localLabelGroup.value = null
+                localFdrMax.value = null
                 page.value = 1
               }}
             >
-              {props.labelGroups.map((g) => (
-                <ElOption key={g.name} value={g.name} label={g.name} />
-              ))}
+              <ElOption value="0.05" label="5%" />
+              <ElOption value="0.1" label="10%" />
+              <ElOption value="0.2" label="20%" />
+              <ElOption value="0.5" label="50%" />
             </ElSelect>
           </div>
-        )}
+          <div class="rfb-item">
+            <span class="rfb-label">|LFC| ≥</span>
+            <ElInputNumber
+              modelValue={localLfcAbsMin.value ?? undefined}
+              onUpdate:modelValue={(v: number | undefined) => {
+                localLfcAbsMin.value = v ?? null
+                page.value = 1
+              }}
+              min={0}
+              step={0.5}
+              precision={1}
+              controls={false}
+              size="small"
+              placeholder="any"
+              style={{ width: '80px' }}
+              data-test-key="filter-lfc-min"
+            />
+          </div>
+          {showLabelGroupSelector.value && (
+            <div class="rfb-item">
+              <span class="rfb-label">Groups:</span>
+              <ElSelect
+                modelValue={localLabelGroup.value ?? ''}
+                placeholder="All groups"
+                clearable
+                size="small"
+                style={{ width: '160px' }}
+                data-test-key="filter-label-group"
+                onChange={(v: string) => {
+                  localLabelGroup.value = v || null
+                  page.value = 1
+                }}
+                onClear={() => {
+                  localLabelGroup.value = null
+                  page.value = 1
+                }}
+              >
+                {props.labelGroups.map((g) => (
+                  <ElOption key={g.name} value={g.name} label={g.name} />
+                ))}
+              </ElSelect>
+            </div>
+          )}
+          {showContrastSelector.value && (
+            <div class="rfb-item" data-test-key="contrast-selector">
+              <span class="rfb-label">Contrast:</span>
+              <ElSelect
+                modelValue={contrastSelectValue.value}
+                onChange={onContrastChange}
+                size="small"
+                style={{ width: '190px' }}
+              >
+                <ElOption value="all_pairs" label="All pair rows" />
+                <ElOption value="omnibus" label="Omnibus (any-difference)" />
+                {contrastPairOptions.value}
+              </ElSelect>
+            </div>
+          )}
+        </div>
+        {renderWarningIndicator()}
       </div>
     )
 
     const renderTableWrapper = () => (
       <div class="results-table-wrapper" v-loading={loading.value}>
-        {renderWarningBanner()}
-        {renderFilterBar()}
-        {renderContrastSelector()}
         <ElTable
           ref={tableRef}
           data={rows.value}
           onSortChange={onSort}
           onRowClick={onSelect}
-          onCurrentChange={onSelect}
           rowClassName={rowClassName}
-          highlightCurrentRow
           size="small"
           border
           stripe
@@ -788,7 +847,7 @@ export default defineComponent({
               {(volcanoRows.value.length || rows.value.length) === 1 ? 'record' : 'records'}
             </div>
             <div class="fdr-legend-row" data-test-key="fdr-legend">
-              <span>FDR levels:</span>
+              <span>Q-value levels:</span>
               <span class="fdr-legend fdr-5">5%</span>
               <span class="fdr-legend fdr-10">10%</span>
               <span class="fdr-legend fdr-20">20%</span>
@@ -844,13 +903,6 @@ export default defineComponent({
                 title: () => <span>Statistical analysis</span>,
                 default: () => (
                   <div class="px-2">
-                    <div class="flex justify-end mb-2">
-                      <ElButton size="small" plain disabled>
-                        <ElIcon class="mr-1">
-                          <Download />
-                        </ElIcon>
-                      </ElButton>
-                    </div>
                     <IntensityStripPlot
                       experimentId={props.experimentId}
                       ionId={selectedRow.value?.ion?.id ?? null}
@@ -890,8 +942,11 @@ export default defineComponent({
       const empty = !loading.value && rows.value.length === 0 && liveRows.value.length === 0
       return (
         <div class="results-stage" data-test-key="results-stage">
+          {/* The filter bar is always rendered — even when the current filters
+              match no rows — so the user can always adjust or clear them. */}
+          {renderTopFilterBar()}
           {empty ? (
-            <ElEmpty description="No results yet" />
+            <ElEmpty description="No results match the current filters — try adjusting or clearing them above." />
           ) : (
             <div class="results-grid">
               {renderTableWrapper()}

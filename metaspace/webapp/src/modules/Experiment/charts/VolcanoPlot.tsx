@@ -22,7 +22,6 @@ const NEG_LOG10 = (p: number): number => -Math.log10(p)
 // Mockup palette
 const COLOR_UP = '#7C5CC7' // up (LFC ≥ 0) — purple
 const COLOR_DOWN = '#5CA98F' // down (LFC < 0) — teal
-const COLOR_THRESHOLD = '#E29B3F' // FDR dashed line — orange
 
 export default defineComponent({
   name: 'VolcanoPlot',
@@ -35,15 +34,6 @@ export default defineComponent({
   setup(props, { emit }) {
     const plottable = computed(() => props.rows.filter((r) => r.pValue != null && r.pValue > 0))
     const nullCount = computed(() => props.rows.length - plottable.value.length)
-
-    const thresholdY = computed<number | null>(() => {
-      const passing = props.rows.filter(
-        (r) => r.fdr != null && r.fdr <= props.fdrThreshold && r.pValue != null && r.pValue > 0
-      )
-      if (passing.length === 0) return null
-      const minP = Math.min(...passing.map((r) => r.pValue as number))
-      return NEG_LOG10(minP)
-    })
 
     // Standard volcano plot convention: color by direction of log2 fold change.
     // The dashed FDR threshold line conveys significance separately, so a row
@@ -93,25 +83,6 @@ export default defineComponent({
           z: 3,
         },
       ]
-
-      if (thresholdY.value != null) {
-        series[0] = {
-          ...series[0],
-          markLine: {
-            symbol: 'none',
-            silent: true,
-            lineStyle: { type: 'dashed', color: COLOR_THRESHOLD, width: 1 },
-            label: {
-              show: true,
-              position: 'insideStartTop',
-              formatter: `FDR ${props.fdrThreshold}`,
-              color: COLOR_THRESHOLD,
-              fontSize: 10,
-            },
-            data: [{ yAxis: thresholdY.value }],
-          },
-        }
-      }
 
       return {
         tooltip: {

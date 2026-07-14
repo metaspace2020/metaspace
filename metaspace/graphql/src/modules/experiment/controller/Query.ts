@@ -20,6 +20,7 @@ interface ResultsFilter {
   databases?: number[] | null
   adducts?: string[] | null
   fdrMax?: number | null
+  lfcAbsMin?: number | null
   minDetectionRate?: number | null
   labelGroupName?: string | null
   contrast?: ResultsContrastFilter | null
@@ -145,6 +146,10 @@ const QueryResolvers: FieldResolversFor<Query, any> = {
     if (filter.fdrMax != null) {
       const cap = filter.fdrMax
       rows = rows.filter(r => r.fdr != null && r.fdr <= cap)
+    }
+    if (filter.lfcAbsMin != null) {
+      const minAbs = filter.lfcAbsMin
+      rows = rows.filter(r => r.lfc != null && Math.abs(r.lfc) >= minAbs)
     }
 
     // orderBy may be a bare column name (legacy) or "<col> ASC|DESC".

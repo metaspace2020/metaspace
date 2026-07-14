@@ -13,7 +13,6 @@ import { Experiment, ExperimentDataset, ExperimentResult } from '../model'
 import { Ion } from '../../annotation/model'
 import { Annotation } from '../../engine/model'
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const mockEs = _mockEsConnector as jest.Mocked<typeof _mockEsConnector>
 
 describe('experiment queries', () => {
@@ -148,6 +147,38 @@ describe('experiment queries', () => {
     expect(rows[0].pValue).toBeCloseTo(0.001, 6)
   })
 
+  it('experimentResults — lfcAbsMin keeps only rows with |lfc| >= threshold', async() => {
+    const { exp } = await seed() as any
+    const ion: any = await testEntityManager.save(Ion, {
+      ion: 'C6H12O6+H+', formula: 'C6H12O6', adduct: '+H', ionFormula: 'C6H13O6', charge: 1,
+    } as any)
+    // lfc values spanning both signs; |lfc| >= 1 keeps 1.5, -1.5 and 2.0.
+    for (const lfc of [0.2, -0.5, 1.5, -1.5, 2.0]) {
+      await testEntityManager.save(ExperimentResult, {
+        experimentId: exp.id,
+        runGeneration: 1,
+        ionId: ion.id,
+        labelGroupName: 'tumor',
+        condA: 'control',
+        condB: 'treated',
+        lfc,
+        pValue: 0.01,
+        fdr: 0.01,
+        nA: 3,
+        nB: 3,
+        meanA: 1.0,
+        meanB: 2.0,
+        detectionRateA: 1,
+        detectionRateB: 1,
+      } as any)
+    }
+    const rows = await doQuery<any[]>(
+      'query($id: ID!){ experimentResults(experimentId: $id, filter: { lfcAbsMin: 1 }, limit: 50) { lfc } }',
+      { id: exp.id })
+    const lfcs = rows.map(r => r.lfc).sort((a, b) => a - b)
+    expect(lfcs).toEqual([-1.5, 1.5, 2.0])
+  })
+
   it('experimentResults — database filter is scoped to the experiment\'s own datasets', async() => {
     // Regression: the ion-membership lookup used to scan annotation⨝job across
     // the ENTIRE platform for the selected moldb (WHERE j.moldb_id IN (...)),
@@ -220,6 +251,124 @@ describe('experiment queries', () => {
     // survives. ionOut belongs to the same DB but only in an unrelated dataset.
     expect(rows).toHaveLength(1)
     expect(rows[0].ion.id).toBe(ionIn.id)
+  })
+
+  it('experimentResults — annotation resolves the representative ES annotation for the ion', async() => {
+    const { exp } = await seed() as any
+    const db = await createTestMolecularDB({ isPublic: true })
+    const { engineDataset: ds } = await createTestDatasetWithEngineDataset({ userId: testUser.id })
+    await testEntityManager.save(ExperimentDataset, {
+      experimentId: exp.id, datasetId: ds.id, regionSource: 'whole', regions: [],
+    } as any)
+    const job = await createTestJob({ datasetId: ds.id, moldbId: db.id })
+    const ion: any = await testEntityManager.save(Ion, {
+      ion: 'C6H12O6+H+', formula: 'C6H12O6', adduct: '+H', ionFormula: 'C6H13O6', charge: 1,
+    } as any)
+    await testEntityManager.save(Annotation, {
+      jobId: job.id,
+      ionId: ion.id,
+      formula: 'C6H12O6',
+      chemMod: '',
+      neutralLoss: '',
+      adduct: '+H',
+      msm: 0.9,
+      fdr: 0.1,
+      stats: {},
+      isoImageIds: [],
+    } as any)
+    await testEntityManager.save(ExperimentResult, {
+      experimentId: exp.id,
+      runGeneration: 1,
+      ionId: ion.id,
+      labelGroupName: 'tumor',
+      condA: 'control',
+      condB: 'treated',
+      lfc: 1.0,
+      pValue: 0.01,
+      fdr: 0.05,
+      nA: 3,
+      nB: 3,
+      meanA: 1.0,
+      meanB: 2.0,
+      detectionRateA: 1,
+      detectionRateB: 1,
+    } as any)
+    // The row resolver finds the representative (ds, db) from the DB above, then
+    // hands the ion string + ds + db to esAnnotationByIon (ES is mocked here).
+    // The raw hit must be run through unpackAnnotation so the Annotation type's
+    // non-null scalar fields (id/ion/sumFormula/fdrLevel) are populated.
+    mockEs.esAnnotationByIon.mockResolvedValue({
+      _id: 'ann1',
+      _source: {
+        db_id: db.id,
+        ds_id: ds.id,
+        formula: 'C6H12O6',
+        ion: 'C6H12O6+H+',
+        adduct: '+H',
+        ion_formula: 'C6H13O6',
+        chem_mod: '',
+        neutral_loss: '',
+        centroid_mzs: [181.07],
+        mz: 181.07,
+        fdr: 0.1,
+        msm: 0.9,
+        is_mono: true,
+      },
+    } as any)
+
+    const rows = await doQuery<any[]>(
+      `query($id: ID!){ experimentResults(experimentId: $id, limit: 10) {
+        ion { id }
+        annotation { id ion sumFormula fdrLevel databaseDetails { id name } }
+      } }`,
+      { id: exp.id })
+
+    expect(rows).toHaveLength(1)
+    expect(rows[0].annotation).not.toBeNull()
+    expect(rows[0].annotation.id).toBe('ann1')
+    expect(rows[0].annotation.ion).toBe('C6H12O6+H+')
+    expect(rows[0].annotation.sumFormula).toBe('C6H12O6')
+    expect(rows[0].annotation.fdrLevel).toBeCloseTo(0.1, 6)
+    expect(rows[0].annotation.databaseDetails.name).toBe('test-db')
+    expect(mockEs.esAnnotationByIon).toHaveBeenCalledWith('C6H12O6+H+', ds.id, String(db.id), expect.anything())
+  })
+
+  it('experimentResults — annotation is null when the ion has no annotation in the experiment', async() => {
+    const { exp } = await seed() as any
+    const ion: any = await testEntityManager.save(Ion, {
+      ion: 'C6H12O6+H+', formula: 'C6H12O6', adduct: '+H', ionFormula: 'C6H13O6', charge: 1,
+    } as any)
+    await testEntityManager.save(ExperimentResult, {
+      experimentId: exp.id,
+      runGeneration: 1,
+      ionId: ion.id,
+      labelGroupName: 'tumor',
+      condA: 'control',
+      condB: 'treated',
+      lfc: 1.0,
+      pValue: 0.01,
+      fdr: 0.05,
+      nA: 3,
+      nB: 3,
+      meanA: 1.0,
+      meanB: 2.0,
+      detectionRateA: 1,
+      detectionRateB: 1,
+    } as any)
+    mockEs.esAnnotationByIon.mockResolvedValue({ _id: 'x', _source: {} } as any)
+
+    const rows = await doQuery<any[]>(
+      `query($id: ID!){ experimentResults(experimentId: $id, limit: 10) {
+        ion { id }
+        annotation { databaseDetails { id } }
+      } }`,
+      { id: exp.id })
+
+    expect(rows).toHaveLength(1)
+    // No engine annotation/job for this ion in the experiment → no representative
+    // → null (and ES is never consulted).
+    expect(rows[0].annotation).toBeNull()
+    expect(mockEs.esAnnotationByIon).not.toHaveBeenCalled()
   })
 })
 

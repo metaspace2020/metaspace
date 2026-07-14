@@ -1,38 +1,16 @@
 import { defineComponent, ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-import { ElButton, ElAlert, ElIcon, ElTag } from '../../lib/element-plus'
+import { isEqual } from 'lodash-es'
+import { ElButton, ElAlert, ElIcon, ElTag, ElSkeleton, ElSkeletonItem } from '../../lib/element-plus'
 import { DataAnalysis, Search, Document, ArrowRight } from '@element-plus/icons-vue'
-import { experimentRunStatusQuery, experimentResultsQuery, runExperimentStatsMutation } from './api'
+import { experimentRunStatusQuery, experimentResultsPlotQuery, runExperimentStatsMutation } from './api'
 import SampleQcStage from './stages/SampleQcStage'
 import ExploreStage from './stages/ExploreStage'
 import ResultsStage from './stages/ResultsStage'
 
 const isInProgress = (s?: string | null): boolean =>
   s === 'QUEUED' || s === 'PREPARING' || s === 'RUNNING' || s === 'RUNNING_STATS'
-
-/** Deep equal for plain JSON-ish filter objects (primitives, arrays, POJOs). */
-const deepEqualPlain = (a: unknown, b: unknown): boolean => {
-  if (a === b) return true
-  if (a == null || b == null) return a === b
-  if (typeof a !== typeof b) return false
-  if (Array.isArray(a) && Array.isArray(b)) {
-    if (a.length !== b.length) return false
-    for (let i = 0; i < a.length; i++) if (!deepEqualPlain(a[i], b[i])) return false
-    return true
-  }
-  if (typeof a === 'object' && typeof b === 'object') {
-    const ak = Object.keys(a as Record<string, unknown>)
-    const bk = Object.keys(b as Record<string, unknown>)
-    if (ak.length !== bk.length) return false
-    for (const k of ak) {
-      if (!Object.prototype.hasOwnProperty.call(b, k)) return false
-      if (!deepEqualPlain((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k])) return false
-    }
-    return true
-  }
-  return false
-}
 
 type StageIdx = 0 | 1 | 2
 const STAGES: Array<{ idx: StageIdx; caption: string; title: string; icon: any }> = [
@@ -47,7 +25,6 @@ export default defineComponent({
     const route = useRoute()
     const router = useRouter()
     const id = route.params.id as string
-    const projectId = route.params.projectId as string
     /** Stage is persisted in `?stage=` so a refresh keeps the user on the
      *  same stage. Clamp to [0, 2] in case of bad input. */
     const parseStage = (q: any): StageIdx => {
@@ -84,7 +61,7 @@ export default defineComponent({
     /** Tiny probe of the results query just to know whether any results exist —
      *  needed for the initial-mount Stage 3 jump and unaffected by Stage 2's
      *  filter form (results are paginated; we only need >=1 row). */
-    const resultsProbe: any = useQuery(experimentResultsQuery, () => ({
+    const resultsProbe: any = useQuery(experimentResultsPlotQuery, () => ({
       experimentId: id,
       filter: null,
       orderBy: 'fdr ASC',
@@ -216,7 +193,7 @@ export default defineComponent({
       const savedExcluded = new Set<string>(exp.value?.run?.excludedSamples ?? [])
       const curFilter = (currentFilters.value ?? {}) as Record<string, unknown>
       const curExcluded = new Set<string>(currentExcludedSamples.value ?? [])
-      if (!deepEqualPlain(curFilter, savedFilter)) return true
+      if (!isEqual(curFilter, savedFilter)) return true
       if (savedExcluded.size !== curExcluded.size) return true
       for (const s of curExcluded) if (!savedExcluded.has(s)) return true
       return false
@@ -381,29 +358,50 @@ export default defineComponent({
 
     return () => {
       const e = exp.value
-      if (!e) return <p>Loading…</p>
+      if (!e) {
+        return (
+          <div class="experiment-results-page p-4" data-test-key="experiment-results-loading">
+            <ElSkeleton animated loading>
+              {{
+                template: () => (
+                  <div>
+                    <div class="flex justify-between items-start mb-6">
+                      <div>
+                        <ElSkeletonItem variant="h1" style={{ width: '260px', height: '28px' }} />
+                        <ElSkeletonItem variant="text" style={{ width: '200px', marginTop: '10px' }} />
+                      </div>
+                      <ElSkeletonItem variant="button" style={{ width: '130px', height: '32px' }} />
+                    </div>
+                    <div class="flex items-stretch gap-2 bg-gray-50 rounded-lg p-3 mb-6">
+                      {[0, 1, 2].map((i) => (
+                        <ElSkeletonItem key={i} variant="p" style={{ flex: '1', height: '56px' }} />
+                      ))}
+                    </div>
+                    <ElSkeletonItem variant="p" style={{ width: '100%', height: '360px' }} />
+                  </div>
+                ),
+              }}
+            </ElSkeleton>
+          </div>
+        )
+      }
       const run = e.run
       const inProgress = isInProgress(run?.status)
       const sm = summary.value
       return (
         <div class="experiment-results-page p-4" data-test-key="experiment-results-page">
-          <header class="flex justify-between items-start mb-6">
-            <div>
-              <div class="flex items-center gap-3">
-                <h2 class="text-2xl font-semibold m-0">{e.name}</h2>
-                <ElTag size="small" type={statusTagType(run?.status)} effect="plain">
-                  {run?.status ?? 'NOT RUN'}
-                </ElTag>
-              </div>
-              {sm && (
-                <p class="text-sm text-gray-500 mt-1 mb-0">
-                  {sm.samples} samples · {sm.conditions} conditions · {sm.regionLabels} region labels
-                </p>
-              )}
+          <header class="mb-6">
+            <div class="flex items-center gap-3">
+              <h2 class="text-2xl font-semibold m-0">{e.name}</h2>
+              <ElTag size="small" type={statusTagType(run?.status)} effect="plain">
+                {run?.status ?? 'NOT RUN'}
+              </ElTag>
             </div>
-            <ElButton onClick={() => router.push(`/project/${projectId}/experiment/${id}/edit`)}>
-              Edit experiment
-            </ElButton>
+            {sm && (
+              <p class="text-sm text-gray-500 mt-1 mb-0">
+                {sm.samples} samples · {sm.conditions} conditions · {sm.regionLabels} region labels
+              </p>
+            )}
           </header>
           {run?.error && (
             <ElAlert
@@ -518,6 +516,7 @@ export default defineComponent({
             <ResultsStage
               experimentId={e.id}
               filter={currentFilters.value}
+              datasetIds={(e.datasets ?? []).map((ed: any) => ed.dataset?.id).filter(Boolean)}
               labelGroups={e.labelGroups ?? []}
               {...{
                 sampleIdToLabelGroup: sampleIdToLabelGroup.value,

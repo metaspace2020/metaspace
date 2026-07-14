@@ -1,4 +1,67 @@
 .results-stage {
+  // Top-of-page filter bar — mirrors the shared FilterPanel look used on the
+  // Annotations / dataset-comparison / diff-ROI pages (bordered, rounded, a row
+  // of labelled controls), but driven by local state.
+  .results-filter-bar {
+    @apply flex items-center justify-between gap-4 flex-wrap mb-4;
+    padding: 8px 12px;
+    background: #fff;
+    border: 1px solid #ebeef5;
+    border-radius: 6px;
+
+    .rfb-filters {
+      @apply flex items-center gap-4 flex-wrap;
+    }
+    .rfb-item {
+      @apply flex items-center gap-1;
+    }
+    .rfb-label {
+      @apply text-sm text-gray-600 whitespace-nowrap;
+    }
+  }
+
+  .results-warning-chip {
+    @apply inline-flex items-center gap-1 cursor-default select-none;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #b88230;
+    background: #fdf6ec;
+    border: 1px solid #f5dab1;
+    border-radius: 4px;
+    outline: none;
+
+    .el-icon {
+      color: #e6a23c;
+    }
+  }
+
+  .results-warning-popover {
+    @apply text-left;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  // Annotation cell: mol-name (with candidate-molecules popover) + a link out
+  // to the main annotations page.
+  .exp-annotation-cell {
+    @apply flex items-center justify-between gap-1;
+
+    .exp-annotation-link {
+      @apply text-gray-400 shrink-0;
+      opacity: 0;
+      transition: opacity 0.15s;
+
+      &:hover {
+        @apply text-primary;
+      }
+    }
+
+    &:hover .exp-annotation-link {
+      opacity: 1;
+    }
+  }
+
   .results-grid {
     display: grid;
     grid-template-columns: 1fr;

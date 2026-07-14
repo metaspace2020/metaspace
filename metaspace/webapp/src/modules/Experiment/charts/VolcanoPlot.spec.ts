@@ -41,20 +41,14 @@ describe('VolcanoPlot', () => {
     expect(w.emitted('select')?.[0]).toEqual([1])
   })
 
-  it('omits markLine when no row passes the FDR threshold', () => {
-    const noPass: ResultRow[] = [{ ion: { id: 9, ion: 'X' }, lfc: 0.1, pValue: 0.5, fdr: 0.9 }]
-    const w = mount(VolcanoPlot, { props: { rows: noPass } })
-    const echart = w.findComponent({ name: 'echarts' }) as any
-    const option: any = echart.props('option')
-    expect(option.series[0].markLine).toBeUndefined()
-  })
-
-  it('includes markLine when a row passes the FDR threshold', () => {
+  it('never renders the FDR threshold markLine (removed per design)', () => {
+    // The orange "FDR 0.05" dashed line was removed from the volcano plot.
     const w = mount(VolcanoPlot, { props: { rows } })
     const echart = w.findComponent({ name: 'echarts' }) as any
     const option: any = echart.props('option')
-    expect(option.series[0].markLine).toBeDefined()
-    expect(option.series[0].markLine.data[0].yAxis).toBeCloseTo(-Math.log10(0.001))
+    for (const s of option.series) {
+      expect(s.markLine).toBeUndefined()
+    }
   })
 
   it('renders empty-state when rows array is empty', () => {

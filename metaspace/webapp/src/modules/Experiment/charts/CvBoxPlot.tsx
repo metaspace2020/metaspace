@@ -8,6 +8,12 @@ import type { QcSampleRow } from './types'
 
 use([CanvasRenderer, BoxplotChart, GridComponent, TooltipComponent, LegendComponent, TitleComponent])
 
+/** Format tooltip numbers: integers stay whole, decimals snap to 2 places. */
+const fmt2 = (v: unknown): string => {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return String(v ?? '')
+  return Number.isInteger(v) ? String(v) : v.toFixed(2)
+}
+
 function fiveNumberSummary(values: number[]): [number, number, number, number, number] {
   const sorted = [...values].sort((a, b) => a - b)
   const n = sorted.length
@@ -29,7 +35,22 @@ export default defineComponent({
       )
       return {
         title: { text: 'Within-group coefficient of variation', textStyle: { fontSize: 13 } },
-        tooltip: { trigger: 'item' },
+        tooltip: {
+          trigger: 'item',
+          // Boxplot item value is [categoryIndex, min, Q1, median, Q3, max].
+          formatter: (p: any) => {
+            const v = Array.isArray(p?.value) ? p.value : []
+            const [, min, q1, med, q3, max] = v
+            return [
+              p?.name ?? '',
+              `max: ${fmt2(max)}`,
+              `Q3: ${fmt2(q3)}`,
+              `median: ${fmt2(med)}`,
+              `Q1: ${fmt2(q1)}`,
+              `min: ${fmt2(min)}`,
+            ].join('<br/>')
+          },
+        },
         grid: { left: 40, right: 16, top: 48, bottom: 32 },
         xAxis: { type: 'category', data: conditions },
         yAxis: { type: 'value', name: 'CV' },

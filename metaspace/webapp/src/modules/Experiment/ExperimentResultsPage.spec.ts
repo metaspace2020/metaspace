@@ -16,6 +16,7 @@ vi.mock('echarts/components', () => ({
   LegendComponent: {},
   TitleComponent: {},
   MarkLineComponent: {},
+  ToolboxComponent: {},
   MarkAreaComponent: {},
 }))
 
@@ -81,7 +82,7 @@ describe('ExperimentResultsPage', () => {
       if (docName === 'experimentRunStatus') {
         return { result: resultRef, loading: ref(false), stopPolling, startPolling }
       }
-      if (docName === 'experimentResults') {
+      if (docName === 'experimentResults' || docName === 'experimentResultsPlot') {
         return { result: resultsRef, loading: ref(false), stopPolling: vi.fn(), startPolling: vi.fn() }
       }
       return { result: ref(null), loading: ref(false), stopPolling: vi.fn(), startPolling: vi.fn() }

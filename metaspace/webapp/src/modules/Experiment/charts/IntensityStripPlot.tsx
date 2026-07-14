@@ -10,6 +10,7 @@ import {
   TitleComponent,
   MarkLineComponent,
   MarkAreaComponent,
+  ToolboxComponent,
 } from 'echarts/components'
 import { useQuery } from '@vue/apollo-composable'
 import { experimentIonIntensitiesQuery } from '../api'
@@ -23,6 +24,7 @@ use([
   TitleComponent,
   MarkLineComponent,
   MarkAreaComponent,
+  ToolboxComponent,
 ])
 
 interface IntensityRow {
@@ -122,10 +124,24 @@ export default defineComponent({
             ]
           : []
 
+      const fmt2 = (v: unknown): string => {
+        if (typeof v !== 'number' || !Number.isFinite(v)) return String(v ?? '')
+        return Number.isInteger(v) ? String(v) : v.toFixed(2)
+      }
+
       return {
+        // Built-in echarts download control, matching the rest of the app's
+        // charts (diff volcano, heatmaps, etc.).
+        toolbox: {
+          right: 8,
+          top: 0,
+          feature: {
+            saveAsImage: { title: ' ', name: 'experiment_intensity', pixelRatio: 2 },
+          },
+        },
         tooltip: {
           trigger: 'item',
-          formatter: (p: any) => `${p.data?.sampleId ?? ''}<br/>${p.data?.value?.[1] ?? ''}`,
+          formatter: (p: any) => `${p.data?.sampleId ?? ''}<br/>${fmt2(p.data?.value?.[1])}`,
         },
         legend: {
           top: 4,
@@ -135,7 +151,7 @@ export default defineComponent({
           itemHeight: 12,
           icon: 'rect',
         },
-        grid: { left: 56, right: 24, top: 40, bottom: 56 },
+        grid: { left: 72, right: 24, top: 40, bottom: 56 },
         xAxis: {
           type: 'category',
           data: conditions.value,
@@ -154,7 +170,7 @@ export default defineComponent({
           name: 'INTENSITY (NORM.)',
           nameLocation: 'middle',
           nameRotate: 90,
-          nameGap: 48,
+          nameGap: 54,
           nameTextStyle: { color: '#909399', fontSize: 10 },
           axisLine: { show: false },
           axisLabel: { color: '#606266', fontSize: 10 },

@@ -8,6 +8,21 @@ import type { QcSampleRow } from './types'
 
 use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent, TitleComponent])
 
+/** Format tooltip numbers: integers stay whole, decimals snap to 2 places. */
+const fmt2 = (v: unknown): string => {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return String(v ?? '')
+  return Number.isInteger(v) ? String(v) : v.toFixed(2)
+}
+/** Axis-trigger tooltip that renders each series value at 2 decimals. */
+const axisTooltipFormatter = (params: any): string => {
+  const items = Array.isArray(params) ? params : [params]
+  const header = items[0]?.axisValueLabel ?? items[0]?.name ?? ''
+  const lines = items
+    .filter((it: any) => it.value != null)
+    .map((it: any) => `${it.marker ?? ''}${it.seriesName}: ${fmt2(it.value)}`)
+  return [header, ...lines].join('<br/>')
+}
+
 export default defineComponent({
   name: 'TicBarsChart',
   props: {
@@ -35,10 +50,10 @@ export default defineComponent({
       }))
       return {
         title: { text: 'Total ion signal per sample', textStyle: { fontSize: 13 } },
-        tooltip: { trigger: 'axis' },
+        tooltip: { trigger: 'axis', formatter: axisTooltipFormatter },
         legend: { top: 24 },
-        grid: { left: 40, right: 16, top: 64, bottom: 32 },
-        xAxis: { type: 'category', data: xLabels.value },
+        grid: { left: 40, right: 16, top: 64, bottom: 16 },
+        xAxis: { type: 'category', data: xLabels.value, axisLabel: { show: false }, axisTick: { show: false } },
         yAxis: { type: 'value', name: 'TIC (norm.)' },
         series,
       }

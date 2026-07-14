@@ -70,6 +70,7 @@ type ExperimentRun {
 
 type ExperimentResultRow {
   ion: Ion!
+  annotation: Annotation
   labelGroupName: String!
   condA: String
   condB: String
@@ -121,6 +122,7 @@ input ExperimentResultsFilter {
   databases: [Int!]
   adducts: [String!]
   fdrMax: Float
+  lfcAbsMin: Float
   minDetectionRate: Float
   labelGroupName: String
   contrast: ExperimentContrastFilter
