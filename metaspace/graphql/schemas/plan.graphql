@@ -96,6 +96,9 @@ type RemainingApiUsage {
     periodType: String!
     period: Int!
     actionType: String
+    creditsTotal: Int
+    creditsUsed: Int
+    creditsRemaining: Int
 }
 
 type ApiUsage {

@@ -731,6 +731,66 @@ describe('modules/plan/controller (queries)', () => {
     })
   })
 
+  describe('Query.remainingApiUsages extra credits', () => {
+    const queryWithCredits = `query ($groupId: String, $types: [String!]) {
+      remainingApiUsages(groupId: $groupId, types: $types) {
+        actionType
+        remaining
+        limit
+        creditsTotal
+        creditsUsed
+        creditsRemaining
+      }
+    }`
+
+    // The manager API folds usage-credit grants into the remaining-usages rows itself,
+    // so these fields are passed straight through.
+    it('should pass through the credit fields the manager API returns', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          remainingUsages: [{
+            actionType: 'create',
+            remaining: 3,
+            limit: 3,
+            period: 1,
+            periodType: 'day',
+            creditsTotal: 1,
+            creditsUsed: 0,
+            creditsRemaining: 1,
+          }],
+        }),
+      })
+
+      const result = await doQuery(queryWithCredits, { types: ['create'] })
+
+      expect(result).toEqual([{
+        actionType: 'create',
+        remaining: 3,
+        limit: 3,
+        creditsTotal: 1,
+        creditsUsed: 0,
+        creditsRemaining: 1,
+      }])
+    })
+
+    it('should return null credit fields when the row carries none', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          remainingUsages: [{ actionType: 'create', remaining: 3, limit: 5, period: 1, periodType: 'day' }],
+        }),
+      })
+
+      const result = await doQuery(queryWithCredits, { types: ['create'] })
+
+      expect(result).toEqual([expect.objectContaining({
+        creditsTotal: null,
+        creditsUsed: null,
+        creditsRemaining: null,
+      })])
+    })
+  })
   describe('Query.plan with additional parameters', () => {
     const queryPlanWithParams = `query ($id: String!, $includeVat: Boolean, $customerCountry: String) {
       plan(id: $id, includeVat: $includeVat, customerCountry: $customerCountry) {

@@ -67,6 +67,9 @@ export interface RemainingApiUsage {
   periodType: string
   period: number
   actionType: string
+  creditsTotal?: number
+  creditsUsed?: number
+  creditsRemaining?: number
 }
 
 export interface ApiUsage {
@@ -319,6 +322,9 @@ export const getRemainingApiUsagesQuery = gql`
       period
       remaining
       actionType
+      creditsTotal
+      creditsUsed
+      creditsRemaining
     }
   }
 `
