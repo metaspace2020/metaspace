@@ -24,7 +24,7 @@ import { Loading, DataLine } from '@element-plus/icons-vue'
 import { formatCsvTextArray } from '../lib/formatCsvRow'
 import { useRouter } from 'vue-router'
 import { UserProfileQuery, userProfileQuery } from '@/api/user'
-import { getActiveUserSubscriptionQuery } from '@/api/subscription'
+import { useProFeatures } from '../lib/useProFeatures'
 
 const VisibleIcon = defineAsyncComponent(() => import('../assets/inline/refactoring-ui/icon-view-visible.svg'))
 
@@ -146,11 +146,7 @@ export default defineComponent({
       roiQueryOptions as any
     )
 
-    const { result: subscriptionResult } = useQuery<any>(getActiveUserSubscriptionQuery, null, {
-      fetchPolicy: 'network-only',
-    })
-
-    const activeSubscription = computed(() => subscriptionResult.value?.activeUserSubscription)
+    const { canUse } = useProFeatures()
 
     onAnnotationsResult(async (result) => {
       if (result && result.data) {
@@ -689,9 +685,6 @@ export default defineComponent({
 
     const renderRoiSettings = () => {
       const roiInfo = (state.rois || []).filter((roi: any) => !roi.removed)
-      const isPro = activeSubscription.value?.isActive
-      const allowedUsers = []
-      const isAdmin = currentUser.value?.role?.includes('admin') || allowedUsers.includes(currentUser.value?.id)
 
       return (
         <div class="roi-content">
@@ -699,7 +692,8 @@ export default defineComponent({
             <ElTooltip
               popperClass="roi-save-tooltip"
               content={
-                'Click to perform differential analysis among the ROIs. This requires being a METASPACE Pro user.'
+                'Click to perform differential analysis among the ROIs.' +
+                (canUse('diffAnalysis') ? '' : ' This requires being a METASPACE Pro user.')
               }
               placement="top"
             >
@@ -707,7 +701,7 @@ export default defineComponent({
                 <ElButton
                   class="button-reset roi-diff-icon"
                   onClick={handleDiffAnalysis}
-                  disabled={roiInfo.length === 0 || (isAdmin ? false : !isPro)}
+                  disabled={roiInfo.length === 0 || !canUse('diffAnalysis')}
                 >
                   <ElIcon size={25}>
                     <DataLine />

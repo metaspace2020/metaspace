@@ -6,10 +6,14 @@ import {
   onBeforeEach,
   setupTestUsers,
   adminContext,
+  userContext,
+  anonContext,
+  testUser,
 } from '../../../tests/graphqlTestEnvironment'
 import * as moment from 'moment'
 import fetch from 'node-fetch'
 import config from '../../../utils/config'
+import { PRO_FEATURE_WHITELIST } from '../util/proFeatureWhitelist'
 
 // Mock node-fetch
 jest.mock('node-fetch')
@@ -731,6 +735,66 @@ describe('modules/plan/controller (queries)', () => {
     })
   })
 
+  describe('Query.remainingApiUsages extra credits', () => {
+    const queryWithCredits = `query ($groupId: String, $types: [String!]) {
+      remainingApiUsages(groupId: $groupId, types: $types) {
+        actionType
+        remaining
+        limit
+        creditsTotal
+        creditsUsed
+        creditsRemaining
+      }
+    }`
+
+    // The manager API folds usage-credit grants into the remaining-usages rows itself,
+    // so these fields are passed straight through.
+    it('should pass through the credit fields the manager API returns', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          remainingUsages: [{
+            actionType: 'create',
+            remaining: 3,
+            limit: 3,
+            period: 1,
+            periodType: 'day',
+            creditsTotal: 1,
+            creditsUsed: 0,
+            creditsRemaining: 1,
+          }],
+        }),
+      })
+
+      const result = await doQuery(queryWithCredits, { types: ['create'] })
+
+      expect(result).toEqual([{
+        actionType: 'create',
+        remaining: 3,
+        limit: 3,
+        creditsTotal: 1,
+        creditsUsed: 0,
+        creditsRemaining: 1,
+      }])
+    })
+
+    it('should return null credit fields when the row carries none', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          remainingUsages: [{ actionType: 'create', remaining: 3, limit: 5, period: 1, periodType: 'day' }],
+        }),
+      })
+
+      const result = await doQuery(queryWithCredits, { types: ['create'] })
+
+      expect(result).toEqual([expect.objectContaining({
+        creditsTotal: null,
+        creditsUsed: null,
+        creditsRemaining: null,
+      })])
+    })
+  })
   describe('Query.plan with additional parameters', () => {
     const queryPlanWithParams = `query ($id: String!, $includeVat: Boolean, $customerCountry: String) {
       plan(id: $id, includeVat: $includeVat, customerCountry: $customerCountry) {
@@ -780,6 +844,55 @@ describe('modules/plan/controller (queries)', () => {
           priceCents: option.priceCents,
         })),
       })
+    })
+  })
+
+  describe('Query.proFeatureWhitelist', () => {
+    const queryProFeatureWhitelist = 'query { proFeatureWhitelist }'
+
+    afterEach(() => {
+      PRO_FEATURE_WHITELIST.diffAnalysis = []
+      PRO_FEATURE_WHITELIST.segmentation = []
+    })
+
+    it('should return an empty list for an anonymous user', async() => {
+      PRO_FEATURE_WHITELIST.segmentation = [testUser.id]
+
+      const result = await doQuery(queryProFeatureWhitelist, {}, { context: anonContext })
+
+      expect(result).toEqual([])
+    })
+
+    it('should return only the features the user is listed for', async() => {
+      PRO_FEATURE_WHITELIST.segmentation = [testUser.id]
+
+      const result = await doQuery(queryProFeatureWhitelist, {}, { context: userContext })
+
+      expect(result).toEqual(['segmentation'])
+    })
+
+    it('should return an empty list for a user who is not listed', async() => {
+      PRO_FEATURE_WHITELIST.segmentation = ['00000000-0000-0000-0000-000000000000']
+
+      const result = await doQuery(queryProFeatureWhitelist, {}, { context: userContext })
+
+      expect(result).toEqual([])
+    })
+
+    it('should return every feature the user is listed for', async() => {
+      PRO_FEATURE_WHITELIST.segmentation = [testUser.id]
+      PRO_FEATURE_WHITELIST.diffAnalysis = [testUser.id]
+
+      const result = await doQuery(queryProFeatureWhitelist, {}, { context: userContext })
+
+      expect(result).toEqual(expect.arrayContaining(['diffAnalysis', 'segmentation']))
+      expect(result).toHaveLength(2)
+    })
+
+    it('should not grant a feature to an admin who is not listed', async() => {
+      const result = await doQuery(queryProFeatureWhitelist, {}, { context: adminContext })
+
+      expect(result).toEqual([])
     })
   })
 })

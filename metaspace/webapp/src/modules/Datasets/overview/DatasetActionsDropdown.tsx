@@ -27,6 +27,7 @@ import './DatasetActionsDropdown.scss'
 import { checkIfEnrichmentRequested } from '../../../api/enrichmentdb'
 import { ArrowDown } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
+import { useProFeatures } from '../../../lib/useProFeatures'
 // import { verifyRecaptcha } from '../../../api/auth'
 
 interface DatasetActionsDropdownProps {
@@ -43,7 +44,6 @@ interface DatasetActionsDropdownProps {
   dataset: DatasetDetailItem
   currentUser: CurrentUserRoleResult
   isPublishedOrUnderReview: boolean
-  isPro: boolean
 }
 
 interface DatasetActionsDropdownState {
@@ -72,12 +72,12 @@ export const DatasetActionsDropdown = defineComponent({
     isPublishedOrUnderReview: { type: Boolean, default: () => false },
     dataset: { type: Object as () => DatasetDetailItem, required: true },
     currentUser: { type: Object as () => CurrentUserRoleResult },
-    isPro: { type: Boolean, default: () => false },
   },
   setup(props: DatasetActionsDropdownProps, ctx) {
     const { emit } = ctx
     const router = useRouter()
     const apolloClient = inject(DefaultApolloClient)
+    const { canUse, loading: proLoading } = useProFeatures()
     // const token = computed(() => props.recaptchaToken)
 
     const state = reactive<DatasetActionsDropdownState>({
@@ -337,8 +337,12 @@ export const DatasetActionsDropdown = defineComponent({
         case 'segmentation':
           await segmentationJobsRefetch()
           hideFeatureBadge('imageSegmentation')
-          if (props.isPro || props.currentUser?.role === 'admin') {
+          if (canUse('segmentation')) {
             openSegmentationDialog()
+          } else if (proLoading.value) {
+            // Entitlement is still resolving — ignore the click rather than
+            // wrongly showing the upsell to a Pro user.
+            break
           } else {
             ElNotification.warning({
               title: '',
