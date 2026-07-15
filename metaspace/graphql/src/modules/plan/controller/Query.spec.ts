@@ -6,10 +6,14 @@ import {
   onBeforeEach,
   setupTestUsers,
   adminContext,
+  userContext,
+  anonContext,
+  testUser,
 } from '../../../tests/graphqlTestEnvironment'
 import * as moment from 'moment'
 import fetch from 'node-fetch'
 import config from '../../../utils/config'
+import { PRO_FEATURE_WHITELIST } from '../util/proFeatureWhitelist'
 
 // Mock node-fetch
 jest.mock('node-fetch')
@@ -840,6 +844,55 @@ describe('modules/plan/controller (queries)', () => {
           priceCents: option.priceCents,
         })),
       })
+    })
+  })
+
+  describe('Query.proFeatureWhitelist', () => {
+    const queryProFeatureWhitelist = 'query { proFeatureWhitelist }'
+
+    afterEach(() => {
+      PRO_FEATURE_WHITELIST.diffAnalysis = []
+      PRO_FEATURE_WHITELIST.segmentation = []
+    })
+
+    it('should return an empty list for an anonymous user', async() => {
+      PRO_FEATURE_WHITELIST.segmentation = [testUser.id]
+
+      const result = await doQuery(queryProFeatureWhitelist, {}, { context: anonContext })
+
+      expect(result).toEqual([])
+    })
+
+    it('should return only the features the user is listed for', async() => {
+      PRO_FEATURE_WHITELIST.segmentation = [testUser.id]
+
+      const result = await doQuery(queryProFeatureWhitelist, {}, { context: userContext })
+
+      expect(result).toEqual(['segmentation'])
+    })
+
+    it('should return an empty list for a user who is not listed', async() => {
+      PRO_FEATURE_WHITELIST.segmentation = ['00000000-0000-0000-0000-000000000000']
+
+      const result = await doQuery(queryProFeatureWhitelist, {}, { context: userContext })
+
+      expect(result).toEqual([])
+    })
+
+    it('should return every feature the user is listed for', async() => {
+      PRO_FEATURE_WHITELIST.segmentation = [testUser.id]
+      PRO_FEATURE_WHITELIST.diffAnalysis = [testUser.id]
+
+      const result = await doQuery(queryProFeatureWhitelist, {}, { context: userContext })
+
+      expect(result).toEqual(expect.arrayContaining(['diffAnalysis', 'segmentation']))
+      expect(result).toHaveLength(2)
+    })
+
+    it('should not grant a feature to an admin who is not listed', async() => {
+      const result = await doQuery(queryProFeatureWhitelist, {}, { context: adminContext })
+
+      expect(result).toEqual([])
     })
   })
 })

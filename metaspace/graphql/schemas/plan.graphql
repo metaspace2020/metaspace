@@ -165,5 +165,6 @@ type Query {
     apiUsagesCount(filter: ApiUsageFilter = {}): Int!
 
     remainingApiUsages(groupId: String, types: [String]): [RemainingApiUsage]
+    proFeatureWhitelist: [String!]!
 }
 

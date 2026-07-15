@@ -328,3 +328,9 @@ export const getRemainingApiUsagesQuery = gql`
     }
   }
 `
+
+export const proFeatureWhitelistQuery = gql`
+  query ProFeatureWhitelistQuery {
+    proFeatureWhitelist
+  }
+`

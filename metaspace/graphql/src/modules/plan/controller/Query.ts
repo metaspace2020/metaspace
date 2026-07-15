@@ -8,6 +8,7 @@ import logger from '../../../utils/logger'
 import { URLSearchParams } from 'url'
 import { assertCanEditGroup, assertCanAddDataset } from '../../../modules/group/controller'
 import { User } from '../../user/model'
+import { PRO_FEATURE_WHITELIST } from '../util/proFeatureWhitelist'
 
 interface AllPlansArgs {
   filter?: {
@@ -270,6 +271,16 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       logger.error(`Error fetching remaining api usages for group ${groupId}:`, error)
       return []
     }
+  },
+
+  proFeatureWhitelist(_: any, args: any, ctx: Context): string[] {
+    const userId = ctx.user?.id
+    if (!userId) {
+      return []
+    }
+    return Object.entries(PRO_FEATURE_WHITELIST)
+      .filter(([, userIds]) => userIds.includes(userId))
+      .map(([feature]) => feature)
   },
 
   async apiUsagesCount(_: any, args: AllApiUsagesArgs, ctx: Context): Promise<number> {
