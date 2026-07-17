@@ -338,7 +338,23 @@ export const DatasetActionsDropdown = defineComponent({
           await segmentationJobsRefetch()
           hideFeatureBadge('imageSegmentation')
           if (canUse('segmentation')) {
-            openSegmentationDialog()
+            if (props.dataset?.canEdit) {
+              openSegmentationDialog()
+            } else {
+              // Users who can view but not edit may only open an existing
+              // segmentation result — they cannot run a new one.
+              const hasSegmentation = segmentationJobs.value?.find((job: any) => job.status === 'FINISHED')
+              if (props.dataset?.canDownload && hasSegmentation) {
+                router.push({
+                  name: 'dataset-segmentation',
+                  params: { dataset_id: props.dataset?.id },
+                })
+              } else {
+                ElNotification.warning(
+                  'You need to be the dataset owner or a member of its group to run image segmentation.'
+                )
+              }
+            }
           } else if (proLoading.value) {
             // Entitlement is still resolving — ignore the click rather than
             // wrongly showing the upsell to a Pro user.
@@ -407,7 +423,7 @@ export const DatasetActionsDropdown = defineComponent({
               </div>
             </ElDropdownItem>
           )}
-          {canEdit && config.features.segmentation && (
+          {config.features.segmentation && canDownload && (
             <ElDropdownItem command="segmentation">
               <div class="relative actionBadge">
                 <NewFeatureBadge featureKey="imageSegmentation">{segmentationActionLabel}</NewFeatureBadge>
