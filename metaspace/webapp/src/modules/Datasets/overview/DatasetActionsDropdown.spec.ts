@@ -244,7 +244,7 @@ describe('DatasetActionsDropdown', () => {
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.findAll('.mock-el-dropdown-item').length).toBe(3)
+    expect(wrapper.findAll('.mock-el-dropdown-item').length).toBe(4)
   })
 
   it('it show only canDownload option for normalUser', async () => {
