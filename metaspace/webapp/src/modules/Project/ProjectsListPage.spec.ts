@@ -5,7 +5,7 @@ import router from '../../router'
 import { vi } from 'vitest'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import ProjectsListPage from './ProjectsListPage.vue'
-import { MyProjectsListQuery, ProjectsListProject, ProjectsListQuery } from '../../api/project'
+import { ProjectsListProject, ProjectsListQuery } from '../../api/project'
 import { createStore } from 'vuex'
 import store from '../../store'
 import actions from '../../store/actions'
@@ -72,10 +72,6 @@ describe('ProjectDatasetsDialog', () => {
     publishedDT: null,
   }
 
-  const makeMockMyProjects = (projects: any[]): MyProjectsListQuery['myProjects'] => ({
-    id: 'id',
-    projects: projects.map((project) => ({ project })),
-  })
   const mockAllProjects: ProjectsListQuery['allProjects'] = [mockProject1, mockProject2]
 
   beforeEach(() => {
@@ -142,15 +138,16 @@ describe('ProjectDatasetsDialog', () => {
   })
 
   it('should show only my projects when on the My Projects tab', async () => {
+    // On the My Projects tab the component issues allProjects with userIds scoped to the current
+    // user, so the server returns only their projects; the mock stands in for that scoped result.
+    const myProjects = [mockProject3, mockProject1]
     const queryReturn = {
-      allDatasets: () => [],
-      allProjects: () => mockAllProjects,
-      currentUser: () => makeMockMyProjects([mockProject3, mockProject1]),
+      allProjects: () => myProjects,
+      currentUser: () => ({ id: 'userid' }),
     }
     const graphqlClient = await mockGraphql(queryReturn)
     ;(useQuery as any).mockReturnValue({
       result: ref({
-        allDatasets: queryReturn.allDatasets(),
         allProjects: queryReturn.allProjects(),
         currentUser: queryReturn.currentUser(),
       }),
@@ -160,7 +157,7 @@ describe('ProjectDatasetsDialog', () => {
 
     const wrapper = mount(ProjectsListPage, {
       global: {
-        plugins: [store, router],
+        plugins: [auxStore, router],
         provide: {
           [DefaultApolloClient]: graphqlClient,
         },
@@ -176,25 +173,20 @@ describe('ProjectDatasetsDialog', () => {
       .map((projectListItem) => projectListItem.props().project.id)
 
     expect(wrapper.html()).toMatchSnapshot()
-    expect(projectIds).toEqual(['project 1', 'project 2'])
+    expect(projectIds).toEqual(['project 3', 'project 1'])
   })
 
   it('should filter projects by the keyword search on the My Projects tab', async () => {
-    const mockProjects = 'AB'.split('').map((letter) => ({
-      id: `ID ${letter}`,
-      name: `Project ${letter}${letter}${letter}`,
-      date: '2018-08-29T05:00:00.000',
-      publishedDT: '2018-08-29T05:00:00.000',
-      latestUploadDT: '2018-08-29T05:00:00.000',
-    }))
+    // Keyword filtering happens server-side now; the mock returns the already-filtered result.
+    const projectA = { ...mockProject1, id: 'ID A', name: 'Project AAA' }
     const queryReturn = {
+      allProjects: () => [projectA],
       currentUser: () => ({ id: 'userid' }),
-      myProjects: () => makeMockMyProjects(mockProjects),
     }
     const graphqlClient = await mockGraphql(queryReturn)
     ;(useQuery as any).mockReturnValue({
       result: ref({
-        myProjects: queryReturn.myProjects(),
+        allProjects: queryReturn.allProjects(),
         currentUser: queryReturn.currentUser(),
       }),
       loading: ref(false),

@@ -76,10 +76,10 @@ type Query {
   projectByUrlSlug(urlSlug: String!): Project
   allProjects(orderBy: ProjectOrderBy = ORDER_BY_POPULARITY,
               sortingOrder: SortingOrder = DESCENDING,
-              query: String, offset: Int = 0, limit: Int = 10): [Project!]!
+              query: String, offset: Int = 0, limit: Int = 10, userIds: [ID!]): [Project!]!
   projectsCount(orderBy: ProjectOrderBy = ORDER_BY_POPULARITY,
               sortingOrder: SortingOrder = DESCENDING,
-              query: String): Int!
+              query: String, userIds: [ID!]): Int!
 
   projectUrlSlugIsValid(urlSlug: String!, existingProjectId: ID): Boolean! # Throws error if invalid, consistent with updateProject
 }
