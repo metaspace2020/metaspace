@@ -87,7 +87,7 @@ const defaultConfig: ClientConfig = {
   features: {
     coloc: true,
     ignore_ibd_size: false,
-    segmentation: false,
+    segmentation: true,
     diff_analysis: false,
     enrichment: true,
     experiment: false,

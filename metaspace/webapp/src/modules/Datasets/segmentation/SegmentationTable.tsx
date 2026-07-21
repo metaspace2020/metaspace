@@ -8,8 +8,9 @@ import * as FileSaver from 'file-saver'
 import formatCsvRow, { formatCsvTextArray } from '../../../lib/formatCsvRow'
 import { getLocalStorage, setLocalStorage } from '../../../lib/localStorage'
 import { useStore } from 'vuex'
-import { useRoute } from 'vue-router'
-import { ArrowDown, Check, QuestionFilled, Loading } from '@element-plus/icons-vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ArrowDown, Check, QuestionFilled, Loading, TopRight } from '@element-plus/icons-vue'
+import { encodeParams } from '../../Filters'
 import { uniqBy } from 'lodash-es'
 import moment from 'moment'
 
@@ -54,7 +55,7 @@ const SEGMENTATION_TABLE_COLUMNS = {
     selected: true,
   },
   maxEnrichmentScore: {
-    label: 'Max Enrichment Score',
+    label: 'Highest AUC',
     src: 'maxEnrichmentScore',
     selected: true,
   },
@@ -165,6 +166,8 @@ export const SegmentationTable = defineComponent({
   setup: function (props: any, { emit }) {
     const store = useStore()
     const route = useRoute()
+    const router = useRouter()
+    const datasetId = computed(() => route.params.dataset_id as string)
     const table: any = ref(null)
     const pageSizes = [15, 20, 25, 30]
     const aggregatedAnnotations = computed(() => aggregateAnnotations(props.annotations))
@@ -575,7 +578,7 @@ export const SegmentationTable = defineComponent({
     const renderMaxEnrichmentScoreHeader = () => {
       return (
         <div class="enrichment-score-header">
-          Max Enrichment Score
+          Highest AUC
           <ElPopover
             trigger="hover"
             placement="right"
@@ -585,15 +588,43 @@ export const SegmentationTable = defineComponent({
                   <QuestionFilled />
                 </ElIcon>
               ),
-              default: () => <span>Highest enrichment score for this annotation across all segments</span>,
+              default: () => <span>Highest AUC score for this annotation across all clusters</span>,
             }}
           />
         </div>
       )
     }
 
+    const buildAnnotationLink = (row: any) => {
+      const path = `/dataset/${datasetId.value}/annotations`
+      const filter = {
+        datasetIds: [datasetId.value],
+        compoundName: row.sumFormula,
+        adduct: row.adduct,
+        fdrLevel: Math.max(row.fdrLevel || 0.5, store.getters.filter.fdrLevel || 0.5),
+      }
+      const query = encodeParams(filter, path, store.state.filterLists)
+      return router.resolve({ path, query }).href
+    }
+
     const formatAnnotation = (row: any) => {
-      return <AnnotationTableMolName annotation={row} hideFilter />
+      return (
+        <div class="flex items-center gap-1">
+          <AnnotationTableMolName annotation={row} hideFilter />
+          <a
+            href={buildAnnotationLink(row)}
+            target="_blank"
+            rel="noopener"
+            title="Open in annotations"
+            class="annotation-page-link"
+            onClick={(e: MouseEvent) => e.stopPropagation()}
+          >
+            <ElIcon>
+              <TopRight />
+            </ElIcon>
+          </a>
+        </div>
+      )
     }
 
     const getSegmentDisplayName = (segmentIndex: number): string => {
@@ -681,29 +712,30 @@ export const SegmentationTable = defineComponent({
       const dateStr = moment().format('YYYY-MM-DD HH:mm:ss')
       let csv = `# Generated at ${dateStr}.\n` + `# URL: ${window.location.href}\n`
 
-      const columns = ['Annotation', 'Cluster', 'Max Enrichment Score', 'm/z', 'Adduct', 'FDR', 'MSM', 'Molecules']
+      // Export the raw AUC score for each annotation in every cluster it was scored in,
+      // not just the per-annotation maximum, so users can analyse per-cluster behaviour.
+      const columns = ['Annotation', 'Cluster', 'AUC', 'Highest AUC', 'm/z', 'Adduct', 'FDR', 'MSM', 'Molecules']
 
       csv += formatCsvRow(columns)
 
       function formatRow(row: any) {
-        const maxEnrichmentScore = Math.max(...row.segments.map((segment: any) => segment.enrichmentScore))
-        const segmentName =
-          row.segments
-            ?.filter((segment: any) => segment.enrichmentScore === maxEnrichmentScore)
-            .map((s: any) => getSegmentDisplayName(s.segmentIndex))
-            .join(', ') || ''
-        const cells = [
-          row?.sumFormula || '',
-          segmentName,
-          row?.maxEnrichmentScore || '',
-          row?.mz || '',
-          row?.adduct || '',
-          row?.fdrLevel || '',
-          row?.msmScore || '',
-          formatCsvTextArray(row?.possibleCompounds?.map((m: any) => m.name) || []),
-        ]
-
-        return formatCsvRow(cells)
+        const molecules = formatCsvTextArray(row?.possibleCompounds?.map((m: any) => m.name) || [])
+        return uniqBy(row.segments || [], 'segmentIndex')
+          .sort((a: any, b: any) => a.segmentIndex - b.segmentIndex)
+          .map((segment: any) =>
+            formatCsvRow([
+              row?.sumFormula || '',
+              getSegmentDisplayName(segment.segmentIndex),
+              segment.enrichmentScore ?? '',
+              row?.maxEnrichmentScore ?? '',
+              row?.mz || '',
+              row?.adduct || '',
+              row?.fdrLevel || '',
+              row?.msmScore || '',
+              molecules,
+            ])
+          )
+          .join('')
       }
 
       state.isExporting = true

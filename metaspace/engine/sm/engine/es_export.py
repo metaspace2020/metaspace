@@ -102,7 +102,7 @@ DS_COLUMNS_TO_SKIP_IN_ANN = (
 def init_es_conn(es_config):
     hosts = [{"host": es_config['host'], "port": int(es_config['port']), 'scheme': "http"}]
     http_auth = (es_config['user'], es_config['password']) if 'user' in es_config else None
-    return Elasticsearch(hosts=hosts, basic_auth=http_auth)
+    return Elasticsearch(hosts=hosts, basic_auth=http_auth, request_timeout=60)
 
 
 class ESIndexManager:
@@ -587,8 +587,13 @@ class ESExporter:
                         processors.append({'set': {'field': k, 'value': v}})
                 self._ingest.put_pipeline(id=pipeline_id, processors=processors)
                 try:
+                    # update_by_query holds the HTTP connection open until the
+                    # server-side task (timeout='5m') completes; raise the
+                    # client socket timeout to match so it doesn't give up
+                    # while ES is still working.
+                    es_long = self._es.options(request_timeout=600)
                     # update dataset index
-                    self._es.update_by_query(
+                    es_long.update_by_query(
                         index=self.dataset_index,
                         query={'term': {'ds_id': ds_id}},
                         pipeline=pipeline_id,
@@ -598,7 +603,7 @@ class ESExporter:
                     )
 
                     # update ds fields on annotation index
-                    self._es.update_by_query(
+                    es_long.update_by_query(
                         index=self.annotation_index,
                         query={'term': {'ds_id': ds_id}},
                         pipeline=pipeline_id,

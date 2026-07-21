@@ -11,6 +11,9 @@ config.services.sm_engine_api_host = "localhost:5123";
 config.upload = {};
 config.upload.bucket = '{{ sm_graphql_s3_upload_bucket }}';
 
+config.imageStorage = {};
+config.imageStorage.cloudFrontUrl = "{{ sm_graphql_image_cloudfront_url | default('') }}";
+
 config.db = {};
 config.db.host = "{{ sm_graphql_database_host | default('localhost') }}";
 config.db.database = "sm";

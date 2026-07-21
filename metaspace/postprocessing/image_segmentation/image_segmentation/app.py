@@ -55,15 +55,10 @@ def _run_and_callback(body):
         result = run_segmentation(
             dataset_id=dataset_id,
             algorithm=body.get('algorithm', 'pca_gmm'),
-            input_s3_key=body.get('input_s3_key'),
-            database_ids=body.get('database_ids'),
+            input_s3_key=body['input_s3_key'],
             parameters=body.get('parameters', {}),
             fdr=body.get('fdr', 0.1),
-            adducts=body.get('adducts'),
-            min_mz=body.get('min_mz'),
-            max_mz=body.get('max_mz'),
-            use_tic=body.get('use_tic', False),
-            off_sample=body.get('off_sample'),
+            use_tic=body.get('use_tic', True),
             smoothing=body.get('smoothing', True),
             window_size=body.get('window_size', 3),
         )

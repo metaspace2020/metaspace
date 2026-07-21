@@ -43,6 +43,10 @@ module.exports = {
     optical_image_prefix: 'optical_images',
   },
 
+  imageStorage: {
+    cloudFrontUrl: '', // empty → graphql returns the stored URL (local dev / MinIO)
+  },
+
   services: {
     /* Internal ad-hoc service with /v1/datasets and /v1/isotopic_patterns endpoints */
     sm_engine_api_host: 'localhost:5123',

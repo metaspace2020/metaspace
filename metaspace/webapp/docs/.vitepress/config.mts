@@ -52,8 +52,8 @@ export default defineConfig({
             collapsed: true,
             items: [
               { text: 'ROI Selection', link: '/features/spatial-pattern-analysis/roi-selection' },
-              // { text: 'Spatial Segmentation', link: '/features/spatial-pattern-analysis/spatial-segmentation' },  // Pro feature – in development
-              // { text: 'ROI Differential Analysis', link: '/features/spatial-pattern-analysis/roi-differential-analysis' },  // Pro feature
+              { text: 'Spatial Segmentation', link: '/features/spatial-pattern-analysis/spatial-segmentation' },
+              { text: 'ROI Differential Analysis', link: '/features/spatial-pattern-analysis/roi-differential-analysis' },
             ],
           },
           {
@@ -103,8 +103,8 @@ export default defineConfig({
               { text: 'Understanding the Annotation Page', link: '/guides/interpreting-results/understanding-annotation-page' },
               { text: 'Off-Sample Filtering', link: '/guides/interpreting-results/off-sample-filtering' },
               { text: 'Colocalization', link: '/guides/interpreting-results/colocalization' },
-              // { text: 'Understanding Differential Analysis', link: '/guides/interpreting-results/understanding-differential-analysis' },  // Pro feature
-              // { text: 'Understanding Spatial Segmentation', link: '/guides/interpreting-results/understanding-spatial-segmentation' },  // Pro feature – in development
+              { text: 'Understanding Differential Analysis', link: '/guides/interpreting-results/understanding-differential-analysis' },
+              { text: 'Understanding Spatial Segmentation', link: '/guides/interpreting-results/understanding-spatial-segmentation' },
             ],
           },
         ],

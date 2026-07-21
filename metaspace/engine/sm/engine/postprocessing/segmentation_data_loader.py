@@ -10,8 +10,13 @@ from sm.engine import molecular_db
 from sm.engine.config import SMConfig
 from sm.engine.db import DB
 from sm.engine.formula_parser import format_ion_formula
-from sm.engine.storage import get_s3_resource
-from sm.rest.diff_roi_manager import DiffROIData
+from sm.engine.image_storage import ImageStorage
+from sm.engine.storage import get_s3_client, get_s3_resource
+from sm.engine.utils.dataset_image_data import (
+    get_imzml_browser_dataset,
+    get_ppm,
+    get_tic_image,
+)
 
 logger = logging.getLogger('update-daemon')
 
@@ -37,10 +42,14 @@ ANNOTATIONS_SEL = '''
             ORDER BY start DESC
             LIMIT 1
       )
-      AND m.fdr <= %s
       AND m.iso_image_ids[1] IS NOT NULL
       AND (m.stats->'theo_mz'->>0) IS NOT NULL
 '''
+
+# annotation.fdr is `real` (float4); cast the threshold to real so the comparison
+# happens in float4 precision. Without the cast the stored 0.05 promotes to
+# 0.05000000074... > 0.05::float8 and boundary (FDR == threshold) rows are dropped.
+FDR_CLAUSE = '\n      AND m.fdr <= %s::real'
 
 
 # ---------------------------------------------------------------------------
@@ -53,7 +62,8 @@ class SegmentationDataLoader:
         self.ds_id = ds_id
         self._db = db
         self._sm_config = sm_config or SMConfig.get_conf()
-        self._roi_data = DiffROIData(ds_id, db)
+        self._s3_client = get_s3_client(self._sm_config)
+        self._image_storage = ImageStorage(self._sm_config)
 
     # ------------------------------------------------------------------
     # Annotation filtering
@@ -78,13 +88,25 @@ class SegmentationDataLoader:
         """
         seen_labels: set = set()
         merged: List[Dict] = []
+        analysis_version = self._get_analysis_version()
 
         for db_id in database_ids:
             moldb = molecular_db.find_by_id(db_id)
 
-            rows = self._db.select_with_fields(
-                ANNOTATIONS_SEL, (self.ds_id, db_id, self.ds_id, db_id, fdr)
-            )
+            # Targeted (small custom) databases have no meaningful FDR — annotation.fdr
+            # holds placeholder values that es_export overrides with -1 so the webapp
+            # shows them at every FDR level (see es_export.ESExporterBase). Mirror that
+            # here: skip the FDR filter entirely instead of dropping all their rows.
+            skip_fdr = moldb.targeted and analysis_version == 1
+
+            if skip_fdr:
+                rows = self._db.select_with_fields(
+                    ANNOTATIONS_SEL, (self.ds_id, db_id, self.ds_id, db_id)
+                )
+            else:
+                rows = self._db.select_with_fields(
+                    ANNOTATIONS_SEL + FDR_CLAUSE, (self.ds_id, db_id, self.ds_id, db_id, fdr)
+                )
 
             if adducts is not None:
                 rows = [r for r in rows if r['adduct'] in adducts]
@@ -120,6 +142,17 @@ class SegmentationDataLoader:
     def _off_sample_label(row: Dict) -> Optional[bool]:
         offsample = row.get('off_sample')
         return None if offsample is None else offsample.get('label')
+
+    def _get_analysis_version(self) -> int:
+        """Dataset analysis_version (defaults to 1). FDR handling for targeted
+        databases only differs from the standard pipeline at analysis_version 1."""
+        res = self._db.select_one(
+            "SELECT (config->>'analysis_version')::int FROM dataset WHERE id = %s",
+            params=(self.ds_id,),
+        )
+        if res and res[0] is not None:
+            return res[0]
+        return 1
 
     # ------------------------------------------------------------------
     # Ion image construction (mirrors DiffROIManager.build_ion_images_chunk
@@ -233,10 +266,12 @@ class SegmentationDataLoader:
                 f'{database_ids} at fdr={fdr}'
             )
 
-        # 2. Shared data — reuse DiffROIData methods
-        peak_array = self._roi_data.get_imzml_browser_dataset()
-        ppm = self._roi_data.get_ppm()
-        tic_image = self._roi_data.get_tic_image()
+        # 2. Shared dataset image data (ppm, peak arrays, TIC image)
+        peak_array = get_imzml_browser_dataset(
+            self._db, self._s3_client, self._sm_config, self.ds_id
+        )
+        ppm = get_ppm(self._db, self.ds_id)
+        tic_image = get_tic_image(self._db, self._image_storage, self.ds_id)
 
         mzs = peak_array[:, 0]
         ints = peak_array[:, 1]

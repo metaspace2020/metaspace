@@ -44,6 +44,9 @@ export interface Config {
     moldb_prefix: string;
     optical_images_prefix: string;
   };
+  imageStorage: {
+    cloudFrontUrl: string; // '' in dev → falls back to stored URLs
+  };
   services: {
     sm_engine_api_host: string;
   };

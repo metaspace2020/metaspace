@@ -54,10 +54,13 @@ interface SegmentationData {
 
 interface SegmentationHeatmapProps {
   segmentationData: SegmentationData
+  annotations?: any[]
   isLoading: boolean
   isVisible?: boolean
   segmentations?: any[]
 }
+
+const TOP_N_PER_CLUSTER = 3
 
 interface SegmentationHeatmapState {
   chartOptions: any
@@ -70,6 +73,10 @@ export const SegmentationHeatmap = defineComponent({
     segmentationData: {
       type: Object as () => SegmentationData,
       required: true,
+    },
+    annotations: {
+      type: Array as () => any[],
+      default: () => [],
     },
     isLoading: {
       type: Boolean,
@@ -97,41 +104,72 @@ export const SegmentationHeatmap = defineComponent({
       return `Cluster ${segmentId + 1}`
     }
 
-    // Process segmentation data to create heatmap
-    const processSegmentationData = (data: SegmentationData) => {
-      if (!data || !data.segment_summary) {
+    // Build the heatmap from the per-cluster ion AUC scores (one annotation row
+    // per cluster). For each cluster we keep the top-N ions by raw AUC, then
+    // min-max scale every shown ion's AUC *within each cluster* so that each
+    // column spans 0..1. The raw AUC is preserved for the tooltip.
+    const processAnnotations = (annotations: any[]) => {
+      if (!annotations || annotations.length === 0) {
         return { segments: [], ions: [], heatmapData: [] }
       }
 
-      // Get all unique ions from all segments
-      const allIons = new Set<string>()
-      data.segment_summary.forEach((segment) => {
-        segment.top_ions.slice(0, 10).forEach((ion) => allIons.add(ion)) // Top 10 ions per segment
+      // segmentIndex -> Map<ionLabel, { auc, mz }>, de-duplicating ions that are
+      // annotated in multiple databases by keeping the highest AUC.
+      const clusterIons = new Map<number, Map<string, { auc: number }>>()
+      annotations.forEach((ann) => {
+        const segIdx = ann.segmentIndex
+        const ion = ann.ion || ann.sumFormula
+        if (segIdx == null || ion == null || ann.enrichmentScore == null) return
+        if (!clusterIons.has(segIdx)) clusterIons.set(segIdx, new Map())
+        const ionMap = clusterIons.get(segIdx)!
+        const existing = ionMap.get(ion)
+        if (!existing || ann.enrichmentScore > existing.auc) {
+          ionMap.set(ion, { auc: ann.enrichmentScore })
+        }
       })
 
-      const ions = Array.from(allIons)
-      const segments = data.segment_summary.map((s) => getSegmentName(s.id))
-      // Create heatmap data matrix:
-      // [segmentIndex, ionIndex, coverageFraction, ionRank]
+      const clusterIndices = Array.from(clusterIons.keys()).sort((a, b) => a - b)
+
+      // Top-N ions per cluster -> union of ion labels to display as rows.
+      const selectedIons = new Set<string>()
+      clusterIndices.forEach((segIdx) => {
+        const ionMap = clusterIons.get(segIdx)!
+        Array.from(ionMap.entries())
+          .sort((a, b) => b[1].auc - a[1].auc)
+          .slice(0, TOP_N_PER_CLUSTER)
+          .forEach(([ion]) => selectedIons.add(ion))
+      })
+
+      const ions = Array.from(selectedIons)
+      const segments = clusterIndices.map((segIdx) => getSegmentName(segIdx))
+
+      // Per-cluster min/max over the displayed ions for min-max scaling.
+      const clusterScale = new Map<number, { min: number; max: number }>()
+      clusterIndices.forEach((segIdx) => {
+        const ionMap = clusterIons.get(segIdx)!
+        const aucs = ions.map((ion) => ionMap.get(ion)?.auc).filter((v): v is number => v != null)
+        if (aucs.length > 0) {
+          clusterScale.set(segIdx, { min: Math.min(...aucs), max: Math.max(...aucs) })
+        }
+      })
+
+      // heatmap cell: [columnIndex, ionRowIndex, scaledAuc, rawAuc]
       const heatmapData: [number, number, number, number][] = []
-
       ions.forEach((ion, ionIndex) => {
-        segments.forEach((segmentName, segmentIndex) => {
-          const segment = data.segment_summary[segmentIndex]
-          const ionRank = segment.top_ions.indexOf(ion)
-
-          // Only render cells where the ion appears in this segment.
-          // Cell color encodes coverage_fraction; label encodes ion rank.
-          if (ionRank >= 0) {
-            heatmapData.push([segmentIndex, ionIndex, segment.coverage_fraction, ionRank + 1])
-          }
+        clusterIndices.forEach((segIdx, colIndex) => {
+          const entry = clusterIons.get(segIdx)!.get(ion)
+          if (!entry) return
+          const scale = clusterScale.get(segIdx)!
+          const range = scale.max - scale.min
+          const scaled = range > 0 ? (entry.auc - scale.min) / range : 1
+          heatmapData.push([colIndex, ionIndex, scaled, entry.auc])
         })
       })
 
       return { segments, ions, heatmapData }
     }
 
-    const processedData = computed(() => processSegmentationData(props.segmentationData))
+    const processedData = computed(() => processAnnotations(props.annotations))
 
     const state = reactive<SegmentationHeatmapState>({
       size: 600,
@@ -145,7 +183,7 @@ export const SegmentationHeatmap = defineComponent({
         toolbox: {
           feature: {
             saveAsImage: {
-              title: 'Export to CSV',
+              title: 'Save as image',
               name: 'segmentation_heatmap',
             },
           },
@@ -158,14 +196,14 @@ export const SegmentationHeatmap = defineComponent({
             if (!params || !params.data || params.data.length < 4) return 'No data'
             const segmentIndex = params.data[0]
             const ionIndex = params.data[1]
-            const ionRank = params.data[3]
+            const rawAuc = params.data[3]
             const segments = processedData.value?.segments
             const ions = processedData.value?.ions
 
             return `
               <strong>${ions[ionIndex] || 'Unknown'}</strong><br/>
               ${segments[segmentIndex] || 'Unknown'}<br/>
-              Rank: #${ionRank}<br/>
+              AUC: ${typeof rawAuc === 'number' ? rawAuc.toFixed(3) : 'N/A'}<br/>
             `
           },
         },
@@ -177,7 +215,10 @@ export const SegmentationHeatmap = defineComponent({
           axisTick: { show: true },
           axisLabel: {
             fontWeight: 'bold',
-            rotate: 0,
+            // Show every cluster label (echarts otherwise drops overlapping ones),
+            // rotating to make room.
+            interval: 0,
+            rotate: 45,
           },
         },
         yAxis: {
@@ -191,8 +232,8 @@ export const SegmentationHeatmap = defineComponent({
           },
         },
         visualMap: {
-          // Heatmap points are [segmentIndex, ionIndex, coverageFraction, ionRank]
-          // Force color mapping to use coverageFraction.
+          // Heatmap points are [columnIndex, ionIndex, scaledAuc, rawAuc].
+          // Colour by the per-cluster min-max scaled AUC (always 0..1).
           dimension: 2,
           min: 0,
           max: 1,
@@ -218,7 +259,7 @@ export const SegmentationHeatmap = defineComponent({
             left: 'center',
             bottom: 5,
             style: {
-              text: 'AUC',
+              text: 'Scaled AUC (per cluster)',
               fill: '#666',
               fontSize: 12,
               fontWeight: 500,
@@ -255,19 +296,16 @@ export const SegmentationHeatmap = defineComponent({
 
     // Update chart options when data changes
     watch(
-      () => [props.segmentationData, props.segmentations],
+      () => [props.segmentationData, props.segmentations, props.annotations],
       () => {
         const { segments, ions, heatmapData } = processedData.value
-        const coverageValues = heatmapData.map((d) => d[2])
-        const minCoverage = coverageValues.length ? Math.min(...coverageValues) : 0
-        const maxCoverage = coverageValues.length ? Math.max(...coverageValues) : 1
 
         state.chartOptions = {
           ...state.chartOptions,
           visualMap: {
             ...state.chartOptions.visualMap,
-            min: minCoverage,
-            max: maxCoverage,
+            min: 0,
+            max: 1,
           },
           xAxis: {
             ...state.chartOptions.xAxis,

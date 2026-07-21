@@ -1,7 +1,34 @@
 .segment-markers-container {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-around;
-  
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-around;
+
+  .segment-marker {
+    font-size: 1rem;
+    vertical-align: top;
+    padding: 8px 5px;
+    text-align: center;
+    flex: 0 1 300px;
+    box-sizing: border-box;
+
+    @media (max-width: 768px) {
+      flex-basis: 100%;
+    }
+
+    .segment-marker-link {
+      @apply flex flex-col items-center justify-center;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .segment-marker-formula {
+      line-height: 1em;
+    }
+
+    .segment-marker-auc {
+      margin-top: 4px;
+      font-weight: 600;
+    }
+  }
 }

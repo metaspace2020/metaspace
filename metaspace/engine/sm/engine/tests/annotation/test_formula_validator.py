@@ -26,7 +26,7 @@ def _test_compute_metrics():
         isotope_generation=None,
         fdr=None,
     )
-    imzml_reader = make_imzml_reader_mock(list(product(range(2), range(3))))
+    imzml_reader = make_imzml_reader_mock(list(product(range(3), range(2))))
     compute_metrics = make_compute_image_metrics(imzml_reader, ds_config)
     return compute_metrics
 
@@ -37,7 +37,7 @@ def _test_compute_metrics():
 def test_formula_image_metrics(chaos_mock, spatial_mock, spectral_mock):
     spectral_mock.side_effect = lambda imgs_flat, *args: imgs_flat[0][0]
     spatial_mock.side_effect = lambda imgs_flat, *args, **kwargs: imgs_flat[0][1]
-    chaos_mock.side_effect = lambda img, *args: img[0, 2]
+    chaos_mock.side_effect = lambda img, *args: img.toarray()[0, 2]
 
     # Images 2 & 3 combine to equal image 1
     # First 3 intensities get used as spectral, spatial & chaos metrics

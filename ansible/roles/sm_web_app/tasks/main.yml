@@ -29,6 +29,18 @@
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash
 
+- name: Remove stale dist from previous deploy
+  become: true
+  file:
+    path: "{{ sm_webapp_home }}/dist"
+    state: absent
+
+- name: Remove stale dist-docs from previous deploy
+  become: true
+  file:
+    path: "{{ sm_webapp_home }}/dist-docs"
+    state: absent
+
 - name: Run build app
   shell: "{{ sm_activate_nvm }} && nice yarn run build"
   args:
@@ -51,9 +63,10 @@
   become: true
   shell: >
     [ -d "{{ sm_webapp_www }}/old_ver" ] && rm -rf "{{ sm_webapp_www }}/old_ver";
-    [ -d "{{ sm_webapp_home }}/dist/old_ver" ] && rm -rf "{{ sm_webapp_home }}/dist/old_ver";
-    [ -d "{{ sm_webapp_www }}" ] && mv "{{ sm_webapp_www }}" "{{ sm_webapp_home }}/dist/old_ver";
+    [ -d "{{ sm_webapp_home }}/old_ver" ] && rm -rf "{{ sm_webapp_home }}/old_ver";
+    [ -d "{{ sm_webapp_www }}" ] && mv "{{ sm_webapp_www }}" "{{ sm_webapp_home }}/old_ver";
     cp --preserve --recursive "{{ sm_webapp_home }}/dist" "{{ sm_webapp_www }}";
+    [ -d "{{ sm_webapp_home }}/old_ver" ] && cp --preserve --recursive "{{ sm_webapp_home }}/old_ver" "{{ sm_webapp_www }}/old_ver";
   args:
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash

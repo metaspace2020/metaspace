@@ -11,6 +11,7 @@ exports[`AnnotationCountTable > it should match snapshot 1`] = `
         <div></div>
         <div></div>
         <div></div>
+        <div></div>
       </div>
       <div class=\\"el-table__header-wrapper\\">
         <table class=\\"el-table__header\\" border=\\"0\\" cellpadding=\\"0\\" cellspacing=\\"0\\">
@@ -20,6 +21,7 @@ exports[`AnnotationCountTable > it should match snapshot 1`] = `
             <col name=\\"el-table_1_column_3\\" width=\\"80\\">
             <col name=\\"el-table_1_column_4\\" width=\\"80\\">
             <col name=\\"el-table_1_column_5\\" width=\\"80\\">
+            <col name=\\"el-table_1_column_6\\" width=\\"80\\">
           </colgroup>
           <thead class=\\"\\">
             <tr class=\\"\\">
@@ -48,6 +50,11 @@ exports[`AnnotationCountTable > it should match snapshot 1`] = `
                   <!---->
                 </div>
               </th>
+              <th class=\\"el-table_1_column_6 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                <div class=\\"cell\\">Total<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                  <!---->
+                </div>
+              </th>
             </tr>
           </thead>
         </table>
@@ -63,14 +70,14 @@ exports[`AnnotationCountTable > it should match snapshot 1`] = `
                   <col name=\\"el-table_1_column_3\\" width=\\"80\\">
                   <col name=\\"el-table_1_column_4\\" width=\\"80\\">
                   <col name=\\"el-table_1_column_5\\" width=\\"80\\">
+                  <col name=\\"el-table_1_column_6\\" width=\\"80\\">
                 </colgroup>
                 <!--v-if-->
                 <tbody tabindex=\\"-1\\">
                   <tr class=\\"el-table__row\\">
                     <td class=\\"el-table_1_column_1 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
-                        <!---->
-                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;}}\\">HMDB-v4</div>
+                        <!----><span class=\\"inline-flex items-center justify-center gap-1\\"><div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;}}\\">HMDB-v4</div><!----></span>
                       </div>
                     </td>
                     <td class=\\"el-table_1_column_2 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
@@ -97,12 +104,17 @@ exports[`AnnotationCountTable > it should match snapshot 1`] = `
                         <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.5&quot;}}\\">224</div>
                       </div>
                     </td>
+                    <td class=\\"el-table_1_column_6 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.5&quot;}}\\">224</div>
+                      </div>
+                    </td>
                   </tr>
                   <tr class=\\"el-table__row\\">
                     <td class=\\"el-table_1_column_1 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
-                        <!---->
-                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;}}\\">ChEBI-2018-01</div>
+                        <!----><span class=\\"inline-flex items-center justify-center gap-1\\"><div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;}}\\">ChEBI-2018-01</div><!----></span>
                       </div>
                     </td>
                     <td class=\\"el-table_1_column_2 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
@@ -124,6 +136,12 @@ exports[`AnnotationCountTable > it should match snapshot 1`] = `
                       </div>
                     </td>
                     <td class=\\"el-table_1_column_5 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.5&quot;}}\\">190</div>
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_6 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!---->
                         <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.5&quot;}}\\">190</div>
@@ -153,6 +171,7 @@ exports[`AnnotationCountTable > it should match snapshot 1`] = `
             <col name=\\"el-table_1_column_3\\" width=\\"80\\">
             <col name=\\"el-table_1_column_4\\" width=\\"80\\">
             <col name=\\"el-table_1_column_5\\" width=\\"80\\">
+            <col name=\\"el-table_1_column_6\\" width=\\"80\\">
           </colgroup>
           <tfoot>
             <tr>
@@ -175,6 +194,11 @@ exports[`AnnotationCountTable > it should match snapshot 1`] = `
                 </div>
               </td>
               <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_5 is-leaf\\">
+                <div class=\\"cell\\">
+                  <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.5&quot;}}\\" from=\\"dataset-overview\\">414</div>
+                </div>
+              </td>
+              <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_6 is-leaf\\">
                 <div class=\\"cell\\">
                   <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.5&quot;}}\\" from=\\"dataset-overview\\">414</div>
                 </div>

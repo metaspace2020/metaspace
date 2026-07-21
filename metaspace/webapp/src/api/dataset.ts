@@ -17,6 +17,8 @@ export interface DatasetAnnotationCount {
   dbName: string
   dbVersion: string
   counts: FdrSingleCount[]
+  isTargeted: boolean
+  total: number
 }
 
 export interface DatasetDetailItem {
@@ -69,6 +71,8 @@ export interface DatasetDetailItem {
     dbVersion: string
     levels: number[]
     counts: number[]
+    isTargeted: boolean
+    total: number
   }
   rawOpticalImageUrl: string
   canEdit: boolean
@@ -140,6 +144,8 @@ export const datasetDetailItemFragment = gql`
       dbVersion
       levels
       counts
+      isTargeted
+      total
     }
     annotationCounts(inpFdrLvls: $inpFdrLvls) {
       databaseId
@@ -149,6 +155,8 @@ export const datasetDetailItemFragment = gql`
         level
         n
       }
+      isTargeted
+      total
     }
     thumbnailOpticalImageUrl
     ionThumbnailUrl

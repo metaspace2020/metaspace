@@ -24,7 +24,8 @@ export class ProjectSourceRepository {
   }
 
   private async queryProjectsWhere(user: ContextUser, whereClause?: string | Brackets,
-    parameters?: any, sortBy: SortBy = 'name', sortingOrder: SortingOrder = 'DESCENDING') {
+    parameters?: any, sortBy: SortBy = 'name', sortingOrder: SortingOrder = 'DESCENDING',
+    userIds?: string[]) {
     const columnMap = this.manager.connection
       .getMetadata(ProjectModel)
       .columns
@@ -108,6 +109,16 @@ export class ProjectSourceRepository {
         .addOrderBy('project.name')
     }
 
+    // Restrict to projects the given users are members of (any role), e.g. the "My projects" view.
+    // The security filter above still hides projects the user isn't allowed to see (e.g. private PENDING).
+    // Authorization of which userIds a caller may request is enforced in the resolver.
+    if (userIds != null && userIds.length > 0) {
+      qb = qb.andWhere(
+        'EXISTS (SELECT 1 FROM graphql.user_project up '
+          + 'WHERE up.project_id = project.id AND up.user_id = ANY(:filterUserIds))',
+        { filterUserIds: userIds })
+    }
+
     // Add caller-supplied filter
     if (whereClause) {
       qb = qb.andWhere(whereClause, parameters)
@@ -171,7 +182,7 @@ export class ProjectSourceRepository {
   }
 
   private queryProjectsByTextSearch(user: ContextUser, query?: string, sortBy: SortBy = 'name',
-    sortingOrder: SortingOrder = 'DESCENDING') {
+    sortingOrder: SortingOrder = 'DESCENDING', userIds?: string[]) {
     if (query) {
       // Full-text search is disabled as it relies on functions not present in the installed pg version (9.5)
       // TODO: Add a full-text index to project.name to speed this up
@@ -184,15 +195,16 @@ export class ProjectSourceRepository {
       //   END
       // )`, {query});
       return this.queryProjectsWhere(user, 'project.name ILIKE (\'%\' || :query || \'%\')',
-        { query }, sortBy, sortingOrder)
+        { query }, sortBy, sortingOrder, userIds)
     } else {
-      return this.queryProjectsWhere(user, undefined, undefined, sortBy, sortingOrder)
+      return this.queryProjectsWhere(user, undefined, undefined, sortBy, sortingOrder, userIds)
     }
   }
 
   async findProjectsByQuery(user: ContextUser, query?: string,
-    offset?: number, limit?: number, orderBy?: ProjectOrderBy, sortingOrder?: SortingOrder): Promise<ProjectSource[]> {
-    let queryBuilder = await this.queryProjectsByTextSearch(user, query, orderBy, sortingOrder)
+    offset?: number, limit?: number, orderBy?: ProjectOrderBy, sortingOrder?: SortingOrder,
+    userIds?: string[]): Promise<ProjectSource[]> {
+    let queryBuilder = await this.queryProjectsByTextSearch(user, query, orderBy, sortingOrder, userIds)
     if (offset != null) {
       queryBuilder = queryBuilder.offset(offset)
     }
@@ -203,8 +215,8 @@ export class ProjectSourceRepository {
   }
 
   async countProjectsByQuery(user: ContextUser, query?: string,
-    orderBy?: ProjectOrderBy, sortingOrder?: SortingOrder): Promise<number> {
-    const queryBuilder = await this.queryProjectsByTextSearch(user, query, orderBy, sortingOrder)
+    orderBy?: ProjectOrderBy, sortingOrder?: SortingOrder, userIds?: string[]): Promise<number> {
+    const queryBuilder = await this.queryProjectsByTextSearch(user, query, orderBy, sortingOrder, userIds)
     return await queryBuilder.getCount()
   }
 }

@@ -9,6 +9,11 @@ import pandas as pd  # pylint: disable=import-error
 from sm.engine.image_storage import ImageStorage
 from sm.engine.config import SMConfig
 from sm.engine.storage import get_s3_client
+from sm.engine.utils.dataset_image_data import (
+    get_imzml_browser_dataset,
+    get_ppm,
+    get_tic_image,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -61,13 +66,6 @@ class DiffROIData:
             features.append(geojson_data)
 
         return {'type': 'FeatureCollection', 'features': features}
-
-    def get_ppm(self):
-        ppm = self._db.select_one(
-            "SELECT config->'image_generation'->>'ppm' " "FROM dataset WHERE id = %s",
-            params=(self.ds_id,),
-        )
-        return int(ppm[0])
 
     def get_annots_ids(self):
         query = '''
@@ -129,45 +127,6 @@ class DiffROIData:
         all_metrics_df['monoiso_theo_mz'] = monoiso_theo_mz
         return all_metrics_df
 
-    def get_imzml_browser_dataset(self):
-        res = self._db.select_one(
-            'SELECT input_path FROM dataset ' 'WHERE id = %s', params=(self.ds_id,)
-        )
-
-        uuid = res[0].split('/')[-1]
-        browser_bucket = self._sm_config['imzml_browser_storage']['bucket']
-
-        keys_path = {
-            'mzs': f'{uuid}/mzs.npy',
-            'ints': f'{uuid}/ints.npy',
-            'sp_idxs': f'{uuid}/sp_idxs.npy',
-        }
-
-        result = {}
-        for key_name, mz_index_key in keys_path.items():
-            s3_object = self.s3_client.get_object(Bucket=browser_bucket, Key=mz_index_key)
-            bytestream = s3_object['Body'].read()
-            result[key_name] = np.frombuffer(bytestream, dtype='f')
-
-        peak_array = np.stack([result['mzs'], result['ints'], result['sp_idxs']]).T
-        return peak_array
-
-    def get_tic_image(self):
-        query = '''
-            SELECT images
-            FROM dataset_diagnostic
-            WHERE ds_id = %s AND type = 'TIC'
-        '''
-        result = self._db.select(query, params=(self.ds_id,))
-        tic_image_id = result[0][0][0]['image_id']
-        img_bytes = self._image_storage.get_image(
-            self._image_storage.DIAG, self.ds_id, tic_image_id
-        )
-        img_bytes = BytesIO(img_bytes)
-        img_bytes.seek(0)
-        tic = np.load(img_bytes, allow_pickle=False)
-        return tic
-
     def prepare_data_for_diff_analysis(self):
         """Prepare lookup data for chunked differential analysis."""
 
@@ -204,10 +163,10 @@ class DiffROIData:
         if annots_df.empty:
             raise ValueError(f"No annotations found for dataset {self.ds_id}")
 
-        peak_arr = self.get_imzml_browser_dataset()
-        ppm = self.get_ppm()
+        peak_arr = get_imzml_browser_dataset(self._db, self.s3_client, self._sm_config, self.ds_id)
+        ppm = get_ppm(self._db, self.ds_id)
 
-        tic_image = self.get_tic_image()
+        tic_image = get_tic_image(self._db, self._image_storage, self.ds_id)
         height, width = tic_image.shape
         n_pixels = height * width
 

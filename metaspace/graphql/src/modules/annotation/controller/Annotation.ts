@@ -8,6 +8,7 @@ import { AllHtmlEntities } from 'html-entities'
 import { MolecularDB, MolecularDB as MolecularDbModel } from '../../moldb/model'
 import { MolecularDbRepository } from '../../moldb/MolecularDbRepository'
 import { Context } from '../../../context'
+import { resolveImageUrl } from '../../../utils/imageStorageUrl'
 
 const cleanMoleculeName = (name: string) =>
   // Decode &alpha; &beta; &gamma; etc.
@@ -102,12 +103,19 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
   },
 
   isotopeImages(hit) {
-    const { iso_image_urls, centroid_mzs, total_iso_ints, min_iso_ints, max_iso_ints } = hit._source
+    const {
+      iso_image_ids, iso_image_urls, centroid_mzs, total_iso_ints, min_iso_ints, max_iso_ints, ds_id,
+    } = hit._source
     return centroid_mzs
       .map(function(mz, i) {
         return {
           mz: parseFloat(mz as any),
-          url: iso_image_urls && iso_image_urls[i] || null,
+          url: resolveImageUrl({
+            imageType: 'iso',
+            dsId: ds_id,
+            imageId: iso_image_ids && iso_image_ids[i],
+            storedUrl: iso_image_urls && iso_image_urls[i],
+          }),
           totalIntensity: total_iso_ints[i],
           minIntensity: min_iso_ints[i],
           maxIntensity: max_iso_ints[i],

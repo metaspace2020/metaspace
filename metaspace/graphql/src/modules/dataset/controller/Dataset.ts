@@ -17,7 +17,7 @@ import config from '../../../utils/config'
 import { Context } from '../../../context'
 import getGroupAdminNames from '../../group/util/getGroupAdminNames'
 import * as DataLoader from 'dataloader'
-import { esDatasetByID } from '../../../../esConnector'
+import { esCountResults, esDatasetByID } from '../../../../esConnector'
 import { ExternalLink } from '../../project/ExternalLink'
 import canViewEsDataset from '../operation/canViewEsDataset'
 import { MolecularDB } from '../../moldb/model'
@@ -30,6 +30,7 @@ import { DatasetEnrichment as DatasetEnrichmentModel, EnrichmentDB } from '../..
 import * as moment from 'moment/moment'
 import { getDeviceInfo, hashIp, performAction } from '../../plan/util/canPerformAction'
 import isRateLimited from '../../../utils/redis'
+import { resolveImageUrl } from '../../../utils/imageStorageUrl'
 
 interface DbDataset {
   id: string;
@@ -45,7 +46,7 @@ const getDbDatasetById = async(ctx: Context, id: string): Promise<DbDataset | nu
   const dataloader = ctx.contextCacheGet('getDbDatasetByIdDataLoader', [], () => {
     return new DataLoader(async(datasetIds: string[]): Promise<any[]> => {
       const results = await ctx.entityManager.query(`
-      SELECT ds.id, ds.thumbnail_url, ds.ion_thumbnail_url, 
+      SELECT ds.id, ds.thumbnail, ds.thumbnail_url, ds.ion_thumbnail, ds.ion_thumbnail_url,
              ds.transform, ds.roi, gds.external_links
       FROM public.dataset ds
       JOIN graphql.dataset gds on ds.id = gds.id
@@ -69,7 +70,12 @@ const getEnrichment = async(ctx: Context, datasetId: string): Promise<any> => {
 
 export const thumbnailOpticalImageUrl = async(ctx: Context, datasetId: string) => {
   const result = await getDbDatasetById(ctx, datasetId)
-  return result?.thumbnail_url ?? null
+  return resolveImageUrl({
+    imageType: 'optical',
+    dsId: datasetId,
+    imageId: result?.thumbnail,
+    storedUrl: result?.thumbnail_url,
+  })
 }
 
 export const checkIfPublishedOrUnderReview = async(dsId: string, ctx: Context) => {
@@ -343,15 +349,29 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
         el => ds._source.ds_moldb_ids?.includes(el.db.id)
               && visibleDatabaseIds.includes(el.db.id)
       )
+      const analysisVersion = ds._source.ds_config?.analysis_version ?? 1
+      const maxFdrLvl = Math.max(...inpFdrLvls)
       for (const el of annotCounts) {
         const filteredFdrLevels = el.counts.filter((lvlObj: any) => inpFdrLvls.includes(lvlObj.level))
         const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
           .findDatabaseById(ctx, el.db.id)
+        // Targeted databases have no FDR: their annotations are indexed with fdr=-1, so the
+        // pre-computed per-level counts above are all zero. They pass every FDR threshold, so the
+        // real count is recovered from the annotation index and exposed via `total`.
+        const isTargeted = !!database.targeted && analysisVersion === 1
+        const total = isTargeted
+          ? await esCountResults({
+              datasetFilter: { ids: ds._source.ds_id },
+              filter: { databaseId: el.db.id },
+            }, 'annotation', ctx.user)
+          : (filteredFdrLevels.find((c: any) => c.level === maxFdrLvl)?.n ?? 0)
         counts.push({
           databaseId: el.db.id,
           dbName: database.name,
           dbVersion: database.version,
           counts: filteredFdrLevels,
+          isTargeted,
+          total,
         })
       }
     }
@@ -390,12 +410,22 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       if (databaseId != null) {
         const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
           .findDatabaseById(ctx, databaseId)
+        const analysisVersion = ds._source.ds_config?.analysis_version ?? 1
+        const isTargeted = !!database.targeted && analysisVersion === 1
+        const total = isTargeted
+          ? await esCountResults({
+              datasetFilter: { ids: ds._source.ds_id },
+              filter: { databaseId },
+            }, 'annotation', ctx.user)
+          : Math.max(...outFdrCounts, 0)
         return {
           databaseId: databaseId,
           dbName: database.name,
           dbVersion: database.version,
           levels: outFdrLvls,
           counts: outFdrCounts,
+          isTargeted,
+          total,
         }
       }
     }
@@ -419,9 +449,18 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   async opticalImages(ds, { type }: { type?: string }, ctx) {
     const opticalImages = await getOpticalImagesByDsId(ctx, ds._source.ds_id)
+    const resolved = opticalImages.map(img => ({
+      ...img,
+      url: resolveImageUrl({
+        imageType: 'optical',
+        dsId: ds._source.ds_id,
+        imageId: (img as any).id,
+        storedUrl: img.url,
+      }),
+    }))
     return type != null
-      ? opticalImages.filter(optImg => optImg.type === type)
-      : opticalImages
+      ? resolved.filter(optImg => optImg.type === type)
+      : resolved
   },
 
   async opticalImageTransform(ds, args, ctx) {
@@ -431,7 +470,12 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   async ionThumbnailUrl(ds, args, ctx) {
     const result = await getDbDatasetById(ctx, ds._source.ds_id)
-    return result?.ion_thumbnail_url ?? null
+    return resolveImageUrl({
+      imageType: 'thumb',
+      dsId: ds._source.ds_id,
+      imageId: result?.ion_thumbnail,
+      storedUrl: result?.ion_thumbnail_url,
+    })
   },
 
   async externalLinks(ds, args, ctx) {
@@ -593,6 +637,15 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
           }
           return {
             ...diag,
+            images: (diag.images || []).map(img => ({
+              ...img,
+              url: resolveImageUrl({
+                imageType: 'diag',
+                dsId: diag.datasetId,
+                imageId: img.image_id,
+                storedUrl: img.url,
+              }),
+            })),
             data: JSON.stringify(diag.data),
             database,
             updatedDT: diag.updatedDT.toISOString(),

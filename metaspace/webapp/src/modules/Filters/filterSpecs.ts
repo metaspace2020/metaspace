@@ -64,6 +64,7 @@ export type FilterKey =
   | 'colocalizationSamples'
   | 'offSample'
   | 'datasetOwner'
+  | 'visibility'
   | 'molClass'
   | 'term'
   | 'opticalImage'
@@ -457,6 +458,16 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     sortOrder: 1,
   },
 
+  visibility: {
+    type: SingleSelectFilter,
+    name: '',
+    description: 'Select dataset by visibility',
+    levels: ['dataset'],
+    initialValue: 'private',
+    options: ['private', 'public'],
+    optionFormatter: (option) => (option === 'private' ? 'Private only' : 'Public only'),
+  },
+
   colocalizedWith: {
     type: InputFilter,
     name: 'Colocalized with',
@@ -560,6 +571,7 @@ export const DATASET_FILTERS: FilterKey[] = [
   'analyzerType',
   'metadataType',
   'datasetOwner',
+  'visibility',
   'opticalImage',
 ]
 /** = all annotation-affecting filters - dataset-affecting filters */

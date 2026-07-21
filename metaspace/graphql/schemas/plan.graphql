@@ -96,6 +96,9 @@ type RemainingApiUsage {
     periodType: String!
     period: Int!
     actionType: String
+    creditsTotal: Int
+    creditsUsed: Int
+    creditsRemaining: Int
 }
 
 type ApiUsage {
@@ -162,5 +165,6 @@ type Query {
     apiUsagesCount(filter: ApiUsageFilter = {}): Int!
 
     remainingApiUsages(groupId: String, types: [String]): [RemainingApiUsage]
+    proFeatureWhitelist: [String!]!
 }
 

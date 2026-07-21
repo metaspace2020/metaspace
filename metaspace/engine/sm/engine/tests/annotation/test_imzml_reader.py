@@ -69,6 +69,22 @@ def test_imzml_reader_tic_image_from_metadata():
     assert np.array_equal(imzml_reader.tic_image(), metadata_tic, equal_nan=True)
 
 
+def test_imzml_reader_duplicate_coordinates():
+    # Some exporters emit multiple spectra at the same (x, y) pixel. n_spectra is then larger
+    # than the number of unique pixels, which must not break pixel_to_flat_idx construction.
+    coordinates = [(1, 1, 1), (1, 1, 1), (2, 1, 1)]
+    spectra = [(np.arange(1, i + 2), np.full(i + 1, i + 1)) for i in range(len(coordinates))]
+    imzml_reader = make_imzml_reader_mock(coordinates=coordinates, spectra=spectra)
+
+    n_unique_pixels = int(np.count_nonzero(imzml_reader.mask))
+    assert n_unique_pixels == 2  # (1,1) and (2,1); the duplicate (1,1) collapses
+
+    # pixel_to_flat_idx indexes into the masked-flat array (size == unique pixels), with positions
+    # assigned in ascending pixel order. Valid (non -1) entries must be exactly 0..n_unique_pixels-1.
+    valid = imzml_reader.pixel_to_flat_idx[imzml_reader.pixel_to_flat_idx >= 0]
+    assert np.array_equal(np.sort(valid), np.arange(n_unique_pixels))
+
+
 def test_imzml_reader_lithops(executor):
     imzml_reader = make_lithops_imzml_reader(
         executor.storage, mz_precision='d', polarity='negative'

@@ -10,7 +10,7 @@
       position: relative;
       user-select: none;
       overflow: hidden;
-      
+
       .canvas-controls {
         position: absolute;
         top: 8px;
@@ -19,7 +19,6 @@
         pointer-events: auto;
         display: flex;
         gap: 8px;
-
       }
 
       .image-wrapper {
@@ -27,18 +26,17 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        min-height: 400px;
+        height: 500px;
         overflow: hidden;
 
         .segmentation-viewbox {
-          position: relative;
+          position: absolute;
+          top: 0;
+          left: 0;
           display: inline-block;
 
           .segmentation-canvas {
             display: block;
-            max-width: 100%;
-            max-height: 600px;
-            height: auto;
             border-radius: 4px;
             image-rendering: pixelated;
           }
@@ -81,19 +79,18 @@
       .opacity-controls {
         pointer-events: auto;
         z-index: 30;
-            display: flex;
-    flex-wrap: wrap;
-        
+        display: flex;
+        flex-wrap: wrap;
+
         .opacity-control-item {
           margin: 8px;
           min-width: 200px;
-          
+
           &:last-child {
             margin-bottom: 0;
           }
         }
       }
-
     }
   }
 
@@ -140,7 +137,6 @@
             .segment-info {
               display: flex;
               align-items: center;
-              
 
               .color-swatch {
                 width: 20px;

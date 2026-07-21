@@ -117,6 +117,7 @@ export default defineComponent({
       datasetsLoading: false,
       datasetCounts: [],
       datasetCountsLoading: false,
+      silentRefetch: false,
     })
 
     const queryVariables = computed(() => {
@@ -137,7 +138,9 @@ export default defineComponent({
     })
     const currentUser = computed(() => currentUserResult.value?.currentUser)
 
-    const loading = computed(() => datasetsLoading.value || datasetCountsLoading.value || currentUserLoading.value)
+    const loading = computed(
+      () => !state.silentRefetch && (datasetsLoading.value || datasetCountsLoading.value || currentUserLoading.value)
+    )
 
     const setCurrentPage = (page) => {
       // ignore the initial "sync"
@@ -253,9 +256,14 @@ export default defineComponent({
       state.datasetCounts = extractGroupedStatusCounts(result.data)
     })
 
-    const initializeTable = async () => {
-      await refetchDatasets()
-      await refetchCounts()
+    const initializeTable = async ({ silent = false } = {}) => {
+      if (silent) state.silentRefetch = true
+      try {
+        await refetchDatasets()
+        await refetchCounts()
+      } finally {
+        if (silent) state.silentRefetch = false
+      }
       if (currentUser.value) {
         // due to some misbehaviour from setting initial value from getLocalstorage with null values
         // on filterSpecs, the filter is being initialized here if user is logged
@@ -272,13 +280,13 @@ export default defineComponent({
       subscribeToMore({
         document: datasetStatusUpdatedQuery,
         updateQuery: () => {
-          initializeTable()
+          initializeTable({ silent: true })
         },
       })
       subscribeToMoreCounts({
         document: datasetDeletedQuery,
         updateQuery: () => {
-          initializeTable()
+          initializeTable({ silent: true })
         },
       })
       await initializeTable()
