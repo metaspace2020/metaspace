@@ -40,6 +40,16 @@ function applyBenjaminiHochberg<T extends { pValue: number | null; fdr: number |
   return rows
 }
 
+const cmpStr = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0)
+
+function compareAnnotation(a: any, b: any): number {
+  const byFormula = cmpStr(a.ion?.formula ?? '', b.ion?.formula ?? '')
+  if (byFormula !== 0) return byFormula
+  const byAdduct = cmpStr(a.ion?.adduct ?? '', b.ion?.adduct ?? '')
+  if (byAdduct !== 0) return byAdduct
+  return (a.fdr ?? Infinity) - (b.fdr ?? Infinity)
+}
+
 const QueryResolvers: FieldResolversFor<Query, any> = {
   experiment: async(_, args, ctx: Context) => {
     const id: string = args.id
@@ -152,12 +162,14 @@ const QueryResolvers: FieldResolversFor<Query, any> = {
       rows = rows.filter(r => r.lfc != null && Math.abs(r.lfc) >= minAbs)
     }
 
-    // orderBy may be a bare column name (legacy) or "<col> ASC|DESC".
-    // Direction is honoured for the user-facing sortable columns
-    // (pValue, lfc, fdr). Unknown columns fall back to fdr ASC.
     const [orderCol, orderDirRaw] = orderBy.trim().split(/\s+/)
     const orderDir = orderDirRaw?.toUpperCase() === 'DESC' ? -1 : 1
     rows.sort((a, b) => {
+      if (orderCol === 'ion' || orderCol === 'annotation') {
+        // Formula → adduct → fdr order, matching the Annotations table. The
+        // `ion` relation is eagerly loaded above so formula/adduct are present.
+        return compareAnnotation(a, b) * orderDir
+      }
       if (orderCol === 'pValue') {
         // Null p-values always sort to the bottom regardless of direction.
         if (a.pValue == null && b.pValue == null) return 0
@@ -172,6 +184,25 @@ const QueryResolvers: FieldResolversFor<Query, any> = {
         const la = a.lfc ?? -Infinity
         const lb = b.lfc ?? -Infinity
         return (la - lb) * orderDir
+      }
+      if (orderCol === 'labelGroupName' || orderCol === 'condA' || orderCol === 'condB') {
+        // String columns (Group / A / B). Empty or null values (e.g. omnibus
+        // rows have no condA/condB) sort to the bottom regardless of direction.
+        const sa = (a as any)[orderCol] ?? ''
+        const sb = (b as any)[orderCol] ?? ''
+        if (sa === sb) return 0
+        if (sa === '') return 1
+        if (sb === '') return -1
+        return cmpStr(sa, sb) * orderDir
+      }
+      if (orderCol === 'detectionRateA' || orderCol === 'detectionRateB') {
+        // Detection rates are numeric; null (omnibus rows) sorts last.
+        const da = (a as any)[orderCol]
+        const db = (b as any)[orderCol]
+        if (da == null && db == null) return 0
+        if (da == null) return 1
+        if (db == null) return -1
+        return (da - db) * orderDir
       }
       // Default: fdr ascending puts the most significant rows first.
       const fa = a.fdr ?? Infinity

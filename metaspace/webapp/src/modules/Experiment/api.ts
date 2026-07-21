@@ -436,6 +436,9 @@ export interface ExperimentDraft {
   labelGroups: { name: string; color: string }[]
 }
 
+export const resultRowKey = (row: any): string =>
+  row == null ? '' : `${row.ion?.id ?? ''}|${row.labelGroupName ?? ''}|${row.condA ?? ''}|${row.condB ?? ''}`
+
 /** Deterministic palette used for auto-generated label-group colors and fallback region swatches. */
 export const REGION_PALETTE: readonly string[] = ['#1f77b4', '#2ca02c', '#d62728', '#9467bd', '#ff7f0e'] as const
 

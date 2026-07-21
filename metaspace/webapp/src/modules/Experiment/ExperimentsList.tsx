@@ -1,7 +1,7 @@
 import { defineComponent, computed, inject, onMounted } from 'vue'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
-import { useRouter } from 'vue-router'
-import { ElButton, ElCard, ElIcon, ElMessage, ElMessageBox, ElTag } from '../../lib/element-plus'
+import { useRouter, RouterLink } from 'vue-router'
+import { ElButton, ElCard, ElIcon, ElMessage, ElMessageBox, ElTag, ElTooltip } from '../../lib/element-plus'
 import { PictureFilled, EditPen, Delete } from '@element-plus/icons-vue'
 import { experimentsByProjectQuery, deleteExperimentMutation, experimentProjectRoleQuery } from './api'
 import { useExperimentPermissions, promptExperimentProUpgrade } from './composables/experimentPermissions'
@@ -120,13 +120,37 @@ export default defineComponent({
 
     return () => (
       <div class="space-y-4">
-        {props.canEdit && (
-          <div class="flex justify-end">
+        <div class="flex justify-between items-center">
+          <ElTooltip placement="top">
+            {{
+              content: () => (
+                <div class="max-w-xs">
+                  Experiments is still in beta. Use it to explore and please share{' '}
+                  <RouterLink to="/contact" class="text-blue-400 underline">
+                    any suggestions
+                  </RouterLink>{' '}
+                  or feedback that could help us improve the feature.
+                </div>
+              ),
+              default: () => (
+                <ElTag
+                  type="warning"
+                  size="small"
+                  effect="light"
+                  class="cursor-help"
+                  data-test-key="experiments-beta-badge"
+                >
+                  Beta testing
+                </ElTag>
+              ),
+            }}
+          </ElTooltip>
+          {props.canEdit && (
             <ElButton type="primary" data-test-key="create-experiment" onClick={onCreate}>
               Create experiment
             </ElButton>
-          </div>
-        )}
+          )}
+        </div>
         {loading.value && <p>Loading…</p>}
         {!loading.value && experiments.value.length === 0 && <p class="text-gray-500">No experiments yet.</p>}
         {experiments.value.map((exp) => (

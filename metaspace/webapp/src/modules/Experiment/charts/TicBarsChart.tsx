@@ -27,17 +27,23 @@ export default defineComponent({
   name: 'TicBarsChart',
   props: {
     samples: { type: Array as PropType<QcSampleRow[]>, required: true },
+    sampleLabels: { type: Object as PropType<Record<string, string>>, default: () => ({}) },
   },
   setup(props) {
     const xLabels = computed(() => {
+      const labelOf = (s: QcSampleRow) => props.sampleLabels[s.sampleId] ?? s.sampleId
       const counts = new Map<string, number>()
-      for (const s of props.samples) counts.set(s.sampleId, (counts.get(s.sampleId) ?? 0) + 1)
+      for (const s of props.samples) {
+        const l = labelOf(s)
+        counts.set(l, (counts.get(l) ?? 0) + 1)
+      }
       const seen = new Map<string, number>()
       return props.samples.map((s) => {
-        if ((counts.get(s.sampleId) ?? 0) <= 1) return s.sampleId
-        const idx = (seen.get(s.sampleId) ?? 0) + 1
-        seen.set(s.sampleId, idx)
-        return `${s.sampleId} (R${idx})`
+        const l = labelOf(s)
+        if ((counts.get(l) ?? 0) <= 1) return l
+        const idx = (seen.get(l) ?? 0) + 1
+        seen.set(l, idx)
+        return `${l} (R${idx})`
       })
     })
 

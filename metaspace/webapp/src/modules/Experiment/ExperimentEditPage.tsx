@@ -414,30 +414,33 @@ export default defineComponent({
 
     const analysisPreview = computed<LabelGroupPreview[]>(() => {
       const allRegions = draft.value.datasets.flatMap((ds) => ds.regions).filter((r) => r.included !== false)
-      return draft.value.labelGroups.map((lg) => {
-        const lgRegions = allRegions.filter((r) => r.labelGroupName === lg.name)
-        // Count distinct effective replicates per condition.
-        const condMap = new Map<string, Set<string>>()
-        for (const r of lgRegions) {
-          const cond = r.metadata.condition?.trim()
-          if (!cond) continue
-          if (!condMap.has(cond)) condMap.set(cond, new Set())
-          condMap.get(cond)!.add(r.metadata.biologicalReplicateId?.trim() || r.regionKey)
-        }
-        const conditions = Array.from(condMap.keys()).sort()
-        const pairs: ContrastPreviewPair[] = []
-        for (let i = 0; i < conditions.length; i++) {
-          for (let j = i + 1; j < conditions.length; j++) {
-            pairs.push({
-              condA: conditions[i],
-              condB: conditions[j],
-              nA: condMap.get(conditions[i])!.size,
-              nB: condMap.get(conditions[j])!.size,
-            })
+      const usedNames = new Set(allRegions.map((r) => r.labelGroupName))
+      return draft.value.labelGroups
+        .filter((lg) => usedNames.has(lg.name))
+        .map((lg) => {
+          const lgRegions = allRegions.filter((r) => r.labelGroupName === lg.name)
+          // Count distinct effective replicates per condition.
+          const condMap = new Map<string, Set<string>>()
+          for (const r of lgRegions) {
+            const cond = r.metadata.condition?.trim()
+            if (!cond) continue
+            if (!condMap.has(cond)) condMap.set(cond, new Set())
+            condMap.get(cond)!.add(r.metadata.biologicalReplicateId?.trim() || r.regionKey)
           }
-        }
-        return { name: lg.name, color: lg.color, pairs }
-      })
+          const conditions = Array.from(condMap.keys()).sort()
+          const pairs: ContrastPreviewPair[] = []
+          for (let i = 0; i < conditions.length; i++) {
+            for (let j = i + 1; j < conditions.length; j++) {
+              pairs.push({
+                condA: conditions[i],
+                condB: conditions[j],
+                nA: condMap.get(conditions[i])!.size,
+                nB: condMap.get(conditions[j])!.size,
+              })
+            }
+          }
+          return { name: lg.name, color: lg.color, pairs }
+        })
     })
 
     const labelGroupOptions = computed(() => draft.value.labelGroups.map((lg) => ({ name: lg.name, color: lg.color })))

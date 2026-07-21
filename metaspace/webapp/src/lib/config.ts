@@ -90,7 +90,7 @@ const defaultConfig: ClientConfig = {
     segmentation: false,
     diff_analysis: false,
     enrichment: true,
-    experiment: true,
+    experiment: false,
     show_dataset_overview: true,
     metabo_enrich: false,
     imzml_browser: true,

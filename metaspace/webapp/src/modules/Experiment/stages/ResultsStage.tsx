@@ -24,7 +24,7 @@ import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/Cand
 import CopyButton from '../../../components/CopyButton.vue'
 import { encodeParams } from '../../Filters'
 import { calculateMzFromFormula } from '../../../lib/formulaParser'
-import { experimentResultsQuery, experimentResultsPlotQuery } from '../api'
+import { experimentResultsQuery, experimentResultsPlotQuery, resultRowKey } from '../api'
 import VolcanoPlot, { ResultRow } from '../charts/VolcanoPlot'
 import IntensityStripPlot from '../charts/IntensityStripPlot'
 import './ResultsStage.scss'
@@ -61,23 +61,14 @@ const formatScientific = (v: number | null | undefined): string => {
   return n.toExponential(2)
 }
 
-// Column `prop` is a simple identifier (no dotted paths) — ElTable's
-// sortChange events emit it verbatim and dotted props confuse the internal
-// sort plumbing even with sortable='custom'. The cell renderer for the
-// Annotation column uses the row directly, so its `prop` value is just a
-// stable sort key.
-//
-// The experiment resolver only supports sorting by `pValue`, `lfc`, and
-// `fdr` (see graphql/src/modules/experiment/controller/Query.ts), and only
-// in ascending order — direction is ignored server-side. The other columns
-// are marked non-sortable to avoid showing arrows that don't do anything.
 const COLUMNS: ColumnDef[] = [
-  { id: 'ion', prop: 'ion', label: 'Annotation', sortable: false },
+  { id: 'ion', prop: 'ion', width: '160', label: 'Annotation', sortable: true },
   {
     id: 'labelGroup',
     prop: 'labelGroupName',
     label: 'Group',
     width: '120',
+    sortable: true,
     formatter: (row) => (row.labelGroupName === '__experiment__' ? 'All groups' : row.labelGroupName || '—'),
   },
   {
@@ -85,6 +76,7 @@ const COLUMNS: ColumnDef[] = [
     prop: 'condA',
     label: 'A',
     width: '110',
+    sortable: true,
     formatter: (row) => row.condA ?? '—',
   },
   {
@@ -92,6 +84,7 @@ const COLUMNS: ColumnDef[] = [
     prop: 'condB',
     label: 'B',
     width: '110',
+    sortable: true,
     formatter: (row) => row.condB ?? '—',
   },
   {
@@ -115,6 +108,7 @@ const COLUMNS: ColumnDef[] = [
     prop: 'detectionRateA',
     label: 'det. A',
     width: '80',
+    sortable: true,
     formatter: (row) => formatPercent(row.detectionRateA),
   },
   {
@@ -122,6 +116,7 @@ const COLUMNS: ColumnDef[] = [
     prop: 'detectionRateB',
     label: 'det. B',
     width: '80',
+    sortable: true,
     formatter: (row) => formatPercent(row.detectionRateB),
   },
   {
@@ -204,7 +199,20 @@ export default defineComponent({
       prop: 'fdr',
       order: 'ascending',
     })
-    const SORTABLE_PROPS = new Set(['lfc', 'pValue', 'fdr'])
+    // All sorting is server-side: the resolver sorts the full set before
+    // pagination so the ordering is page-consistent. `ion` sorts by molecular
+    // formula (matching the Annotations table); the rest sort by their column.
+    const SORTABLE_PROPS = new Set([
+      'ion',
+      'labelGroupName',
+      'condA',
+      'condB',
+      'lfc',
+      'pValue',
+      'detectionRateA',
+      'detectionRateB',
+      'fdr',
+    ])
     const orderBy = computed(() => {
       const prop = SORTABLE_PROPS.has(tableSort.value.prop) ? tableSort.value.prop : 'fdr'
       const dir = tableSort.value.order === 'descending' ? 'DESC' : 'ASC'
@@ -324,6 +332,7 @@ export default defineComponent({
     const visibleCols = ref<string[]>(COLUMNS.filter((c) => c.id !== 'nA' && c.id !== 'nB').map((c) => c.id))
     const selectedRow = ref<any | null>(null)
     const tableRef = ref<any>(null)
+    const rowKey = resultRowKey
 
     const ensureSelection = (): void => {
       if (selectedRow.value == null && rows.value.length > 0) {
@@ -332,11 +341,6 @@ export default defineComponent({
       }
     }
 
-    // Keyboard navigation, mirroring the convention used by the diff-analysis
-    // and dataset-comparison tables: up/down moves the selection within the
-    // current page (wrapping to the previous/next page at the edges), and
-    // left/right paginates. Listeners are window-level but gated on focus
-    // not being in a text input so they don't fight with form controls.
     const KEY_TO_ACTION: Record<string, 'up' | 'down' | 'left' | 'right'> = {
       ArrowUp: 'up',
       ArrowDown: 'down',
@@ -347,23 +351,24 @@ export default defineComponent({
       Math.max(1, Math.ceil((volcanoRows.value.length || rows.value.length) / pageSize.value))
     )
     const currentPageIndex = computed(() => {
-      const id = selectedRow.value?.ion?.id
-      if (id == null) return -1
-      return rows.value.findIndex((r) => r.ion?.id === id)
+      if (selectedRow.value == null) return -1
+      const key = rowKey(selectedRow.value)
+      return rows.value.findIndex((r) => rowKey(r) === key)
     })
     // After a page change the new page's rows arrive asynchronously — when
     // a navigation action requires "select first/last of the next page" we
     // stash the target index and apply it once the new rows are in.
     const pendingSelectIndex = ref<number | null>(null)
     // Set when a volcano click triggers a page change — the new page's row
-    // matching this ion id is selected once it arrives.
-    const pendingSelectIonId = ref<number | null>(null)
+    // matching this composite key (ion + group + contrast) is selected once it
+    // arrives, so the exact clicked group's row is highlighted.
+    const pendingSelectKey = ref<string | null>(null)
     watch(rows, (newRows) => {
       if (newRows.length === 0) return
-      if (pendingSelectIonId.value != null) {
-        const match = newRows.find((r) => r.ion?.id === pendingSelectIonId.value)
+      if (pendingSelectKey.value != null) {
+        const match = newRows.find((r) => rowKey(r) === pendingSelectKey.value)
         if (match) onSelect(match)
-        pendingSelectIonId.value = null
+        pendingSelectKey.value = null
         return
       }
       if (pendingSelectIndex.value == null) return
@@ -449,33 +454,30 @@ export default defineComponent({
       emit('update:selectedRow', row)
     }
 
-    const onVolcanoSelect = (ionId: number): void => {
-      // Find the row in the volcano dataset (which mirrors the table's
-      // current sort) and navigate the table to the page containing it so
-      // the user can see where it sits in the ranking.
-      const absoluteIdx = volcanoRows.value.findIndex((r) => r.ion?.id === ionId)
+    const onVolcanoSelect = (row: any): void => {
+      const key = rowKey(row)
+      const absoluteIdx = volcanoRows.value.findIndex((r) => rowKey(r) === key)
       if (absoluteIdx === -1) {
         // Fallback — pick from current page if the volcano query hasn't
         // resolved yet, so the right column at least updates.
-        const cur = rows.value.find((r) => r.ion?.id === ionId)
-        if (cur) onSelect(cur)
+        const cur = rows.value.find((r) => rowKey(r) === key) ?? row
+        onSelect(cur)
         return
       }
       const targetPage = Math.floor(absoluteIdx / pageSize.value) + 1
       if (targetPage !== page.value) {
         // Defer row selection until the new page's rows arrive — the watch
-        // on `rows` re-applies the selection by ion id.
-        pendingSelectIonId.value = ionId
+        pendingSelectKey.value = key
         page.value = targetPage
       } else {
-        const cur = rows.value.find((r) => r.ion?.id === ionId) ?? volcanoRows.value[absoluteIdx]
+        const cur = rows.value.find((r) => rowKey(r) === key) ?? volcanoRows.value[absoluteIdx]
         onSelect(cur)
       }
     }
 
     const rowClassName = (info: any): string => {
       const fdr = info.row?.fdr
-      const isCurrent = selectedRow.value && info.row?.ion?.id === selectedRow.value.ion?.id
+      const isCurrent = selectedRow.value != null && rowKey(info.row) === rowKey(selectedRow.value)
       return `${fdrClass(fdr)}${isCurrent ? ' current-row' : ''}`
     }
 
@@ -926,7 +928,7 @@ export default defineComponent({
                     <VolcanoPlot
                       rows={volcanoRows.value}
                       fdrThreshold={localFdrMax.value ?? 0.05}
-                      selectedIonId={selectedRow.value?.ion?.id ?? null}
+                      selectedKey={selectedRow.value ? rowKey(selectedRow.value) : null}
                       onSelect={onVolcanoSelect}
                     />
                   </div>

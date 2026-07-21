@@ -101,6 +101,25 @@ describe('TicBarsChart', () => {
     expect(option.xAxis.data).toEqual(['ds_001 (R1)', 'ds_001 (R2)', 'ds_002'])
   })
 
+  it('maps sampleIds to dataset-name labels, suffixing repeats to keep categories unique', () => {
+    const w = mount(TicBarsChart, {
+      props: {
+        samples,
+        sampleLabels: { ds_001: 'Liver A', ds_002: 'Liver A', ds_005: 'Kidney B' },
+      },
+    })
+    const echart = w.findComponent({ name: 'echarts' }) as any
+    const option: any = echart.props('option')
+    expect(option.xAxis.data).toEqual(['Liver A (R1)', 'Liver A (R2)', 'Kidney B'])
+  })
+
+  it('falls back to the raw sampleId when no label is provided', () => {
+    const w = mount(TicBarsChart, { props: { samples, sampleLabels: {} } })
+    const echart = w.findComponent({ name: 'echarts' }) as any
+    const option: any = echart.props('option')
+    expect(option.xAxis.data).toEqual(['ds_001', 'ds_002', 'ds_005'])
+  })
+
   it('renders empty-state when samples array is empty', () => {
     const w = mount(TicBarsChart, { props: { samples: [] } })
     expect(w.find('[data-test-key="tic-empty"]').exists()).toBe(true)

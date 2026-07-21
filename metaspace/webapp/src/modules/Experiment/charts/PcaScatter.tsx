@@ -20,6 +20,7 @@ export default defineComponent({
   props: {
     samples: { type: Array as PropType<QcSampleRow[]>, required: true },
     pcaVariance: { type: Object as PropType<PcaVariance>, required: true },
+    sampleLabels: { type: Object as PropType<Record<string, string>>, default: () => ({}) },
   },
   emits: ['exclude'],
   setup(props, { emit }) {
@@ -31,13 +32,18 @@ export default defineComponent({
         symbolSize: 12,
         data: props.samples
           .filter((s) => (s.condition ?? '—') === cond)
-          .map((s) => ({ value: [s.pcaPC1, s.pcaPC2], sampleId: s.sampleId, condition: cond })),
+          .map((s) => ({
+            value: [s.pcaPC1, s.pcaPC2],
+            sampleId: s.sampleId,
+            label: props.sampleLabels[s.sampleId] ?? s.sampleId,
+            condition: cond,
+          })),
       }))
       return {
         title: { text: 'PCA — PC1 vs PC2', textStyle: { fontSize: 13 } },
         tooltip: {
           trigger: 'item',
-          formatter: (p: any) => `${p.data.sampleId} (${p.data.condition})`,
+          formatter: (p: any) => `${p.data.label} (${p.data.condition})`,
         },
         legend: { top: 24 },
         grid: { left: 48, right: 16, top: 64, bottom: 40 },

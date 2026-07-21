@@ -179,6 +179,102 @@ describe('experiment queries', () => {
     expect(lfcs).toEqual([-1.5, 1.5, 2.0])
   })
 
+  it('experimentResults — orderBy "ion" sorts by formula then adduct, matching the Annotations table', async() => {
+    const { exp } = await seed() as any
+    // Plain lexicographic formula order (as the Annotations table's
+    // ORDER_BY_FORMULA does), so 'C12…' < 'C3…' < 'C6…' by string order.
+    // Two ions share the SAME formula (C6H12O6, different adducts) so we assert
+    // same-formula rows stay grouped and adduct-ordered ('+H' before '+Na') —
+    // guarding against a comparator that scatters equal formulas.
+    const ionSpecs = [
+      { formula: 'C6H12O6', adduct: '+Na' },
+      { formula: 'C12H22O11', adduct: '+H' },
+      { formula: 'C3H6O3', adduct: '+H' },
+      { formula: 'C6H12O6', adduct: '+H' },
+    ]
+    for (const { formula, adduct } of ionSpecs) {
+      const ion: any = await testEntityManager.save(Ion, {
+        ion: `${formula}${adduct}`, formula, adduct, ionFormula: `${formula}H`, charge: 1,
+      } as any)
+      await testEntityManager.save(ExperimentResult, {
+        experimentId: exp.id,
+        runGeneration: 1,
+        ionId: ion.id,
+        labelGroupName: 'tumor',
+        condA: 'control',
+        condB: 'treated',
+        lfc: 1.0,
+        pValue: 0.01,
+        fdr: 0.01,
+        nA: 3,
+        nB: 3,
+        meanA: 1.0,
+        meanB: 2.0,
+        detectionRateA: 1,
+        detectionRateB: 1,
+      } as any)
+    }
+    const asc = await doQuery<any[]>(
+      `query($id: ID!){ experimentResults(experimentId: $id, orderBy: "ion ASC", limit: 50)
+        { ion { formula adduct } } }`,
+      { id: exp.id })
+    // C12 < C3 < C6 lexically; the two C6H12O6 rows are adjacent, '+H' before '+Na'.
+    expect(asc.map(r => `${r.ion.formula}${r.ion.adduct}`))
+      .toEqual(['C12H22O11+H', 'C3H6O3+H', 'C6H12O6+H', 'C6H12O6+Na'])
+
+    const desc = await doQuery<any[]>(
+      `query($id: ID!){ experimentResults(experimentId: $id, orderBy: "ion DESC", limit: 50)
+        { ion { formula adduct } } }`,
+      { id: exp.id })
+    expect(desc.map(r => `${r.ion.formula}${r.ion.adduct}`))
+      .toEqual(['C6H12O6+Na', 'C6H12O6+H', 'C3H6O3+H', 'C12H22O11+H'])
+  })
+
+  it('experimentResults — orderBy supports Group (string) and detection-rate (numeric) columns', async() => {
+    const { exp } = await seed() as any
+    const ion: any = await testEntityManager.save(Ion, {
+      ion: 'C6H12O6+H+', formula: 'C6H12O6', adduct: '+H', ionFormula: 'C6H13O6', charge: 1,
+    } as any)
+    // labelGroupName order and detectionRateA order are intentionally different
+    // so each assertion pins its own column, not an incidental shared order.
+    const seedRows = [
+      { labelGroupName: 'alpha', detectionRateA: 0.2 },
+      { labelGroupName: 'beta', detectionRateA: 0.9 },
+      { labelGroupName: 'gamma', detectionRateA: 0.5 },
+    ]
+    for (const { labelGroupName, detectionRateA } of seedRows) {
+      await testEntityManager.save(ExperimentResult, {
+        experimentId: exp.id,
+        runGeneration: 1,
+        ionId: ion.id,
+        labelGroupName,
+        condA: 'control',
+        condB: 'treated',
+        lfc: 1.0,
+        pValue: 0.01,
+        fdr: 0.01,
+        nA: 3,
+        nB: 3,
+        meanA: 1.0,
+        meanB: 2.0,
+        detectionRateA,
+        detectionRateB: 1,
+      } as any)
+    }
+    const byGroup = await doQuery<any[]>(
+      `query($id: ID!){ experimentResults(experimentId: $id, orderBy: "labelGroupName ASC", limit: 50)
+        { labelGroupName } }`,
+      { id: exp.id })
+    expect(byGroup.map(r => r.labelGroupName)).toEqual(['alpha', 'beta', 'gamma'])
+
+    const byDetDesc = await doQuery<any[]>(
+      `query($id: ID!){ experimentResults(experimentId: $id, orderBy: "detectionRateA DESC", limit: 50)
+        { labelGroupName detectionRateA } }`,
+      { id: exp.id })
+    expect(byDetDesc.map(r => r.detectionRateA)).toEqual([0.9, 0.5, 0.2])
+    expect(byDetDesc.map(r => r.labelGroupName)).toEqual(['beta', 'gamma', 'alpha'])
+  })
+
   it('experimentResults — database filter is scoped to the experiment\'s own datasets', async() => {
     // Regression: the ion-membership lookup used to scan annotation⨝job across
     // the ENTIRE platform for the selected moldb (WHERE j.moldb_id IN (...)),

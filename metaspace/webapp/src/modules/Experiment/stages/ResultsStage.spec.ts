@@ -2,7 +2,7 @@ import { ref, nextTick, defineComponent } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import { vi } from 'vitest'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
-import { ElTableColumn } from '../../../lib/element-plus'
+import { ElTable, ElTableColumn } from '../../../lib/element-plus'
 import { initMockGraphqlClient } from '../../../tests/utils/mockGraphqlClient'
 
 vi.mock('@vue/apollo-composable', () => ({
@@ -111,6 +111,9 @@ const mockRows = [
 describe('ResultsStage', () => {
   let mockClient: any
   let lastVariables: any
+  // The mock evaluates the variables factory once at mount; keep the factory so
+  // tests can re-read the (reactive) variables after changing sort/page state.
+  let lastVariablesFn: (() => any) | null
 
   beforeAll(async () => {
     mockClient = await initMockGraphqlClient({ Query: () => ({}) })
@@ -118,11 +121,13 @@ describe('ResultsStage', () => {
 
   beforeEach(() => {
     lastVariables = null
+    lastVariablesFn = null
     ;(useQuery as any).mockImplementation((doc: any, variablesFn: any) => {
       const vars = typeof variablesFn === 'function' ? variablesFn() : variablesFn
       const opName = doc?.definitions?.[0]?.name?.value
       if (opName === 'experimentResults' || opName === 'experimentResultsPlot') {
         lastVariables = vars
+        if (opName === 'experimentResults' && typeof variablesFn === 'function') lastVariablesFn = variablesFn
         return {
           result: ref({ experimentResults: mockRows }),
           loading: ref(false),
@@ -188,6 +193,49 @@ describe('ResultsStage', () => {
     // Resolver was extended to honour direction; the page sends "<col>
     // ASC|DESC" so clicking the same column's arrow flips the order.
     expect(lastVariables.orderBy).toBe('fdr ASC')
+  })
+
+  it('makes the sortable columns server-sortable (custom), inert ones non-sortable', async () => {
+    const wrapper = mountStage()
+    await flushPromises()
+    await nextTick()
+    const cols = wrapper.findAllComponents(ElTableColumn)
+    const sortableProps = [
+      'ion',
+      'labelGroupName',
+      'condA',
+      'condB',
+      'lfc',
+      'pValue',
+      'detectionRateA',
+      'detectionRateB',
+      'fdr',
+    ]
+    for (const prop of sortableProps) {
+      const col = cols.find((c) => c.props('prop') === prop)!
+      // `custom` = the sort is delegated to the server via orderBy, not done in-page.
+      expect(col.props('sortable')).toBe('custom')
+    }
+  })
+
+  it.each([
+    ['ion', 'ion ASC'],
+    ['labelGroupName', 'labelGroupName ASC'],
+    ['condA', 'condA ASC'],
+    ['condB', 'condB ASC'],
+    ['detectionRateA', 'detectionRateA ASC'],
+    ['detectionRateB', 'detectionRateB ASC'],
+  ])('sorting by the %s column sends orderBy "%s" to the resolver', async (prop, expected) => {
+    const wrapper = mountStage()
+    await flushPromises()
+    await nextTick()
+    // Drive the sort through the table's sort-change event, as Element Plus would.
+    const table = wrapper.findComponent(ElTable)
+    table.vm.$emit('sort-change', { prop, order: 'ascending' })
+    await flushPromises()
+    await nextTick()
+    // Re-read the reactive query variables to observe the post-sort orderBy.
+    expect(lastVariablesFn?.().orderBy).toBe(expected)
   })
 
   it('omits the n A / n B columns by default', async () => {
@@ -318,13 +366,69 @@ describe('ResultsStage', () => {
     await nextTick()
 
     const volcano = wrapper.findComponent(VolcanoPlot)
-    volcano.vm.$emit('select', 4)
+    // The volcano now emits the full row, not just the ion id.
+    volcano.vm.$emit('select', mockRows[3])
     await nextTick()
 
     const strip = wrapper.findComponent(IntensityStripPlot)
     expect(strip.exists()).toBe(true)
     expect(strip.props('ionId')).toBe(4)
     expect(strip.props('fdr')).toBe(0.005)
+  })
+
+  it('volcano select highlights the specific group row when one ion spans groups', async () => {
+    // Same ion id 7 on two label groups; clicking the Diamond dot must select
+    // the Diamond row (not the first row sharing the ion) — the selectedKey the
+    // volcano receives back reflects that exact row.
+    const ion7 = { id: 7, ion: 'C6H12O6+H', formula: 'C6H12O6', adduct: '+H' }
+    const circle = { ...mockRows[0], ion: ion7, labelGroupName: 'Circle', fdr: 0.02 }
+    const diamond = { ...mockRows[0], ion: ion7, labelGroupName: 'Diamond', fdr: 0.08 }
+    ;(useQuery as any).mockImplementation((doc: any) => {
+      const opName = doc?.definitions?.[0]?.name?.value
+      if (opName === 'experimentResults' || opName === 'experimentResultsPlot') {
+        return { result: ref({ experimentResults: [circle, diamond] }), loading: ref(false), error: ref(null) }
+      }
+      return { result: ref({ experimentIonIntensities: [] }), loading: ref(false), error: ref(null) }
+    })
+
+    const wrapper = mountStage()
+    await flushPromises()
+    await nextTick()
+
+    const volcano = wrapper.findComponent(VolcanoPlot)
+    volcano.vm.$emit('select', diamond)
+    await nextTick()
+
+    // The selected row is the Diamond one → its composite key flows to the plot,
+    // and the strip plot reflects the Diamond row's fdr.
+    expect(volcano.props('selectedKey')).toBe('7|Diamond|control|treated')
+    const strip = wrapper.findComponent(IntensityStripPlot)
+    expect(strip.props('fdr')).toBe(0.08)
+  })
+
+  it('highlights only the selected row when one annotation spans multiple label groups', async () => {
+    // Same ion id, two label groups — the pre-fix behaviour keyed the current
+    // row by ion id alone and lit up every row sharing that ion.
+    const sharedIonRows = [
+      { ...mockRows[0], ion: { id: 7, ion: 'C6H12O6+H', formula: 'C6H12O6', adduct: '+H' }, labelGroupName: 'Circle' },
+      { ...mockRows[0], ion: { id: 7, ion: 'C6H12O6+H', formula: 'C6H12O6', adduct: '+H' }, labelGroupName: 'Diamond' },
+    ]
+    ;(useQuery as any).mockImplementation((doc: any) => {
+      const opName = doc?.definitions?.[0]?.name?.value
+      if (opName === 'experimentResults' || opName === 'experimentResultsPlot') {
+        return { result: ref({ experimentResults: sharedIonRows }), loading: ref(false), error: ref(null) }
+      }
+      return { result: ref({ experimentIonIntensities: [] }), loading: ref(false), error: ref(null) }
+    })
+
+    const wrapper = mountStage()
+    await flushPromises()
+    await nextTick()
+
+    // ensureSelection selects the first row on render; despite both rows sharing
+    // ion id 7, exactly one row carries the `current-row` class.
+    const currentRows = wrapper.findAll('.el-table__row.current-row')
+    expect(currentRows).toHaveLength(1)
   })
 
   it('shows a compact warning indicator with per-group details in its popover', async () => {

@@ -97,38 +97,14 @@ export default defineComponent({
       return true
     }
 
-    /** Coerce arbitrary Apollo / network errors to a printable string. Avoids
-     *  ElMessage being handed an object whose `toString`/`Symbol.toPrimitive`
-     *  throws ("Cannot convert object to primitive value"). */
-    const errorMessage = (e: unknown): string => {
-      if (e == null) return 'Update failed'
-      if (typeof e === 'string') return e
-      const anyE = e as any
-      const candidates = [anyE?.message, anyE?.graphQLErrors?.[0]?.message, anyE?.networkError?.message]
-      for (const c of candidates) {
-        if (typeof c === 'string' && c) return c
-      }
-      try {
-        return JSON.stringify(e)
-      } catch {
-        return 'Update failed'
-      }
-    }
-
     const persistExcluded = async (next: Set<string>): Promise<void> => {
-      // Skip the mutation entirely if the selection didn't actually change.
-      // ElSelect re-emits `update:modelValue` with a fresh array reference on
-      // mount / props update; without this guard every visit to the page
-      // would re-trigger `updateExperimentExcludedSamples`, which calls
-      // `submitExperimentPrep` server-side and bounces the run back to
-      // PREPARING.
       if (setsEqual(excluded.value, next)) return
       excluded.value = next
       try {
         await updateExcluded({ experimentId: props.experimentId, excludedSamples: Array.from(next) })
         ElMessage.success('Excluded samples updated')
       } catch (e: unknown) {
-        ElMessage.error(errorMessage(e))
+        // pass
       }
     }
 
@@ -153,12 +129,13 @@ export default defineComponent({
         ) : (
           <>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4" data-test-key="qc-charts">
-              <TicBarsChart samples={qcRows.value} />
-              <DetectionRateChart samples={qcRows.value} />
+              <TicBarsChart samples={qcRows.value} sampleLabels={props.sampleLabels} />
+              <DetectionRateChart samples={qcRows.value} sampleLabels={props.sampleLabels} />
               <CvBoxPlot samples={qcRows.value} />
               <PcaScatter
                 samples={qcRows.value}
                 pcaVariance={pcaVariance.value}
+                sampleLabels={props.sampleLabels}
                 {...{ onExclude: (id: string) => toggle(id) }}
               />
             </div>

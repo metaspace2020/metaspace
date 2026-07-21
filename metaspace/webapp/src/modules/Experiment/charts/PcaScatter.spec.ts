@@ -44,6 +44,19 @@ describe('PcaScatter', () => {
     expect(w.emitted('exclude')?.[0]).toEqual(['ds_001'])
   })
 
+  it('shows the dataset-name label in the tooltip while still keying exclude by sampleId', () => {
+    const w = mount(PcaScatter, {
+      props: { samples, pcaVariance: { pc1: 0, pc2: 0 }, sampleLabels: { ds_001: 'Liver A' } },
+    })
+    const echart = w.findComponent({ name: 'echarts' }) as any
+    const option: any = echart.props('option')
+    const point = option.series.flatMap((s: any) => s.data).find((d: any) => d.sampleId === 'ds_001')
+    // Data carries both: label for display, sampleId for the exclude action.
+    expect(point.label).toBe('Liver A')
+    expect(point.sampleId).toBe('ds_001')
+    expect(option.tooltip.formatter({ data: point })).toBe('Liver A (treated)')
+  })
+
   it('renders empty-state when samples array is empty', () => {
     const w = mount(PcaScatter, { props: { samples: [], pcaVariance: { pc1: 0, pc2: 0 } } })
     expect(w.find('[data-test-key="pca-empty"]').exists()).toBe(true)

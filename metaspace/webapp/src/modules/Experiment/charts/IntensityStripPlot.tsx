@@ -141,7 +141,11 @@ export default defineComponent({
         },
         tooltip: {
           trigger: 'item',
-          formatter: (p: any) => `${p.data?.sampleId ?? ''}<br/>${fmt2(p.data?.value?.[1])}`,
+          formatter: (p: any) => {
+            return `${p.data?.sampleId ? props.sampleIdToLabelGroup[p.data?.sampleId] : ''}<br/>${fmt2(
+              p.data?.value?.[1]
+            )}`
+          },
         },
         legend: {
           top: 4,

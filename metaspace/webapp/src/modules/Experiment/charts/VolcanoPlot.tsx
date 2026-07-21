@@ -4,14 +4,15 @@ import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { ScatterChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent, LegendComponent, TitleComponent, MarkLineComponent } from 'echarts/components'
+import { resultRowKey } from '../api'
 
 use([CanvasRenderer, ScatterChart, GridComponent, TooltipComponent, LegendComponent, TitleComponent, MarkLineComponent])
 
-/**
- * One row in the experiment results table.
- */
 export interface ResultRow {
   ion: { id: number; ion: string; formula?: string; adduct?: string }
+  labelGroupName?: string | null
+  condA?: string | null
+  condB?: string | null
   lfc: number
   pValue: number | null
   fdr: number | null
@@ -28,7 +29,7 @@ export default defineComponent({
   props: {
     rows: { type: Array as PropType<ResultRow[]>, required: true },
     fdrThreshold: { type: Number, default: 0.05 },
-    selectedIonId: { type: Number as unknown as () => number | null, default: null },
+    selectedKey: { type: String as unknown as () => string | null, default: null },
   },
   emits: ['select'],
   setup(props, { emit }) {
@@ -47,9 +48,10 @@ export default defineComponent({
         .filter((r) => classify(r) === kind)
         .map((r) => {
           const significant = isSignificant(r)
-          const selected = props.selectedIonId === r.ion.id
+          const selected = props.selectedKey != null && props.selectedKey === resultRowKey(r)
           return {
             value: [r.lfc, NEG_LOG10(r.pValue as number)],
+            row: r,
             ionId: r.ion.id,
             ionLabel: r.ion.ion,
             fdr: r.fdr,
@@ -123,8 +125,8 @@ export default defineComponent({
     })
 
     const onClick = (evt: any): void => {
-      const id = evt?.data?.ionId
-      if (typeof id === 'number') emit('select', id)
+      const row = evt?.data?.row
+      if (row != null) emit('select', row)
     }
 
     return () => {

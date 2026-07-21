@@ -892,6 +892,50 @@ describe('ExperimentEditPage', () => {
     expect(wrapper.find('[data-test-key="analysis-preview-fallback"]').exists()).toBe(true)
   })
 
+  it('omits orphaned label groups (no included regions) from the analysis preview', async () => {
+    mockRoute = { params: { projectId: 'p1' } }
+    setupQueries()
+    const wrapper = mountPage()
+    await flushPromises()
+    await nextTick()
+    const vm: any = wrapper.vm
+    vm.setDraft({
+      name: 'X',
+      description: null,
+      matchMode: 'MANUAL',
+      labelGroups: [
+        { name: 'Circle', color: '#111' },
+        { name: 'Whole dataset', color: '#222' },
+      ],
+      datasets: [
+        {
+          datasetId: 'd1',
+          regionSource: 'ROI',
+          regions: [
+            {
+              regionKey: 'r1',
+              sourceKind: 'roi',
+              roiId: 1,
+              segmentationId: null,
+              labelGroupName: 'Circle',
+              included: true,
+              metadata: {
+                condition: 'A',
+                biologicalReplicateId: 'b1',
+                sampleId: 's1',
+                technicalReplicateId: null,
+                batchId: null,
+              },
+            },
+          ],
+        },
+      ],
+    })
+    await nextTick()
+    expect(wrapper.find('[data-test-key="analysis-chip-Circle"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test-key="analysis-chip-Whole dataset"]').exists()).toBe(false)
+  })
+
   describe('region mapping merge logic', () => {
     const baseRegion = (regionKey: string, labelGroupName: string | null = null) => ({
       regionKey,
