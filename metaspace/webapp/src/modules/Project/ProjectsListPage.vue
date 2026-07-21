@@ -61,7 +61,7 @@ import ProjectsListItem from './ProjectsListItem.vue'
 import CreateProjectDialog from './CreateProjectDialog.vue'
 import { getLocalStorage } from '../../lib/localStorage'
 import SortDropdown from '../../components/SortDropdown/SortDropdown'
-import { myProjectsListQuery, projectsCountQuery, ProjectsListProject, projectsListQuery } from '../../api/project'
+import { projectsCountQuery, ProjectsListProject, projectsListQuery } from '../../api/project'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 import { useQuery } from '@vue/apollo-composable'
 import { ElButton, ElLoading, ElPagination } from '../../lib/element-plus'
@@ -134,6 +134,7 @@ export default defineComponent({
       limit: pageSize.value,
       orderBy: orderBy.value,
       sortingOrder: sortingOrder.value,
+      userIds: filter.value === 'my' && currentUser.value != null ? [currentUser.value.id] : undefined,
     }))
 
     const { result: allProjectsResult, refetch: refetchAllProjects } = useQuery(projectsListQuery, queryVars, {
@@ -148,39 +149,9 @@ export default defineComponent({
     )
     const allProjectsCount = computed(() => allProjectsCountResult.value?.projectsCount || 0)
 
-    const { result: myProjectsResult, refetch: refetchMyProjects } = useQuery(myProjectsListQuery, null, {
-      fetchPolicy: 'cache-first',
-    })
+    const projects = computed(() => allProjects.value)
 
-    const myProjects = computed(() =>
-      myProjectsResult.value?.myProjects?.projects
-        ? myProjectsResult.value?.myProjects?.projects.map((userProject) => userProject.project)
-        : []
-    )
-
-    const filteredMyProjects = computed(() => {
-      if (query.value && myProjects.value != null) {
-        return myProjects.value.filter((p) => p.name.toLowerCase().includes(query.value.toLowerCase()))
-      } else {
-        return myProjects.value || []
-      }
-    })
-
-    const projects = computed(() => {
-      if (filter.value === 'my') {
-        return filteredMyProjects.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value)
-      } else {
-        return allProjects.value
-      }
-    })
-
-    const projectsCount = computed(() => {
-      if (filter.value === 'my') {
-        return filteredMyProjects.value.length
-      } else {
-        return allProjectsCount.value
-      }
-    })
+    const projectsCount = computed(() => allProjectsCount.value)
 
     const simpleFilterOptions = computed(() => {
       if (currentUser.value == null) {
@@ -215,7 +186,7 @@ export default defineComponent({
     })
 
     const handleRefreshData = async () => {
-      await Promise.all([refetchAllProjects(), refetchAllProjectsCount(), refetchMyProjects()])
+      await Promise.all([refetchAllProjects(), refetchAllProjectsCount()])
     }
 
     const handleOpenCreateProject = () => {
@@ -240,7 +211,6 @@ export default defineComponent({
       loading,
       currentUser,
       allProjects,
-      myProjects,
       allProjectsCount,
       showCreateProjectDialog,
       page,
