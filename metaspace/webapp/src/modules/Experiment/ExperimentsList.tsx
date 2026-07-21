@@ -1,6 +1,6 @@
 import { defineComponent, computed, inject, onMounted } from 'vue'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
-import { useRouter, RouterLink } from 'vue-router'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { ElButton, ElCard, ElIcon, ElMessage, ElMessageBox, ElTag, ElTooltip } from '../../lib/element-plus'
 import { PictureFilled, EditPen, Delete } from '@element-plus/icons-vue'
 import { experimentsByProjectQuery, deleteExperimentMutation, experimentProjectRoleQuery } from './api'
@@ -52,6 +52,7 @@ export default defineComponent({
   },
   setup(props) {
     const router = useRouter()
+    const route = useRoute()
     const { isAdmin, currentUserId, canCreateExperiment } = useExperimentPermissions()
     // Create is allowed for admins, or project editors with an active Pro subscription.
     // The button stays visible for any project editor; non-Pro users are prompted to
@@ -71,7 +72,7 @@ export default defineComponent({
 
     const onCreate = (): void => {
       if (canCreate.value) {
-        router.push(`/project/${props.projectId}/experiment/new`)
+        router.push({ path: `/project/${props.projectId}/experiment/new`, query: { ...route.query } })
       } else {
         promptExperimentProUpgrade()
       }
@@ -186,7 +187,10 @@ export default defineComponent({
                     data-test-key={`browse-${exp.id}`}
                     onClick={(e) => {
                       e.preventDefault()
-                      router.push(`/project/${props.projectId}/experiment/${exp.id}`)
+                      router.push({
+                        path: `/project/${props.projectId}/experiment/${exp.id}`,
+                        query: { ...route.query },
+                      })
                     }}
                   >
                     Browse analysis
@@ -203,7 +207,10 @@ export default defineComponent({
                         class="ml-1"
                         onClick={(e) => {
                           e.preventDefault()
-                          router.push(`/project/${props.projectId}/experiment/${exp.id}/edit`)
+                          router.push({
+                            path: `/project/${props.projectId}/experiment/${exp.id}/edit`,
+                            query: { ...route.query },
+                          })
                         }}
                       >
                         Manage experiment

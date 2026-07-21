@@ -720,7 +720,7 @@ export default defineComponent({
           await createMut({ projectId, input: serializeDraft(draft.value) })
         }
         ElMessage.success('Saved')
-        router.push({ path: `/project/${projectId}`, query: { tab: 'experiments' } })
+        router.push({ path: `/project/${projectId}`, query: { ...route.query, tab: 'experiments' } })
       } catch (e: any) {
         ElMessage.error(e?.message ?? 'Save failed')
       }
@@ -742,7 +742,7 @@ export default defineComponent({
         if (!runId) throw new Error('Could not determine experiment id after save')
         await runMut({ id: runId })
         ElMessage.success('Experiment submitted')
-        router.push({ path: `/project/${projectId}`, query: { tab: 'experiments' } })
+        router.push({ path: `/project/${projectId}`, query: { ...route.query, tab: 'experiments' } })
       } catch (e: any) {
         ElMessage.error(e?.message ?? 'Run failed')
       }
@@ -1048,7 +1048,9 @@ export default defineComponent({
                 )}
 
                 <div class="flex gap-2 justify-end">
-                  <ElButton onClick={() => router.push(`/project/${projectId}`)}>Cancel</ElButton>
+                  <ElButton onClick={() => router.push({ path: `/project/${projectId}`, query: { ...route.query } })}>
+                    Cancel
+                  </ElButton>
                   <ElButton
                     type="primary"
                     data-test-key="experiment-save"

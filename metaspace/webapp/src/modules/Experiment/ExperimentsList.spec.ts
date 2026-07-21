@@ -177,7 +177,7 @@ describe('ExperimentsList', () => {
     await btn.trigger('click')
     await nextTick()
 
-    expect(pushSpy).toHaveBeenCalledWith('/project/project-id-1/experiment/new')
+    expect(pushSpy).toHaveBeenCalledWith({ path: '/project/project-id-1/experiment/new', query: {} })
     expect(notifySpy).not.toHaveBeenCalled()
 
     notifySpy.mockRestore()

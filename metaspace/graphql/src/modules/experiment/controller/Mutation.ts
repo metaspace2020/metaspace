@@ -28,6 +28,7 @@ async function submitExperimentPrep(ctx: Context, exp: Experiment) {
     await smApiDatasetRequest('/v1/experiment/run_prep', {
       experiment_id: exp.id,
       run_generation: nextGeneration,
+      email: ctx.user.email,
     })
   } catch (err) {
     await repo.update(exp.id, {
