@@ -582,12 +582,20 @@ class ExperimentManager:
         error: Optional[str] = None,
     ):
         """Send a completion notification for an experiment run."""
+        row = self._db.select_one(
+            'SELECT project_id, name FROM experiment WHERE id=%s',
+            params=(experiment_id,),
+        )
+        project_id, exp_name = (row[0], row[1]) if row else (None, experiment_id)
+        base_url = self._sm_config['services']['web_app_url']
+        link = f"{base_url}/project/{project_id}/experiment/{experiment_id}"
         if status == 'FINISHED':
             subject = 'METASPACE service notification (EXPERIMENT SUCCESS)'
             body = (
                 'Dear METASPACE user,\n\n'
-                f'Your METASPACE experiment {experiment_id} statistical analysis '
-                'has completed successfully.\n\n'
+                f'The statistical analysis for the "{exp_name}" experiment. '
+                'has been completed successfully. '
+                f'You can view the results at {link}.\n\n'
                 'Best regards,\n'
                 'METASPACE Team'
             )
@@ -595,9 +603,11 @@ class ExperimentManager:
             subject = 'METASPACE service notification (EXPERIMENT FAILED)'
             body = (
                 'Dear METASPACE user,\n\n'
-                f'Your METASPACE experiment {experiment_id} statistical analysis '
-                'has failed.\n'
+                f'The statistical analysis for '
+                f'the "{exp_name}" experiment has failed. '
                 f'Error details: {error or "unknown error"}\n\n'
+                'Please check your input parameters and try again. If the problem persists, '
+                'please contact our support team.\n\n'
                 'Best regards,\n'
                 'METASPACE Team'
             )
