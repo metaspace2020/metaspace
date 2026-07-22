@@ -108,6 +108,14 @@ const asyncPagesFreelyTyped = {
     import(
       /* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/FeatureRequests/FeatureRequestPage'
     ),
+  ExperimentEditPage: () =>
+    import(
+      /* webpackPrefetch: true, webpackChunkName: "ExperimentEditPage" */ '../modules/Experiment/ExperimentEditPage'
+    ),
+  ExperimentResultsPage: () =>
+    import(
+      /* webpackPrefetch: true, webpackChunkName: "ExperimentResultsPage" */ '../modules/Experiment/ExperimentResultsPage'
+    ),
 }
 
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, Component>
@@ -192,6 +200,24 @@ export const routes: any = [
   { path: '/group/:groupIdOrSlug', name: 'group', component: asyncPages.ViewGroupPage },
 
   { path: '/project/:projectIdOrSlug', name: 'project', component: asyncPages.ViewProjectPage },
+  {
+    path: '/project/:projectId/experiment/new',
+    name: 'experiment-create',
+    component: asyncPages.ExperimentEditPage,
+    props: true,
+  },
+  {
+    path: '/project/:projectId/experiment/:id/edit',
+    name: 'experiment-edit',
+    component: asyncPages.ExperimentEditPage,
+    props: true,
+  },
+  {
+    path: '/project/:projectId/experiment/:id',
+    name: 'experiment-view',
+    component: asyncPages.ExperimentResultsPage,
+    props: true,
+  },
   {
     // Legacy URL sent in "request access" emails up until Feb 2019
     path: '/project/:projectIdOrSlug/manage',

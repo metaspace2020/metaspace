@@ -1,6 +1,6 @@
 clientConfig.json
 db.sqlite
-coverage*
+/coverage*
 
 # Dereferenced metadata files
 /src/lib/metadataSchemas

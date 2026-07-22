@@ -5,6 +5,8 @@ class DaemonAction:
     DELETE = 'delete'
     CLASSIFY_OFF_SAMPLE = 'classify_off_sample'
     SEGMENTATION = 'segmentation'
+    EXPERIMENT_PREP = 'experiment_prep'
+    EXPERIMENT_STATS = 'experiment_stats'
 
 
 class DaemonActionStage:

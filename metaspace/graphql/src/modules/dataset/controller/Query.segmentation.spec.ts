@@ -1,5 +1,6 @@
 jest.mock('../../../../esConnector')
 import * as _mockEsConnector from '../../../../esConnector'
+import * as moment from 'moment'
 
 import {
   doQuery,
@@ -82,6 +83,33 @@ describe('Dataset queries: segmentation', () => {
       })
       const result = await doQuery<any[]>(query, { datasetId: dataset.id })
       expect(result.map(r => r.segmentIndex)).toEqual([0, 1])
+    })
+
+    it('flags segmentations from non-latest jobs as stale', async() => {
+      const dataset = await createTestDataset()
+      const oldJob = await testEntityManager.save(ImageSegmentationJob, {
+        datasetId: dataset.id,
+        status: 'FINISHED',
+        createdAt: moment('2024-01-01'),
+        updatedAt: moment('2024-01-01'),
+      } as any) as ImageSegmentationJob
+      const newJob = await testEntityManager.save(ImageSegmentationJob, {
+        datasetId: dataset.id,
+        status: 'FINISHED',
+        createdAt: moment('2024-06-01'),
+        updatedAt: moment('2024-06-01'),
+      } as any) as ImageSegmentationJob
+      await testEntityManager.save(Segmentation, [
+        { datasetId: dataset.id, jobId: oldJob.id, segmentIndex: 0, algorithm: 'kmeans', status: 'FINISHED' },
+        { datasetId: dataset.id, jobId: newJob.id, segmentIndex: 0, algorithm: 'kmeans', status: 'FINISHED' },
+      ])
+      const res = await doQuery<any[]>(
+        'query($id: String!) { segmentations(datasetId: $id) { jobId stale } }',
+        { id: dataset.id },
+      )
+      const byJob = new Map(res.map((s: any) => [Number(s.jobId), s.stale]))
+      expect(byJob.get(Number(oldJob.id))).toBe(true)
+      expect(byJob.get(Number(newJob.id))).toBe(false)
     })
   })
 

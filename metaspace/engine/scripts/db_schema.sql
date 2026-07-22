@@ -550,6 +550,58 @@ CREATE TABLE "public"."news_blacklist_user" (
   CONSTRAINT "PK_2a9d84204903e88b66919c1ac1e" PRIMARY KEY ("id")
 );
 
+CREATE TABLE "public"."experiment" (
+  "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
+  "project_id" uuid NOT NULL, 
+  "created_by" uuid NOT NULL, 
+  "name" text NOT NULL, 
+  "description" text, 
+  "match_mode" text NOT NULL, 
+  "label_groups" jsonb NOT NULL DEFAULT '[]'::jsonb, 
+  "run_status" text, 
+  "run_stage" text, 
+  "run_filters" jsonb, 
+  "run_excluded_samples" jsonb NOT NULL DEFAULT '[]'::jsonb, 
+  "run_inferred_test" text, 
+  "run_error" text, 
+  "run_started_at" TIMESTAMP, 
+  "run_finished_at" TIMESTAMP, 
+  "run_generation" integer NOT NULL DEFAULT '0', 
+  "run_qc" jsonb, 
+  "created_at" TIMESTAMP NOT NULL DEFAULT now(), 
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now(), 
+  CONSTRAINT "PK_dcd6c27fda20495ccc306dfbbf9" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "public"."experiment_dataset" (
+  "id" BIGSERIAL NOT NULL, 
+  "experiment_id" uuid NOT NULL, 
+  "dataset_id" text NOT NULL, 
+  "region_source" text NOT NULL, 
+  "regions" jsonb NOT NULL DEFAULT '[]'::jsonb, 
+  CONSTRAINT "PK_6c64aee860cb15c7715e5ae4902" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "public"."experiment_result" (
+  "id" BIGSERIAL NOT NULL, 
+  "experiment_id" uuid NOT NULL, 
+  "run_generation" integer NOT NULL, 
+  "ion_id" integer NOT NULL, 
+  "label_group_name" text NOT NULL, 
+  "cond_a" text, 
+  "cond_b" text, 
+  "lfc" real, 
+  "p_value" real, 
+  "fdr" real, 
+  "n_a" integer, 
+  "n_b" integer, 
+  "mean_a" real, 
+  "mean_b" real, 
+  "detection_rate_a" real, 
+  "detection_rate_b" real, 
+  CONSTRAINT "PK_07ce415c4b2ba31fe9389ffabcf" PRIMARY KEY ("id")
+);
+
 ALTER TABLE "public"."molecular_db" ADD CONSTRAINT "FK_a18f5f7d6cc662006d9c849ea1f" FOREIGN KEY (
   "group_id") REFERENCES "graphql"."group"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -728,6 +780,30 @@ ALTER TABLE "public"."news_blacklist_user" ADD CONSTRAINT "FK_cc07c5228b1857cebf
 
 ALTER TABLE "public"."news_blacklist_user" ADD CONSTRAINT "FK_bb9e11816860543b441841ef68c" FOREIGN KEY (
   "user_id") REFERENCES "graphql"."user"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."experiment" ADD CONSTRAINT "FK_04c178e455e89416288115574aa" FOREIGN KEY (
+  "project_id") REFERENCES "graphql"."project"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."experiment" ADD CONSTRAINT "FK_fa18704d6f1fd23e597f0721f91" FOREIGN KEY (
+  "created_by") REFERENCES "graphql"."user"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."experiment_dataset" ADD CONSTRAINT "FK_c0923a9849e2b555402bc853058" FOREIGN KEY (
+  "experiment_id") REFERENCES "public"."experiment"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."experiment_dataset" ADD CONSTRAINT "FK_df6f91be674a4732b4fc64cc180" FOREIGN KEY (
+  "dataset_id") REFERENCES "public"."dataset"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."experiment_result" ADD CONSTRAINT "FK_c22b587504d45afee04558856c4" FOREIGN KEY (
+  "experiment_id") REFERENCES "public"."experiment"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."experiment_result" ADD CONSTRAINT "FK_4433cbb748784930eb5442b9aa5" FOREIGN KEY (
+  "ion_id") REFERENCES "graphql"."ion"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 

@@ -37,7 +37,8 @@
     "colocalization": false,
     "ion_thumbnail": false,
     "segmentation": "http://image-segmentation:9877",
-    "segmentation_callback": "http://api:5123/v1/segmentation/callback"
+    "segmentation_callback": "http://api:5123/v1/segmentation/callback",
+    "experiment_callback": "http://api:5123/v1/experiment/callback"
   },
   "redis": {
     "host": "redis"

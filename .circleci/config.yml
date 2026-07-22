@@ -258,6 +258,46 @@ jobs:
           command: |
             black --check ansible metaspace/off-sample metaspace/python-client
 
+  test-postprocessing:
+    docker:
+      - image: metaspace2020/sm-engine:2.0.0
+    working_directory: ~/metaspace/metaspace/postprocessing
+    steps:
+      - checkout:
+          path: ~/metaspace
+      - run:
+          name: Clean git repository
+          command: |
+            # This is a workaround for the old git version in this image not correctly resetting ignored-but-committed
+            # files (mainly files in the config directories) when switching branches.
+            git clean -fdX
+            git checkout -- ~/metaspace
+      - run:
+          name: Install dependencies
+          command: |
+            pip install --upgrade -r ~/metaspace/metaspace/engine/requirements-dev.txt
+            pip install -r stats_analysis/requirements.txt
+            pip install -e shared -e stats_analysis
+      - run:
+          name: Run tests
+          command: |
+            cd stats_analysis
+            python -m pytest tests
+      - run:
+          name: Run linter
+          # Limit number of CPUs to prevent silent OOMs in background processes
+          # https://github.com/PyCQA/pylint/issues/3899
+          command: |
+            pylint --version
+            pylint -j1 --rcfile=../engine/.pylintrc \
+              stats_analysis/stats_analysis \
+              shared/postprocessing_shared \
+              image_segmentation/image_segmentation \
+              server/postprocessing_server
+      - run:
+          name: Run code formatter
+          command: black --check .
+
   test-engine:
     docker:
       - image: metaspace2020/sm-engine:2.0.0
@@ -395,6 +435,7 @@ workflows:
     jobs:
       - generate-graphql-schema
       - test-pycode-format
+      - test-postprocessing
       - test-engine:
           requires:
             - generate-graphql-schema

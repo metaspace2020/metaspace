@@ -63,6 +63,9 @@
             </router-link>
           </div>
         </el-tab-pane>
+        <el-tab-pane v-if="visibleTabs.includes('experiments')" name="experiments" label="Experiments" lazy>
+          <ExperimentsList :project-id="projectId" :can-edit="canEditExperiments" />
+        </el-tab-pane>
         <el-tab-pane name="members" lazy>
           <template v-slot:label>
             <span>
@@ -139,9 +142,11 @@ import RichText from '../../components/RichText'
 import Publishing from './publishing'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 import DatasetsDialog from './DatasetsDialog'
+import ExperimentsList from '../Experiment/ExperimentsList'
 import { DefaultApolloClient, useQuery, useSubscription } from '@vue/apollo-composable'
 import { ElIcon } from '../../lib/element-plus'
 import { Loading } from '@element-plus/icons-vue'
+import config from '../../lib/config'
 interface ViewProjectPageData {
   allDatasets: DatasetDetailItem[]
   countDatasets: number
@@ -155,6 +160,7 @@ export default defineComponent({
     ElTabPane,
     DatasetList,
     DatasetsDialog,
+    ExperimentsList,
     ProjectMembersList,
     ProjectSettings,
     NotificationIcon,
@@ -312,21 +318,33 @@ export default defineComponent({
         roleInProject.value === ProjectRoleOptions.MANAGER || (currentUser.value && currentUser.value?.role === 'admin')
       )
     })
+    // Experiments are a collaborative feature: project members can edit them too, not
+    // just managers/admins. The Pro gate is enforced separately inside ExperimentsList.
+    const canEditExperiments = computed(() => {
+      return (
+        roleInProject.value === ProjectRoleOptions.MANAGER ||
+        roleInProject.value === ProjectRoleOptions.MEMBER ||
+        (currentUser.value && currentUser.value?.role === 'admin')
+      )
+    })
     const visibleTabs = computed(() => {
       if (project.value === null) {
         return []
       }
+      // The experiments tab is behind the `experiment` feature flag.
+      const experimentsTab = config.features.experiment ? ['experiments'] : []
       if (canEdit.value) {
-        return ['about', 'datasets', 'members', 'publishing', 'settings']
+        return ['about', 'datasets', 'members', ...experimentsTab, 'publishing', 'settings']
       }
       if (project.value && project.value?.projectDescription !== null) {
-        return ['about', 'datasets', 'members']
+        return ['about', 'datasets', 'members', ...experimentsTab]
       }
-      return ['datasets', 'members']
+      return ['datasets', 'members', ...experimentsTab]
     })
     const setTab = (newTab: string | null) => {
       if (newTab !== null && visibleTabs.value.includes(newTab)) {
-        router.replace({ query: { tab: newTab } })
+        // Preserve other query params (e.g. `feat=`) instead of replacing the whole query.
+        router.replace({ query: { ...route.query, tab: newTab } })
         tab.value = newTab
       }
     }
@@ -536,6 +554,7 @@ export default defineComponent({
       isInvited,
       datasetsListLink,
       canEdit,
+      canEditExperiments,
       isManager,
       countHiddenMembers,
       hasMembershipRequest,

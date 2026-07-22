@@ -26,6 +26,10 @@ from sm.engine.postprocessing.ion_thumbnail import (
     delete_ion_thumbnail,
 )
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
+from sm.engine.postprocessing.experiment_wrapper import (
+    submit_experiment_prep_job,
+    submit_experiment_stats_job,
+)
 from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
 from sm.engine.postprocessing.segmentation_wrapper import submit_segmentation_job
 from sm.engine.postprocessing.ds_size_hash import save_size_hash
@@ -34,7 +38,7 @@ from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import perf_profile
 
 
-class DatasetManager:
+class DatasetManager:  # pylint: disable=too-many-public-methods
     def __init__(self, db, es, status_queue=None, logger=None, sm_config=None):
         self._sm_config = sm_config or SMConfig.get_conf()
         self._slack_conf = self._sm_config.get('slack', {})
@@ -383,6 +387,64 @@ class DatasetManager:
                     self.logger.warning(
                         f'Failed to send failure email for job {job_id}: {email_err}'
                     )
+
+    def run_experiment_prep(self, msg):
+        """Submit a cross-dataset experiment prep + stats analysis job.
+
+        Args:
+            msg: Dict with keys ``experiment_id`` and ``run_generation``,
+                plus optional ``email``.
+        """
+        experiment_id = msg['experiment_id']
+        run_generation = msg['run_generation']
+        self.logger.info(
+            f'Running experiment prep for experiment {experiment_id} '
+            f'run_generation={run_generation}'
+        )
+        try:
+            submit_experiment_prep_job(
+                experiment_id=experiment_id,
+                run_generation=run_generation,
+                email=msg.get('email'),
+                db=self._db,
+            )
+            self._db.alter(
+                "UPDATE experiment SET run_status='RUNNING', run_stage='PREP' "
+                "WHERE id=%s AND run_generation=%s",
+                params=(experiment_id, run_generation),
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            self.logger.exception('Failed to submit experiment job')
+            self._db.alter(
+                "UPDATE experiment SET run_status='FAILED', run_error=%s, "
+                "run_finished_at=NOW() WHERE id=%s AND run_generation=%s",
+                params=(str(e), experiment_id, run_generation),
+            )
+
+    def run_experiment_stats(self, msg):
+        """Submit a stats-only re-run that reuses the persisted intensity blob."""
+        experiment_id = msg['experiment_id']
+        run_generation = msg['run_generation']
+        self.logger.info(
+            f'Running stats-only re-run for experiment {experiment_id} '
+            f'run_generation={run_generation}'
+        )
+        try:
+            submit_experiment_stats_job(
+                experiment_id=experiment_id,
+                run_generation=run_generation,
+                intensity_blob_s3_key=msg['intensity_blob_s3_key'],
+                filter=msg.get('filter') or {},
+                excluded_samples=msg.get('excluded_samples') or [],
+                db=self._db,
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            self.logger.exception('Failed to submit stats-only job')
+            self._db.alter(
+                "UPDATE experiment SET run_status='FAILED', run_error=%s, "
+                "run_finished_at=NOW() WHERE id=%s AND run_generation=%s",
+                params=(str(e), experiment_id, run_generation),
+            )
 
     def ds_failure_handler(self, msg, e):
         self.logger.error(f' SM {msg["action"]} daemon: failure', exc_info=True)
