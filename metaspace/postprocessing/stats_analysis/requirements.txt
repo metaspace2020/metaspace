@@ -1,5 +1,5 @@
 bottle==0.12.25
-requests==2.32.0
+requests==2.33.0
 numpy==1.19.5
 scipy==1.5.4
 scikit-learn==0.24.2
