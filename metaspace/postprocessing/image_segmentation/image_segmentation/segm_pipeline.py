@@ -31,21 +31,12 @@ def run_segmentation(  # pylint: disable=too-many-arguments,too-many-locals
         parameters = {}
 
     pipeline_start_time = time.time()
-    logger.info("[SEGMENTATION_PERF] Pipeline started for dataset %s", dataset_id)
-    logger.info(
-        "Dataset %s: starting segmentation (algorithm=%s, fdr=%s)",
-        dataset_id,
-        algorithm,
-        fdr,
-    )
+    logger.info(f"[SEGMENTATION_PERF] Pipeline started for dataset {dataset_id}")
+    logger.info(f"Dataset {dataset_id}: starting segmentation (algorithm={algorithm}, fdr={fdr})")
 
     # 1. Load
     load_start_time = time.time()
-    logger.info(
-        "Dataset %s: loading input from S3 key '%s'",
-        dataset_id,
-        input_s3_key,
-    )
+    logger.info(f"Dataset {dataset_id}: loading input from S3 key '{input_s3_key}'")
     (
         intensity_matrix,
         pixel_coordinates,
@@ -55,9 +46,7 @@ def run_segmentation(  # pylint: disable=too-many-arguments,too-many-locals
 
     load_time = time.time() - load_start_time
     logger.info(
-        "[SEGMENTATION_PERF] Data loading completed in %.3fs for dataset %s",
-        load_time,
-        dataset_id,
+        f"[SEGMENTATION_PERF] Data loading completed in {load_time:.3f}s for dataset {dataset_id}"
     )
 
     # 2. Preprocess
@@ -72,9 +61,8 @@ def run_segmentation(  # pylint: disable=too-many-arguments,too-many-locals
     )
     preprocess_time = time.time() - preprocess_start_time
     logger.info(
-        "[SEGMENTATION_PERF] Preprocessing completed in %.3fs for dataset %s",
-        preprocess_time,
-        dataset_id,
+        f"[SEGMENTATION_PERF] Preprocessing completed in {preprocess_time:.3f}s "
+        f"for dataset {dataset_id}"
     )
 
     # 3. Dispatch
@@ -86,10 +74,8 @@ def run_segmentation(  # pylint: disable=too-many-arguments,too-many-locals
     )
     dispatch_time = time.time() - dispatch_start_time
     logger.info(
-        "[SEGMENTATION_PERF] Algorithm dispatch (%s) completed in %.3fs for dataset %s",
-        algorithm,
-        dispatch_time,
-        dataset_id,
+        f"[SEGMENTATION_PERF] Algorithm dispatch ({algorithm}) completed in "
+        f"{dispatch_time:.3f}s for dataset {dataset_id}"
     )
 
     # 4. Postprocess
@@ -105,28 +91,19 @@ def run_segmentation(  # pylint: disable=too-many-arguments,too-many-locals
 
     total_pipeline_time = time.time() - pipeline_start_time
     logger.info(
-        "[SEGMENTATION_PERF] Postprocessing completed in %.3fs for dataset %s",
-        postprocess_time,
-        dataset_id,
+        f"[SEGMENTATION_PERF] Postprocessing completed in {postprocess_time:.3f}s "
+        f"for dataset {dataset_id}"
     )
     logger.info(
-        "[SEGMENTATION_PERF] Total pipeline time: %.3fs for dataset %s",
-        total_pipeline_time,
-        dataset_id,
+        f"[SEGMENTATION_PERF] Total pipeline time: {total_pipeline_time:.3f}s "
+        f"for dataset {dataset_id}"
     )
     logger.info(
-        "[SEGMENTATION_PERF] Pipeline breakdown - Load: %.3fs, Preprocess: %.3fs, "
-        "Dispatch: %.3fs, Postprocess: %.3fs",
-        load_time,
-        preprocess_time,
-        dispatch_time,
-        postprocess_time,
+        f"[SEGMENTATION_PERF] Pipeline breakdown - Load: {load_time:.3f}s, "
+        f"Preprocess: {preprocess_time:.3f}s, Dispatch: {dispatch_time:.3f}s, "
+        f"Postprocess: {postprocess_time:.3f}s"
     )
 
-    logger.info(
-        "Dataset %s: segmentation complete (n_segments=%s)",
-        dataset_id,
-        result.n_segments,
-    )
+    logger.info(f"Dataset {dataset_id}: segmentation complete (n_segments={result.n_segments})")
 
     return result

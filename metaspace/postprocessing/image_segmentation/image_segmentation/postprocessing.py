@@ -177,10 +177,8 @@ def _drop_empty_segments(
 
     n_dropped = n_segments - n_actual
     logger.warning(
-        "%d empty segment(s) removed after smoothing — relabelling %d → %d segments",
-        n_dropped,
-        n_segments,
-        n_actual,
+        f"{n_dropped} empty segment(s) removed after smoothing — "
+        f"relabelling {n_segments} → {n_actual} segments"
     )
 
     # Build lookup: old_id → new_id (present_ids is sorted so IDs stay ordered)
