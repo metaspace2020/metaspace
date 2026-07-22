@@ -52,7 +52,7 @@ def _build_weight_matrix(pixel_coordinates: np.ndarray) -> csr_matrix:
     tree = KDTree(pixel_coordinates)
     pairs = tree.query_pairs(r=1.5)
 
-    n = len(pixel_coordinates)
+    n = len(pixel_coordinates)  # pylint: disable=invalid-name
     if not pairs:
         return csr_matrix((n, n))
 
@@ -63,7 +63,7 @@ def _build_weight_matrix(pixel_coordinates: np.ndarray) -> csr_matrix:
     return csr_matrix((data, (all_rows, all_cols)), shape=(n, n))
 
 
-def _compute_morans_i(
+def _compute_morans_i(  # pylint: disable=invalid-name,too-many-locals
     all_scores: np.ndarray,
     pixel_coordinates: np.ndarray,
     n_permutations: int = 999,
@@ -91,21 +91,24 @@ def _compute_morans_i(
     if S0 == 0.0:
         logger.warning(
             "Moran's I: weight matrix has no edges (all pixels isolated) — "
-            "returning zero Moran's I for all %d PCs", K,
+            "returning zero Moran's I for all %d PCs",
+            K,
         )
-        return pd.DataFrame({
-            "pc":                  np.arange(1, K + 1),
-            "morans_i":            np.zeros(K),
-            "p_value":             np.ones(K),
-            "p_method":            ["none"] * K,
-            "passes_p_gate":       np.zeros(K, dtype=bool),
-            "passes_morans_floor": np.zeros(K, dtype=bool),
-            "passes_both":         np.zeros(K, dtype=bool),
-        })
+        return pd.DataFrame(
+            {
+                "pc": np.arange(1, K + 1),
+                "morans_i": np.zeros(K),
+                "p_value": np.ones(K),
+                "p_method": ["none"] * K,
+                "passes_p_gate": np.zeros(K, dtype=bool),
+                "passes_morans_floor": np.zeros(K, dtype=bool),
+                "passes_both": np.zeros(K, dtype=bool),
+            }
+        )
 
     # Column-centre scores; denominator is invariant under row permutation
     z = all_scores - all_scores.mean(axis=0)  # (N, K)
-    denom = (z * z).sum(axis=0)               # (K,)
+    denom = (z * z).sum(axis=0)  # (K,)
 
     zero_var = denom == 0
     if zero_var.any():
@@ -130,7 +133,9 @@ def _compute_morans_i(
         p_method = ["permutation"] * K
         logger.info(
             "Moran's I: permutation null (N=%d < %d, %d iters)",
-            N, SMALL_DATASET_THRESHOLD, n_permutations,
+            N,
+            SMALL_DATASET_THRESHOLD,
+            n_permutations,
         )
     else:
         # Analytical one-sided z-test
@@ -148,29 +153,36 @@ def _compute_morans_i(
         p_method = ["analytical_z"] * K
         logger.info(
             "Moran's I: analytical z-test (N=%d >= %d)",
-            N, SMALL_DATASET_THRESHOLD,
+            N,
+            SMALL_DATASET_THRESHOLD,
         )
 
-    passes_p_gate       = p_value < p_threshold
+    passes_p_gate = p_value < p_threshold
     passes_morans_floor = I_observed >= MIN_MORANS_I
-    passes_both         = passes_p_gate & passes_morans_floor
+    passes_both = passes_p_gate & passes_morans_floor
 
     logger.info(
         "Moran's I: %d/%d pass p-gate, %d/%d pass floor (>=%.2f), %d/%d pass both",
-        int(passes_p_gate.sum()), K,
-        int(passes_morans_floor.sum()), K, MIN_MORANS_I,
-        int(passes_both.sum()), K,
+        int(passes_p_gate.sum()),
+        K,
+        int(passes_morans_floor.sum()),
+        K,
+        MIN_MORANS_I,
+        int(passes_both.sum()),
+        K,
     )
 
-    return pd.DataFrame({
-        "pc":                  np.arange(1, K + 1),
-        "morans_i":            I_observed,
-        "p_value":             p_value,
-        "p_method":            p_method,
-        "passes_p_gate":       passes_p_gate,
-        "passes_morans_floor": passes_morans_floor,
-        "passes_both":         passes_both,
-    })
+    return pd.DataFrame(
+        {
+            "pc": np.arange(1, K + 1),
+            "morans_i": I_observed,
+            "p_value": p_value,
+            "p_method": p_method,
+            "passes_p_gate": passes_p_gate,
+            "passes_morans_floor": passes_morans_floor,
+            "passes_both": passes_both,
+        }
+    )
 
 
 def _find_elbow(k_values: List[int], scores: List[float]) -> int:  # pylint: disable=too-many-locals
@@ -231,7 +243,9 @@ def _select_k_via_criterion(
         score = gmm.bic(pc_scores) if criterion == "bic" else gmm.aic(pc_scores)
         logger.info(
             "GMM: k_range collapsed to single value — using k=%d (%s=%.2f)",
-            k_min, criterion.upper(), score,
+            k_min,
+            criterion.upper(),
+            score,
         )
         return k_min, {
             "k_values": [k_min],
@@ -352,13 +366,11 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
             )
 
         if not 0.0 < validated["p_threshold"] < 1.0:
-            raise ValueError(
-                f"p_threshold must be in (0, 1), got {validated['p_threshold']}"
-            )
+            raise ValueError(f"p_threshold must be in (0, 1), got {validated['p_threshold']}")
 
         return validated
 
-    def run(  # pylint: disable=too-many-locals
+    def run(  # pylint: disable=too-many-locals,too-many-statements
         self, segmentation_input: SegmentationInput, parameters: dict
     ) -> RawAlgorithmOutput:
         start_time = time.time()
@@ -393,14 +405,13 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
         # 1c. Select PCs that pass both gates, capped at MAX_GMM_PCS
         selected_indices = np.where(morans_df["passes_both"].to_numpy())[0]
         if len(selected_indices) == 0:
-            logger.warning(
-                "No PCs passed Moran's I filter — falling back to first 5 PCs"
-            )
+            logger.warning("No PCs passed Moran's I filter — falling back to first 5 PCs")
             selected_indices = np.arange(min(5, all_scores.shape[1]))
         elif len(selected_indices) > MAX_GMM_PCS:
             logger.warning(
                 "%d PCs passed Moran's I filter — capping to first %d",
-                len(selected_indices), MAX_GMM_PCS,
+                len(selected_indices),
+                MAX_GMM_PCS,
             )
             selected_indices = selected_indices[:MAX_GMM_PCS]
         pc_scores = all_scores[:, selected_indices]

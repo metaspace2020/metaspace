@@ -147,6 +147,8 @@ const EXPERIMENT_FIELDS = gql`
       error
       startedAt
       finishedAt
+      warnings
+      warningsPerLabelGroup
     }
   }
 `

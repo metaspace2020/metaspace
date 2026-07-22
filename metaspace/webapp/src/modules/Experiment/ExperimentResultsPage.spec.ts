@@ -241,7 +241,7 @@ describe('ExperimentResultsPage', () => {
   })
 
   describe('onClickNext on Stage 2 (idx=1)', () => {
-    it('fires runExperimentStats when dirty and sets pendingAdvanceToResults', async () => {
+    it('fires runExperimentStats with the current filter/excluded when dirty', async () => {
       resultRef.value = buildExperiment('FINISHED', { filters: {}, excludedSamples: [], generation: 1 })
       resultsRef.value = { experimentResults: [{ ion: { id: 1 } }] }
       const wrapper = mountPage()
@@ -259,7 +259,94 @@ describe('ExperimentResultsPage', () => {
         filter: { fdrMax: 0.05 },
         excludedSamples: [],
       })
-      expect((wrapper.vm as any).pendingAdvanceToResults).toBe(true)
+    })
+
+    it('advances to Stage 3 in a single click once the stats mutation resolves (run FINISHED)', async () => {
+      resultRef.value = buildExperiment('FINISHED', { filters: { fdrMax: 0.1 }, excludedSamples: [], generation: 1 })
+      resultsRef.value = { experimentResults: [{ ion: { id: 1 } }] }
+      runExperimentStatsMock.mockResolvedValue({
+        data: {
+          runExperimentStats: {
+            id: 'e1',
+            run: { status: 'FINISHED', filters: { fdrMax: 0.05 }, excludedSamples: [], generation: 1 },
+          },
+        },
+      })
+      const wrapper = mountPage()
+      await flushPromises()
+      await nextTick()
+      ;(wrapper.vm as any).currentStage = 1
+      await nextTick()
+      ;(wrapper.vm as any).handleFilterChange({ fdrMax: 0.05 })
+      await (wrapper.vm as any).onClickNext()
+      await nextTick()
+      expect(runExperimentStatsMock).toHaveBeenCalled()
+      expect((wrapper.vm as any).currentStage).toBe(2)
+      expect((wrapper.vm as any).pendingAdvanceToResults).toBe(false)
+    })
+
+    it('advances to Stage 3 in a single click even when the mutation resolves still RUNNING_STATS', async () => {
+      // Stage 3 shows its "preparing" state while the re-run finishes; the user
+      // must not be stranded on Stage 2 waiting for a poll transition.
+      resultRef.value = buildExperiment('FINISHED', { filters: { fdrMax: 0.1 }, excludedSamples: [], generation: 1 })
+      resultsRef.value = { experimentResults: [{ ion: { id: 1 } }] }
+      runExperimentStatsMock.mockResolvedValue({
+        data: {
+          runExperimentStats: {
+            id: 'e1',
+            run: { status: 'RUNNING_STATS', filters: { fdrMax: 0.05 }, excludedSamples: [], generation: 1 },
+          },
+        },
+      })
+      const wrapper = mountPage()
+      await flushPromises()
+      await nextTick()
+      ;(wrapper.vm as any).currentStage = 1
+      await nextTick()
+      ;(wrapper.vm as any).handleFilterChange({ fdrMax: 0.05 })
+      await (wrapper.vm as any).onClickNext()
+      await nextTick()
+      expect((wrapper.vm as any).currentStage).toBe(2)
+      expect((wrapper.vm as any).pendingAdvanceToResults).toBe(false)
+    })
+
+    it('still advances to Stage 3 when the mutation throws a client-only (non-GraphQL) error', async () => {
+      // A client-side Apollo cache-write throw must not strand the user: the
+      // server accepted the re-run, so we advance. (A real GraphQL error would
+      // keep us on Stage 2 — covered separately.)
+      resultRef.value = buildExperiment('FINISHED', { filters: { fdrMax: 0.1 }, excludedSamples: [], generation: 1 })
+      resultsRef.value = { experimentResults: [{ ion: { id: 1 } }] }
+      runExperimentStatsMock.mockRejectedValue(new Error('Cannot convert object to primitive value'))
+      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const wrapper = mountPage()
+      await flushPromises()
+      await nextTick()
+      ;(wrapper.vm as any).currentStage = 1
+      await nextTick()
+      ;(wrapper.vm as any).handleFilterChange({ fdrMax: 0.05 })
+      await (wrapper.vm as any).onClickNext()
+      await nextTick()
+      expect((wrapper.vm as any).currentStage).toBe(2)
+      expect((wrapper.vm as any).pendingAdvanceToResults).toBe(false)
+      errSpy.mockRestore()
+    })
+
+    it('stays on Stage 2 when the mutation rejects with a GraphQL error', async () => {
+      resultRef.value = buildExperiment('FINISHED', { filters: { fdrMax: 0.1 }, excludedSamples: [], generation: 1 })
+      resultsRef.value = { experimentResults: [{ ion: { id: 1 } }] }
+      const gqlErr: any = new Error('Stats-only re-run requires a finished previous run.')
+      gqlErr.graphQLErrors = [{ message: 'Stats-only re-run requires a finished previous run.' }]
+      runExperimentStatsMock.mockRejectedValue(gqlErr)
+      const wrapper = mountPage()
+      await flushPromises()
+      await nextTick()
+      ;(wrapper.vm as any).currentStage = 1
+      await nextTick()
+      ;(wrapper.vm as any).handleFilterChange({ fdrMax: 0.05 })
+      await expect((wrapper.vm as any).onClickNext()).rejects.toBeTruthy()
+      await nextTick()
+      expect((wrapper.vm as any).currentStage).toBe(1)
+      expect((wrapper.vm as any).pendingAdvanceToResults).toBe(false)
     })
 
     it('advances without mutation when not dirty', async () => {

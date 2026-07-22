@@ -15,7 +15,7 @@ from image_segmentation.types import SegmentationResult
 logger = logging.getLogger(__name__)
 
 
-def run_segmentation(
+def run_segmentation(  # pylint: disable=too-many-arguments,too-many-locals
     dataset_id: str,
     algorithm: str,
     input_s3_key: str,

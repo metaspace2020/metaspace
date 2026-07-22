@@ -3,7 +3,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { isEqual } from 'lodash-es'
 import { ElButton, ElAlert, ElIcon, ElTag, ElSkeleton, ElSkeletonItem } from '../../lib/element-plus'
-import { DataAnalysis, Search, Document, ArrowRight } from '@element-plus/icons-vue'
+import { DataAnalysis, Search, Document, ArrowRight, Loading } from '@element-plus/icons-vue'
 import { experimentRunStatusQuery, experimentResultsPlotQuery, runExperimentStatsMutation } from './api'
 import SampleQcStage from './stages/SampleQcStage'
 import ExploreStage from './stages/ExploreStage'
@@ -299,6 +299,7 @@ export default defineComponent({
     const onClickNext = async (): Promise<void> => {
       if (stage.value === 1) {
         if (isResultsDirty.value) {
+          if (currentFilters.value == null) return
           pendingAdvanceToResults.value = true
           try {
             await runExperimentStats({
@@ -307,9 +308,16 @@ export default defineComponent({
               excludedSamples: [...currentExcludedSamples.value],
             })
           } catch (err) {
-            pendingAdvanceToResults.value = false
-            throw err
+            const gqlErrors = (err as { graphQLErrors?: unknown[] })?.graphQLErrors
+            if (Array.isArray(gqlErrors) && gqlErrors.length > 0) {
+              pendingAdvanceToResults.value = false
+              throw err
+            }
+            // eslint-disable-next-line no-console
+            console.error('runExperimentStats client-side error (advancing anyway):', err)
           }
+          pendingAdvanceToResults.value = false
+          stage.value = 2
           return
         }
         if (isInProgress(runStatus.value)) {
@@ -504,13 +512,19 @@ export default defineComponent({
             />
           )}
           {stage.value === 2 && run && inProgress && (
-            <ElAlert
-              type="info"
-              title="Results are being prepared…"
-              description="Run still in progress. The page will update automatically once the results are ready."
-              closable={false}
-              data-test-key="results-preparing"
-            />
+            <ElAlert type="info" closable={false} data-test-key="results-preparing">
+              {{
+                title: () => (
+                  <span class="flex items-center gap-2">
+                    <ElIcon class="is-loading">
+                      <Loading />
+                    </ElIcon>
+                    Results are being prepared…
+                  </span>
+                ),
+                default: () => 'Run still in progress. The page will update automatically once the results are ready.',
+              }}
+            </ElAlert>
           )}
           {stage.value === 2 && run && !inProgress && (
             <ResultsStage
