@@ -3,6 +3,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { ElNotification } from '../../../lib/element-plus'
 import { getActiveUserSubscriptionQuery } from '../../../api/subscription'
 import { userProfileQuery } from '../../../api/user'
+import { proFeatureWhitelistQuery } from '../../../api/plan'
 
 /**
  * Prompt a project editor who lacks Pro to upgrade, with a link to the plans page.
@@ -23,7 +24,8 @@ export function promptExperimentProUpgrade(): void {
  * Shared gate for the "Create experiment" action.
  *
  * A user may create an experiment when they are a system admin, OR when they
- * can edit the project (project manager) AND have an active Pro subscription.
+ * can edit the project (project manager) AND are Pro — via an active Pro
+ * subscription or the plan module's `experiments` whitelist entry.
  * Both `ExperimentsList` (the button) and `ExperimentEditPage` (the create
  * page/action) rely on this so the rule stays in one place.
  */
@@ -36,8 +38,16 @@ export function useExperimentPermissions() {
   const { result: currentUserResult } = useQuery<any>(userProfileQuery, null, {
     fetchPolicy: 'cache-first',
   })
+  const { result: whitelistResult } = useQuery<any>(proFeatureWhitelistQuery, null, {
+    fetchPolicy: 'cache-first',
+  })
 
-  const isPro = computed<boolean>(() => !!subscriptionResult.value?.activeUserSubscription?.isActive)
+  const isWhitelisted = computed<boolean>(() =>
+    (whitelistResult.value?.proFeatureWhitelist ?? []).includes('experiments')
+  )
+  const isPro = computed<boolean>(
+    () => !!subscriptionResult.value?.activeUserSubscription?.isActive || isWhitelisted.value
+  )
   const isAdmin = computed<boolean>(() => currentUserResult.value?.currentUser?.role === 'admin')
   const currentUserId = computed<string | null>(() => currentUserResult.value?.currentUser?.id ?? null)
 

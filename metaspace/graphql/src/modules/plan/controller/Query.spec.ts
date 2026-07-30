@@ -13,7 +13,7 @@ import {
 import * as moment from 'moment'
 import fetch from 'node-fetch'
 import config from '../../../utils/config'
-import { PRO_FEATURE_WHITELIST } from '../util/proFeatureWhitelist'
+import { ALL_PRO_FEATURES_WHITELIST, PRO_FEATURE_WHITELIST } from '../util/proFeatureWhitelist'
 
 // Mock node-fetch
 jest.mock('node-fetch')
@@ -853,6 +853,8 @@ describe('modules/plan/controller (queries)', () => {
     afterEach(() => {
       PRO_FEATURE_WHITELIST.diffAnalysis = []
       PRO_FEATURE_WHITELIST.segmentation = []
+      PRO_FEATURE_WHITELIST.experiments = []
+      ALL_PRO_FEATURES_WHITELIST.length = 0
     })
 
     it('should return an empty list for an anonymous user', async() => {
@@ -891,6 +893,31 @@ describe('modules/plan/controller (queries)', () => {
 
     it('should not grant a feature to an admin who is not listed', async() => {
       const result = await doQuery(queryProFeatureWhitelist, {}, { context: adminContext })
+
+      expect(result).toEqual([])
+    })
+
+    it('should return the experiments feature for a listed user', async() => {
+      PRO_FEATURE_WHITELIST.experiments = [testUser.id]
+
+      const result = await doQuery(queryProFeatureWhitelist, {}, { context: userContext })
+
+      expect(result).toEqual(['experiments'])
+    })
+
+    it('should return every feature for a user in the all-features list', async() => {
+      ALL_PRO_FEATURES_WHITELIST.push(testUser.id)
+
+      const result = await doQuery(queryProFeatureWhitelist, {}, { context: userContext })
+
+      expect(result).toEqual(expect.arrayContaining(['diffAnalysis', 'segmentation', 'experiments']))
+      expect(result).toHaveLength(3)
+    })
+
+    it('should not grant all features to a user not in the all-features list', async() => {
+      ALL_PRO_FEATURES_WHITELIST.push('00000000-0000-0000-0000-000000000000')
+
+      const result = await doQuery(queryProFeatureWhitelist, {}, { context: userContext })
 
       expect(result).toEqual([])
     })

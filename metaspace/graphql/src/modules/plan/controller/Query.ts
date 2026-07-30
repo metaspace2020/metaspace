@@ -8,7 +8,7 @@ import logger from '../../../utils/logger'
 import { URLSearchParams } from 'url'
 import { assertCanEditGroup, assertCanAddDataset } from '../../../modules/group/controller'
 import { User } from '../../user/model'
-import { PRO_FEATURE_WHITELIST } from '../util/proFeatureWhitelist'
+import { ALL_PRO_FEATURES_WHITELIST, PRO_FEATURE_WHITELIST } from '../util/proFeatureWhitelist'
 
 interface AllPlansArgs {
   filter?: {
@@ -278,8 +278,9 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     if (!userId) {
       return []
     }
+    const hasAllFeatures = ALL_PRO_FEATURES_WHITELIST.includes(userId)
     return Object.entries(PRO_FEATURE_WHITELIST)
-      .filter(([, userIds]) => userIds.includes(userId))
+      .filter(([, userIds]) => hasAllFeatures || userIds.includes(userId))
       .map(([feature]) => feature)
   },
 

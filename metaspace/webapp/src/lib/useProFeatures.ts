@@ -4,7 +4,7 @@ import { proFeatureWhitelistQuery } from '../api/plan'
 import { getActiveUserSubscriptionQuery } from '../api/subscription'
 import { currentUserRoleQuery } from '../api/user'
 
-export type ProFeature = 'diffAnalysis' | 'segmentation'
+export type ProFeature = 'diffAnalysis' | 'segmentation' | 'experiments'
 
 /**
  * Single source of truth for METASPACE Pro feature gating.
