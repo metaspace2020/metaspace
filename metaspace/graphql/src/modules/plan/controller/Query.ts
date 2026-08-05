@@ -8,7 +8,7 @@ import logger from '../../../utils/logger'
 import { URLSearchParams } from 'url'
 import { assertCanEditGroup, assertCanAddDataset } from '../../../modules/group/controller'
 import { User } from '../../user/model'
-import { ALL_PRO_FEATURES_WHITELIST, PRO_FEATURE_WHITELIST } from '../util/proFeatureWhitelist'
+import { fetchBetaFeatures } from '../util/betaTesterApi'
 
 interface AllPlansArgs {
   filter?: {
@@ -273,15 +273,12 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     }
   },
 
-  proFeatureWhitelist(_: any, args: any, ctx: Context): string[] {
+  async proFeatureWhitelist(_: any, args: any, ctx: Context): Promise<string[]> {
     const userId = ctx.user?.id
     if (!userId) {
       return []
     }
-    const hasAllFeatures = ALL_PRO_FEATURES_WHITELIST.includes(userId)
-    return Object.entries(PRO_FEATURE_WHITELIST)
-      .filter(([, userIds]) => hasAllFeatures || userIds.includes(userId))
-      .map(([feature]) => feature)
+    return fetchBetaFeatures(userId)
   },
 
   async apiUsagesCount(_: any, args: AllApiUsagesArgs, ctx: Context): Promise<number> {
