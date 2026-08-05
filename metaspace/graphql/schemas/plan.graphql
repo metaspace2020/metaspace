@@ -168,3 +168,7 @@ type Query {
     proFeatureWhitelist: [String!]!
 }
 
+type Mutation {
+    activateBetaTester(token: String!, features: String, startDate: String, endDate: String): String!
+}
+

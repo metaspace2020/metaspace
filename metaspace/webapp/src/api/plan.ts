@@ -334,3 +334,9 @@ export const proFeatureWhitelistQuery = gql`
     proFeatureWhitelist
   }
 `
+
+export const activateBetaTesterMutation = gql`
+  mutation ActivateBetaTester($token: String!, $features: String, $startDate: String, $endDate: String) {
+    activateBetaTester(token: $token, features: $features, startDate: $startDate, endDate: $endDate)
+  }
+`

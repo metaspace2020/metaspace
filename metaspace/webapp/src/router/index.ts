@@ -79,6 +79,8 @@ const asyncPagesFreelyTyped = {
   TermsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/App/TermsPage.vue'),
   PublicationsPage: () =>
     import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/App/PublicationsPage'),
+  BetaActivationPage: () =>
+    import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/BetaTester/BetaActivationPage.vue'),
 
   // These pages use sanitizeHtml, which is big
   ViewGroupPage: () =>
@@ -140,6 +142,12 @@ export const routes: any = [
   { path: '/annotations', name: 'annotations', component: asyncPages.AnnotationsPage },
   { path: '/contact', name: 'contact', component: asyncPages.ContactPage, meta: { footer: true } },
   { path: '/faq', name: 'faq', component: asyncPages.FAQPage, meta: { footer: true } },
+  {
+    path: '/beta-testers/activate',
+    name: 'beta-activation',
+    component: asyncPages.BetaActivationPage,
+    meta: { footer: true },
+  },
   { path: '/split', name: 'split', component: asyncPages.SplitPage, meta: { footer: true } },
   {
     path: '/datasets',

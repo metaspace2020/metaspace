@@ -13,7 +13,6 @@ import {
 import * as moment from 'moment'
 import fetch from 'node-fetch'
 import config from '../../../utils/config'
-import { ALL_PRO_FEATURES_WHITELIST, PRO_FEATURE_WHITELIST } from '../util/proFeatureWhitelist'
 
 // Mock node-fetch
 jest.mock('node-fetch')
@@ -850,72 +849,49 @@ describe('modules/plan/controller (queries)', () => {
   describe('Query.proFeatureWhitelist', () => {
     const queryProFeatureWhitelist = 'query { proFeatureWhitelist }'
 
-    afterEach(() => {
-      PRO_FEATURE_WHITELIST.diffAnalysis = []
-      PRO_FEATURE_WHITELIST.segmentation = []
-      PRO_FEATURE_WHITELIST.experiments = []
-      ALL_PRO_FEATURES_WHITELIST.length = 0
-    })
-
-    it('should return an empty list for an anonymous user', async() => {
-      PRO_FEATURE_WHITELIST.segmentation = [testUser.id]
-
+    it('should return an empty list for an anonymous user without calling the manager API', async() => {
       const result = await doQuery(queryProFeatureWhitelist, {}, { context: anonContext })
 
       expect(result).toEqual([])
+      expect(mockFetch).not.toHaveBeenCalled()
     })
 
-    it('should return only the features the user is listed for', async() => {
-      PRO_FEATURE_WHITELIST.segmentation = [testUser.id]
+    it('should return the features reported by the manager service', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ allowed: true, features: ['diffAnalysis', 'segmentation'] }),
+      })
 
       const result = await doQuery(queryProFeatureWhitelist, {}, { context: userContext })
 
-      expect(result).toEqual(['segmentation'])
+      expect(result).toEqual(['diffAnalysis', 'segmentation'])
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining(`/api/beta-testers/is-allowed?userId=${testUser.id}`),
+        expect.anything()
+      )
     })
 
-    it('should return an empty list for a user who is not listed', async() => {
-      PRO_FEATURE_WHITELIST.segmentation = ['00000000-0000-0000-0000-000000000000']
+    it('should return an empty list for a user with no beta access', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ allowed: false, features: [] }),
+      })
 
       const result = await doQuery(queryProFeatureWhitelist, {}, { context: userContext })
 
       expect(result).toEqual([])
     })
 
-    it('should return every feature the user is listed for', async() => {
-      PRO_FEATURE_WHITELIST.segmentation = [testUser.id]
-      PRO_FEATURE_WHITELIST.diffAnalysis = [testUser.id]
+    it('should return an empty list when the manager service is down', async() => {
+      mockFetch.mockRejectedValueOnce(new Error('ECONNREFUSED'))
 
       const result = await doQuery(queryProFeatureWhitelist, {}, { context: userContext })
-
-      expect(result).toEqual(expect.arrayContaining(['diffAnalysis', 'segmentation']))
-      expect(result).toHaveLength(2)
-    })
-
-    it('should not grant a feature to an admin who is not listed', async() => {
-      const result = await doQuery(queryProFeatureWhitelist, {}, { context: adminContext })
 
       expect(result).toEqual([])
     })
 
-    it('should return the experiments feature for a listed user', async() => {
-      PRO_FEATURE_WHITELIST.experiments = [testUser.id]
-
-      const result = await doQuery(queryProFeatureWhitelist, {}, { context: userContext })
-
-      expect(result).toEqual(['experiments'])
-    })
-
-    it('should return every feature for a user in the all-features list', async() => {
-      ALL_PRO_FEATURES_WHITELIST.push(testUser.id)
-
-      const result = await doQuery(queryProFeatureWhitelist, {}, { context: userContext })
-
-      expect(result).toEqual(expect.arrayContaining(['diffAnalysis', 'segmentation', 'experiments']))
-      expect(result).toHaveLength(3)
-    })
-
-    it('should not grant all features to a user not in the all-features list', async() => {
-      ALL_PRO_FEATURES_WHITELIST.push('00000000-0000-0000-0000-000000000000')
+    it('should return an empty list when the manager service errors', async() => {
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 500, json: () => Promise.resolve({}) })
 
       const result = await doQuery(queryProFeatureWhitelist, {}, { context: userContext })
 
