@@ -1,4 +1,5 @@
 import moment from 'moment'
+import { NormalizationType, normalizationBadgeText } from './normalization'
 
 export default (values: string[]): string => {
   const escaped = values.map((v) => {
@@ -19,11 +20,12 @@ export const csvExportHeader = () => {
   return `# Generated at ${dateStr}. For help see https://bit.ly/3Bzs6Z4\n` + `# URL: ${url.toString()}\n`
 }
 
-export const csvExportIntensityHeader = (isNormalized: boolean = false) => {
+export const csvExportIntensityHeader = (normalization: NormalizationType | false | undefined = false) => {
   const dateStr = moment().format('YYYY-MM-DD HH:mm:ss')
+  const normalizationNote = normalization ? ` The intensities were ${normalizationBadgeText(normalization)}.` : ''
   return (
     `# Generated at ${dateStr}. Hot-spot removal has been applied and the intensity values might ` +
-    `differ from the api results.${isNormalized ? 'The intensities were TIC normalized' : ''}\n` +
+    `differ from the api results.${normalizationNote}\n` +
     `# URL: ${window.location.href}\n`
   )
 }

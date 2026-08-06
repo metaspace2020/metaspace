@@ -67,9 +67,7 @@
             :reset-viewport="resetViewport"
             :toggle-optical-image="toggleOpticalImage"
             :is-active="activeSections.includes('images')"
-            :normalization-text="
-              ticData === 'RMS' ? 'RMS normalized' : ticData === 'MEDIAN' ? 'Median normalized' : 'TIC normalized'
-            "
+            :normalization-text="normalizationBadgeText(ticData)"
             @scaleBarColorChange="setScaleBarColor"
           />
         </template>

@@ -42,12 +42,11 @@
           :model-value="normalization || ''"
           style="width: 300px"
           :teleported="false"
+          placeholder="Select normalization"
+          clearable
           @change="onNormalizationChange"
         >
-          <el-option value="" label="None" />
-          <el-option value="TIC" label="TIC" />
-          <el-option value="RMS" label="RMS" />
-          <el-option value="MEDIAN" label="Median" />
+          <el-option v-for="item in normalizationOptions" :key="item.value" :value="item.value" :label="item.label" />
         </el-select>
       </el-form-item>
       <el-form-item label="Colormap">
@@ -102,6 +101,7 @@ import { useStore } from 'vuex'
 import ColorBar from './Colorbar.vue'
 import ScaleBar from '../../../../components/ScaleBar.vue'
 import NewFeatureBadge, { hideFeatureBadge } from '../../../../components/NewFeatureBadge'
+import { NORMALIZATION_OPTIONS } from '../../../../lib/normalization'
 
 interface colorObjType {
   code: string
@@ -194,6 +194,7 @@ export default defineComponent({
       colormap,
       scaleType,
       normalization,
+      normalizationOptions: NORMALIZATION_OPTIONS,
       selectedTemplate,
       pickedColor,
       onColormapChange,

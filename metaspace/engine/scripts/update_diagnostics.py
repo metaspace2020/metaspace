@@ -8,7 +8,7 @@ from lithops import Storage
 from lithops.storage.utils import CloudObject
 
 from sm.engine.annotation.diagnostics import (
-    DiagnosticType,
+    DATASET_DIAGNOSTIC_TYPES,
     extract_dataset_diagnostics,
     add_diagnostics,
     del_diagnostics,
@@ -60,11 +60,12 @@ def process_dataset(sm_config, del_first, ds_id):
 
         if input_path.startswith('/'):
             imzml_reader = FSImzMLReader(input_path)
-            if not imzml_reader.is_mz_from_metadata or not imzml_reader.is_tic_from_metadata:
-                logger.info(f'{ds_id} missing metadata, reading spectra...')
-                for _ in imzml_reader.iter_spectra(np.arange(imzml_reader.n_spectra)):
-                    # Read all spectra so that mz/tic data is populated
-                    pass
+            # All spectra must be read, because the RMS and median diagnostics can only be derived
+            # from the intensities - unlike the m/z bounds and TIC, imzML metadata never has them.
+            logger.info(f'{ds_id} reading spectra...')
+            for _ in imzml_reader.iter_spectra(np.arange(imzml_reader.n_spectra)):
+                # Read all spectra so that mz/tic/rms/median data is populated
+                pass
         else:
             storage, imzml_cobject, ibd_cobject = parse_input_path_for_lithops(
                 sm_config, input_path
@@ -75,15 +76,14 @@ def process_dataset(sm_config, del_first, ds_id):
                 ibd_cobject=ibd_cobject,
             )
 
-            if not imzml_reader.is_mz_from_metadata or not imzml_reader.is_tic_from_metadata:
-                logger.info(f'{ds_id} missing metadata, reading spectra...')
-                chunk_size = 1000
-                for chunk_start in range(0, imzml_reader.n_spectra, chunk_size):
-                    chunk_end = min(imzml_reader.n_spectra, chunk_start + chunk_size)
-                    chunk = np.arange(chunk_start, chunk_end)
-                    for _ in imzml_reader.iter_spectra(storage, chunk):
-                        # Read all spectra so that mz/tic data is populated
-                        pass
+            logger.info(f'{ds_id} reading spectra...')
+            chunk_size = 1000
+            for chunk_start in range(0, imzml_reader.n_spectra, chunk_size):
+                chunk_end = min(imzml_reader.n_spectra, chunk_start + chunk_size)
+                chunk = np.arange(chunk_start, chunk_end)
+                for _ in imzml_reader.iter_spectra(storage, chunk):
+                    # Read all spectra so that mz/tic/rms/median data is populated
+                    pass
 
         diagnostics = extract_dataset_diagnostics(ds_id, imzml_reader)
         add_diagnostics(diagnostics)
@@ -105,21 +105,25 @@ def find_dataset_ids(ds_ids_param, sql_where, missing, failed, succeeded):
     if not missing:
         # Default to processing all datasets missing diagnostics
         missing = specified_ds_ids is None and not failed and not succeeded
+    # Only count the dataset-level diagnostics, as the remaining DiagnosticTypes are per-job and
+    # would make the counts unreachable
     ds_type_counts = db.select(
         'SELECT d.id, COUNT(DISTINCT dd.type), COUNT(dd.error) '
         'FROM dataset d LEFT JOIN dataset_diagnostic dd on d.id = dd.ds_id '
+        'AND dd.type = ANY(%s) '
         'WHERE d.status = \'FINISHED\' '
-        'GROUP BY d.id'
+        'GROUP BY d.id',
+        ([t.value for t in DATASET_DIAGNOSTIC_TYPES],),
     )
     if missing or failed or succeeded:
         # Get ds_ids based on status (or filter specified ds_ids on status)
         status_ds_ids = set()
         for ds_id, n_diagnostics, n_errors in ds_type_counts:
-            if missing and (n_diagnostics or 0) < len(DiagnosticType):
+            if missing and (n_diagnostics or 0) < len(DATASET_DIAGNOSTIC_TYPES):
                 status_ds_ids.add(ds_id)
             elif failed and n_errors > 0:
                 status_ds_ids.add(ds_id)
-            elif succeeded and n_diagnostics == len(DiagnosticType) and n_errors == 0:
+            elif succeeded and n_diagnostics == len(DATASET_DIAGNOSTIC_TYPES) and n_errors == 0:
                 status_ds_ids.add(ds_id)
 
         if specified_ds_ids is not None:

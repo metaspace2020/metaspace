@@ -440,6 +440,7 @@ import { ElIcon, ElRow, ElTable, ElTableColumn, ElPagination, ElButton, ElMessag
 import isSnapshot from '../../lib/isSnapshot'
 import { readNpy } from '../../lib/npyHandler'
 import safeJsonParse from '../../lib/safeJsonParse'
+import { buildNormalizationMetadata, findNormalizationImage, normalizationFileSuffix } from '../../lib/normalization'
 import { invert, isEqual, uniqBy } from 'lodash-es'
 import config from '../../lib/config'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
@@ -1048,29 +1049,17 @@ export default defineComponent({
           fetchPolicy: 'cache-first',
         })
         const dataset = resp.data.dataset
-        const matchingDiagnostics = dataset.diagnostics.filter((diagnostic) => diagnostic?.type === normType)
+        const normImage = findNormalizationImage(dataset.diagnostics, normType)
 
-        if (!matchingDiagnostics.length) {
+        if (!normImage) {
           store.commit('setNormalization', false)
           store.commit('setNormalizationMatrix', undefined)
           ElMessage.warning(`${normType} normalization is not available for this dataset. Please reprocess it.`)
           return
         }
 
-        const normImage = matchingDiagnostics[0].images.filter(
-          (image) => image.key === normType && image.format === 'NPY'
-        )
-        const { data, shape } = await readNpy(normImage[0].url)
-        const metadata = safeJsonParse(matchingDiagnostics[0].data)
-
-        const fieldMap = { TIC: 'tic', RMS: 'rms', MEDIAN: 'median' }
-        const key = fieldMap[normType] || 'tic'
-        metadata.maxNorm = metadata[`max_${key}`]
-        metadata.minNorm = metadata[`min_${key}`]
-        if (normType === 'TIC') {
-          metadata.maxTic = metadata.max_tic
-          metadata.minTic = metadata.min_tic
-        }
+        const { data, shape } = await readNpy(normImage.url)
+        const metadata = buildNormalizationMetadata(safeJsonParse(normImage.data), normType)
 
         store.commit('setNormalizationMatrix', {
           data,
@@ -1324,7 +1313,7 @@ export default defineComponent({
             if (!fileCols) {
               fileCols = formatCsvRow(cols)
               fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${
-                isNormalized.value ? '_tic_normalized' : ''
+                isNormalized.value ? normalizationFileSuffix(isNormalized.value) : ''
               }.csv`
             }
             rows += formatCsvRow(row)

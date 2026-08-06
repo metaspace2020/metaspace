@@ -120,13 +120,16 @@ class ImzMLReader:  # pylint: disable=too-many-instance-attributes
         if not self.is_tic_from_metadata:
             self._sp_tic[idx] = np.sum(ints)
 
-        # Populate RMS and Median
-        if len(ints) > 0:
-            self._sp_rms[idx] = float(np.sqrt(np.mean(ints**2)))
+        # Populate RMS and Median. Spectra with no non-zero peaks get 0, matching the TIC's
+        # semantics - leaving NaN would break the whole image for datasets with blank pixels.
+        if len(ints):
+            # Square in float64: imzML allows integer intensities, and squaring those in their
+            # own dtype silently overflows to negative values, making the RMS NaN.
+            self._sp_rms[idx] = float(np.sqrt(np.mean(np.square(ints, dtype=np.float64))))
             self._sp_median[idx] = float(np.median(ints))
         else:
-            self._sp_rms[idx] = np.nan
-            self._sp_median[idx] = np.nan
+            self._sp_rms[idx] = 0.0
+            self._sp_median[idx] = 0.0
 
         # Populate min/max m/zs
         if len(mzs) and not self.is_mz_from_metadata:

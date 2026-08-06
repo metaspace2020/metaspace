@@ -22,6 +22,7 @@ import reportError from '../lib/reportError'
 import { defineAsyncComponent } from 'vue'
 import { Loading, DataLine } from '@element-plus/icons-vue'
 import { formatCsvTextArray } from '../lib/formatCsvRow'
+import { normalizationFileSuffix } from '../lib/normalization'
 import { useRouter } from 'vue-router'
 import { UserProfileQuery, userProfileQuery } from '@/api/user'
 import { getActiveUserSubscriptionQuery } from '@/api/subscription'
@@ -167,7 +168,9 @@ export default defineComponent({
           const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
           FileSaver.saveAs(
             blob,
-            `${props.annotation.dataset.name.replace(/\s/g, '_')}_ROI${isNormalized.value ? '_tic_normalized' : ''}.csv`
+            `${props.annotation.dataset.name.replace(/\s/g, '_')}_ROI${
+              isNormalized.value ? normalizationFileSuffix(isNormalized.value) : ''
+            }.csv`
           )
           state.isDownloading = false
           state.offset = 0

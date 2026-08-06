@@ -4,6 +4,7 @@ import { invert, isArray, mapValues } from 'lodash-es'
 import { RouteLocation } from 'vue-router'
 // import { ScaleType } from '../../lib/ionImageRendering'
 import { DEFAULT_SCALE_TYPE } from '../../lib/constants'
+import { NormalizationType, parseNormalization } from '../../lib/normalization'
 
 type ScaleType = 'linear' | 'linear-full' | 'log' | 'log-full' | 'hist' | 'test'
 
@@ -233,7 +234,7 @@ export interface UrlTableSettings {
 export interface UrlAnnotationViewSettings {
   activeSections: string[]
   colormap: string
-  normalization: string | false
+  normalization: NormalizationType | false
   lockTemplate: string | null
   colocalizationAlgo: string | null
   scaleType: ScaleType
@@ -299,8 +300,7 @@ export function decodeSettings(location: RouteLocation): UrlSettings | undefined
     settings.annotationView.colormap = query.cmap
   }
   if (query.norm) {
-    settings.annotationView.normalization =
-      query.norm === true || query.norm === 'true' ? 'TIC' : (query.norm as string)
+    settings.annotationView.normalization = parseNormalization(query.norm)
   }
   if (query.scale) {
     settings.annotationView.scaleType = (query.scale || DEFAULT_SCALE_TYPE) as ScaleType

@@ -28,6 +28,16 @@ class DiagnosticType(str, Enum):
     SEGMENTATION = 'SEGMENTATION'
 
 
+# The diagnostic types produced by extract_dataset_diagnostics. The remaining DiagnosticTypes are
+# per-job, so a dataset never has all of them.
+DATASET_DIAGNOSTIC_TYPES = [
+    DiagnosticType.IMZML_METADATA,
+    DiagnosticType.TIC,
+    DiagnosticType.RMS,
+    DiagnosticType.MEDIAN,
+]
+
+
 class DiagnosticImageKey(str, Enum):
     # if type == DiagnosticType.TIC:
     TIC = 'TIC'
@@ -356,11 +366,15 @@ def extract_dataset_diagnostics(
 
     logger.debug(f'Extracting dataset diagnostics for {ds_id}')
 
+    diagnostic_fns = {
+        DiagnosticType.IMZML_METADATA: metadata_diagnostic,
+        DiagnosticType.TIC: tic_diagnostic,
+        DiagnosticType.RMS: rms_diagnostic,
+        DiagnosticType.MEDIAN: median_diagnostic,
+    }
     return [
-        _run_diagnostic_fn(ds_id, DiagnosticType.IMZML_METADATA, metadata_diagnostic),
-        _run_diagnostic_fn(ds_id, DiagnosticType.TIC, tic_diagnostic),
-        _run_diagnostic_fn(ds_id, DiagnosticType.RMS, rms_diagnostic),
-        _run_diagnostic_fn(ds_id, DiagnosticType.MEDIAN, median_diagnostic),
+        _run_diagnostic_fn(ds_id, type_, diagnostic_fns[type_])
+        for type_ in DATASET_DIAGNOSTIC_TYPES
     ]
 
 

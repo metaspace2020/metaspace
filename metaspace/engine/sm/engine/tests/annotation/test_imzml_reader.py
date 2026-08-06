@@ -18,6 +18,14 @@ EXPECTED_TIC = np.array(
         [3 * 3, np.nan, 4 * 4],
     ]
 )
+# All intensities in a spectrum are equal, so both RMS and median equal that intensity
+EXPECTED_RMS = EXPECTED_MEDIAN = np.array(
+    [
+        [1, np.nan, 2],
+        [np.nan, np.nan, np.nan],
+        [3, np.nan, 4],
+    ]
+)
 TIC_ACCESSION = 'MS:1000285'
 
 
@@ -69,6 +77,50 @@ def test_imzml_reader_tic_image_from_metadata():
     assert np.array_equal(imzml_reader.tic_image(), metadata_tic, equal_nan=True)
 
 
+def test_imzml_reader_rms_and_median_images():
+    imzml_reader = make_imzml_reader_mock(coordinates=MOCK_COORDINATES, spectra=MOCK_SPECTRA)
+    for _ in imzml_reader.iter_spectra(np.arange(4)):
+        pass
+
+    assert np.array_equal(imzml_reader.rms_image(), EXPECTED_RMS, equal_nan=True)
+    assert np.array_equal(imzml_reader.median_image(), EXPECTED_MEDIAN, equal_nan=True)
+
+
+def test_imzml_reader_empty_spectra_are_zero():
+    """Spectra with no non-zero peaks must produce 0, matching the TIC's semantics.
+    Blank/off-tissue pixels are common, and previously left NaNs that broke the images."""
+    spectra = [
+        (np.array([], dtype='f'), np.array([], dtype='f')),  # no peaks at all
+        (np.array([1, 2], dtype='f'), np.array([0, 0], dtype='f')),  # only zero-intensity peaks
+        (np.array([1, 2], dtype='f'), np.array([3, 5], dtype='f')),
+        (np.array([1], dtype='f'), np.array([4], dtype='f')),
+    ]
+    imzml_reader = make_imzml_reader_mock(coordinates=MOCK_COORDINATES, spectra=spectra)
+    for _ in imzml_reader.iter_spectra(np.arange(4)):
+        pass
+
+    expected_tic = np.array([[0, np.nan, 0], [np.nan] * 3, [8, np.nan, 4]])
+    expected_rms = np.array([[0, np.nan, 0], [np.nan] * 3, [np.sqrt(17), np.nan, 4]])
+    expected_median = np.array([[0, np.nan, 0], [np.nan] * 3, [4, np.nan, 4]])
+
+    assert np.array_equal(imzml_reader.tic_image(), expected_tic, equal_nan=True)
+    assert np.allclose(imzml_reader.rms_image(), expected_rms, equal_nan=True)
+    assert np.array_equal(imzml_reader.median_image(), expected_median, equal_nan=True)
+
+
+def test_imzml_reader_rms_with_integer_intensities():
+    """imzML allows 32-bit integer intensities. Squaring those in their own dtype overflows to
+    negative values, which would make the RMS NaN and fail the assertion in rms_image()."""
+    big = 70_000  # 70_000**2 overflows int32
+    spectra = [(np.array([1], dtype='i'), np.array([big], dtype='i'))] * 4
+    imzml_reader = make_imzml_reader_mock(coordinates=MOCK_COORDINATES, spectra=spectra)
+    for _ in imzml_reader.iter_spectra(np.arange(4)):
+        pass
+
+    rms = imzml_reader.rms_image()
+    assert np.allclose(rms[imzml_reader.mask], big)
+
+
 def test_imzml_reader_lithops(executor):
     imzml_reader = make_lithops_imzml_reader(
         executor.storage, mz_precision='d', polarity='negative'
@@ -92,6 +144,8 @@ def test_imzml_reader_lithops(executor):
     assert imzml_reader.max_mz == 4.0
 
     assert np.array_equal(imzml_reader.tic_image(), EXPECTED_TIC, equal_nan=True)
+    assert np.array_equal(imzml_reader.rms_image(), EXPECTED_RMS, equal_nan=True)
+    assert np.array_equal(imzml_reader.median_image(), EXPECTED_MEDIAN, equal_nan=True)
 
     # Ensure imzml_reader is pickleable, as Lithops will pickle it
     p = pickle.dumps(imzml_reader)
