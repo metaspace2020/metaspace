@@ -233,7 +233,7 @@ export interface UrlTableSettings {
 export interface UrlAnnotationViewSettings {
   activeSections: string[]
   colormap: string
-  normalization: boolean
+  normalization: string | false
   lockTemplate: string | null
   colocalizationAlgo: string | null
   scaleType: ScaleType
@@ -299,7 +299,8 @@ export function decodeSettings(location: RouteLocation): UrlSettings | undefined
     settings.annotationView.colormap = query.cmap
   }
   if (query.norm) {
-    settings.annotationView.normalization = true
+    settings.annotationView.normalization =
+      query.norm === true || query.norm === 'true' ? 'TIC' : (query.norm as string)
   }
   if (query.scale) {
     settings.annotationView.scaleType = (query.scale || DEFAULT_SCALE_TYPE) as ScaleType
