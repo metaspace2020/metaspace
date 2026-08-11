@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import pickle
 from concurrent.futures import Future, ThreadPoolExecutor
+from contextlib import ExitStack
 from typing import TypeVar, Generic, List, Iterable, overload, Any, Tuple, Union
 
 import uuid
@@ -16,6 +17,7 @@ logger = logging.getLogger('annotation-pipeline')
 TItem = TypeVar('TItem')
 TArg = TypeVar('TArg')
 TRet = TypeVar('TRet')
+MAX_MULTIPART_THREADS = 4
 
 
 class CObj(Generic[TItem], CloudObject):
@@ -56,17 +58,28 @@ def deserialize(data):
 
 
 def multipart_upload_cobj(
-    storage: Storage, data: bytes, bucket: str = None, key: str = None, part_size_mb: int = 100
+    storage: Storage,
+    data: np.ndarray,
+    bucket: str = None,
+    key: str = None,
+    dtype=None,
+    part_size_mb: int = 32,
+    pool: ThreadPoolExecutor = None,
 ) -> Union[CObj, CloudObject]:
-    """
-    Upload large data to S3 using multipart upload.
+    """Upload data to S3 as a multipart upload, sending the parts in parallel.
 
     Args:
         storage: The Storage instance to use
-        data: The binary data to upload
+        data: The payload array. It is sliced and converted one part at a time, so its
+            bytes are never materialised in full. Wrap raw bytes in a zero-copy
+            np.frombuffer view to send them.
         bucket: The S3 bucket name (defaults to storage.bucket)
         key: The S3 key (path) to upload to
-        part_size_mb: Size of each part in MB (default 100MB)
+        dtype: dtype to convert each part to before sending.
+        part_size_mb: Size of each uploaded part. S3 requires >= 5 MB for every part but the
+            last, and allows at most 10 000 parts.
+        pool: Pool to send the parts through; private if not given. Share one pool across
+            objects to cap in-flight parts and memory; don't call from inside it (deadlock).
 
     Returns:
         A CloudObject or CObj pointing to the uploaded data
@@ -79,57 +92,50 @@ def multipart_upload_cobj(
         key = '/'.join(["lithops.jobs/tmp", name])
         logger.debug(f"No key provided, generated key following lithops pattern: {key}")
 
-    data_size = len(data)
     bucket = bucket or storage.bucket
-
-    # Get the underlying boto3 client
     s3_client = storage.get_client()
 
-    # Calculate part size in bytes
-    part_size = part_size_mb * 1024 * 1024
+    # Parts are sliced in elements, so that part_size_mb always refers to what actually
+    # goes over the wire after the dtype conversion.
+    itemsize = np.dtype(dtype or data.dtype).itemsize
+    part_len = max(1, int(part_size_mb * 2 ** 20) // itemsize)
+    parts_count = max(1, (len(data) + part_len - 1) // part_len)
 
-    # Log start of multipart upload
-    logger.info(f"Using multipart upload for large file: {key} ({data_size/(1024**3):.2f} GB)")
-    logger.info(f"Using multipart upload for large file bucket: {bucket}")
-    logger.info(f"Using multipart upload for large file s3_client: {s3_client}")
-
-    # Initialize multipart upload
+    logger.info(
+        f'Multipart upload of {key}: {len(data) * itemsize / 1024 ** 3:.2f} GB '
+        f'in {parts_count} parts'
+    )
     mpu = s3_client.create_multipart_upload(Bucket=bucket, Key=key)
     upload_id = mpu['UploadId']
 
-    # Calculate number of parts
-    parts_count = (data_size + part_size - 1) // part_size  # ceiling division
-    parts = []
+    def upload_part(part_i):
+        # Slicing and converting inside the worker keeps only `pool size` parts in memory
+        part = data[part_i * part_len : (part_i + 1) * part_len]
+        if dtype:
+            part = part.astype(dtype, copy=False)
+        body = part.tobytes()
+        response = s3_client.upload_part(
+            Bucket=bucket, Key=key, PartNumber=part_i + 1, UploadId=upload_id, Body=body
+        )
+        return {'PartNumber': part_i + 1, 'ETag': response['ETag']}
 
     try:
-        # Upload each part
-        for i in range(parts_count):
-            part_number = i + 1
-            start = i * part_size
-            end = min(start + part_size, data_size)
+        with ExitStack() as stack:
+            if pool is None:
+                pool = stack.enter_context(
+                    ThreadPoolExecutor(min(MAX_MULTIPART_THREADS, parts_count))
+                )
+            # S3 requires `Parts` sorted by PartNumber. `map` yields in submission
+            # order, so it already is; collect by completion and you must sort again.
+            parts = list(pool.map(upload_part, range(parts_count)))
 
-            logger.info(f"Uploading part {part_number}/{parts_count} for {key}")
-            response = s3_client.upload_part(
-                Bucket=bucket,
-                Key=key,
-                PartNumber=part_number,
-                UploadId=upload_id,
-                Body=data[start:end],
-            )
-
-            # Add part info to list
-            parts.append({'PartNumber': part_number, 'ETag': response['ETag']})
-
-        # Complete the multipart upload
         s3_client.complete_multipart_upload(
             Bucket=bucket, Key=key, UploadId=upload_id, MultipartUpload={'Parts': parts}
         )
 
-        # Return appropriate object type
         return CObj(storage.backend, bucket, key)
 
     except Exception as e:
-        # Abort multipart upload if something goes wrong
         logger.error(f"Error in multipart upload: {str(e)}")
         s3_client.abort_multipart_upload(Bucket=bucket, Key=key, UploadId=upload_id)
         raise
@@ -140,12 +146,12 @@ def save_cobj(storage: Storage, obj: TItem, bucket: str = None, key: str = None)
     data = serialize(obj)
     data_size = len(data)
 
-    # # # Use regular upload for files under 5GB
+    # Use regular upload for files under 5GB
     if data_size < 5 * 1024 ** 3:
         return storage.put_cloudobject(data, bucket, key)
 
-    # For files >= 5GB, use multipart upload
-    return multipart_upload_cobj(storage, data, bucket, key)
+    # For files >= 5GB, frombuffer is a zero-copy view, the parts are sliced and copied from it one at a time
+    return multipart_upload_cobj(storage, np.frombuffer(data, np.uint8), bucket, key)
 
 
 @overload
