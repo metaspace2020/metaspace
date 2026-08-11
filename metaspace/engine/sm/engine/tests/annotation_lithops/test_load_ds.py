@@ -9,6 +9,7 @@ import pytest
 from sm.engine.annotation_lithops import load_ds
 from sm.engine.annotation_lithops.io import multipart_upload_cobj
 from sm.engine.annotation_lithops.load_ds import (
+    BROWSER_FILES,
     BROWSER_UPLOAD_THREADS,
     _upload_imzml_browser_files,
 )
@@ -25,10 +26,76 @@ def _args():
     return mzs, ints, sp_idxs, imzml_reader
 
 
-def _storage():
+def _storage(keys):
     storage = MagicMock()
     storage.bucket = 'browser-bucket'
+    storage.list_keys.return_value = list(keys)
     return storage
+
+
+def _uploaded_keys(storage, save_cobj):
+    """Every key written by the block. The pickle goes through save_cobj, the rest direct."""
+    written = {call.kwargs['key'] for call in storage.put_cloudobject.call_args_list}
+    return written | {call.kwargs['key'] for call in save_cobj.call_args_list}
+
+
+def test_browser_files_matches_what_the_rest_api_expects():
+    """DatasetFiles.check_imzml_browser_files requires exactly these 5 keys per uuid.
+
+    Pinning the list also keeps it non-empty, which the skip check relies on: `all()` over
+    an empty iterable is True, so an emptied constant would silently skip every upload.
+    """
+    assert set(BROWSER_FILES) == {
+        'mzs.npy',
+        'ints.npy',
+        'sp_idxs.npy',
+        'mz_index.npy',
+        'portable_spectrum_reader.pickle',
+    }
+
+
+@patch('sm.engine.annotation_lithops.load_ds.save_cobj')
+def test_skips_upload_when_complete_set_already_exists(save_cobj):
+    storage = _storage(f'{UUID}/{name}' for name in BROWSER_FILES)
+
+    skipped = _upload_imzml_browser_files(*_args(), storage, UUID)
+
+    assert skipped is True
+    storage.list_keys.assert_called_once_with('browser-bucket', f'{UUID}/')
+    assert _uploaded_keys(storage, save_cobj) == set()
+
+
+@patch('sm.engine.annotation_lithops.load_ds.save_cobj')
+def test_uploads_every_file_when_bucket_is_empty(save_cobj):
+    storage = _storage([])
+
+    skipped = _upload_imzml_browser_files(*_args(), storage, UUID)
+
+    assert skipped is False
+    assert _uploaded_keys(storage, save_cobj) == {f'{UUID}/{name}' for name in BROWSER_FILES}
+
+
+@patch('sm.engine.annotation_lithops.load_ds.save_cobj')
+def test_uploads_when_the_set_is_incomplete(save_cobj):
+    """An interrupted run leaves some keys behind - they must not pass as a complete set."""
+    for missing in BROWSER_FILES:
+        save_cobj.reset_mock()
+        storage = _storage(f'{UUID}/{name}' for name in BROWSER_FILES if name != missing)
+
+        skipped = _upload_imzml_browser_files(*_args(), storage, UUID)
+
+        assert skipped is False, f'a set missing {missing} was treated as complete'
+        assert _uploaded_keys(storage, save_cobj) == {f'{UUID}/{name}' for name in BROWSER_FILES}
+
+
+@patch('sm.engine.annotation_lithops.load_ds.save_cobj')
+def test_ignores_keys_belonging_to_another_dataset(save_cobj):
+    storage = _storage(f'other-uuid/{name}' for name in BROWSER_FILES)
+
+    skipped = _upload_imzml_browser_files(*_args(), storage, UUID)
+
+    assert skipped is False
+    assert _uploaded_keys(storage, save_cobj) == {f'{UUID}/{name}' for name in BROWSER_FILES}
 
 
 class FakeS3:
@@ -126,13 +193,14 @@ def test_browser_files_keep_their_old_bytes():
     mzs = np.linspace(100, 1000, n_peaks, dtype='d')
     ints = np.linspace(1, 9, n_peaks, dtype='f')
     sp_idxs = np.arange(n_peaks, dtype=np.uint32)
-    storage = _storage()
+    storage = _storage([])
     s3 = FakeS3()
     storage.get_client.return_value = s3
 
     with patch.object(load_ds, 'MULTIPART_THRESHOLD_MB', 0), patch.object(load_ds, 'save_cobj'):
-        _upload_imzml_browser_files(mzs, ints, sp_idxs, MagicMock(), storage, UUID)
+        skipped = _upload_imzml_browser_files(mzs, ints, sp_idxs, MagicMock(), storage, UUID)
 
+    assert skipped is False
     assert s3.completed[f'{UUID}/mzs.npy'] == mzs.astype('f').tobytes()
     assert s3.completed[f'{UUID}/ints.npy'] == ints.astype('f').tobytes()
     assert s3.completed[f'{UUID}/sp_idxs.npy'] == sp_idxs.astype('f').tobytes()
@@ -161,7 +229,7 @@ def test_browser_files_share_a_single_pool(monkeypatch):
         'ThreadPoolExecutor',
         lambda max_workers: pool_sizes.append(max_workers) or real_pool(max_workers),
     )
-    storage = _storage()
+    storage = _storage([])
     storage.get_client.return_value = FakeS3()
 
     with patch.object(load_ds, 'MULTIPART_THRESHOLD_MB', 0), patch.object(load_ds, 'save_cobj'):

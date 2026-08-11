@@ -20,6 +20,7 @@ logger = logging.getLogger('annotation-pipeline')
 
 
 BROWSER_ARRAY_FILES = ['mzs.npy', 'ints.npy', 'sp_idxs.npy']
+BROWSER_FILES = [*BROWSER_ARRAY_FILES, 'mz_index.npy', 'portable_spectrum_reader.pickle']
 BROWSER_UPLOAD_THREADS = 4
 MULTIPART_THRESHOLD_MB = 64
 BROWSER_BYTES_PER_PEAK = 4
@@ -121,8 +122,17 @@ def _upload_imzml_browser_files(
     imzml_reader: LithopsImzMLReader,
     browser_storage: Storage,
     uuid: str,
-) -> None:
-    """Save imzML browser files on the object storage"""
+) -> bool:
+    """Save imzML browser files on the object storage.
+
+    Returns True if the upload was skipped because a complete set was already there.
+    """
+    # The files are a pure function of the .ibd/.imzML behind this per-session uuid, so an
+    # existing set is never stale; S3 PUTs are atomic, so a partial upload fails this check.
+    existing = set(browser_storage.list_keys(browser_storage.bucket, f'{uuid}/'))
+    if all(f'{uuid}/{name}' in existing for name in BROWSER_FILES):
+        logger.info(f'imzML browser files for {uuid} already exist, skipping upload')
+        return True
 
     def upload_file(data: np.array, key: str, pool: ThreadPoolExecutor) -> CloudObject:
         if len(data) * BROWSER_BYTES_PER_PEAK < MULTIPART_THRESHOLD_MB * 2 ** 20:
@@ -145,6 +155,7 @@ def _upload_imzml_browser_files(
 
     key = f'{uuid}/portable_spectrum_reader.pickle'
     cobjs.append(save_cobj(browser_storage, imzml_reader.imzml_reader, key=key))
+    return False
 
 
 def _load_ds(
@@ -174,8 +185,8 @@ def _load_ds(
 
     logger.info('Uploading imzml browser files')
     browser_storage, uuid = _prepare_storage_imzml_browser_files(imzml_cobject, conf)
-    _upload_imzml_browser_files(mzs, ints, sp_idxs, imzml_reader, browser_storage, uuid)
-    perf.record_entry('uploaded imzml browser files')
+    skipped = _upload_imzml_browser_files(mzs, ints, sp_idxs, imzml_reader, browser_storage, uuid)
+    perf.record_entry('uploaded imzml browser files', skipped=skipped)
 
     logger.info('Uploading segments')
     ds_segms_cobjs, ds_segments_bounds, ds_segm_lens = _upload_segments(
