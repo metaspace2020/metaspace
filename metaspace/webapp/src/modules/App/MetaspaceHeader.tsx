@@ -223,6 +223,7 @@ export default defineComponent({
       'my-groups': { type: 'route', route: 'group-list', query: { f: 'my-groups' } },
       'my-projects': { type: 'route', route: 'project-list', query: { f: 'my-projects' } },
       plans: { type: 'route', route: 'plans' },
+      pro: { type: 'route', route: 'pro' },
       split: { type: 'route', route: 'split' },
       upload: { type: 'route', route: 'upload' },
       news: { type: 'route', route: 'news' },
@@ -631,7 +632,7 @@ export default defineComponent({
 
                 {renderTab(
                   'METASPACE Pro',
-                  'plans',
+                  'pro',
                   [
                     { command: 'plans', label: 'Plans' },
                     { command: 'split', label: 'Pro x Academic' },

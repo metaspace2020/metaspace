@@ -181,7 +181,7 @@ const AboutPage = defineComponent({
                       <span
                         class="about-link ml-1 text-pro"
                         onClick={() => {
-                          router.push('/plans')
+                          router.push('/pro')
                         }}
                       >
                         METASPACE Pro
