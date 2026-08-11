@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Tuple, Union, Any
 
@@ -19,29 +20,30 @@ from sm.engine.utils.perf_profile import SubtaskProfiler
 logger = logging.getLogger('annotation-pipeline')
 
 
+def _get_n_read_threads():
+    """Measured optimum: 8 S3 connections saturate EC2 download throughput, while Lambda is
+    network-capped and gains nothing past 4 (see bench_s3_download.py)."""
+    if os.environ.get('AWS_LAMBDA_FUNCTION_MEMORY_SIZE'):
+        return 4
+    return 8
+
+
 def _load_spectra(storage, imzml_reader):
-    # Pre-allocate lists of mz & int arrays
-    mz_arrays = [np.array([], dtype=imzml_reader.mz_precision)] * imzml_reader.n_spectra
-    int_arrays = [np.array([], dtype=np.float32)] * imzml_reader.n_spectra
-    sp_lens = np.empty(imzml_reader.n_spectra, np.int64)
-
-    def read_spectrum_chunk(start_end):
-        for sp_i, mzs, ints in imzml_reader.iter_spectra(storage, list(range(*start_end))):
-            mz_arrays[sp_i] = mzs
-            int_arrays[sp_i] = ints.astype(np.float32)
-            sp_lens[sp_i] = len(ints)
-
     # Break into approx. 100MB chunks to read in parallel
     n_peaks = np.sum(imzml_reader.imzml_reader.mzLengths)
-    n_chunks = min(int(np.ceil(n_peaks / (10 * 2 ** 20))), imzml_reader.n_spectra)
+    n_chunks = max(min(int(np.ceil(n_peaks / (10 * 2 ** 20))), imzml_reader.n_spectra), 1)
     chunk_bounds = np.linspace(0, imzml_reader.n_spectra, n_chunks + 1, dtype=np.int64)
-    spectrum_chunks = zip(chunk_bounds, chunk_bounds[1:])
+    spectrum_chunks = list(zip(chunk_bounds, chunk_bounds[1:]))
 
-    with ThreadPoolExecutor(4) as executor:
-        for _ in executor.map(read_spectrum_chunk, spectrum_chunks):
-            pass
+    def read_chunk(start_end):
+        return imzml_reader.read_spectra_chunk(storage, np.arange(*start_end))
 
-    return np.concatenate(mz_arrays), np.concatenate(int_arrays), sp_lens
+    with ThreadPoolExecutor(_get_n_read_threads()) as executor:
+        chunks = list(executor.map(read_chunk, spectrum_chunks))
+    mzs = np.concatenate([chunk_mzs for chunk_mzs, _, _ in chunks])
+    ints = np.concatenate([chunk_ints for _, chunk_ints, _ in chunks])
+    sp_lens = np.concatenate([chunk_lens for _, _, chunk_lens in chunks])
+    return mzs, ints, sp_lens
 
 
 def _sort_spectra(imzml_reader, perf, mzs, ints, sp_lens):
