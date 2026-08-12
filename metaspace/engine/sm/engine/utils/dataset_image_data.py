@@ -19,7 +19,12 @@ def get_ppm(db, ds_id):
     return int(ppm[0])
 
 
-def get_imzml_browser_dataset(db, s3_client, sm_config, ds_id):
+def get_imzml_browser_arrays(db, s3_client, sm_config, ds_id):
+    """Return the browser's (mzs, ints, sp_idxs) arrays, globally sorted by m/z.
+
+    Kept separate rather than stacked so callers that only need the columns avoid the
+    transient 3x copy that stacking costs on large datasets.
+    """
     res = db.select_one('SELECT input_path FROM dataset WHERE id = %s', params=(ds_id,))
 
     uuid = res[0].split('/')[-1]
@@ -37,7 +42,12 @@ def get_imzml_browser_dataset(db, s3_client, sm_config, ds_id):
         bytestream = s3_object['Body'].read()
         result[key_name] = np.frombuffer(bytestream, dtype='f')
 
-    peak_array = np.stack([result['mzs'], result['ints'], result['sp_idxs']]).T
+    return result['mzs'], result['ints'], result['sp_idxs']
+
+
+def get_imzml_browser_dataset(db, s3_client, sm_config, ds_id):
+    mzs, ints, sp_idxs = get_imzml_browser_arrays(db, s3_client, sm_config, ds_id)
+    peak_array = np.stack([mzs, ints, sp_idxs]).T
     return peak_array
 
 

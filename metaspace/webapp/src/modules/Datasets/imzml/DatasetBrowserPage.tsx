@@ -20,6 +20,9 @@ import {
   getDatasetByIdWithPathQuery,
   getSpectrum,
   getInitialPeak,
+  getRoisQuery,
+  meanSpectrumQuery,
+  meanSpectrumAvailabilityQuery,
 } from '../../../api/dataset'
 import { annotationListQuery } from '../../../api/annotation'
 import config from '../../../lib/config'
@@ -31,6 +34,7 @@ import { calculateMzFromFormula, isFormulaValid, parseFormulaAndCharge } from '.
 import reportError from '../../../lib/reportError'
 import { readNpy } from '../../../lib/npyHandler'
 import { DatasetBrowserKendrickPlot } from './DatasetBrowserKendrickPlot'
+import { DatasetBrowserMeanSpectrum } from './DatasetBrowserMeanSpectrum'
 import FadeTransition from '../../../components/FadeTransition'
 import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../../../components/MolecularFormula'
@@ -95,6 +99,9 @@ interface DatasetBrowserState {
   enableImageQuery: boolean
   noData: boolean
   globalImageSettings: GlobalImageSettings
+  // undefined until the ROI list arrives and a default is picked
+  meanSpectrumRegion: string | undefined
+  meanSpectrumStat: string
 }
 
 const PEAK_FILTER = {
@@ -106,7 +113,11 @@ const PEAK_FILTER = {
 const VIEWS = {
   SPECTRUM: 'Mass spectrum',
   KENDRICK: 'Kendrick plot',
+  MEAN: 'Mean spectrum',
 }
+
+// Sentinel for the "whole dataset" entry in the ROI dropdown; sent to the API as no roiId.
+const WHOLE_DATASET_REGION = '__whole__'
 
 export default defineComponent({
   name: 'DatasetBrowserPage',
@@ -161,6 +172,8 @@ export default defineComponent({
         refMzHigh: undefined,
       },
       enableImageQuery: false,
+      meanSpectrumRegion: undefined,
+      meanSpectrumStat: 'MEAN',
       globalImageSettings: {
         resetViewPort: false,
         isNormalized: true,
@@ -296,6 +309,92 @@ export default defineComponent({
       spectrumQueryOptions as any
     )
     const pixelSpectrum = computed(() => spectrumResult.value?.pixelSpectrum)
+
+    // --- Mean spectrum tab -------------------------------------------------------
+    // Aggregated region spectrum. Independent of the pixel selection that drives the
+    // Mass spectrum / Kendrick views.
+    const meanSpectrumEnabled = computed(() => state.currentView === VIEWS.MEAN && !!datasetId.value)
+
+    const { result: roisResult } = useQuery<any>(
+      getRoisQuery,
+      () => ({ datasetId: datasetId.value }),
+      () => ({ enabled: meanSpectrumEnabled.value })
+    )
+    // Legacy ROIs surface with placeholder `legacy_N` ids and have no row in the `roi`
+    // table for the engine to read, so they cannot back a mean spectrum. (Signed-in
+    // users get theirs migrated on read by the `rois` resolver, so this only bites
+    // anonymous viewers of datasets whose ROIs were never migrated.)
+    const rois = computed(() => (roisResult.value?.rois || []).filter((roi: any) => /^\d+$/.test(String(roi.id))))
+
+    const { result: meanAvailabilityResult } = useQuery<any>(
+      meanSpectrumAvailabilityQuery,
+      () => ({ datasetId: datasetId.value }),
+      () => ({ enabled: meanSpectrumEnabled.value })
+    )
+    const meanAvailability = computed(() => meanAvailabilityResult.value?.meanSpectrumAvailability)
+
+    // Default to the first ROI, matching the ordering `rois` returns (own ROIs first,
+    // isDefault DESC then name ASC) and the diff-analysis view's convention. Falls back
+    // to the whole dataset when there are no ROIs but the dataset is small enough.
+    const resolvedRegion = computed(() => {
+      if (state.meanSpectrumRegion !== undefined) {
+        return state.meanSpectrumRegion
+      }
+      if (rois.value.length > 0) {
+        return String(rois.value[0].id)
+      }
+      return meanAvailability.value?.wholeDatasetAvailable ? WHOLE_DATASET_REGION : undefined
+    })
+
+    const { result: meanSpectrumResult, loading: meanSpectrumLoading } = useQuery<any>(
+      meanSpectrumQuery,
+      () => ({
+        datasetId: datasetId.value,
+        roiId: resolvedRegion.value === WHOLE_DATASET_REGION ? null : resolvedRegion.value,
+        stat: state.meanSpectrumStat,
+      }),
+      () => ({
+        enabled: meanSpectrumEnabled.value && resolvedRegion.value !== undefined,
+        fetchPolicy: 'cache-first' as const,
+      })
+    )
+    const meanSpectrum = computed(() => meanSpectrumResult.value?.meanSpectrum)
+
+    const meanSpectrumData = computed(() => {
+      const spectrum = meanSpectrum.value
+      if (!spectrum) {
+        return []
+      }
+      return spectrum.mzs.map((mz: number, i: number) => [mz, spectrum.intensities[i], spectrum.support[i]])
+    })
+
+    const meanSpectrumEmptyMessage = computed(() => {
+      if (meanAvailability.value && !meanAvailability.value.available) {
+        return meanAvailability.value.reason
+      }
+      if (rois.value.length === 0 && !meanAvailability.value?.wholeDatasetAvailable) {
+        return 'No saved regions for this dataset — define an ROI to see its mean spectrum'
+      }
+      return 'No peaks passed the minimum pixel support for this region'
+    })
+
+    const handleMeanSpectrumDownload = () => {
+      const spectrum = meanSpectrum.value
+      if (!spectrum) {
+        return
+      }
+      const statCol = state.meanSpectrumStat === 'SUM' ? 'summed_intensity' : 'mean_intensity'
+      const rows: any = [['dataset_name', 'dataset_id', 'region', 'mz', statCol, 'n_pixels_supporting']]
+      const region = resolvedRegion.value === WHOLE_DATASET_REGION ? 'whole_dataset' : `roi_${resolvedRegion.value}`
+
+      meanSpectrumData.value.forEach(([mz, intensity, support]: any) => {
+        rows.push([dataset?.value?.name, dataset?.value?.id, region, mz, intensity, support])
+      })
+
+      const csv = rows.map((e: any) => e.join(',')).join('\n')
+      const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
+      FileSaver.saveAs(blob, `${dataset?.value?.name.replace(/\s/g, '_')}_mean_spectrum.csv`)
+    }
 
     const peakQueryOptions = reactive({ enabled: false, fetchPolicy: 'cache-first' as const })
     const { onResult: onInitialPeakResult } = useQuery<any>(
@@ -1256,7 +1355,104 @@ export default defineComponent({
         >
           <ElRadioButton class="ml-2" label={VIEWS.SPECTRUM} />
           <ElRadioButton label={VIEWS.KENDRICK} />
+          <ElRadioButton label={VIEWS.MEAN} />
         </ElRadioGroup>
+      )
+    }
+
+    const renderMeanSpectrumControls = () => {
+      const availability = meanAvailability.value
+      const wholeAvailable = availability?.wholeDatasetAvailable ?? false
+      const spectrum = meanSpectrum.value
+
+      return (
+        <div class="dataset-browser-mean-controls flex flex-wrap items-center gap-4 px-4 pt-2">
+          <div class="flex flex-col">
+            <span class="text-xs">Region</span>
+            <ElSelect
+              class="select-box-mini"
+              modelValue={resolvedRegion.value}
+              onChange={(value: string) => {
+                state.meanSpectrumRegion = value
+              }}
+              placeholder="Select a region"
+              size="small"
+            >
+              {rois.value.map((roi: any) => (
+                <ElOption key={roi.id} label={roi.name} value={String(roi.id)} />
+              ))}
+              {/* Greyed out rather than hidden, so the size limit stays discoverable.
+                  The reason is spelled out below rather than in a tooltip, since a
+                  disabled option does not reliably receive hover events. */}
+              <ElOption
+                label={wholeAvailable ? 'Whole dataset' : 'Whole dataset (unavailable)'}
+                value={WHOLE_DATASET_REGION}
+                disabled={!wholeAvailable}
+              />
+            </ElSelect>
+            {!wholeAvailable && availability?.reason && (
+              <span class="text-xs text-gray-500 mt-1">{availability.reason}</span>
+            )}
+          </div>
+          <div class="flex flex-col">
+            <span class="text-xs">Aggregation</span>
+            <ElSelect
+              class="select-box-mini"
+              modelValue={state.meanSpectrumStat}
+              onChange={(value: string) => {
+                state.meanSpectrumStat = value
+              }}
+              size="small"
+            >
+              <ElOption label="Mean" value="MEAN" />
+              <ElOption label="Sum" value="SUM" />
+            </ElSelect>
+          </div>
+          {spectrum && (
+            <div class="text-xs text-gray-500 self-end pb-1">
+              {/* Computation parameter, not the ion-image tolerance the user controls */}
+              <div>
+                Peaks clustered at {spectrum.clusteringPpm} ppm ({spectrum.instrument} scaling),{' '}
+                {spectrum.nPixels.toLocaleString()} pixels
+              </div>
+              {spectrum.returnedPeaks < spectrum.totalPeaks && (
+                <div>
+                  Showing the {spectrum.returnedPeaks.toLocaleString()} most intense of{' '}
+                  {spectrum.totalPeaks.toLocaleString()} peaks
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    const renderMeanSpectrum = () => {
+      const hasData = meanSpectrumData.value.length > 0
+
+      return (
+        <div>
+          {renderMeanSpectrumControls()}
+          <DatasetBrowserMeanSpectrum
+            isEmpty={!hasData}
+            isLoading={meanSpectrumLoading.value}
+            data={meanSpectrumData.value}
+            stat={state.meanSpectrumStat}
+            emptyMessage={meanSpectrumEmptyMessage.value}
+            onDownload={handleMeanSpectrumDownload}
+            onItemSelected={(mz: number) => {
+              // Same path as typing the m/z by hand: the ion image keeps the user's own
+              // ppm tolerance, which is deliberately independent of the clustering ppm.
+              state.showFullTIC = false
+              state.normalizationData['showFullTIC'] = false
+              state.mzmScoreFilter = mz
+              if (!state.normalizedRefMz.isActive) {
+                state.normalizedRefMz.refMz = mz
+              }
+              requestIonImage()
+            }}
+          />
+        </div>
       )
     }
 
@@ -1333,9 +1529,11 @@ export default defineComponent({
               {renderDatasetFilters()}
               {renderBrowsingFilters()}
               {!state.noData && renderChartOptions()}
-              {isEmpty && !state.chartLoading && renderEmptySpectrum()}
+              {/* The pixel-selection prompt is irrelevant to the region-based mean spectrum */}
+              {isEmpty && !state.chartLoading && state.currentView !== VIEWS.MEAN && renderEmptySpectrum()}
               {state.currentView === VIEWS.KENDRICK && !state.noData && renderKmChart(isEmpty)}
               {state.currentView === VIEWS.SPECTRUM && !state.noData && renderSpectrum(isEmpty)}
+              {state.currentView === VIEWS.MEAN && !state.noData && renderMeanSpectrum()}
             </div>
           </div>
           <div class="dataset-browser-wrapper w-full lg:w-1/2">

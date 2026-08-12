@@ -440,6 +440,30 @@ type Roi {
   geojson: String!  # JSON string representation of GeoJSON
 }
 
+enum MeanSpectrumStat { MEAN SUM }
+
+# Intensity-vs-m/z spectrum aggregated across a region. Read-only QC visualization:
+# the reference m/z axis is built by clustering the region's own pooled peaks, and the
+# result never feeds annotation.
+type MeanSpectrum {
+  mzs: [Float!]!
+  intensities: [Float!]!
+  support: [Int!]!
+  nPixels: Int!
+  # Clusters found before the top-N cap was applied; equals returnedPeaks when uncapped.
+  totalPeaks: Int!
+  returnedPeaks: Int!
+  # Peak-clustering tolerance, distinct from the user's ion-image ppm.
+  clusteringPpm: Float!
+  instrument: String!
+}
+
+type MeanSpectrumAvailability {
+  available: Boolean!
+  wholeDatasetAvailable: Boolean!
+  reason: String
+}
+
 type DiffRoiResult {
   roi: Roi!
   lfc: Float!
@@ -494,6 +518,10 @@ type Query {
   pixelSpectrum(datasetId: String!, x: Int!, y: Int!): PixelSpectrum
 
   initialPeak(datasetId: String!): InitialPeak
+
+  # roiId omitted means the whole dataset (only offered when wholeDatasetAvailable).
+  meanSpectrum(datasetId: String!, roiId: ID, stat: MeanSpectrumStat = MEAN): MeanSpectrum
+  meanSpectrumAvailability(datasetId: String!): MeanSpectrumAvailability
 
   diffRoiResults(datasetId: String!, filter: DiffRoiFilter = {}, annotationFilter: AnnotationFilter = {}): [DiffRoiResult!]!
 

@@ -1,0 +1,9 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`DatasetBrowserMeanSpectrum > it should match snapshot when empty 1`] = `
+"<div class=\\"dataset-browser-mean-spectrum-container\\">
+  <div class=\\"dataset-browser-mean-spectrum-empty\\">
+    <p class=\\"text-sm text-gray-600\\">No saved regions for this dataset — define an ROI to see its mean spectrum</p>
+  </div>
+</div>"
+`;

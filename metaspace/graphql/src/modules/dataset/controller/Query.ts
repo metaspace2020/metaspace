@@ -319,6 +319,68 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       return null
     }
   },
+  async meanSpectrumAvailability(source, { datasetId }, ctx: Context) {
+    if (!await esDatasetByID(datasetId, ctx.user)) {
+      return null
+    }
+    try {
+      const resp = await smApiJsonGet(`/v1/browser/mean_spectrum_availability/${datasetId}`)
+      return {
+        available: resp.available,
+        wholeDatasetAvailable: resp.whole_dataset_available,
+        reason: resp.reason ?? null,
+      }
+    } catch (e) {
+      return { available: false, wholeDatasetAvailable: false, reason: 'Mean spectrum is unavailable' }
+    }
+  },
+  async meanSpectrum(source, { datasetId, roiId, stat }, ctx: Context) {
+    if (!await esDatasetByID(datasetId, ctx.user)) {
+      return null
+    }
+
+    // Only ROIs the caller could have seen via `rois` may be requested: their own, or
+    // the dataset's defaults. Legacy `legacy_N` ids have no row and are rejected here.
+    if (roiId != null) {
+      if (!/^\d+$/.test(String(roiId))) {
+        throw new UserError('Unknown ROI')
+      }
+      const roi = await ctx.entityManager.createQueryBuilder(Roi, 'roi')
+        .where('roi.id = :roiId', { roiId })
+        .andWhere('roi.datasetId = :datasetId', { datasetId })
+        .getOne()
+      if (roi == null || (roi.userId !== ctx.user?.id && !roi.isDefault)) {
+        throw new UserError('Unknown ROI')
+      }
+    }
+
+    // Posted directly rather than via smApiDatasetRequest so the engine's own message
+    // ("region contains no acquired pixels", "above the peak limit") reaches the user.
+    const { response, content } = await smApiJsonPost('/v1/browser/mean_spectrum', {
+      ds_id: datasetId,
+      roi_id: roiId != null ? Number(roiId) : null,
+    })
+    if (!response.ok) {
+      throw new UserError(content?.message || 'Could not compute the mean spectrum')
+    }
+    const resp = content
+
+    // The engine returns summed intensities and is deliberately stat-agnostic, so its
+    // cache entry serves both toggle positions.
+    const nPixels = resp.n_pixels
+    const intensities = stat === 'SUM' ? resp.summed_ints : resp.summed_ints.map((v: number) => v / nPixels)
+
+    return {
+      mzs: resp.mzs,
+      intensities,
+      support: resp.support,
+      nPixels,
+      totalPeaks: resp.total_peaks,
+      returnedPeaks: resp.returned_peaks,
+      clusteringPpm: resp.clustering_ppm,
+      instrument: resp.instrument,
+    }
+  },
   async pixelSpectrum(source, { datasetId, x, y }) {
     try {
       const resp = await smApiDatasetRequest('/v1/browser/peaks_from_pixel', {
