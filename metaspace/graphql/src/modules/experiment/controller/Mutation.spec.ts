@@ -4,6 +4,13 @@ import * as _mockEsConnector from '../../../../esConnector'
 import * as _smApiDatasets from '../../../utils/smApi/datasets'
 jest.mock('../../../utils/smApi/datasets')
 
+jest.mock('../../plan/util/canPerformAction')
+import * as _planActions from '../../plan/util/canPerformAction'
+
+jest.mock('../../plan/util/betaTesterApi')
+import * as _betaTesterApi from '../../plan/util/betaTesterApi'
+
+import { UserError } from 'graphql-errors'
 import {
   doQuery, onAfterAll, onAfterEach, onBeforeAll, onBeforeEach,
   setupTestUsers, testEntityManager, testUser,
@@ -14,6 +21,8 @@ import { Experiment, ExperimentDataset } from '../model'
 
 const mockEs = _mockEsConnector as jest.Mocked<typeof _mockEsConnector>
 const mockSm = _smApiDatasets as jest.Mocked<typeof _smApiDatasets>
+const mockPlanActions = _planActions as jest.Mocked<typeof _planActions>
+const mockBetaTesterApi = _betaTesterApi as jest.Mocked<typeof _betaTesterApi>
 
 const makeProjectWithMember = async(role = UPRO.MEMBER) => {
   const p = await createTestProject({ name: 'Test', isPublic: false })
@@ -104,6 +113,46 @@ describe('createExperiment', () => {
     expect(eds).toHaveLength(2)
     expect(eds[0].regions).toHaveLength(1)
     expect(eds[0].regions[0].labelGroupName).toBe('tumor')
+  })
+
+  it('checks the usage limit and records usage for a non-beta user', async() => {
+    mockBetaTesterApi.hasBetaFeature.mockResolvedValue(false)
+    const p = await makeProjectWithMember()
+    const ds = await createTestDataset()
+    setEsPolarity({ [ds.id]: '+' })
+    await doQuery<any>(createMutation, { projectId: p.id, input: buildInput([ds.id]) })
+
+    expect(mockPlanActions.assertCanPerformAction).toHaveBeenCalledWith(
+      expect.anything(), expect.objectContaining({ actionType: 'experiments', userId: testUser.id }))
+    expect(mockPlanActions.performAction).toHaveBeenCalledWith(
+      expect.anything(), expect.objectContaining({ actionType: 'experiments' }))
+  })
+
+  it('rejects and persists nothing when the usage limit is reached', async() => {
+    mockBetaTesterApi.hasBetaFeature.mockResolvedValue(false)
+    mockPlanActions.assertCanPerformAction.mockRejectedValue(new UserError('Limit reached'))
+    const p = await makeProjectWithMember()
+    const ds = await createTestDataset()
+    setEsPolarity({ [ds.id]: '+' })
+
+    await expect(doQuery(createMutation, { projectId: p.id, input: buildInput([ds.id]) }))
+      .rejects.toThrowError(/Limit reached/)
+    expect(await testEntityManager.find(Experiment)).toHaveLength(0)
+    expect(mockPlanActions.performAction).not.toHaveBeenCalled()
+    mockPlanActions.assertCanPerformAction.mockReset()
+  })
+
+  it('skips usage-limit checks entirely for a beta tester with the experiments feature', async() => {
+    mockBetaTesterApi.hasBetaFeature.mockResolvedValue(true)
+    const p = await makeProjectWithMember()
+    const ds = await createTestDataset()
+    setEsPolarity({ [ds.id]: '+' })
+    await doQuery<any>(createMutation, { projectId: p.id, input: buildInput([ds.id]) })
+
+    expect(mockBetaTesterApi.hasBetaFeature).toHaveBeenCalledWith(testUser.id, 'experiments')
+    expect(mockPlanActions.assertCanPerformAction).not.toHaveBeenCalled()
+    expect(mockPlanActions.performAction).not.toHaveBeenCalled()
+    expect(await testEntityManager.find(Experiment)).toHaveLength(1)
   })
 
   it('prunes labelGroups not referenced by any region', async() => {

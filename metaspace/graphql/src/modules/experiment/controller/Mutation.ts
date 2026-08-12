@@ -1,4 +1,6 @@
 import { UserError } from 'graphql-errors'
+import * as moment from 'moment'
+import { In } from 'typeorm'
 import { FieldResolversFor } from '../../../bindingTypes'
 import { Mutation } from '../../../binding'
 import { Context } from '../../../context'
@@ -6,6 +8,9 @@ import { assertCanAccessProject } from '../operation/permissions'
 import { persistExperiment, ExperimentInput } from '../operation/saveExperiment'
 import { Experiment } from '../model'
 import { smApiDatasetRequest } from '../../../utils'
+import { assertCanPerformAction, performAction } from '../../plan/util/canPerformAction'
+import { hasBetaFeature } from '../../plan/util/betaTesterApi'
+import { UserGroup, UserGroupRoleOptions as UGRO } from '../../group/model'
 
 function loadFullExperiment(ctx: Context, id: string) {
   return ctx.entityManager.getRepository(Experiment).findOneOrFail({
@@ -49,8 +54,32 @@ const MutationResolvers: FieldResolversFor<Mutation, any> = {
     const projectId: string = args.projectId
     const input = args.input as unknown as ExperimentInput
     await assertCanAccessProject(ctx, projectId, { write: true })
+
+    const isBetaTester = await hasBetaFeature(ctx.user.id, 'experiments')
+    const userGroup = await ctx.entityManager.getRepository(UserGroup).findOne({
+      where: { userId: ctx.user.id, role: In([UGRO.MEMBER, UGRO.GROUP_ADMIN]) },
+      order: { primary: 'DESC' },
+    })
+    const action: any = {
+      actionType: 'experiments',
+      userId: ctx.user.id,
+      projectId,
+      groupId: userGroup?.groupId,
+      type: 'experiment',
+      actionDt: moment.utc(moment.utc().toDate()),
+      source: (ctx as any).getSource(),
+    }
+    if (!isBetaTester) {
+      await assertCanPerformAction(ctx, action)
+    }
+
     const id = await ctx.entityManager.transaction(em =>
       persistExperiment(em, ctx, projectId, input))
+
+    if (!isBetaTester) {
+      await performAction(ctx, action)
+    }
+
     return loadFullExperiment(ctx, id) as any
   },
   updateExperiment: async(_, args, ctx: Context) => {

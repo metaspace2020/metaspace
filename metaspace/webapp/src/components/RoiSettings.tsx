@@ -24,7 +24,7 @@ import { Loading, DataLine } from '@element-plus/icons-vue'
 import { formatCsvTextArray } from '../lib/formatCsvRow'
 import { useRouter } from 'vue-router'
 import { UserProfileQuery, userProfileQuery } from '@/api/user'
-import { useProFeatures } from '../lib/useProFeatures'
+import { isPlanLimitError, notifyPlanLimitReached } from '../lib/planLimits'
 
 const VisibleIcon = defineAsyncComponent(() => import('../assets/inline/refactoring-ui/icon-view-visible.svg'))
 
@@ -145,8 +145,6 @@ export default defineComponent({
       roiQueryVars,
       roiQueryOptions as any
     )
-
-    const { canUse } = useProFeatures()
 
     onAnnotationsResult(async (result) => {
       if (result && result.data) {
@@ -577,9 +575,13 @@ export default defineComponent({
         // Now run the differential analysis
         await compareROIs({ datasetId: props.annotation?.dataset?.id })
         router.push(`/dataset/${props.annotation?.dataset?.id}/diff-analysis`)
-      } catch (e) {
-        ElNotification.error('There was a problem running the differential analysis. Please contact support.')
-        reportError(new Error(`Error running differential analysis: ${JSON.stringify(e)}`), null)
+      } catch (e: any) {
+        if (isPlanLimitError(e)) {
+          notifyPlanLimitReached('differential analyses')
+        } else {
+          ElNotification.error('There was a problem running the differential analysis. Please contact support.')
+          reportError(new Error(`Error running differential analysis: ${JSON.stringify(e)}`), null)
+        }
       } finally {
         state.isLoadingDA = false
       }
@@ -691,17 +693,14 @@ export default defineComponent({
           <div class="roi-options">
             <ElTooltip
               popperClass="roi-save-tooltip"
-              content={
-                'Click to perform differential analysis among the ROIs.' +
-                (canUse('diffAnalysis') ? '' : ' This requires being a METASPACE Pro user.')
-              }
+              content={'Click to perform differential analysis among the ROIs.'}
               placement="top"
             >
               {!state.isLoadingDA && (
                 <ElButton
                   class="button-reset roi-diff-icon"
                   onClick={handleDiffAnalysis}
-                  disabled={roiInfo.length === 0 || !canUse('diffAnalysis')}
+                  disabled={roiInfo.length === 0}
                 >
                   <ElIcon size={25}>
                     <DataLine />

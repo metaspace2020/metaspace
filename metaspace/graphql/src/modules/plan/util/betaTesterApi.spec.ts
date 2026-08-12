@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
 import config from '../../../utils/config'
-import { activateBetaTesterToken, fetchBetaFeatures } from './betaTesterApi'
+import { activateBetaTesterToken, fetchBetaFeatures, hasBetaFeature } from './betaTesterApi'
 
 jest.mock('node-fetch')
 const mockFetch = fetch as unknown as jest.Mock
@@ -79,6 +79,33 @@ describe('modules/plan/util/betaTesterApi', () => {
       } finally {
         config.manager_api_url = url
       }
+    })
+  })
+
+  describe('hasBetaFeature', () => {
+    const userId = '550e8400-e29b-41d4-a716-446655440099'
+
+    it('should return true when the feature is in the user\'s beta features', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ allowed: true, features: ['diffAnalysis', 'segmentation'] }),
+      })
+
+      expect(await hasBetaFeature(userId, 'segmentation')).toBe(true)
+    })
+
+    it('should return false when the feature is not in the user\'s beta features', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ allowed: true, features: ['diffAnalysis'] }),
+      })
+
+      expect(await hasBetaFeature(userId, 'experiments')).toBe(false)
+    })
+
+    it('should return false without calling the API for an anonymous user', async() => {
+      expect(await hasBetaFeature(null, 'experiments')).toBe(false)
+      expect(mockFetch).not.toHaveBeenCalled()
     })
   })
 

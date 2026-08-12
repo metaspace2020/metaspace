@@ -12,9 +12,6 @@ import {
   opticalImagesQuery,
   getSegmentationIonProfilesWithImagesQuery,
 } from '../../../api/dataset'
-import { proFeatureWhitelistQuery } from '../../../api/plan'
-import { getActiveUserSubscriptionQuery } from '../../../api/subscription'
-import { currentUserRoleQuery } from '../../../api/user'
 
 vi.mock('@vue/apollo-composable', () => ({
   useQuery: vi.fn(),
@@ -42,9 +39,8 @@ let graphqlMocks: any
 describe('SegmentationPage', () => {
   const datasetId = '2021-03-11_08h29m21s'
 
-  // Real-shaped SEGMENTATION diagnostic, so that a page which wrongly falls through the Pro gate
-  // renders its full content rather than the "No segmentation data available" placeholder. Without
-  // this the regression test below could pass for the wrong reason.
+  // Real-shaped SEGMENTATION diagnostic so the page renders its full content rather than the
+  // "No segmentation data available" placeholder.
   const mockSegmentationData = {
     algorithm: 'kmeans',
     map_type: 'segmentation',
@@ -81,15 +77,6 @@ describe('SegmentationPage', () => {
     },
   }
 
-  interface ProOptions {
-    whitelist?: string[]
-    isActive?: boolean | null
-    role?: string | null
-    // A plain boolean applies to every Pro query; an object sets each query independently
-    // (omitted queries default to settled) so mixed in-flight states can be expressed.
-    loading?: boolean | { whitelist?: boolean; subscription?: boolean; user?: boolean }
-  }
-
   const mockQueryResult = (result: any, loading = false) => ({
     result: ref(result),
     loading: ref(loading),
@@ -98,15 +85,11 @@ describe('SegmentationPage', () => {
     onResult: vi.fn(),
   })
 
-  // Routes each useQuery call to a canned result based on which document was passed, so the page's
-  // own queries and the `useProFeatures` entitlement queries can be set independently. Any query
+  // Routes each useQuery call to a canned result based on which document was passed. Any query
   // this spec does not know about throws, so a future query fails loudly instead of silently
   // returning undefined.
-  const mockQueries = ({ whitelist = [], isActive = null, role = null, loading = false }: ProOptions = {}) => {
-    const isLoading = (key: 'whitelist' | 'subscription' | 'user') =>
-      typeof loading === 'boolean' ? loading : loading[key] ?? false
+  const mockQueries = ({ diagnosticsLoading = false }: { diagnosticsLoading?: boolean } = {}) => {
     ;(useQuery as any).mockImplementation((query: any) => {
-      // Queries owned by SegmentationPage itself
       if (query === getDatasetByIdQuery) {
         return mockQueryResult({ dataset: { id: datasetId, name: 'JD_Sample' } })
       }
@@ -114,29 +97,13 @@ describe('SegmentationPage', () => {
         return mockQueryResult({ segmentations: [] })
       }
       if (query === getDatasetDiagnosticsQuery) {
-        return mockQueryResult(mockDiagnostics)
+        return mockQueryResult(mockDiagnostics, diagnosticsLoading)
       }
       if (query === opticalImagesQuery) {
         return mockQueryResult({ dataset: { id: datasetId, opticalImages: [] } })
       }
       if (query === getSegmentationIonProfilesWithImagesQuery) {
         return mockQueryResult({ segmentationIonProfiles: [] })
-      }
-      // Entitlement queries owned by useProFeatures
-      if (query === proFeatureWhitelistQuery) {
-        return mockQueryResult({ proFeatureWhitelist: whitelist }, isLoading('whitelist'))
-      }
-      if (query === getActiveUserSubscriptionQuery) {
-        return mockQueryResult(
-          { activeUserSubscription: isActive === null ? null : { isActive } },
-          isLoading('subscription')
-        )
-      }
-      if (query === currentUserRoleQuery) {
-        return mockQueryResult(
-          { currentUser: role === null ? null : { id: 'u1', name: 'Test', role } },
-          isLoading('user')
-        )
       }
       throw new Error('Unexpected query passed to useQuery')
     })
@@ -151,8 +118,8 @@ describe('SegmentationPage', () => {
     },
   })
 
-  const mountPage = async (pro: ProOptions) => {
-    mockQueries(pro)
+  const mountPage = async (options: { diagnosticsLoading?: boolean } = {}) => {
+    mockQueries(options)
 
     const wrapper = mount(testHarness, {
       global: {
@@ -179,39 +146,19 @@ describe('SegmentationPage', () => {
     })
   })
 
-  // Regression guard: the gate must fail CLOSED. `useProFeatures` puts the subscription query on
-  // `cache-and-network`, so `loading` is true on every mount, and resolving a non-Pro user who
-  // belongs to groups takes seconds (one billing-API call per group). Gating on
-  // `!canUse(...) && !proLoading.value` made this whole window render the full page to a user who
-  // is not entitled.
-  it('should not render segmentation content to an unentitled user while entitlement is still loading', async () => {
-    const wrapper = await mountPage({ role: 'user', loading: { subscription: true } })
-
-    expect(wrapper.find('.loading-container').exists()).toBe(true)
-    expect(wrapper.find('.page-header').exists()).toBe(false)
-    expect(wrapper.find('.segmentation-info-wrapper').exists()).toBe(false)
-  })
-
-  it('should show the Pro upsell to an unentitled user once entitlement has settled', async () => {
-    const wrapper = await mountPage({ role: 'user' })
-
-    expect(wrapper.text()).toContain('METASPACE Pro feature')
-    expect(wrapper.find('.page-header').exists()).toBe(false)
-  })
-
-  it('should render segmentation content for a whitelisted user who is not pro', async () => {
-    const wrapper = await mountPage({ whitelist: ['segmentation'], role: 'user' })
+  // Segmentation is no longer Pro-gated: any user may view the page. Free users' usage
+  // limits are enforced server-side when a segmentation job is submitted.
+  it('should render segmentation content without requiring a Pro subscription', async () => {
+    const wrapper = await mountPage()
 
     expect(wrapper.find('.page-header').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('METASPACE Pro feature')
   })
 
-  // The mirror of the regression above: an entitled user must not be blocked by the same
-  // `cache-and-network` refetch that keeps `proLoading` true.
-  it('should render segmentation content for a pro user while entitlement is refetching', async () => {
-    const wrapper = await mountPage({ isActive: true, role: 'user', loading: { subscription: true } })
+  it('should show the loading state while diagnostics are loading', async () => {
+    const wrapper = await mountPage({ diagnosticsLoading: true })
 
-    expect(wrapper.find('.page-header').exists()).toBe(true)
-    expect(wrapper.find('.loading-container').exists()).toBe(false)
+    expect(wrapper.find('.loading-container').exists()).toBe(true)
+    expect(wrapper.find('.page-header').exists()).toBe(false)
   })
 })

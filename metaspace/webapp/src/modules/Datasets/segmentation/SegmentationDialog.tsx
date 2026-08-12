@@ -22,6 +22,7 @@ import gql from 'graphql-tag'
 import './SegmentationDialog.scss'
 import { annotationListQuery } from '@/api/annotation'
 import { QuestionFilled } from '@element-plus/icons-vue'
+import { isPlanLimitError, notifyPlanLimitReached } from '../../../lib/planLimits'
 
 const runSegmentationMutation = gql`
   mutation runSegmentation(
@@ -237,9 +238,13 @@ export const SegmentationDialog = defineComponent({
 
         emit('close')
         ElNotification.success('Segmentation job queued — results will appear on the segmentation page once complete.')
-      } catch (error) {
+      } catch (error: any) {
         console.error('Segmentation failed:', error)
-        ElNotification.error('Failed to start segmentation job. Please try again.')
+        if (isPlanLimitError(error)) {
+          notifyPlanLimitReached('image segmentation runs')
+        } else {
+          ElNotification.error('Failed to start segmentation job. Please try again.')
+        }
       } finally {
         state.loading = false
       }
