@@ -36,7 +36,6 @@ describe('ProTrust', () => {
     expect(wrapper.text()).not.toContain('metacloud.bio')
     expect(wrapper.findAll('.pro-checklist li').map((li) => li.text())).toEqual([
       'Purchase orders and institutional invoicing accepted on every paid plan',
-      'VAT ID captured at checkout; prices shown exclude tax',
       'Multi-year plans lock the price for the length of a funding period; 1-2 year terms by quote',
     ])
   })
@@ -74,7 +73,6 @@ describe('ProTrust', () => {
     expect(items).toEqual([
       'Formal quote as a PDF, valid 60 days — usable inside a grant application',
       'Purchase orders and institutional invoicing accepted on every paid plan',
-      'VAT ID captured at checkout; prices shown exclude tax',
       'Multi-year plans lock the price for the length of a funding period; 1-2 year terms by quote',
       'Invoices issued by Metacloud Inc. with full institutional details — metacloud.bio',
     ])
@@ -83,7 +81,7 @@ describe('ProTrust', () => {
   it('offers a quote request and an email CTA', async () => {
     const wrapper = await mountWithFlags({ procurementDetail: true })
     const buttons = wrapper.findAll('#procurement a.pro-btn')
-    expect(buttons.map((b) => b.text())).toEqual(['Request a quote', 'Email the team'])
+    expect(buttons.map((b) => b.text())).toEqual(['Request a quote', 'Contact the team'])
     expect(buttons[0].classes()).toContain('pro-btn--accent')
     expect(buttons[1].classes()).toContain('pro-btn--ghost')
   })

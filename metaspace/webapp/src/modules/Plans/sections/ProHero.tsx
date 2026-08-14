@@ -29,14 +29,14 @@ export default defineComponent({
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', margin: '34px 0 16px' }}>
               <a
                 href="#plans"
-                class="pro-btn pro-btn--accent"
+                class="pro-btn pro-btn--accent min-w-[200px]"
                 onClick={(e: MouseEvent) => scrollToHashSection(e, '#plans')}
               >
                 Submit your private dataset
               </a>
               <a
                 href="#analysis"
-                class="pro-btn pro-btn--ghost"
+                class="pro-btn pro-btn--ghost min-w-[200px]"
                 onClick={(e: MouseEvent) => scrollToHashSection(e, '#analysis')}
               >
                 Explore the analysis tools

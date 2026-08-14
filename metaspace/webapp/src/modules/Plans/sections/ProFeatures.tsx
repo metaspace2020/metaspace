@@ -40,7 +40,7 @@ const FEATURES: FeatureRow[] = [
       'modelled rather than ignored.',
     instead: 'the comparison you keep postponing because the bookkeeping is worse than the science.',
     chart: 'heatmap',
-    caption: 'Cross-dataset comparison',
+    caption: 'Cross-dataset comparison that fits your experimental design',
   },
 ]
 
@@ -67,9 +67,9 @@ const RAIL = [
 
 const PRIVACY = [
   {
-    title: 'Nothing enters the knowledgebase',
+    title: 'Nothing private enters the knowledgebase',
     body:
-      'Your datasets and annotations stay inside your group until you explicitly choose to publish them. Nothing ' +
+      'Your private datasets and annotations stay inside your group until you explicitly choose to publish them. Nothing ' +
       'is contributed to the public knowledgebase on your behalf.',
   },
   {

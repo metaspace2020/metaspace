@@ -25,7 +25,7 @@ describe('ProFaq', () => {
       'Is METASPACE Academic still free?',
       'Do I have to pay to try the analysis tools?',
       'Does my private data enter the public knowledgebase?',
-      'Can I cite a Pro analysis in a paper?',
+      'Can I cite METASPACE Pro analysis in a paper?',
       'What happens to the private datasets I submitted before the split?',
       'What happens to my data if we stop subscribing?',
       'Do we pay per person?',
@@ -40,7 +40,7 @@ describe('ProFaq', () => {
         'from Metacloud Inc. for private work.',
       'No. Differential analysis, spatial segmentation and cross-dataset statistics all run on the free tier, on ' +
         "your three free private datasets a year. Paid plans raise that ceiling — they don't unlock the features. " +
-        "Three datasets is enough to judge the tools on your own tissue; it isn't enough for a real cross-dataset " +
+        "Three datasets is enough to judge the tools on your own dataset; it isn't enough for a real cross-dataset " +
         'study.',
       'No. Private datasets and their annotations stay inside your group. If you later choose to make a dataset ' +
         'public, you do that explicitly, one dataset at a time.',

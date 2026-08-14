@@ -113,9 +113,9 @@ describe('ProFeatures', () => {
     expect(text).toContain('Private by design')
     expect(text).toContain('Your data never touches the public database until you say so')
     expect(text).toContain('Two guarantees, in plain terms, with no asterisks.')
-    expect(text).toContain('Nothing enters the knowledgebase')
+    expect(text).toContain('Nothing private enters the knowledgebase')
     expect(text).toContain(
-      'Your datasets and annotations stay inside your group until you explicitly choose to publish them. Nothing ' +
+      'Your private datasets and annotations stay inside your group until you explicitly choose to publish them. Nothing ' +
         'is contributed to the public knowledgebase on your behalf.'
     )
     expect(text).toContain('Nothing is locked in')

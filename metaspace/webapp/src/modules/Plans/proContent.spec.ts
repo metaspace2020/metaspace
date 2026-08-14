@@ -225,7 +225,7 @@ describe('COMPARISON_GROUPS', () => {
     ALL_TIERS.forEach((tier) => {
       expect(rowNamed('Group members').value(tier), tier).toBe('Unlimited')
       expect(rowNamed('Projects').value(tier), tier).toBe('Unlimited')
-      expect(rowNamed('Export results any time').value(tier), tier).toBe('Yes')
+      expect(rowNamed('Export results any time*').value(tier), tier).toBe('Yes')
     })
   })
 

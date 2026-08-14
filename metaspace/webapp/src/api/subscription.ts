@@ -220,9 +220,6 @@ export interface ValidateCouponData {
   validateCoupon: CouponValidationResult
 }
 
-// One-off invoice checkout (packs and top-ups). The result is a quote, not a
-// sale: the buyer still confirms clientSecret with Stripe.js, and fulfilment
-// arrives asynchronously via webhook.
 export interface PurchaseCheckout {
   invoiceId?: string
   clientSecret?: string

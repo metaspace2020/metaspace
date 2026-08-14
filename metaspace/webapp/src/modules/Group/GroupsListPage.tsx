@@ -34,11 +34,12 @@ export default defineComponent({
       query: state.groupNameFilter,
       useRole: true,
     }))
-    const { result: groupsResult, loading: groupsLoading } = useQuery<ViewGroupResult | any>(
-      getUserGroupsQuery,
-      queryVars,
-      { fetchPolicy: 'network-only' }
-    )
+    const {
+      result: groupsResult,
+      loading: groupsLoading,
+      error: groupsError,
+      refetch: refetchGroups,
+    } = useQuery<ViewGroupResult | any>(getUserGroupsQuery, queryVars, { fetchPolicy: 'cache-and-network' })
     const groups = computed(() => (groupsResult.value != null ? groupsResult.value.allGroups : null))
 
     const handleCreateGroup = async () => {
@@ -46,6 +47,21 @@ export default defineComponent({
     }
 
     return () => {
+      if (groupsError.value && !groupsLoading.value && groups.value == null) {
+        return (
+          <div class="groups-list-container">
+            <div class="groups-list-wrapper">
+              <p class="font-normal text-center">Something went wrong while loading the groups. Please try again.</p>
+              <p class="text-center">
+                <ElButton type="primary" data-test-key="groups-retry" onClick={() => refetchGroups()}>
+                  Retry
+                </ElButton>
+              </p>
+            </div>
+          </div>
+        )
+      }
+
       if (!currentUser.value && !groupsLoading.value) {
         return (
           <div class="groups-list-container">

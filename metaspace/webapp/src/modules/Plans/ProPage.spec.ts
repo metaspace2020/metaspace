@@ -272,7 +272,11 @@ describe('scrollBehavior', () => {
   it('scrolls to the target element when the destination has a hash and the element exists', () => {
     withHashTarget('plans', () => {
       withReducedMotion(false, () => {
-        const result = scrollBehavior!({ hash: '#plans' } as any, {} as any, false)
+        const result = scrollBehavior!(
+          { path: '/pro', hash: '#plans' } as any,
+          { path: '/about', hash: '' } as any,
+          false
+        )
         expect(result).toEqual({ el: '#plans', top: 80, behavior: 'smooth' })
       })
     })
@@ -280,19 +284,27 @@ describe('scrollBehavior', () => {
 
   it('falls back to the top when the hash has no matching element on the page', () => {
     // No element with id "missing" exists.
-    const result = scrollBehavior!({ hash: '#missing' } as any, {} as any, false)
+    const result = scrollBehavior!(
+      { path: '/pro', hash: '#missing' } as any,
+      { path: '/about', hash: '' } as any,
+      false
+    )
     expect(result).toEqual({ top: 0 })
   })
 
   it('scrolls to the top when the destination has no hash', () => {
-    const result = scrollBehavior!({ hash: '' } as any, {} as any, false)
+    const result = scrollBehavior!({ path: '/pro', hash: '' } as any, { path: '/about', hash: '' } as any, false)
     expect(result).toEqual({ top: 0 })
   })
 
   it('uses an immediate jump instead of a smooth scroll when reduced motion is requested', () => {
     withHashTarget('plans', () => {
       withReducedMotion(true, () => {
-        const result = scrollBehavior!({ hash: '#plans' } as any, {} as any, false)
+        const result = scrollBehavior!(
+          { path: '/pro', hash: '#plans' } as any,
+          { path: '/about', hash: '' } as any,
+          false
+        )
         expect(result).toEqual({ el: '#plans', top: 80, behavior: 'auto' })
       })
     })
@@ -300,8 +312,49 @@ describe('scrollBehavior', () => {
 
   it('honours the saved scroll position when navigating with browser back/forward', () => {
     const savedPosition = { left: 0, top: 240 }
-    const result = scrollBehavior!({ hash: '#plans' } as any, {} as any, savedPosition)
+    const result = scrollBehavior!(
+      { path: '/pro', hash: '#plans' } as any,
+      { path: '/about', hash: '' } as any,
+      savedPosition
+    )
     expect(result).toEqual(savedPosition)
+  })
+
+  // Regression: a filter commit landing after the /plans redirect rewrites the
+  // query string via router.replace on the SAME path. That navigation used to
+  // return { top: 0 } (hash stripped) and yank the user from #plans back to
+  // the first section.
+  it('keeps the scroll position on same-path navigations without a hash change', () => {
+    const result = scrollBehavior!(
+      { path: '/pro', hash: '' } as any,
+      { path: '/pro', hash: '#plans' } as any, // hash dropped by a query-only replace
+      false
+    )
+    expect(result).toBe(false)
+  })
+
+  it('does not re-scroll to the hash when a same-path replace keeps the same hash', () => {
+    withHashTarget('plans', () => {
+      const result = scrollBehavior!(
+        { path: '/pro', hash: '#plans' } as any,
+        { path: '/pro', hash: '#plans' } as any,
+        false
+      )
+      expect(result).toBe(false)
+    })
+  })
+
+  it('still scrolls when the hash changes within the same page', () => {
+    withHashTarget('faq', () => {
+      withReducedMotion(false, () => {
+        const result = scrollBehavior!(
+          { path: '/pro', hash: '#faq' } as any,
+          { path: '/pro', hash: '#plans' } as any,
+          false
+        )
+        expect(result).toEqual({ el: '#faq', top: 80, behavior: 'smooth' })
+      })
+    })
   })
 })
 

@@ -57,10 +57,12 @@ export default defineComponent({
                 <p class="pro-eyebrow" style={{ marginBottom: '10px' }}>
                   {card.kicker}
                 </p>
-                <h3 class="pro-h3" style={{ fontSize: '18px' }}>
+                <h3 class="pro-h3" style={{ fontSize: '16px' }}>
                   {card.title}
                 </h3>
-                <div class="pro-docs-card__body">{card.body}</div>
+                <div class="pro-docs-card__body" style={{ fontSize: '15px' }}>
+                  {card.body}
+                </div>
               </a>
             ))}
           </div>

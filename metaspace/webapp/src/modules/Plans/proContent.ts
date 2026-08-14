@@ -217,7 +217,7 @@ export const COMPARISON_GROUPS: ComparisonGroup[] = [
       { name: 'Private reprocessings per year', value: (t) => TIER_SPECS[t].reprocessings },
       { name: 'Group members', value: unlimited },
       { name: 'Projects', value: unlimited },
-      { name: 'Export results any time', value: yes, accent: true },
+      { name: 'Export results any time*', value: yes, accent: true },
     ],
   },
   {

@@ -19,7 +19,7 @@ const FAQS: FaqEntry[] = [
     answer: [
       'No. Differential analysis, spatial segmentation and cross-dataset statistics all run on the free tier, on ' +
         "your three free private datasets a year. Paid plans raise that ceiling — they don't unlock the features. " +
-        "Three datasets is enough to judge the tools on your own tissue; it isn't enough for a real cross-dataset " +
+        "Three datasets is enough to judge the tools on your own dataset; it isn't enough for a real cross-dataset " +
         'study.',
     ],
   },
@@ -33,7 +33,7 @@ const FAQS: FaqEntry[] = [
     ],
   },
   {
-    question: 'Can I cite a Pro analysis in a paper?',
+    question: 'Can I cite METASPACE Pro analysis in a paper?',
     answer: [
       'Yes. The statistical methods, corrections and assumptions are documented in full, and the underlying ' +
         'annotation engine is published in Nature Methods (Palmer et al., 2017). Citation guidance is on the ' +

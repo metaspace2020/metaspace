@@ -486,7 +486,9 @@ export default defineComponent({
           )}
 
           {!props.loading && renderTable()}
-
+          <p class="pro-note" style={{ marginTop: '14px' }}>
+            * The download of raw dataset files is limited to 2 datasets per day.
+          </p>
           <p class="pro-seatnote">
             <b>No per-seat pricing, on any plan.</b> Unlimited group members and unlimited projects, including on Free.
             You pay for private throughput, never for people.

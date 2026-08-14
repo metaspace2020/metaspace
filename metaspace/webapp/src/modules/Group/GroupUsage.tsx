@@ -277,7 +277,7 @@ export default defineComponent({
                 header: () => (
                   <div class="empty-actions">
                     <p class="w-full">This group doesn't have an active subscription. Choose a plan to get started.</p>
-                    <el-button type="primary" size="large" onClick={() => router.push('/pro')}>
+                    <el-button type="primary" size="large" onClick={() => router.push('/plans')}>
                       View plans
                     </el-button>
                   </div>

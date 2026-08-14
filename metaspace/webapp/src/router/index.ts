@@ -269,10 +269,25 @@ export const scrollBehavior: Parameters<typeof createRouter>[0]['scrollBehavior'
   // the top of a long marketing page instead of at the pricing block. Only
   // target the hash if its element actually exists on the destination page -
   // otherwise vue-router silently fails to scroll at all instead of falling
-  // back to the top.
-  if (to.hash && typeof document !== 'undefined' && document.querySelector(to.hash)) {
+  // back to the top. Only scroll when the hash (or page) actually changed:
+  // a same-path replace that keeps the hash (e.g. a filter rewriting the
+  // query string) must not re-scroll a user who has since moved elsewhere
+  // on the page.
+  if (
+    to.hash &&
+    (to.path !== from.path || to.hash !== from.hash) &&
+    typeof document !== 'undefined' &&
+    document.querySelector(to.hash)
+  ) {
     return { el: to.hash, top: 80, behavior: prefersReducedMotion() ? 'auto' : 'smooth' }
   }
+
+  // keep the current position instead.
+  if (to.path === from.path) {
+    return false
+  }
+
+  // scroll to top
   return { top: 0 }
 }
 
@@ -281,6 +296,19 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior,
+})
+
+// Leaving a very long page (e.g. /pro, ~10k px tall) for a shorter one: the
+// keyed <router-view> swaps the content on the next tick, the document height
+// collapses, and the browser clamps the stale scroll offset to the new bottom
+// - which paints the footer alone over an empty page until scrollBehavior
+// runs. afterEach fires before that DOM swap paints, so resetting here
+// removes the footer-only flash; scrollBehavior still applies the saved or
+// hash position afterwards.
+router.afterEach((to, from, failure) => {
+  if (!failure && to.path !== from.path) {
+    window.scrollTo(0, 0)
+  }
 })
 
 const pageLoadedAt = Date.now()

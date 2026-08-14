@@ -27,15 +27,19 @@ function updatedLocation(state, filter) {
   }
 }
 
+function withCurrentHash(params) {
+  return { hash: router.currentRoute.value.hash, ...params }
+}
+
 function routerReplace(state, params) {
-  router.replace(params)
+  router.replace(withCurrentHash(params))
   state.route.path = params.path || state.route.path
   state.route.params = params.params || state.route.params
   state.route.query = params.query || state.route.query
 }
 
 function routerPush(state, params) {
-  router.push(params)
+  router.push(withCurrentHash(params))
   state.route.path = params.path || state.route.path
   state.route.params = params.params || state.route.params
   state.route.query = params.query || state.route.query

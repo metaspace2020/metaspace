@@ -13,7 +13,6 @@ interface ProcurementLine {
 const PROCUREMENT_LINES: ProcurementLine[] = [
   { text: 'Formal quote as a PDF, valid 60 days — usable inside a grant application', detail: true },
   { text: 'Purchase orders and institutional invoicing accepted on every paid plan' },
-  { text: 'VAT ID captured at checkout; prices shown exclude tax' },
   { text: 'Multi-year plans lock the price for the length of a funding period; 1-2 year terms by quote' },
   { text: 'Invoices issued by Metacloud Inc. with full institutional details — metacloud.bio', detail: true },
 ]
@@ -61,7 +60,7 @@ export default defineComponent({
                 Request a quote
               </a>
               <a href="/contact" class="pro-btn pro-btn--ghost">
-                Email the team
+                Contact the team
               </a>
             </div>
           </div>
