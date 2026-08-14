@@ -150,7 +150,8 @@ def save_cobj(storage: Storage, obj: TItem, bucket: str = None, key: str = None)
     if data_size < 5 * 1024 ** 3:
         return storage.put_cloudobject(data, bucket, key)
 
-    # For files >= 5GB, frombuffer is a zero-copy view, the parts are sliced and copied from it one at a time
+    # For files >= 5GB, frombuffer is a zero-copy view, the parts are sliced
+    # and copied from it one at a time
     return multipart_upload_cobj(storage, np.frombuffer(data, np.uint8), bucket, key)
 
 
