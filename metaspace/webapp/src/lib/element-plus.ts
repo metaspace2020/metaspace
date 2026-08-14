@@ -53,6 +53,10 @@ import {
   ElSkeleton,
   ElSkeletonItem,
   ElDatePicker,
+  ElLink,
+  ElColorPicker,
+  ElSteps,
+  ElStep,
 } from 'element-plus'
 
 // Importing Element Plus styles
@@ -111,6 +115,10 @@ const components = {
   ElSkeleton,
   ElSkeletonItem,
   ElDatePicker,
+  ElLink,
+  ElColorPicker,
+  ElSteps,
+  ElStep,
   // Additional components as needed
 }
 
@@ -168,6 +176,10 @@ export {
   ElSkeleton,
   ElSkeletonItem,
   ElDatePicker,
+  ElLink,
+  ElColorPicker,
+  ElSteps,
+  ElStep,
   // Additional components as needed
 }
 

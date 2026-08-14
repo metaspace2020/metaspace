@@ -408,6 +408,7 @@ type Segmentation {
   status: String!
   error: String
   name: String
+  stale: Boolean!
   createdAt: String!
   updatedAt: String!
 }
@@ -566,6 +567,7 @@ type Mutation {
   createRoi(datasetId: String!, input: RoiInput!): Roi!
   updateRoi(id: ID!, input: RoiInput!): Roi!
   deleteRoi(id: ID!): Boolean!
+  copyRoisToDatasets(sourceDatasetId: String!, targetDatasetIds: [String!]!): Boolean!
 
   runSegmentation(
     datasetId: String!

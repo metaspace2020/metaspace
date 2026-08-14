@@ -1,8 +1,29 @@
 ---
 
-- name: Copy image segmentation config file
-  template: src=config.json.j2 dest={{ metaspace_home }}/metaspace/postprocessing/image_segmentation/conf/config.json
+- name: Copy postprocessing config file
+  template: src=config.json.j2 dest={{ metaspace_home }}/metaspace/postprocessing/conf/config.json
             mode=0600 owner=ubuntu group=ubuntu
+
+- name: Install image_segmentation runtime requirements
+  pip:
+    requirements: "{{ metaspace_home }}/metaspace/postprocessing/image_segmentation/requirements.txt"
+    executable: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/pip"
+
+- name: Install stats_analysis runtime requirements
+  pip:
+    requirements: "{{ metaspace_home }}/metaspace/postprocessing/stats_analysis/requirements.txt"
+    executable: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/pip"
+
+- name: Install postprocessing packages (editable)
+  pip:
+    name: "file://{{ metaspace_home }}/metaspace/postprocessing/{{ item }}"
+    editable: yes
+    executable: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/pip"
+  loop:
+    - shared
+    - image_segmentation
+    - stats_analysis
+    - server
 
 - name: Copy sm-image-segmentation supervisor config file
   template: src=sm-image-segmentation.supervisor.j2 dest=/etc/supervisor/{{ sm_image_segmentation_app_name }}.supervisor

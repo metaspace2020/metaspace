@@ -26,7 +26,7 @@ import CopyButton from '../../../components/CopyButton.vue'
 import { parseFormulaAndCharge } from '../../../lib/formulaParser'
 import SimpleIonImageViewer from '../imzml/SimpleIonImageViewer'
 import { userProfileQuery, UserProfileQuery } from '../../../api/user'
-import { getActiveUserSubscriptionQuery } from '@/api/subscription'
+import { useProFeatures } from '../../../lib/useProFeatures'
 import './DatasetDiffAnalysisPage.scss'
 
 interface DatasetDiffAnalysisPageState {
@@ -73,19 +73,12 @@ export default defineComponent({
     const datasetId = computed(() => route.params.dataset_id)
     const currentLevel = computed(() => 'dataset-diff-analysis')
 
-    const { result: currentUserResult, loading: currentUserLoading } = useQuery<UserProfileQuery | any>(
-      userProfileQuery,
-      null,
-      {
-        fetchPolicy: 'cache-first',
-      }
-    )
+    const { result: currentUserResult } = useQuery<UserProfileQuery | any>(userProfileQuery, null, {
+      fetchPolicy: 'cache-first',
+    })
 
     const currentUser = computed(() => (currentUserResult.value != null ? currentUserResult.value.currentUser : null))
-    const { result: subscriptionResult } = useQuery<any>(getActiveUserSubscriptionQuery, null, {
-      fetchPolicy: 'network-only',
-    })
-    const activeSubscription = computed(() => subscriptionResult.value?.activeUserSubscription)
+    const { canUse, loading: proLoading } = useProFeatures()
 
     const { result: datasetResult, onResult: handleDatasetLoad } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, {
       id: datasetId.value,
@@ -569,22 +562,18 @@ export default defineComponent({
     }
 
     return () => {
-      const isPro = activeSubscription.value?.isActive
-      const allowedUsers = []
-      const isAdmin = currentUser.value?.role?.includes('admin') || allowedUsers.includes(currentUser.value?.id)
-
-      if (!isAdmin && (!currentUser.value?.id || !isPro)) {
+      if (!canUse('diffAnalysis')) {
         return (
           <div class="dataset-diff-page">
             <div class="flex w-full flex-wrap flex-row items-center justify-center">
-              {currentUserLoading.value && (
+              {proLoading.value && (
                 <div class="flex items-center justify-center h-48 text-gray-500">
                   <ElIcon class="is-loading">
                     <Loading />
                   </ElIcon>
                 </div>
               )}
-              {!currentUserLoading.value && (
+              {!proLoading.value && (
                 <div class="flex items-center justify-center h-48 text-gray-500">
                   Please upgrade to METASPACE Pro to view this page
                 </div>

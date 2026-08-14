@@ -13,5 +13,8 @@
   "engine_url": "http://api:5123",
   "imzml_browser_storage": {
     "bucket": "sm-imzml-browser-dev"
+  },
+  "image_storage": {
+    "bucket": "sm-image-storage-dev"
   }
 }

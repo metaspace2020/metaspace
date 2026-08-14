@@ -11,6 +11,7 @@ import { MOLECULAR_DB_ENTITIES } from '../modules/moldb/model'
 import { ENRICHMENT_DB_ENTITIES } from '../modules/enrichmentdb/model'
 import { IMAGE_VIEWER_SNAPSHOT_ENTITIES } from '../modules/imageViewerSnapshot/model'
 import { NEWS_ENTITIES } from '../modules/news/model'
+import { EXPERIMENT_ENTITIES } from '../modules/experiment/model'
 import { SnakeCaseNamingStrategy } from './SnakeCaseNamingStrategy'
 
 export const DbSchemaName = 'graphql'
@@ -34,6 +35,7 @@ const typeOrmConfig: ConnectionOptions = {
     ...ENRICHMENT_DB_ENTITIES,
     ...IMAGE_VIEWER_SNAPSHOT_ENTITIES,
     ...NEWS_ENTITIES,
+    ...EXPERIMENT_ENTITIES,
   ],
   namingStrategy: new SnakeCaseNamingStrategy(),
   synchronize: false,

@@ -399,7 +399,15 @@ export const SimpleIonImageViewer = defineComponent({
             ? props.channels[i].settings.channel
             : Object.keys(channels)[i % Object.keys(channels).length]
         )
-        const ionImagePng = await loadPngFromUrl(annotationItem.isotopeImages[0].url)
+        const imageUrl = annotationItem?.isotopeImages?.[0]?.url
+        let ionImagePng = null
+        if (imageUrl) {
+          try {
+            ionImagePng = await loadPngFromUrl(imageUrl)
+          } catch (e) {
+            ionImagePng = null
+          }
+        }
         ionImagesPng.push(ionImagePng)
         if (!annotationItem?.isEmpty) {
           nonEmptyIndex = i

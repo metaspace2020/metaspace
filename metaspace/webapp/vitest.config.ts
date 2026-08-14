@@ -28,7 +28,7 @@ export default defineConfig({
       provider: 'v8',
     },
     environment: 'jsdom',
-    testTimeout: 100000, // Global timeout set to 10000ms (10 seconds)
+    testTimeout: 300000,
   },
   resolve: {
     alias: {

@@ -79,6 +79,8 @@ const asyncPagesFreelyTyped = {
   TermsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/App/TermsPage.vue'),
   PublicationsPage: () =>
     import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/App/PublicationsPage'),
+  BetaActivationPage: () =>
+    import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/BetaTester/BetaActivationPage.vue'),
 
   // These pages use sanitizeHtml, which is big
   ViewGroupPage: () =>
@@ -108,6 +110,14 @@ const asyncPagesFreelyTyped = {
     import(
       /* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/FeatureRequests/FeatureRequestPage'
     ),
+  ExperimentEditPage: () =>
+    import(
+      /* webpackPrefetch: true, webpackChunkName: "ExperimentEditPage" */ '../modules/Experiment/ExperimentEditPage'
+    ),
+  ExperimentResultsPage: () =>
+    import(
+      /* webpackPrefetch: true, webpackChunkName: "ExperimentResultsPage" */ '../modules/Experiment/ExperimentResultsPage'
+    ),
 }
 
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, Component>
@@ -132,6 +142,12 @@ export const routes: any = [
   { path: '/annotations', name: 'annotations', component: asyncPages.AnnotationsPage },
   { path: '/contact', name: 'contact', component: asyncPages.ContactPage, meta: { footer: true } },
   { path: '/faq', name: 'faq', component: asyncPages.FAQPage, meta: { footer: true } },
+  {
+    path: '/beta-testers/activate',
+    name: 'beta-activation',
+    component: asyncPages.BetaActivationPage,
+    meta: { footer: true },
+  },
   { path: '/split', name: 'split', component: asyncPages.SplitPage, meta: { footer: true } },
   {
     path: '/datasets',
@@ -192,6 +208,24 @@ export const routes: any = [
   { path: '/group/:groupIdOrSlug', name: 'group', component: asyncPages.ViewGroupPage },
 
   { path: '/project/:projectIdOrSlug', name: 'project', component: asyncPages.ViewProjectPage },
+  {
+    path: '/project/:projectId/experiment/new',
+    name: 'experiment-create',
+    component: asyncPages.ExperimentEditPage,
+    props: true,
+  },
+  {
+    path: '/project/:projectId/experiment/:id/edit',
+    name: 'experiment-edit',
+    component: asyncPages.ExperimentEditPage,
+    props: true,
+  },
+  {
+    path: '/project/:projectId/experiment/:id',
+    name: 'experiment-view',
+    component: asyncPages.ExperimentResultsPage,
+    props: true,
+  },
   {
     // Legacy URL sent in "request access" emails up until Feb 2019
     path: '/project/:projectIdOrSlug/manage',

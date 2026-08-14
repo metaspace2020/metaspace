@@ -229,23 +229,17 @@ export const projectsListQuery = gql`
     $limit: Int = 10
     $orderBy: ProjectOrderBy = ORDER_BY_POPULARITY
     $sortingOrder: SortingOrder = DESCENDING
+    $userIds: [ID!]
   ) {
-    allProjects(orderBy: $orderBy, sortingOrder: $sortingOrder, query: $query, offset: $offset, limit: $limit) {
+    allProjects(
+      orderBy: $orderBy
+      sortingOrder: $sortingOrder
+      query: $query
+      offset: $offset
+      limit: $limit
+      userIds: $userIds
+    ) {
       ...ProjectsListItem
-    }
-  }
-  ${projectsListItemFragment}
-`
-
-export const myProjectsListQuery = gql`
-  query MyProjectsListQuery {
-    myProjects: currentUser {
-      id
-      projects {
-        project {
-          ...ProjectsListItem
-        }
-      }
     }
   }
   ${projectsListItemFragment}
@@ -256,20 +250,14 @@ export const projectsCountQuery = gql`
     $query: String!
     $orderBy: ProjectOrderBy = ORDER_BY_POPULARITY
     $sortingOrder: SortingOrder = DESCENDING
+    $userIds: [ID!]
   ) {
-    projectsCount(orderBy: $orderBy, sortingOrder: $sortingOrder, query: $query)
+    projectsCount(orderBy: $orderBy, sortingOrder: $sortingOrder, query: $query, userIds: $userIds)
   }
 `
 
 export interface ProjectsListQuery {
   allProjects: ProjectsListProject[]
-}
-
-export interface MyProjectsListQuery {
-  myProjects: {
-    id: string
-    projects: MyProjectsListItem[] | null
-  } | null
 }
 
 export interface ProjectsListProject {
@@ -290,10 +278,6 @@ export interface ProjectsListProject {
   latestUploadDT: string | null
   publicationStatus: string
   publishedDT: string | null
-}
-
-export interface MyProjectsListItem {
-  project: ProjectsListProject
 }
 
 interface ExternalLink {

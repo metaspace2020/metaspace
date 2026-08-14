@@ -1,0 +1,87 @@
+import { defineComponent, PropType, computed } from 'vue'
+import ECharts from 'vue-echarts'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { BarChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent, LegendComponent, TitleComponent, MarkLineComponent } from 'echarts/components'
+import type { QcSampleRow } from './types'
+
+use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent, TitleComponent, MarkLineComponent])
+
+/** Format tooltip numbers: integers stay whole, decimals snap to 2 places. */
+const fmt2 = (v: unknown): string => {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return String(v ?? '')
+  return Number.isInteger(v) ? String(v) : v.toFixed(2)
+}
+/** Axis-trigger tooltip that renders each series value at 2 decimals. */
+const axisTooltipFormatter = (params: any): string => {
+  const items = Array.isArray(params) ? params : [params]
+  const header = items[0]?.axisValueLabel ?? items[0]?.name ?? ''
+  const lines = items
+    .filter((it: any) => it.value != null)
+    .map((it: any) => `${it.marker ?? ''}${it.seriesName}: ${fmt2(it.value)}`)
+  return [header, ...lines].join('<br/>')
+}
+
+export default defineComponent({
+  name: 'DetectionRateChart',
+  props: {
+    samples: { type: Array as PropType<QcSampleRow[]>, required: true },
+    sampleLabels: { type: Object as PropType<Record<string, string>>, default: () => ({}) },
+  },
+  setup(props) {
+    const xLabels = computed(() => {
+      const labelOf = (s: QcSampleRow) => props.sampleLabels[s.sampleId] ?? s.sampleId
+      const counts = new Map<string, number>()
+      for (const s of props.samples) {
+        const l = labelOf(s)
+        counts.set(l, (counts.get(l) ?? 0) + 1)
+      }
+      const seen = new Map<string, number>()
+      return props.samples.map((s) => {
+        const l = labelOf(s)
+        if ((counts.get(l) ?? 0) <= 1) return l
+        const idx = (seen.get(l) ?? 0) + 1
+        seen.set(l, idx)
+        return `${l} (R${idx})`
+      })
+    })
+
+    const option = computed(() => {
+      const conditions = Array.from(new Set(props.samples.map((s) => s.condition ?? '—')))
+      const series = conditions.map((cond, idx) => ({
+        name: cond,
+        type: 'bar',
+        data: props.samples.map((s) => ((s.condition ?? '—') === cond ? s.detectionRate : null)),
+        ...(idx === 0
+          ? {
+              markLine: {
+                silent: true,
+                symbol: 'none',
+                lineStyle: { color: '#f59e0b', type: 'dashed' },
+                data: [{ yAxis: 0.75, label: { formatter: '75% threshold' } }],
+              },
+            }
+          : {}),
+      }))
+      return {
+        title: { text: 'Detection rate per sample', textStyle: { fontSize: 13 } },
+        tooltip: { trigger: 'axis', formatter: axisTooltipFormatter },
+        legend: { top: 24 },
+        grid: { left: 40, right: 16, top: 64, bottom: 16 },
+        xAxis: { type: 'category', data: xLabels.value, axisLabel: { show: false }, axisTick: { show: false } },
+        yAxis: { type: 'value', name: '% detected', max: 1 },
+        series,
+      }
+    })
+
+    return () =>
+      props.samples.length === 0 ? (
+        <div class="text-sm text-gray-400 p-4" data-test-key="detection-empty">
+          No QC samples available.
+        </div>
+      ) : (
+        <ECharts option={option.value} autoresize style="width: 100%; height: 240px" />
+      )
+  },
+})

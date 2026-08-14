@@ -103,6 +103,14 @@ export function setupGlobalStubs() {
     props: ['to'],
   }
 
+  config.global.config = {
+    ...(config.global.config || {}),
+    warnHandler: (msg: string) => {
+      if (msg.includes('Failed to resolve directive: loading')) return
+      console.warn(`[Vue warn]: ${msg}`)
+    },
+  }
+
   config.global.stubs = {
     // 'el-form': ElFormMock,
     'el-autocomplete': ElAutocompleteMock,

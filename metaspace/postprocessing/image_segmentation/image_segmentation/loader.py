@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import logging
+import os
 import time
 from io import BytesIO
 from pathlib import Path
@@ -12,15 +12,18 @@ from typing import Dict, List, Optional, Tuple
 import boto3
 import numpy as np
 
+from postprocessing_shared import load_config
+
 logger = logging.getLogger(__name__)
 
-_CONFIG_PATH = Path(__file__).resolve().parent.parent / 'conf' / 'config.json'
+# postprocessing/image_segmentation/image_segmentation/loader.py -> postprocessing/conf/config.json
+_DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[2] / 'conf' / 'config.json'
 
 
 def _load_config() -> Dict:
-    """Read conf/config.json from the microservice's conf directory."""
-    with open(_CONFIG_PATH, encoding="utf-8") as config_file:
-        return json.load(config_file)
+    """Read the shared postprocessing config (overridable via $POSTPROCESSING_CONFIG)."""
+    path = os.environ.get('POSTPROCESSING_CONFIG') or _DEFAULT_CONFIG_PATH
+    return load_config(path)
 
 
 def _get_s3_client(cfg: Dict):
@@ -71,12 +74,8 @@ def load_segmentation_input_from_s3(  # pylint: disable=too-many-locals
     if bucket is None:
         bucket = cfg['imzml_browser_storage']['bucket']
 
-    logger.info(
-        "[SEGMENTATION_PERF] Loading segmentation input from s3://%s/%s",
-        bucket,
-        s3_key,
-    )
-    logger.info("Loading segmentation input from s3://%s/%s", bucket, s3_key)
+    logger.info(f"[SEGMENTATION_PERF] Loading segmentation input from s3://{bucket}/{s3_key}")
+    logger.info(f"Loading segmentation input from s3://{bucket}/{s3_key}")
 
     s3_client_start = time.time()
     s3_client = _get_s3_client(cfg)
@@ -96,18 +95,13 @@ def load_segmentation_input_from_s3(  # pylint: disable=too-many-locals
 
     total_s3_load_time = time.time() - s3_load_start_time
     logger.info(
-        "[SEGMENTATION_PERF] S3 load completed in %.3fs "
-        "(client: %.3fs, download: %.3fs, processing: %.3fs)",
-        total_s3_load_time,
-        s3_client_time,
-        s3_download_time,
-        data_processing_time,
+        f"[SEGMENTATION_PERF] S3 load completed in {total_s3_load_time:.3f}s "
+        f"(client: {s3_client_time:.3f}s, download: {s3_download_time:.3f}s, "
+        f"processing: {data_processing_time:.3f}s)"
     )
     logger.info(
-        "Loaded segmentation input: %s pixels × %s ions, image shape %s",
-        intensity_matrix.shape[0],
-        len(ion_labels),
-        image_shape,
+        f"Loaded segmentation input: {intensity_matrix.shape[0]} pixels × "
+        f"{len(ion_labels)} ions, image shape {image_shape}"
     )
     return intensity_matrix, pixel_coordinates, ion_labels, image_shape
 

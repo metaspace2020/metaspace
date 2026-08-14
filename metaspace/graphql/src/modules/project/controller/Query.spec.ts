@@ -275,6 +275,53 @@ describe('modules/project/controller (queries)', () => {
       })
     })
 
+    describe('should filter by userIds', () => {
+      const userIdsQuery = `query ($userIds: [ID!]) {
+        allProjects (userIds: $userIds) { ${projectFields} }
+      }`
+      const userIdsCountQuery = `query ($userIds: [ID!]) {
+        projectsCount (userIds: $userIds)
+      }`
+
+      it('should return only the projects the given user is a member of', async() => {
+        const myProject = await createTestProject({ isPublic: true })
+        await createTestUserProject(userId, myProject.id, UPRO.MEMBER)
+        // A public project the user is NOT a member of - should be excluded
+        await createTestProject({ isPublic: true })
+
+        const result = await doQuery<any[]>(userIdsQuery, { userIds: [userId] }, { context: userContext })
+        const count = await doQuery(userIdsCountQuery, { userIds: [userId] }, { context: userContext })
+
+        expect(result.map(p => p.id)).toEqual([myProject.id])
+        expect(count).toEqual(1)
+      })
+
+      it('should not allow a non-admin to filter by another user\'s id', async() => {
+        const otherUser = await createTestUser()
+
+        await expect(doQuery(userIdsQuery, { userIds: [otherUser.id] }, { context: userContext }))
+          .rejects.toThrow(/Not authorized/)
+        await expect(doQuery(userIdsCountQuery, { userIds: [otherUser.id] }, { context: userContext }))
+          .rejects.toThrow(/Not authorized/)
+      })
+
+      it('should allow an admin to filter by multiple users\' ids', async() => {
+        const [userA, userB] = await Promise.all([createTestUser(), createTestUser()])
+        const [projectA, projectB, projectC] = await Promise.all([
+          createTestProject(), createTestProject(), createTestProject(),
+        ])
+        await createTestUserProject(userA.id, projectA.id, UPRO.MEMBER)
+        await createTestUserProject(userB.id, projectB.id, UPRO.MANAGER)
+        // projectC has neither user as a member - should be excluded
+
+        const result = await doQuery<any[]>(userIdsQuery,
+          { userIds: [userA.id, userB.id] }, { context: adminContext })
+
+        expect(result.map((p: any) => p.id).sort()).toEqual([projectA.id, projectB.id].sort())
+        expect(result.map((p: any) => p.id)).not.toContain(projectC.id)
+      })
+    })
+
     describe('should sort projects according to params', () => {
       it('should test all sorting options and orders', async() => {
         const projects = await Promise.all(_.range(10).map(async(pIdx, idx) => {

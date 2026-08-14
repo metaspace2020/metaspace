@@ -24,8 +24,7 @@ def normalize_tic(
     n_zero = (~nonzero_mask).sum()
     if n_zero > 0:
         logger.warning(
-            "TIC normalization: %s pixels had zero total intensity and were left as zero",
-            n_zero,
+            f"TIC normalization: {n_zero} pixels had zero total intensity and were left as zero"
         )
 
     return matrix
@@ -56,9 +55,8 @@ def normalize_zscore(
     n_zero_std = (~nonzero_std).sum()
     if n_zero_std > 0:
         logger.warning(
-            "Z-score normalization: %s ions had zero std and were zeroed out — "
-            "consider removing them via variance filtering",
-            n_zero_std,
+            f"Z-score normalization: {n_zero_std} ions had zero std and were zeroed out — "
+            "consider removing them via variance filtering"
         )
 
     return matrix
@@ -74,10 +72,8 @@ def preprocess(  # pylint: disable=too-many-arguments
 ) -> SegmentationInput:
     """Run TIC (optional), log, and z-score steps; return a ``SegmentationInput``."""
     logger.info(
-        "Dataset %s: preprocessing matrix %s pixels x %s ions",
-        dataset_id,
-        intensity_matrix.shape[0],
-        intensity_matrix.shape[1],
+        f"Dataset {dataset_id}: preprocessing matrix {intensity_matrix.shape[0]} pixels "
+        f"x {intensity_matrix.shape[1]} ions"
     )
 
     matrix = intensity_matrix.copy()

@@ -1,0 +1,242 @@
+.results-stage {
+  // Top-of-page filter bar — mirrors the shared FilterPanel look used on the
+  // Annotations / dataset-comparison / diff-ROI pages (bordered, rounded, a row
+  // of labelled controls), but driven by local state.
+  .results-filter-bar {
+    @apply flex items-center justify-between gap-4 flex-wrap mb-4;
+    padding: 8px 12px;
+    background: #fff;
+    border: 1px solid #ebeef5;
+    border-radius: 6px;
+
+    .rfb-filters {
+      @apply flex items-center gap-4 flex-wrap;
+    }
+    .rfb-item {
+      @apply flex items-center gap-1;
+    }
+    .rfb-label {
+      @apply text-sm text-gray-600 whitespace-nowrap;
+    }
+  }
+
+  .results-warning-chip {
+    @apply inline-flex items-center gap-1 cursor-default select-none;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #b88230;
+    background: #fdf6ec;
+    border: 1px solid #f5dab1;
+    border-radius: 4px;
+    outline: none;
+
+    .el-icon {
+      color: #e6a23c;
+    }
+  }
+
+  .results-warning-popover {
+    @apply text-left;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  // Annotation cell: mol-name (with candidate-molecules popover) + a link out
+  // to the main annotations page.
+  .exp-annotation-cell {
+    @apply flex items-center justify-between gap-1;
+
+    .exp-annotation-link {
+      @apply text-gray-400 shrink-0;
+      opacity: 0;
+      transition: opacity 0.15s;
+
+      &:hover {
+        @apply text-primary;
+      }
+    }
+
+    &:hover .exp-annotation-link {
+      opacity: 1;
+    }
+  }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: 100%;
+
+    @media (min-width: 1024px) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+  }
+
+  .results-table-wrapper,
+  .results-info-wrapper {
+    min-width: 0;
+  }
+
+  .results-info-wrapper {
+    .ds-collapse {
+      margin: 0 8px;
+      min-height: 50px;
+      width: calc(100% - 16px);
+
+      .el-collapse-item__header {
+        background-color: #f1f5f8;
+        text-align: left;
+        padding: 0 16px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #303133;
+
+        .el-collapse-item__arrow {
+          // Match the diff-analysis page convention (arrow on the left).
+          order: -1;
+          margin: 0 8px 0 0;
+        }
+      }
+
+      .el-collapse-item__wrap {
+        background-color: transparent;
+      }
+
+      .el-collapse-item__content {
+        padding: 16px 8px 24px;
+      }
+    }
+
+    .selected-annotation-header {
+      padding: 12px 16px 16px;
+      border-bottom: 1px solid #ebeef5;
+
+      .av-header-items {
+        @apply flex items-baseline;
+        font-size: 24px;
+
+        > * + * {
+          margin-left: 8px;
+        }
+
+        .sf-big sub {
+          @apply text-base;
+        }
+      }
+
+      .sa-hint {
+        font-size: 12px;
+        color: #909399;
+        margin-top: 4px;
+      }
+
+      .sa-stats {
+        @apply flex flex-wrap gap-x-6 gap-y-1 mt-3 px-3 py-2 rounded;
+        background: #f5f7fa;
+        font-family:
+          'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 12px;
+
+        .sa-stat-label {
+          display: block;
+          font-size: 10px;
+          letter-spacing: 0.05em;
+          color: #909399;
+          text-transform: uppercase;
+        }
+        .sa-stat-value {
+          font-size: 13px;
+          color: #303133;
+        }
+        .sa-stat-value.is-positive {
+          color: #7c5cc7;
+        }
+        .sa-stat-value.is-negative {
+          color: #5ca98f;
+        }
+        .sa-stat-value.is-significant {
+          color: #e29b3f;
+        }
+      }
+    }
+  }
+
+  // FDR cell-only coloring (scoped to td.fdr-cell so the rest of the row
+  // stays default-themed, matching the Annotations table convention).
+  .el-table__body tr.fdr-5 > td.fdr-cell,
+  .fdr-legend.fdr-5 {
+    background-color: #c8ffc8 !important;
+  }
+  .el-table__body tr.fdr-10 > td.fdr-cell,
+  .fdr-legend.fdr-10 {
+    background-color: #e0ffe0 !important;
+  }
+  .el-table__body tr.fdr-20 > td.fdr-cell,
+  .fdr-legend.fdr-20 {
+    background-color: #ffffee !important;
+  }
+  .el-table__body tr.fdr-50 > td.fdr-cell,
+  .fdr-legend.fdr-50 {
+    background-color: #fff5e0 !important;
+  }
+  .fdr-cell > .cell {
+    @apply text-center;
+  }
+
+  // Selected row → tint the entire row to match the FDR colour palette
+  // (greens for low FDR, fading to amber). Mirrors the Annotations table.
+  .el-table__body tr.current-row > td {
+    background-color: #d8f0ff !important;
+  }
+  .el-table__body tr.fdr-5.current-row > td {
+    background-color: #8f8 !important;
+  }
+  .el-table__body tr.fdr-10.current-row > td {
+    background-color: #bfb !important;
+  }
+  .el-table__body tr.fdr-20.current-row > td {
+    background-color: #ffa !important;
+  }
+  .el-table__body tr.fdr-50.current-row > td {
+    background-color: #ffe5a0 !important;
+  }
+
+  .fdr-legend-row {
+    @apply flex items-center gap-2 mt-2 text-xs text-gray-600;
+  }
+  .fdr-legend {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 12px;
+    color: #555;
+  }
+  .fdr-legend.fdr-5 {
+    border-radius: 4px 0 0 4px;
+  }
+  .fdr-legend.fdr-50 {
+    border-radius: 0 4px 4px 0;
+  }
+
+  .results-footer {
+    @apply flex justify-between items-start mt-2 flex-wrap gap-2;
+  }
+
+  .matching-records {
+    @apply mt-2 text-sm text-gray-700;
+  }
+
+  .select-btn-wrapper {
+    position: relative;
+  }
+  .select-btn-icon {
+    margin-left: 4px;
+  }
+
+  .columns-popover-list {
+    @apply cursor-pointer select-none;
+    > div {
+      @apply flex items-center gap-2 py-1 px-1 hover:bg-gray-50 rounded;
+    }
+  }
+}

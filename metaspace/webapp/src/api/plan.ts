@@ -67,6 +67,9 @@ export interface RemainingApiUsage {
   periodType: string
   period: number
   actionType: string
+  creditsTotal?: number
+  creditsUsed?: number
+  creditsRemaining?: number
 }
 
 export interface ApiUsage {
@@ -319,6 +322,21 @@ export const getRemainingApiUsagesQuery = gql`
       period
       remaining
       actionType
+      creditsTotal
+      creditsUsed
+      creditsRemaining
     }
+  }
+`
+
+export const proFeatureWhitelistQuery = gql`
+  query ProFeatureWhitelistQuery {
+    proFeatureWhitelist
+  }
+`
+
+export const activateBetaTesterMutation = gql`
+  mutation ActivateBetaTester($token: String!, $features: String, $startDate: String, $endDate: String) {
+    activateBetaTester(token: $token, features: $features, startDate: $startDate, endDate: $endDate)
   }
 `

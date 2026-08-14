@@ -80,10 +80,8 @@ def _compute_enrichment_profiles(
     presence = (raw_intensity_matrix > 0).mean(axis=0)
     valid_indices = np.where(presence >= min_presence_fraction)[0]
     logger.info(
-        "Segment profiles: %d/%d ions pass min_presence_fraction=%.0f%%",
-        len(valid_indices),
-        len(ion_labels),
-        min_presence_fraction * 100,
+        f"Segment profiles: {len(valid_indices)}/{len(ion_labels)} ions "
+        f"pass min_presence_fraction={min_presence_fraction * 100:.0f}%"
     )
 
     records: List[dict] = []
@@ -91,7 +89,7 @@ def _compute_enrichment_profiles(
         inside = labels == seg_id
         n_inside = int(inside.sum())
         if n_inside == 0:
-            logger.warning("Segment %s has no pixels — skipping", seg_id)
+            logger.warning(f"Segment {seg_id} has no pixels — skipping")
             continue
         outside = ~inside
         n_outside = int(outside.sum())
@@ -179,10 +177,8 @@ def _drop_empty_segments(
 
     n_dropped = n_segments - n_actual
     logger.warning(
-        "%d empty segment(s) removed after smoothing — relabelling %d → %d segments",
-        n_dropped,
-        n_segments,
-        n_actual,
+        f"{n_dropped} empty segment(s) removed after smoothing — "
+        f"relabelling {n_segments} → {n_actual} segments"
     )
 
     # Build lookup: old_id → new_id (present_ids is sorted so IDs stay ordered)
@@ -225,10 +221,8 @@ def postprocess(
                                 to be included in AUC computation.
     """
     logger.info(
-        "Dataset %s: postprocessing %s output (map_type=%s)",
-        segmentation_input.dataset_id,
-        raw_output.algorithm,
-        raw_output.map_type,
+        f"Dataset {segmentation_input.dataset_id}: postprocessing {raw_output.algorithm} "
+        f"output (map_type={raw_output.map_type})"
     )
 
     # 1. Smoothing
@@ -239,11 +233,7 @@ def postprocess(
             map_type=raw_output.map_type,
             window_size=window_size,
         )
-        logger.info(
-            "Applied majority vote smoothing (window=%sx%s)",
-            window_size,
-            window_size,
-        )
+        logger.info(f"Applied majority vote smoothing (window={window_size}x{window_size})")
 
     # 2 & 3. Enrichment profiles and segment summary — unified maps only
     segment_profiles: Optional[pd.DataFrame] = None

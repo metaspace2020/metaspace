@@ -1,7 +1,8 @@
 import json
 import logging
+import threading
 import time
-from typing import Optional
+from typing import List, Optional, Tuple
 
 import boto3
 from botocore.exceptions import ClientError
@@ -212,73 +213,111 @@ class SegmentationManager:
 
         return {'status': 'processed', 'job_id': job_id, 'ds_id': ds_id}
 
-    def restart_pending_jobs(self):
-        """Restart all pending segmentation jobs by republishing them to the queue.
+    # Sequential restart tuning — match the experiment manager. Segmentation
+    # prep is also heavy enough that parallel post-restart preps can OOM the
+    # daemon (e.g. multiple datasets re-segmented at once), so we trickle them
+    # through and poll the job row for status transition.
+    _RESTART_POLL_INTERVAL_S = 5
+    _RESTART_PER_JOB_TIMEOUT_S = 30 * 60
 
-        This allows the segmentation daemon to pick them up and reprocess them.
-        This is typically called when the segmentation service restarts and needs to
-        continue processing jobs that were queued but not yet completed.
+    def restart_pending_jobs(self):
+        """Restart pending segmentation jobs sequentially by republishing them.
+
+        Replaces the previous bulk-republish behavior, which could trigger a
+        thundering-herd / parallel-OOM after a service restart by handing
+        every pending job to N daemon threads at once. This version queues
+        a background worker that publishes one job, polls for it to leave
+        QUEUED/STARTED, then publishes the next.
 
         Returns:
-            dict: Number of jobs restarted
+            dict: Number of jobs queued for sequential republish.
         """
         try:
-            # Get all QUEUED jobs from database
             pending_jobs_data = self._db.select(
                 """SELECT id, ds_id, submitter_email, parameters
                    FROM image_segmentation_job
                    WHERE status in ('QUEUED', 'STARTED')
                    ORDER BY created_at ASC""",
             )
-
             if not pending_jobs_data:
                 logger.info('No pending segmentation jobs found to restart')
                 return {'restarted_count': 0}
 
-            # Republish jobs to the queue with stored parameters
-            queue_publisher = self._create_update_queue_publisher()
-            restarted_count = len(pending_jobs_data)
-
-            for job_row in pending_jobs_data:
-                job_id, ds_id, email, params_dict = job_row
-
-                # Create message with stored or default parameters
-                msg = {
-                    'action': DaemonAction.SEGMENTATION,
-                    'ds_id': ds_id,
-                    'job_id': job_id,
-                    'algorithm': params_dict.get('algorithm', 'pca_gmm'),
-                    'database_ids': params_dict.get('database_ids', []),
-                    'fdr': params_dict.get('fdr', 0.2),
-                    'params': params_dict.get('params', {}),
-                    'off_sample': params_dict.get('off_sample'),
-                }
-
-                # Add optional parameters if they exist
-                if params_dict.get('adducts') is not None:
-                    msg['adducts'] = params_dict['adducts']
-                if params_dict.get('min_mz') is not None:
-                    msg['min_mz'] = params_dict['min_mz']
-                if params_dict.get('max_mz') is not None:
-                    msg['max_mz'] = params_dict['max_mz']
-
-                if email:
-                    msg['email'] = email
-
-                try:
-                    queue_publisher.publish(msg)
-                    logger.info(
-                        f'Republished segmentation job {job_id} for dataset {ds_id} to queue'
-                    )
-                except Exception as e:
-                    logger.error(f'Failed to republish job {job_id}: {e}')
-
-            logger.info(f'Successfully restarted {restarted_count} pending segmentation jobs')
-            return {'restarted_count': restarted_count}
-
+            threading.Thread(
+                target=self._sequential_republish_worker,
+                args=(list(pending_jobs_data),),
+                daemon=True,
+                name='segmentation-restart-pending',
+            ).start()
+            logger.info(f'Queued {len(pending_jobs_data)} pending segmentation jobs')
+            return {'restarted_count': len(pending_jobs_data)}
         except Exception as e:
             logger.error(f'Failed to restart pending segmentation jobs: {e}', exc_info=True)
             raise
+
+    def _sequential_republish_worker(self, pending: List[Tuple]) -> None:
+        """Background worker: publish one segmentation job, wait, repeat."""
+        try:
+            queue_publisher = self._create_update_queue_publisher()
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f'Sequential segmentation republish: failed to open publisher: {e}')
+            return
+
+        for job_row in pending:
+            job_id, ds_id, email, params_dict = job_row
+            msg = {
+                'action': DaemonAction.SEGMENTATION,
+                'ds_id': ds_id,
+                'job_id': job_id,
+                'algorithm': params_dict.get('algorithm', 'pca_gmm'),
+                'database_ids': params_dict.get('database_ids', []),
+                'fdr': params_dict.get('fdr', 0.2),
+                'params': params_dict.get('params', {}),
+                'off_sample': params_dict.get('off_sample'),
+            }
+            if params_dict.get('adducts') is not None:
+                msg['adducts'] = params_dict['adducts']
+            if params_dict.get('min_mz') is not None:
+                msg['min_mz'] = params_dict['min_mz']
+            if params_dict.get('max_mz') is not None:
+                msg['max_mz'] = params_dict['max_mz']
+            if email:
+                msg['email'] = email
+
+            try:
+                queue_publisher.publish(msg)
+                logger.info(f'Republished segmentation job {job_id} for dataset {ds_id} (waiting)')
+            except Exception as e:  # pylint: disable=broad-except
+                logger.error(f'Failed to republish job {job_id}: {e}')
+                continue
+
+            self._wait_for_segmentation_settled(job_id)
+
+    def _wait_for_segmentation_settled(self, job_id) -> None:
+        """Block until the segmentation job row leaves QUEUED/STARTED (or timeout)."""
+        deadline = time.monotonic() + self._RESTART_PER_JOB_TIMEOUT_S
+        while time.monotonic() < deadline:
+            try:
+                row = self._db.select_one(
+                    "SELECT status FROM image_segmentation_job WHERE id=%s",
+                    params=(job_id,),
+                )
+            except Exception as e:  # pylint: disable=broad-except
+                logger.warning(
+                    f'Sequential segmentation republish: DB poll failed for job '
+                    f'{job_id}: {e}; advancing'
+                )
+                return
+            if not row:
+                return
+            (status,) = row
+            if status not in ('QUEUED', 'STARTED'):
+                return
+            time.sleep(self._RESTART_POLL_INTERVAL_S)
+        logger.warning(
+            f'Sequential segmentation republish: job {job_id} did not settle '
+            f'within {self._RESTART_PER_JOB_TIMEOUT_S}s; advancing to next job'
+        )
 
     def _get_callback_url(self):
         """Get callback URL for segmentation service."""

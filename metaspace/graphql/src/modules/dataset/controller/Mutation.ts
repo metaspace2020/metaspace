@@ -816,6 +816,64 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     return true
   },
 
+  copyRoisToDatasets: async(
+    source: any,
+    { sourceDatasetId, targetDatasetIds }: { sourceDatasetId: string; targetDatasetIds: string[] },
+    ctx: Context
+  ) => {
+    if (ctx.user.id == null) {
+      throw new UserError('Not authenticated')
+    }
+
+    const sourceDataset = await esDatasetByID(sourceDatasetId, ctx.user)
+    if (!sourceDataset) {
+      throw new UserError('Source dataset not found or access denied')
+    }
+
+    const userRoiCount = await ctx.entityManager.createQueryBuilder(Roi, 'roi')
+      .where('roi.datasetId = :datasetId', { datasetId: sourceDatasetId })
+      .andWhere('roi.userId = :userId', { userId: ctx.user.id })
+      .getCount()
+
+    const sourceRois = userRoiCount > 0
+      ? await ctx.entityManager.find(Roi, { where: { datasetId: sourceDatasetId, userId: ctx.user.id } })
+      : await ctx.entityManager.find(Roi, { where: { datasetId: sourceDatasetId, isDefault: true } })
+
+    if (sourceRois.length === 0) {
+      throw new UserError('No ROIs found on source dataset')
+    }
+
+    for (const targetDatasetId of targetDatasetIds) {
+      const targetDataset = await esDatasetByID(targetDatasetId, ctx.user)
+      if (!targetDataset) {
+        throw new UserError(`Target dataset ${targetDatasetId} not found or access denied`)
+      }
+      const canEdit = await canEditEsDataset(targetDataset, ctx)
+
+      await ctx.entityManager.createQueryBuilder()
+        .delete()
+        .from(Roi)
+        .where('"dataset_id" = :datasetId AND "user_id" = :userId', {
+          datasetId: targetDatasetId,
+          userId: ctx.user.id,
+        })
+        .execute()
+
+      for (const roi of sourceRois) {
+        const newRoi = ctx.entityManager.create(Roi, {
+          datasetId: targetDatasetId,
+          userId: ctx.user.id,
+          name: roi.name,
+          isDefault: canEdit,
+          geojson: roi.geojson,
+        })
+        await ctx.entityManager.save(newRoi)
+      }
+    }
+
+    return true
+  },
+
   runSegmentation: async(
     source: any,
     {

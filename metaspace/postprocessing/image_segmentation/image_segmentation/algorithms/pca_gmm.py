@@ -40,7 +40,7 @@ def _run_pca(matrix: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     pca = PCA(n_components=max_components)
     all_scores = pca.fit_transform(matrix)
     cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
-    logger.info("PCA: computed %d components", max_components)
+    logger.info(f"PCA: computed {max_components} components")
     return all_scores, cumulative_variance
 
 
@@ -52,7 +52,7 @@ def _build_weight_matrix(pixel_coordinates: np.ndarray) -> csr_matrix:
     tree = KDTree(pixel_coordinates)
     pairs = tree.query_pairs(r=1.5)
 
-    n = len(pixel_coordinates)
+    n = len(pixel_coordinates)  # pylint: disable=invalid-name
     if not pairs:
         return csr_matrix((n, n))
 
@@ -63,7 +63,7 @@ def _build_weight_matrix(pixel_coordinates: np.ndarray) -> csr_matrix:
     return csr_matrix((data, (all_rows, all_cols)), shape=(n, n))
 
 
-def _compute_morans_i(
+def _compute_morans_i(  # pylint: disable=invalid-name,too-many-locals
     all_scores: np.ndarray,
     pixel_coordinates: np.ndarray,
     n_permutations: int = 999,
@@ -91,27 +91,29 @@ def _compute_morans_i(
     if S0 == 0.0:
         logger.warning(
             "Moran's I: weight matrix has no edges (all pixels isolated) — "
-            "returning zero Moran's I for all %d PCs", K,
+            f"returning zero Moran's I for all {K} PCs"
         )
-        return pd.DataFrame({
-            "pc":                  np.arange(1, K + 1),
-            "morans_i":            np.zeros(K),
-            "p_value":             np.ones(K),
-            "p_method":            ["none"] * K,
-            "passes_p_gate":       np.zeros(K, dtype=bool),
-            "passes_morans_floor": np.zeros(K, dtype=bool),
-            "passes_both":         np.zeros(K, dtype=bool),
-        })
+        return pd.DataFrame(
+            {
+                "pc": np.arange(1, K + 1),
+                "morans_i": np.zeros(K),
+                "p_value": np.ones(K),
+                "p_method": ["none"] * K,
+                "passes_p_gate": np.zeros(K, dtype=bool),
+                "passes_morans_floor": np.zeros(K, dtype=bool),
+                "passes_both": np.zeros(K, dtype=bool),
+            }
+        )
 
     # Column-centre scores; denominator is invariant under row permutation
     z = all_scores - all_scores.mean(axis=0)  # (N, K)
-    denom = (z * z).sum(axis=0)               # (K,)
+    denom = (z * z).sum(axis=0)  # (K,)
 
     zero_var = denom == 0
     if zero_var.any():
         logger.warning(
-            "Moran's I: %d constant PC(s) detected — Moran's I will be 0, will not pass gates",
-            int(zero_var.sum()),
+            f"Moran's I: {int(zero_var.sum())} constant PC(s) detected — "
+            "Moran's I will be 0, will not pass gates"
         )
     safe_denom = np.where(zero_var, 1.0, denom)
 
@@ -129,8 +131,8 @@ def _compute_morans_i(
         p_value = (count_ge + 1) / (n_permutations + 1)
         p_method = ["permutation"] * K
         logger.info(
-            "Moran's I: permutation null (N=%d < %d, %d iters)",
-            N, SMALL_DATASET_THRESHOLD, n_permutations,
+            f"Moran's I: permutation null (N={N} < {SMALL_DATASET_THRESHOLD}, "
+            f"{n_permutations} iters)"
         )
     else:
         # Analytical one-sided z-test
@@ -146,31 +148,29 @@ def _compute_morans_i(
         z_score = np.zeros(K) if std_I == 0.0 else (I_observed - E_I) / std_I
         p_value = scipy_norm.sf(z_score)  # one-sided: P(Z > z)
         p_method = ["analytical_z"] * K
-        logger.info(
-            "Moran's I: analytical z-test (N=%d >= %d)",
-            N, SMALL_DATASET_THRESHOLD,
-        )
+        logger.info(f"Moran's I: analytical z-test (N={N} >= {SMALL_DATASET_THRESHOLD})")
 
-    passes_p_gate       = p_value < p_threshold
+    passes_p_gate = p_value < p_threshold
     passes_morans_floor = I_observed >= MIN_MORANS_I
-    passes_both         = passes_p_gate & passes_morans_floor
+    passes_both = passes_p_gate & passes_morans_floor
 
     logger.info(
-        "Moran's I: %d/%d pass p-gate, %d/%d pass floor (>=%.2f), %d/%d pass both",
-        int(passes_p_gate.sum()), K,
-        int(passes_morans_floor.sum()), K, MIN_MORANS_I,
-        int(passes_both.sum()), K,
+        f"Moran's I: {int(passes_p_gate.sum())}/{K} pass p-gate, "
+        f"{int(passes_morans_floor.sum())}/{K} pass floor (>={MIN_MORANS_I:.2f}), "
+        f"{int(passes_both.sum())}/{K} pass both"
     )
 
-    return pd.DataFrame({
-        "pc":                  np.arange(1, K + 1),
-        "morans_i":            I_observed,
-        "p_value":             p_value,
-        "p_method":            p_method,
-        "passes_p_gate":       passes_p_gate,
-        "passes_morans_floor": passes_morans_floor,
-        "passes_both":         passes_both,
-    })
+    return pd.DataFrame(
+        {
+            "pc": np.arange(1, K + 1),
+            "morans_i": I_observed,
+            "p_value": p_value,
+            "p_method": p_method,
+            "passes_p_gate": passes_p_gate,
+            "passes_morans_floor": passes_morans_floor,
+            "passes_both": passes_both,
+        }
+    )
 
 
 def _find_elbow(k_values: List[int], scores: List[float]) -> int:  # pylint: disable=too-many-locals
@@ -206,9 +206,7 @@ def _find_elbow(k_values: List[int], scores: List[float]) -> int:  # pylint: dis
 
     dist_str = ", ".join(f"{d:.3f}" for d in distances)
     logger.info(
-        "[SEGMENTATION_PERF] Elbow detection: selected k=%s (distances=[%s])",
-        elbow_k,
-        dist_str,
+        f"[SEGMENTATION_PERF] Elbow detection: selected k={elbow_k} (distances=[{dist_str}])"
     )
 
     return elbow_k
@@ -230,8 +228,8 @@ def _select_k_via_criterion(
         gmm.fit(pc_scores)
         score = gmm.bic(pc_scores) if criterion == "bic" else gmm.aic(pc_scores)
         logger.info(
-            "GMM: k_range collapsed to single value — using k=%d (%s=%.2f)",
-            k_min, criterion.upper(), score,
+            f"GMM: k_range collapsed to single value — using k={k_min} "
+            f"({criterion.upper()}={score:.2f})"
         )
         return k_min, {
             "k_values": [k_min],
@@ -248,11 +246,11 @@ def _select_k_via_criterion(
         gmm.fit(pc_scores)
         score = gmm.bic(pc_scores) if criterion == "bic" else gmm.aic(pc_scores)
         scores.append(score)
-        logger.debug("GMM k=%s: %s=%.2f", k, criterion.upper(), score)
+        logger.debug(f"GMM k={k}: {criterion.upper()}={score:.2f}")
 
     # best_k = k_values[int(np.argmin(scores))]
     best_k = _find_elbow(k_values, scores)
-    logger.info("GMM: auto-selected k=%s via %s", best_k, criterion.upper())
+    logger.info(f"GMM: auto-selected k={best_k} via {criterion.upper()}")
 
     curve = {
         "k_values": k_values,
@@ -283,10 +281,8 @@ def _run_gmm(
     }
 
     logger.info(
-        "GMM: fitted k=%s, unique labels=%s, mean confidence=%.3f",
-        k,
-        np.unique(labels),
-        float(confidence.mean()),
+        f"GMM: fitted k={k}, unique labels={np.unique(labels)}, "
+        f"mean confidence={float(confidence.mean()):.3f}"
     )
     return labels, confidence_histogram
 
@@ -352,30 +348,26 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
             )
 
         if not 0.0 < validated["p_threshold"] < 1.0:
-            raise ValueError(
-                f"p_threshold must be in (0, 1), got {validated['p_threshold']}"
-            )
+            raise ValueError(f"p_threshold must be in (0, 1), got {validated['p_threshold']}")
 
         return validated
 
-    def run(  # pylint: disable=too-many-locals
+    def run(  # pylint: disable=too-many-locals,too-many-statements
         self, segmentation_input: SegmentationInput, parameters: dict
     ) -> RawAlgorithmOutput:
         start_time = time.time()
         parameters = self.validate_parameters(parameters)
 
         logger.info(
-            "Dataset %s: running PCA+GMM on %s pixels x %s ions",
-            segmentation_input.dataset_id,
-            segmentation_input.n_pixels,
-            segmentation_input.n_ions,
+            f"Dataset {segmentation_input.dataset_id}: running PCA+GMM on "
+            f"{segmentation_input.n_pixels} pixels x {segmentation_input.n_ions} ions"
         )
 
         # 1. PCA
         pca_start_time = time.time()
         all_scores, explained_variance = _run_pca(segmentation_input.intensity_matrix)
         pca_time = time.time() - pca_start_time
-        logger.info("[SEGMENTATION_PERF] PCA completed in %.3fs", pca_time)
+        logger.info(f"[SEGMENTATION_PERF] PCA completed in {pca_time:.3f}s")
 
         # 1b. Moran's I on all computed PCs
         morans_start_time = time.time()
@@ -388,27 +380,24 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
         )
         morans_i_result = {col: morans_df[col].tolist() for col in morans_df.columns}
         morans_time = time.time() - morans_start_time
-        logger.info("[SEGMENTATION_PERF] Moran's I completed in %.3fs", morans_time)
+        logger.info(f"[SEGMENTATION_PERF] Moran's I completed in {morans_time:.3f}s")
 
         # 1c. Select PCs that pass both gates, capped at MAX_GMM_PCS
         selected_indices = np.where(morans_df["passes_both"].to_numpy())[0]
         if len(selected_indices) == 0:
-            logger.warning(
-                "No PCs passed Moran's I filter — falling back to first 5 PCs"
-            )
+            logger.warning("No PCs passed Moran's I filter — falling back to first 5 PCs")
             selected_indices = np.arange(min(5, all_scores.shape[1]))
         elif len(selected_indices) > MAX_GMM_PCS:
             logger.warning(
-                "%d PCs passed Moran's I filter — capping to first %d",
-                len(selected_indices), MAX_GMM_PCS,
+                f"{len(selected_indices)} PCs passed Moran's I filter — "
+                f"capping to first {MAX_GMM_PCS}"
             )
             selected_indices = selected_indices[:MAX_GMM_PCS]
         pc_scores = all_scores[:, selected_indices]
         n_selected_pcs = pc_scores.shape[1]
         logger.info(
-            "Moran's I PC selection: %d PCs selected for GMM (0-based indices: %s)",
-            n_selected_pcs,
-            selected_indices.tolist(),
+            f"Moran's I PC selection: {n_selected_pcs} PCs selected for GMM "
+            f"(0-based indices: {selected_indices.tolist()})"
         )
 
         # Guard: k cannot exceed the number of selected PCs
@@ -416,10 +405,8 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
             if parameters["k"] > n_selected_pcs:
                 clamped_k = max(2, n_selected_pcs)
                 logger.warning(
-                    "Requested k=%d exceeds selected PCs (%d) — clamping k to %d",
-                    parameters["k"],
-                    n_selected_pcs,
-                    clamped_k,
+                    f"Requested k={parameters['k']} exceeds selected PCs "
+                    f"({n_selected_pcs}) — clamping k to {clamped_k}"
                 )
                 parameters = {**parameters, "k": clamped_k}
         else:
@@ -427,10 +414,8 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
             if k_max > n_selected_pcs:
                 new_k_max = max(k_min, n_selected_pcs)
                 logger.warning(
-                    "k_range upper bound %d exceeds selected PCs (%d) — clamping to %d",
-                    k_max,
-                    n_selected_pcs,
-                    new_k_max,
+                    f"k_range upper bound {k_max} exceeds selected PCs "
+                    f"({n_selected_pcs}) — clamping to {new_k_max}"
                 )
                 parameters = {**parameters, "k_range": (k_min, new_k_max)}
 
@@ -439,7 +424,7 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
         bic_curve = None
         if parameters["k"] is not None:
             k = parameters["k"]
-            logger.info("GMM: using fixed k=%s", k)
+            logger.info(f"GMM: using fixed k={k}")
         else:
             k, bic_curve = _select_k_via_criterion(
                 pc_scores=pc_scores,
@@ -447,13 +432,13 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
                 criterion=parameters["criterion"],
             )
         k_selection_time = time.time() - k_selection_start_time
-        logger.info("[SEGMENTATION_PERF] k selection completed in %.3fs", k_selection_time)
+        logger.info(f"[SEGMENTATION_PERF] k selection completed in {k_selection_time:.3f}s")
 
         # 3. GMM
         gmm_start_time = time.time()
         labels, confidence_histogram = _run_gmm(pc_scores, k)
         gmm_time = time.time() - gmm_start_time
-        logger.info("[SEGMENTATION_PERF] GMM completed in %.3fs", gmm_time)
+        logger.info(f"[SEGMENTATION_PERF] GMM completed in {gmm_time:.3f}s")
 
         # 4. Reconstruct label map
         label_map_start_time = time.time()
@@ -464,12 +449,11 @@ class PCAGMMAlgorithm(BaseSegmentationAlgorithm):
         )
         label_map_time = time.time() - label_map_start_time
         logger.info(
-            "[SEGMENTATION_PERF] Label map reconstruction completed in %.3fs",
-            label_map_time,
+            f"[SEGMENTATION_PERF] Label map reconstruction completed in {label_map_time:.3f}s"
         )
 
         total_time = time.time() - start_time
-        logger.info("[SEGMENTATION_PERF] Total algorithm time: %.3fs", total_time)
+        logger.info(f"[SEGMENTATION_PERF] Total algorithm time: {total_time:.3f}s")
 
         return RawAlgorithmOutput(
             map_type="unified",

@@ -27,6 +27,7 @@ import './DatasetActionsDropdown.scss'
 import { checkIfEnrichmentRequested } from '../../../api/enrichmentdb'
 import { ArrowDown } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
+import { useProFeatures } from '../../../lib/useProFeatures'
 // import { verifyRecaptcha } from '../../../api/auth'
 
 interface DatasetActionsDropdownProps {
@@ -43,7 +44,6 @@ interface DatasetActionsDropdownProps {
   dataset: DatasetDetailItem
   currentUser: CurrentUserRoleResult
   isPublishedOrUnderReview: boolean
-  isPro: boolean
 }
 
 interface DatasetActionsDropdownState {
@@ -72,12 +72,12 @@ export const DatasetActionsDropdown = defineComponent({
     isPublishedOrUnderReview: { type: Boolean, default: () => false },
     dataset: { type: Object as () => DatasetDetailItem, required: true },
     currentUser: { type: Object as () => CurrentUserRoleResult },
-    isPro: { type: Boolean, default: () => false },
   },
   setup(props: DatasetActionsDropdownProps, ctx) {
     const { emit } = ctx
     const router = useRouter()
     const apolloClient = inject(DefaultApolloClient)
+    const { canUse, loading: proLoading } = useProFeatures()
     // const token = computed(() => props.recaptchaToken)
 
     const state = reactive<DatasetActionsDropdownState>({
@@ -202,7 +202,7 @@ export const DatasetActionsDropdown = defineComponent({
             lockScroll: false,
             type: 'warning',
             confirmButtonText: 'Go to segmentation',
-            cancelButtonText: 'Change  parameters',
+            cancelButtonText: 'Change parameters',
           }
         )
           .then(() => {
@@ -337,8 +337,28 @@ export const DatasetActionsDropdown = defineComponent({
         case 'segmentation':
           await segmentationJobsRefetch()
           hideFeatureBadge('imageSegmentation')
-          if (props.isPro || props.currentUser?.role === 'admin') {
-            openSegmentationDialog()
+          if (canUse('segmentation')) {
+            if (props.dataset?.canEdit) {
+              openSegmentationDialog()
+            } else {
+              // Users who can view but not edit may only open an existing
+              // segmentation result — they cannot run a new one.
+              const hasSegmentation = segmentationJobs.value?.find((job: any) => job.status === 'FINISHED')
+              if (props.dataset?.canDownload && hasSegmentation) {
+                router.push({
+                  name: 'dataset-segmentation',
+                  params: { dataset_id: props.dataset?.id },
+                })
+              } else {
+                ElNotification.warning(
+                  'You need to be the dataset owner or a member of its group to run image segmentation.'
+                )
+              }
+            }
+          } else if (proLoading.value) {
+            // Entitlement is still resolving — ignore the click rather than
+            // wrongly showing the upsell to a Pro user.
+            break
           } else {
             ElNotification.warning({
               title: '',
@@ -403,7 +423,7 @@ export const DatasetActionsDropdown = defineComponent({
               </div>
             </ElDropdownItem>
           )}
-          {canEdit && config.features.segmentation && (
+          {config.features.segmentation && canDownload && (
             <ElDropdownItem command="segmentation">
               <div class="relative actionBadge">
                 <NewFeatureBadge featureKey="imageSegmentation">{segmentationActionLabel}</NewFeatureBadge>

@@ -14,6 +14,7 @@ import { Resolvers as SubscriptionResolvers } from './src/modules/subscription/c
 import { Resolvers as FeatureRequestResolvers } from './src/modules/featureRequest/controller'
 import { Resolvers as ImageViewerSnapshotResolvers } from './src/modules/imageViewerSnapshot/controller'
 import { Resolvers as NewsResolvers } from './src/modules/news/controller'
+import { Resolvers as ExperimentResolvers } from './src/modules/experiment/controller'
 import { mergedSchemas } from './schema'
 import addReadOnlyInterceptorToSchema from './src/modules/system/addReadOnlyInterceptorToSchema'
 import { Context } from './src/context'
@@ -38,6 +39,7 @@ export const makeNewExecutableSchema = () => {
       SubscriptionResolvers,
       FeatureRequestResolvers,
       NewsResolvers,
+      ExperimentResolvers,
     ],
   })
 }

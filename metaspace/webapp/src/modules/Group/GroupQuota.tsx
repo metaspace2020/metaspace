@@ -48,6 +48,12 @@ export default defineComponent({
       }
     }
 
+    // Extra credits are granted on top of the plan quota, so a row is still usable
+    // once its plan quota runs out as long as unused credits remain.
+    const getAvailable = (row: RemainingApiUsage) => row.remaining + (row.creditsRemaining || 0)
+    const hasCredits = (row: RemainingApiUsage) => (row.creditsTotal || 0) > 0
+    const showCreditsColumn = computed(() => (remainingApiUsages.value as RemainingApiUsage[]).some(hasCredits))
+
     return () => {
       const remainingUsages = remainingApiUsages.value as RemainingApiUsage[]
 
@@ -72,13 +78,27 @@ export default defineComponent({
               <ElTableColumn prop="remaining" label="Remaining" width="100">
                 {{
                   default: ({ row }: { row: RemainingApiUsage }) => (
-                    <ElTag type={row.remaining > 0 ? 'success' : 'danger'} size="small">
+                    <ElTag type={getAvailable(row) > 0 ? 'success' : 'danger'} size="small">
                       {row.remaining}
                     </ElTag>
                   ),
                 }}
               </ElTableColumn>
-              <ElTableColumn prop="actionType" label="Action" width="160">
+              {showCreditsColumn.value && (
+                <ElTableColumn prop="creditsRemaining" label="Credits" width="80">
+                  {{
+                    default: ({ row }: { row: RemainingApiUsage }) =>
+                      hasCredits(row) ? (
+                        <ElTag type={(row.creditsRemaining || 0) > 0 ? 'success' : 'info'} size="small">
+                          +{row.creditsRemaining || 0}
+                        </ElTag>
+                      ) : (
+                        <span>-</span>
+                      ),
+                  }}
+                </ElTableColumn>
+              )}
+              <ElTableColumn prop="actionType" label="Action" width="150">
                 {{
                   default: ({ row }: { row: RemainingApiUsage }) => (
                     <ElTag type="info" size="small">
@@ -97,23 +117,28 @@ export default defineComponent({
                   ),
                 }}
               </ElTableColumn>
-              <ElTableColumn label="Usage status" width="120">
+              <ElTableColumn label="Usage status" width="110">
                 {{
                   default: ({ row }: { row: RemainingApiUsage }) => (
-                    <el-tag type={row.remaining > 0 ? 'success' : 'danger'} size="small">
-                      {row.remaining > 0 ? 'Available' : 'Exhausted'}
-                    </el-tag>
+                    <ElTag type={getAvailable(row) > 0 ? 'success' : 'danger'} size="small">
+                      {getAvailable(row) > 0 ? 'Available' : 'Exhausted'}
+                    </ElTag>
                   ),
                 }}
               </ElTableColumn>
-              <ElTableColumn label="Description">
+              <ElTableColumn label="Description" minWidth="140">
                 {{
                   default: ({ row }: { row: RemainingApiUsage }) => (
-                    <span>
-                      {row.remaining} of {row.limit} {getActionType(row.actionType)} remaining for {row.period}{' '}
-                      {row.periodType}
-                      {row.period > 1 ? 's' : ''}
-                    </span>
+                    <div>
+                      <div class="quota-note">
+                        {row.remaining} of {row.limit} remaining
+                      </div>
+                      {hasCredits(row) && (
+                        <div class="credits-note text-xs text-gray-500">
+                          {row.creditsUsed || 0}/{row.creditsTotal} extra credits used
+                        </div>
+                      )}
+                    </div>
                   ),
                 }}
               </ElTableColumn>

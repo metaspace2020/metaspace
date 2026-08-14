@@ -11,6 +11,7 @@ interface Features {
   segmentation: boolean
   diff_analysis: boolean
   enrichment: boolean
+  experiment: boolean
   show_dataset_overview: boolean
   metabo_enrich: boolean
   imzml_browser: boolean
@@ -86,9 +87,10 @@ const defaultConfig: ClientConfig = {
   features: {
     coloc: true,
     ignore_ibd_size: false,
-    segmentation: false,
+    segmentation: true,
     diff_analysis: false,
     enrichment: true,
+    experiment: false,
     show_dataset_overview: true,
     metabo_enrich: false,
     imzml_browser: true,
