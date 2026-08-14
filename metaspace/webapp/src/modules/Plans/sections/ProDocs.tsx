@@ -31,7 +31,7 @@ const DOC_CARDS: DocCard[] = [
   {
     kicker: 'Guide',
     title: 'Cross-dataset statistics',
-    body: 'Grouping datasets by condition and batch, and what the model does with each.',
+    body: 'Grouping datasets by condition.',
     href: '/help',
   },
 ]

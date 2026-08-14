@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { cancelSubscriptionMutation, getActiveGroupSubscriptionQuery } from '../../api/subscription'
 import { ApiUsage, getApiUsagesQuery } from '../../api/plan'
 import GroupQuota from './GroupQuota'
+import GroupTopup from './GroupTopup'
 import { format } from 'date-fns'
 import { Subscription, updateSubscriptionMutation } from '../../api/subscription'
 import { PlanRule } from '../../api/plan'
@@ -11,6 +12,7 @@ import RouterLink from '../../components/RouterLink'
 import './GroupUsage.scss'
 import { ElMessage, ElSwitch, ElPagination } from '../../lib/element-plus'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
+import { getActionTypeText } from '../../lib/usageActions'
 
 export default defineComponent({
   name: 'GroupsListPage',
@@ -36,6 +38,10 @@ export default defineComponent({
 
     const isAutoRenew = ref<boolean>(false)
     const updatingAutoRenew = ref<boolean>(false)
+
+    // A pack is a one-off purchase: it never renews, so offering an
+    // auto-renew toggle would be misleading.
+    const isPackSubscription = computed(() => activeGroupSubscription.value?.plan?.type === 'pack')
 
     // API Usage pagination state
     const apiUsagePage = ref(1)
@@ -134,19 +140,6 @@ export default defineComponent({
           return 'info'
         default:
           return ''
-      }
-    }
-
-    const getActionTypeText = (actionType: string) => {
-      switch (actionType.toLowerCase()) {
-        case 'create':
-          return 'private submissions'
-        case 'update':
-          return 'updated metadata'
-        case 'reprocess':
-          return 'private resubmissions'
-        default:
-          return actionType
       }
     }
 
@@ -284,7 +277,7 @@ export default defineComponent({
                 header: () => (
                   <div class="empty-actions">
                     <p class="w-full">This group doesn't have an active subscription. Choose a plan to get started.</p>
-                    <el-button type="primary" size="large" onClick={() => router.push('/plans')}>
+                    <el-button type="primary" size="large" onClick={() => router.push('/pro')}>
                       View plans
                     </el-button>
                   </div>
@@ -365,21 +358,23 @@ export default defineComponent({
                       </el-col>
                     </el-row>
                     <el-row gutter={20}>
-                      <el-col span={12}>
-                        <div class="info-item">
-                          <label>Auto-renew:</label>
-                          <div class="value">
-                            <ElSwitch
-                              modelValue={isAutoRenew.value}
-                              onUpdate:modelValue={(val: boolean) => onToggleAutoRenew(val)}
-                              activeText="On"
-                              inactiveText="Off"
-                              loading={updatingAutoRenew.value}
-                              disabled={updatingAutoRenew.value}
-                            />
+                      {!isPackSubscription.value && (
+                        <el-col span={12}>
+                          <div class="info-item">
+                            <label>Auto-renew:</label>
+                            <div class="value">
+                              <ElSwitch
+                                modelValue={isAutoRenew.value}
+                                onUpdate:modelValue={(val: boolean) => onToggleAutoRenew(val)}
+                                activeText="On"
+                                inactiveText="Off"
+                                loading={updatingAutoRenew.value}
+                                disabled={updatingAutoRenew.value}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      </el-col>
+                        </el-col>
+                      )}
                       {subscription.cancelledAt && (
                         <el-col span={12}>
                           <div class="info-item">
@@ -522,6 +517,9 @@ export default defineComponent({
                   </div>
 
                   {renderRemainingQuota()}
+
+                  {/* Top up the plan with extra usage credits */}
+                  <GroupTopup groupId={props.groupId} />
 
                   {/* Payment Information */}
                   <div class="section">

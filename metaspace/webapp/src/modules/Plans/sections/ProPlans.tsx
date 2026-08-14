@@ -49,15 +49,10 @@ export default defineComponent({
     availablePeriods: { type: Array as PropType<PricingOption[]>, default: () => [] },
     radioValue: { type: String, default: '' },
     activePlanId: { type: String as PropType<string | null>, default: null },
+    packPlan: { type: Object as PropType<Plan | null>, default: null },
   },
-  emits: ['subscribe', 'period'],
+  emits: ['subscribe', 'period', 'buyPack'],
   setup(props, { emit }) {
-    // Index the active plans by resolved tier. Plans whose tier cannot be
-    // resolved are dropped rather than rendered without a label. Sorted by
-    // displayOrder ascending first (matching the old PlansPage behaviour) so
-    // that if a grandfathered plan ever resolves to the same tier as the
-    // current one, the lowest-displayOrder plan wins deterministically
-    // rather than whichever happened to come first in the raw API response.
     const byTier = computed(() => {
       const map: Partial<Record<ProTier, Plan>> = {}
       ;[...props.plans]
@@ -72,12 +67,6 @@ export default defineComponent({
       return map
     })
 
-    // A plan may exist for a tier without offering the currently selected
-    // billing period (e.g. Max has a 3-year term the others don't).
-    // getPriceForPeriod silently returns 0 cents in that case, which would
-    // render "$0" with a live subscribe button - a real money bug. Use
-    // getPricingOptionForPeriod to distinguish "genuinely free" from
-    // "not offered on this term" before ever calling getPriceForPeriod.
     const pricingOptionFor = (tier: ProTier): PricingOption | null => {
       const plan = byTier.value[tier]
       if (!plan || !props.selectedPeriod) {
@@ -86,9 +75,6 @@ export default defineComponent({
       return getPricingOptionForPeriod(plan, props.selectedPeriod) || null
     }
 
-    // getPriceForPeriod returns CENTS; formatPrice does the cents -> dollars
-    // conversion. Do not divide by 100 here as well. Returns null - never
-    // "0" - when the plan has no pricing option for the selected period.
     const priceFor = (tier: ProTier): string | null => {
       const plan = byTier.value[tier]
       if (!plan || !props.selectedPeriod || !pricingOptionFor(tier)) {
@@ -97,12 +83,6 @@ export default defineComponent({
       return groupThousands(formatPrice(getPriceForPeriod(plan, props.selectedPeriod)))
     }
 
-    // getPeriodDisplayName only special-cases the legacy '1 year'/'Yearly'
-    // display names (returning bare "year"), so live period names like
-    // 'Annual' pass straight through and would render "billed every annual".
-    // Derive the natural phrasing from periodMonths instead of pattern-
-    // matching more display-name strings here (pricing.ts is shared with
-    // PaymentPage and must not be touched for this page-local wording).
     const periodLabel = computed(() => {
       const period = props.selectedPeriod
       if (!period) {
@@ -118,9 +98,6 @@ export default defineComponent({
       return `billed every ${getPeriodDisplayName(period).toLowerCase()}`
     })
 
-    // The line under each card price. A multi-year term is sold on the price
-    // lock rather than on the billing cadence, so it says so instead of
-    // repeating "billed every ...".
     const periodLine = computed(() => {
       const period = props.selectedPeriod
       if (!period) {
@@ -229,6 +206,11 @@ export default defineComponent({
       return 'Annual terms renew at the price published on the day of renewal.'
     })
 
+    const packPriceText = computed(() => {
+      const priceCents = props.packPlan?.pricingOptions?.find((option) => option.isActive)?.priceCents
+      return priceCents != null ? `$${groupThousands(formatPrice(priceCents))}` : '$350'
+    })
+
     const renderBullet = (bullet: TierBullet) =>
       bullet.map((segment, index) => {
         const key = `${index}-${segment.text}`
@@ -253,7 +235,7 @@ export default defineComponent({
       const width = block ? ' pro-btn--block' : ''
       if (props.activePlanId === plan.id) {
         return (
-          <div class={`pro-btn pro-btn--ghost${width}`} style={{ cursor: 'default' }}>
+          <div class={`pro-btn pro-btn--ghost${width} !px-0`} style={{ cursor: 'default' }}>
             Already enjoying the benefits!
           </div>
         )
@@ -471,27 +453,35 @@ export default defineComponent({
           {!props.loading && renderMaxStrip()}
 
           {PRO_FLAGS.datasetPack && (
-            // Unverified: the dataset pack is not implemented in checkout yet.
-            // Styled quieter than a tier card (dashed border, transparent
-            // background, smaller type) so it doesn't read as a fourth plan.
             <div class="pro-datapack" style={{ marginTop: '14px' }}>
               <div class="pro-datapack__body">
                 <p class="pro-datapack__title">
-                  Dataset pack — no subscription <span class="pro-datapack__price">$350</span>
+                  Dataset pack — no subscription <span class="pro-datapack__price">{packPriceText.value}</span>
                 </p>
                 <p class="pro-datapack__copy">
                   10 private datasets, valid 6 months from purchase, all downstream analysis tools included. One-off
                   payment — nothing renews.
                 </p>
               </div>
-              <a
-                href="#procurement"
-                class="pro-btn pro-btn--ghost pro-btn--sm"
-                data-test="buy-dataset-pack"
-                onClick={(e: MouseEvent) => scrollToHashSection(e, '#procurement')}
-              >
-                Buy a pack
-              </a>
+              {props.packPlan ? (
+                <button
+                  type="button"
+                  class="pro-btn pro-btn--ghost pro-btn--sm"
+                  data-test="buy-dataset-pack"
+                  onClick={() => emit('buyPack', props.packPlan!.id)}
+                >
+                  Buy a pack
+                </button>
+              ) : (
+                <a
+                  href="#procurement"
+                  class="pro-btn pro-btn--ghost pro-btn--sm"
+                  data-test="buy-dataset-pack"
+                  onClick={(e: MouseEvent) => scrollToHashSection(e, '#procurement')}
+                >
+                  Buy a pack
+                </a>
+              )}
             </div>
           )}
 

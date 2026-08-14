@@ -60,7 +60,7 @@ describe('ProDocs', () => {
       'From imzML upload and the private toggle through annotation to a finished result.',
       'Drawing regions, choosing a correction, and reading p-values and effect sizes.',
       'Picking the number of segments and tracing each one back to its driver ions.',
-      'Grouping datasets by condition and batch, and what the model does with each.',
+      'Grouping datasets by condition.',
     ])
   })
 

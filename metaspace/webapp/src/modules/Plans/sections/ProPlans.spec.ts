@@ -236,7 +236,21 @@ describe('ProPlans dataset pack', () => {
     vi.resetModules()
   })
 
-  const mountWithFlags = async (flags: Record<string, boolean>) => {
+  // A backend pack plan (type: 'pack'), as returned by allPlans once the
+  // manager service starts selling packs.
+  const packPlan = {
+    id: 'pack1',
+    type: 'pack',
+    tier: 'standard',
+    name: 'Dataset pack',
+    isActive: true,
+    displayOrder: 10,
+    pricingOptions: [
+      { id: 'pp6', periodMonths: 6, priceCents: 35000, displayName: '6 months', isActive: true, displayOrder: 0 },
+    ],
+  }
+
+  const mountWithFlags = async (flags: Record<string, boolean>, extraProps: Record<string, any> = {}) => {
     vi.doMock('../proContent', async () => {
       const actual: any = await vi.importActual('../proContent')
       return { ...actual, PRO_FLAGS: { ...actual.PRO_FLAGS, ...flags } }
@@ -250,6 +264,7 @@ describe('ProPlans dataset pack', () => {
         availablePeriods: [period],
         radioValue: '1 year',
         activePlanId: null,
+        ...extraProps,
       },
       global: { stubs },
     })
@@ -277,6 +292,33 @@ describe('ProPlans dataset pack', () => {
     expect(wrapper.text()).not.toContain('$350')
     // The rest of the section is untouched.
     expect(wrapper.findAll('.pro-card')).toHaveLength(3)
+  })
+
+  it('sells the pack through checkout when the backend offers a pack plan', async () => {
+    const wrapper = await mountWithFlags({ datasetPack: true }, { packPlan })
+    const cta = wrapper.find('[data-test="buy-dataset-pack"]')
+    expect(cta.text()).toBe('Buy a pack')
+    await cta.trigger('click')
+    expect(wrapper.emitted('buyPack')?.[0]).toEqual(['pack1'])
+  })
+
+  it('renders the backend price for the pack, never the static copy', async () => {
+    // If pricing changes on the backend, the page must not keep advertising
+    // the old $350.
+    const wrapper = await mountWithFlags(
+      { datasetPack: true },
+      { packPlan: { ...packPlan, pricingOptions: [{ ...packPlan.pricingOptions[0], priceCents: 39900 }] } }
+    )
+    expect(wrapper.find('.pro-datapack__title').text()).toContain('$399')
+    expect(wrapper.find('.pro-datapack__title').text()).not.toContain('$350')
+  })
+
+  it('keeps the procurement anchor as CTA while the backend offers no pack plan', async () => {
+    const wrapper = await mountWithFlags({ datasetPack: true })
+    const cta = wrapper.find('[data-test="buy-dataset-pack"]')
+    expect(cta.attributes('href')).toBe('#procurement')
+    await cta.trigger('click')
+    expect(wrapper.emitted('buyPack')).toBeUndefined()
   })
 })
 

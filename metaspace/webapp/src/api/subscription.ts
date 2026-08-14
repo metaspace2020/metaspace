@@ -31,6 +31,8 @@ export enum TransactionType {
   DOWNGRADE = 'downgrade',
   RENEWAL = 'renewal',
   CANCELLATION = 'cancellation',
+  USAGE_CREDIT = 'usage_credit',
+  PACK = 'pack',
 }
 
 export enum SubscriptionOrderBy {
@@ -216,6 +218,57 @@ export interface CouponValidationResult {
 
 export interface ValidateCouponData {
   validateCoupon: CouponValidationResult
+}
+
+// One-off invoice checkout (packs and top-ups). The result is a quote, not a
+// sale: the buyer still confirms clientSecret with Stripe.js, and fulfilment
+// arrives asynchronously via webhook.
+export interface PurchaseCheckout {
+  invoiceId?: string
+  clientSecret?: string
+  amountDue?: number
+  currency?: string
+}
+
+export interface TopupGrant {
+  actionType: string
+  type: string
+  visibility: string
+  amount: number
+}
+
+export interface TopupOption {
+  id: string
+  displayName: string
+  units: number
+  priceCents: number
+  grants: TopupGrant[]
+}
+
+export interface TopupOptionsData {
+  topupOptions: TopupOption[]
+}
+
+export interface CreatePackSubscriptionInput {
+  userId: string
+  planId: string
+  pricingId?: string
+  groupId?: string
+  groupName?: string
+  email: string
+  name: string
+  address?: any
+  paymentMethodId?: string
+  couponCode?: string
+}
+
+export interface PurchaseTopupInput {
+  userId?: string
+  groupId?: string
+  email: string
+  topupOptionId: string
+  address?: any
+  paymentMethodId?: string
 }
 
 // GraphQL Fragments
@@ -458,6 +511,50 @@ export const processStripeWebhookMutation = gql`
   }
 `
 
+export const purchaseCheckoutFragment = gql`
+  fragment PurchaseCheckout on PurchaseCheckout {
+    invoiceId
+    clientSecret
+    amountDue
+    currency
+  }
+`
+
+export const createPackSubscriptionMutation = gql`
+  mutation ($input: CreatePackSubscriptionInput!) {
+    createPackSubscription(input: $input) {
+      ...PurchaseCheckout
+    }
+  }
+  ${purchaseCheckoutFragment}
+`
+
+export const purchaseTopupMutation = gql`
+  mutation ($input: PurchaseTopupInput!) {
+    purchaseTopup(input: $input) {
+      ...PurchaseCheckout
+    }
+  }
+  ${purchaseCheckoutFragment}
+`
+
+export const getTopupOptionsQuery = gql`
+  query ($groupId: ID, $userId: ID) {
+    topupOptions(groupId: $groupId, userId: $userId) {
+      id
+      displayName
+      units
+      priceCents
+      grants {
+        actionType
+        type
+        visibility
+        amount
+      }
+    }
+  }
+`
+
 // Coupon validation query
 export const validateCouponQuery = gql`
   query ($input: ValidateCouponInput!) {
@@ -487,6 +584,7 @@ export const getActiveGroupSubscriptionQuery = gql`
         name
         description
         tier
+        type
         planRules {
           id
           actionType

@@ -96,7 +96,6 @@ describe('ProFeatures', () => {
     expect(rows[2].get('.pro-feature__instead').text()).toBe(
       'Instead of: the comparison you keep postponing because the bookkeeping is worse than the science.'
     )
-    expect(rows[2].text()).toContain('Cross-dataset heatmap · conditions × annotations, batch-corrected')
   })
 
   it('emphasises only the "Instead of:" label, leaving the rest of the line unbolded', () => {

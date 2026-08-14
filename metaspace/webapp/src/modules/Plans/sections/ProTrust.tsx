@@ -11,10 +11,10 @@ interface ProcurementLine {
 // Listed in the order the design calls for; the unverified lines sit inline
 // rather than appended, so hiding them never reshuffles the rest.
 const PROCUREMENT_LINES: ProcurementLine[] = [
-  { text: 'Formal quote as a PDF, valid 90 days — usable inside a grant application', detail: true },
+  { text: 'Formal quote as a PDF, valid 60 days — usable inside a grant application', detail: true },
   { text: 'Purchase orders and institutional invoicing accepted on every paid plan' },
   { text: 'VAT ID captured at checkout; prices shown exclude tax' },
-  { text: 'Multi-year plans lock the price for the length of a funding period; 3–5 year terms by quote' },
+  { text: 'Multi-year plans lock the price for the length of a funding period; 1-2 year terms by quote' },
   { text: 'Invoices issued by Metacloud Inc. with full institutional details — metacloud.bio', detail: true },
 ]
 

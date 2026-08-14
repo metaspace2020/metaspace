@@ -237,6 +237,24 @@ describe('modules/plan/controller (queries)', () => {
 
       expect(result).toBeNull()
     })
+
+    it('should expose the plan type for pack discovery', async() => {
+      const planId = '550e8400-e29b-41d4-a716-446655440001'
+      const expectedPlan = TIERS.find(plan => plan.id === planId)
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          ...expectedPlan,
+          type: 'pack',
+          createdAt: moment(expectedPlan!.createdAt).valueOf().toString(),
+        }),
+      })
+
+      const result = await doQuery('query ($id: String!) { plan(id: $id) { id type } }', { id: planId })
+
+      expect(result).toEqual({ id: planId, type: 'pack' })
+    })
   })
 
   describe('Query.allPlans', () => {

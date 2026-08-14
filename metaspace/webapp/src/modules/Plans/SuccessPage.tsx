@@ -95,7 +95,11 @@ export default defineComponent({
       })
     }
 
-    const formatBillingInterval = (interval: string) => {
+    const formatBillingInterval = (interval?: string | null) => {
+      // Packs are one-off subscriptions with no billing interval.
+      if (!interval) {
+        return 'One-time'
+      }
       return interval === 'monthly' ? 'Monthly' : 'Yearly'
     }
 
@@ -197,7 +201,7 @@ export default defineComponent({
 
                   <div class="detail-item">
                     <label>Billing Interval:</label>
-                    <span class="value">{formatBillingInterval(subscription.value.billingInterval || 'monthly')}</span>
+                    <span class="value">{formatBillingInterval(subscription.value.billingInterval)}</span>
                   </div>
 
                   <div class="detail-item">

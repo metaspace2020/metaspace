@@ -52,7 +52,8 @@ export default defineComponent({
     const publicationCount = computed(() => publicationCountResult.value?.countPublications ?? null)
 
     const isLoading = computed(() => plansLoading.value || subscriptionLoading.value)
-    const availablePeriods = computed(() => getAvailablePeriods(plans.value))
+    const availablePeriods = computed(() => getAvailablePeriods(plans.value.filter((p) => p.type !== 'pack')))
+    const packPlan = computed(() => plans.value.find((p) => p.isActive && p.type === 'pack') || null)
 
     watch(
       availablePeriods,
@@ -100,6 +101,19 @@ export default defineComponent({
       router.push(`/payment?planId=${planId}`)
     }
 
+    const onBuyPack = (planId: string) => {
+      const pricing = packPlan.value?.pricingOptions?.find((po) => po.isActive)
+      if (currentUserId.value) {
+        trackBeginCheckout({
+          planId,
+          planName: packPlan.value?.name || 'Dataset pack',
+          price: pricing?.priceCents || 0,
+          billingPeriod: pricing?.displayName || 'one-time',
+        })
+      }
+      router.push(`/payment?planId=${planId}`)
+    }
+
     return () => (
       <div class="pro-page">
         <ProSectionNav />
@@ -118,7 +132,9 @@ export default defineComponent({
           availablePeriods={availablePeriods.value}
           radioValue={state.radioValue}
           activePlanId={activeSubscription.value?.planId || null}
+          packPlan={packPlan.value}
           onSubscribe={onSubscribe}
+          onBuyPack={onBuyPack}
           onPeriod={onPeriod}
         />
         <ProTrust />

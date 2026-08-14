@@ -40,7 +40,7 @@ const FEATURES: FeatureRow[] = [
       'modelled rather than ignored.',
     instead: 'the comparison you keep postponing because the bookkeeping is worse than the science.',
     chart: 'heatmap',
-    caption: 'Cross-dataset heatmap · conditions × annotations, batch-corrected',
+    caption: 'Cross-dataset comparison',
   },
 ]
 

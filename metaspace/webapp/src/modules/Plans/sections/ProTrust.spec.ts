@@ -32,18 +32,18 @@ describe('ProTrust', () => {
 
   it('hides the unverified procurement specifics when its flag is off', async () => {
     const wrapper = await mountWithFlags({ procurementDetail: false })
-    expect(wrapper.text()).not.toContain('valid 90 days')
+    expect(wrapper.text()).not.toContain('valid 60 days')
     expect(wrapper.text()).not.toContain('metacloud.bio')
     expect(wrapper.findAll('.pro-checklist li').map((li) => li.text())).toEqual([
       'Purchase orders and institutional invoicing accepted on every paid plan',
       'VAT ID captured at checkout; prices shown exclude tax',
-      'Multi-year plans lock the price for the length of a funding period; 3–5 year terms by quote',
+      'Multi-year plans lock the price for the length of a funding period; 1-2 year terms by quote',
     ])
   })
 
   it('shows the unverified procurement specifics alongside the base facts when its flag is on', async () => {
     const wrapper = await mountWithFlags({ procurementDetail: true })
-    expect(wrapper.text()).toContain('valid 90 days')
+    expect(wrapper.text()).toContain('valid 60 days')
     expect(wrapper.text()).toContain('Metacloud Inc.')
     expect(wrapper.text()).toContain('Purchase orders and institutional invoicing')
   })
@@ -72,10 +72,10 @@ describe('ProTrust', () => {
     const wrapper = await mountWithFlags({ procurementDetail: true })
     const items = wrapper.findAll('.pro-checklist li').map((li) => li.text())
     expect(items).toEqual([
-      'Formal quote as a PDF, valid 90 days — usable inside a grant application',
+      'Formal quote as a PDF, valid 60 days — usable inside a grant application',
       'Purchase orders and institutional invoicing accepted on every paid plan',
       'VAT ID captured at checkout; prices shown exclude tax',
-      'Multi-year plans lock the price for the length of a funding period; 3–5 year terms by quote',
+      'Multi-year plans lock the price for the length of a funding period; 1-2 year terms by quote',
       'Invoices issued by Metacloud Inc. with full institutional details — metacloud.bio',
     ])
   })
