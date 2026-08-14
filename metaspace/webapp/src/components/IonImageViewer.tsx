@@ -7,6 +7,7 @@ import ScaleBar from './ScaleBar.vue'
 import { debounce, throttle } from 'lodash-es'
 import { ReferenceObject } from 'popper.js'
 import { ElLoading, ElTooltip } from '../lib/element-plus'
+import { normalizationIntensityLabel } from '../lib/normalization'
 
 const formatMatrix3d = (t: readonly number[][]) =>
   `matrix3d(${t[0][0]}, ${t[1][0]}, 0, ${t[2][0]},
@@ -130,7 +131,7 @@ const usePixelIntensityDisplay = (
   const zoomY = computed(() => props.zoom / props.pixelAspectRatio)
   const cursorOverLayers = computed(() => {
     const layers = []
-    const TIC_MULTIPLIER = 1000000
+    const NORMALIZATION_MULTIPLIER = 1000000
     if (props.ionImageLayers.length && cursorPixelPos.value != null) {
       const [x, y] = cursorPixelPos.value
       for (const { ionImage, colorMap } of props.ionImageLayers) {
@@ -140,7 +141,7 @@ const usePixelIntensityDisplay = (
           const [r, g, b] = colorMap[colorMap.length - 1]
           layers.push({
             intensity: (props.showNormalizedIntensity
-              ? (intensityValues[idx] / TIC_MULTIPLIER) * props.normalizationData?.data?.[idx]
+              ? (intensityValues[idx] / NORMALIZATION_MULTIPLIER) * props.normalizationData?.data?.[idx]
               : intensityValues[idx]
             ).toExponential(1),
             normalizedIntensity: intensityValues[idx].toExponential(1),
@@ -232,7 +233,7 @@ const usePixelIntensityDisplay = (
                 </div>
                 {props.showNormalizedIntensity && (
                   <div class="mb-1">
-                    <span>TIC-relative intensity: </span>
+                    <span>{normalizationIntensityLabel(props.normalizationData?.type)}: </span>
                     <span>{normalizedIntensity}</span>
                   </div>
                 )}
@@ -248,7 +249,7 @@ const usePixelIntensityDisplay = (
           </div>
           {props.showNormalizedIntensity && (
             <div>
-              <span>TIC-relative intensity: </span>
+              <span>{normalizationIntensityLabel(props.normalizationData?.type)}: </span>
               <span>{cursorOverLayers.value[0]?.normalizedIntensity}</span>
             </div>
           )}

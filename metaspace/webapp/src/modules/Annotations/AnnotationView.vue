@@ -67,6 +67,7 @@
             :reset-viewport="resetViewport"
             :toggle-optical-image="toggleOpticalImage"
             :is-active="activeSections.includes('images')"
+            :normalization-text="normalizationBadgeText(ticData)"
             @scaleBarColorChange="setScaleBarColor"
           />
         </template>

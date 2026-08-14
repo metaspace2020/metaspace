@@ -436,10 +436,11 @@
 <script>
 import { defineComponent, ref, reactive, computed, onMounted, watch, defineAsyncComponent, nextTick, inject } from 'vue'
 import { useStore } from 'vuex'
-import { ElIcon, ElRow, ElTable, ElTableColumn, ElPagination, ElButton } from '../../lib/element-plus'
+import { ElIcon, ElRow, ElTable, ElTableColumn, ElPagination, ElButton, ElMessage } from '../../lib/element-plus'
 import isSnapshot from '../../lib/isSnapshot'
 import { readNpy } from '../../lib/npyHandler'
 import safeJsonParse from '../../lib/safeJsonParse'
+import { buildNormalizationMetadata, findNormalizationImage, normalizationFileSuffix } from '../../lib/normalization'
 import { invert, isEqual, uniqBy } from 'lodash-es'
 import config from '../../lib/config'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
@@ -1034,6 +1035,11 @@ export default defineComponent({
         return null
       }
 
+      const normType = store.getters.settings?.annotationView?.normalization
+      if (!normType) {
+        return null
+      }
+
       try {
         const resp = await apolloClient.query({
           query: getDatasetDiagnosticsQuery,
@@ -1043,20 +1049,23 @@ export default defineComponent({
           fetchPolicy: 'cache-first',
         })
         const dataset = resp.data.dataset
-        const tics = dataset.diagnostics.filter((diagnostic) => diagnostic?.type === 'TIC')
-        const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
-        const { data, shape } = await readNpy(tic[0].url)
-        const metadata = safeJsonParse(tics[0].data)
-        metadata.maxTic = metadata.max_tic
-        metadata.minTic = metadata.min_tic
-        delete metadata.max_tic
-        delete metadata.min_tic
+        const normImage = findNormalizationImage(dataset.diagnostics, normType)
+
+        if (!normImage) {
+          store.commit('setNormalization', false)
+          store.commit('setNormalizationMatrix', undefined)
+          ElMessage.warning(`${normType} normalization is not available for this dataset. Please reprocess it.`)
+          return
+        }
+
+        const { data, shape } = await readNpy(normImage.url)
+        const metadata = buildNormalizationMetadata(safeJsonParse(normImage.data), normType)
 
         store.commit('setNormalizationMatrix', {
           data,
           shape,
           metadata: metadata,
-          type: 'TIC',
+          type: normType,
           showFullTIC: false,
           error: false,
         })
@@ -1066,7 +1075,7 @@ export default defineComponent({
           shape: null,
           metadata: null,
           showFullTIC: null,
-          type: 'TIC',
+          type: normType,
           error: true,
         })
       }
@@ -1304,7 +1313,7 @@ export default defineComponent({
             if (!fileCols) {
               fileCols = formatCsvRow(cols)
               fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${
-                isNormalized.value ? '_tic_normalized' : ''
+                isNormalized.value ? normalizationFileSuffix(isNormalized.value) : ''
               }.csv`
             }
             rows += formatCsvRow(row)
@@ -1590,6 +1599,11 @@ export default defineComponent({
 
     watch(datasetIds, () => {
       updateDatasetColumns()
+    })
+
+    watch(isNormalized, () => {
+      const currentAnnotation = store.state.annotation
+      setNormalizationData(currentAnnotation)
     })
 
     watch(

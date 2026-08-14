@@ -3,6 +3,19 @@ sidebar: false
 ---
 
 # What's new
+## August 2026
+
+### RMS and median normalization
+
+The TIC normalization checkbox in the ion image viewer has been replaced by a **Normalization** dropdown offering three per-pixel methods. TIC remains the most commonly used option and the recommended starting point.
+
+**Features**
+- RMS and median normalization added alongside TIC, selectable from the normalization dropdown on the annotation page
+- Normalization is also available on the multi-dataset comparison page
+- Datasets processed before this release need to be reprocessed for RMS and median to become available
+
+**Documentation**
+- [Ion image visualization](/features/visualization/ion-image-visualization) updated to describe the normalization dropdown and each method
 
 ## June 2026
 
@@ -24,6 +37,7 @@ Two new Pro features for spatial pattern analysis are now documented.
 
 **Features**
 - [Custom Databases](/features/tools-and-integrations/custom-databases#isotope-labeled-compounds) — custom databases now support stable-isotope labeled compounds; encode labeled atoms with pseudo-element symbols (`Cx`, `Nx`, `Hx`, `Ox`, `Sx`) directly in the `formula` column for ¹³C, ¹⁵N, ²H, ¹⁸O, and ³⁴S tracing experiments
+
 
 ## April 2026
 
