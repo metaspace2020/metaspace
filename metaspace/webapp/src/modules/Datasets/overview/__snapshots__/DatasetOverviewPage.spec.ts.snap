@@ -17,6 +17,7 @@ exports[`DatasetOverviewPage > should match snapshot when dataset exist 1`] = `
     <div class=\\"dataset-overview-holder\\">
       <p class=\\"truncate\\">John Doe<a class=\\"ml-1\\" href=\\"/group/gxxxx\\">(TG)</a></p>
       <div>11 March, 2021</div>
+      <!---->
       <section class=\\"sm-RichText dataset-opt-description p-0\\">
         <!---->
         <div>

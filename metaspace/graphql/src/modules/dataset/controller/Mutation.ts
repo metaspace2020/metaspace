@@ -2,12 +2,17 @@ import * as jsondiffpatch from 'jsondiffpatch'
 import logger from '../../../utils/logger'
 import * as Ajv from 'ajv'
 import { UserError } from 'graphql-errors'
-import { EntityManager } from 'typeorm'
+import { Brackets, EntityManager } from 'typeorm'
 import * as moment from 'moment'
 import * as _ from 'lodash'
+import * as uuid from 'uuid'
 
 import { smApiDatasetRequest } from '../../../utils'
-import { UserProjectRoleOptions as UPRO } from '../../project/model'
+import {
+  Project as ProjectModel,
+  UserProject as UserProjectModel,
+  UserProjectRoleOptions as UPRO,
+} from '../../project/model'
 import { PublicationStatusOptions as PSO } from '../../project/Publishing'
 import { Dataset as DatasetModel, DatasetProject as DatasetProjectModel } from '../model'
 import { DatasetCreateInput, DatasetUpdateInput, Int, Mutation } from '../../../binding'
@@ -27,7 +32,15 @@ import {
   ImageSegmentationJob,
   DatasetDiagnostic,
   DiagnosticTypeOptions,
+  DatasetSplitJob,
+  DatasetSplitChild,
 } from '../../engine/model'
+import {
+  MIN_ROI_PIXELS,
+  assertCanSplitDataset,
+  fetchRoiSplitStats,
+  generateChildDatasetIds,
+} from '../operation/datasetSplit'
 import { addExternalLink, removeExternalLink } from '../../project/ExternalLink'
 import { esDatasetByID } from '../../../../esConnector'
 import { mapDatabaseToDatabaseId } from '../../moldb/util/mapDatabaseToDatabaseId'
@@ -224,6 +237,105 @@ const assertCanCreateDataset = (user: ContextUser) => {
   if (user.id == null) {
     throw new UserError('Not authenticated')
   }
+}
+
+/**
+ * Attribution for a split child, as a tiptap doc.
+ *
+ * Splitting a public dataset is permitted under CC BY 4.0, which requires attribution, so the
+ * credit is written into the child rather than left to the user to remember. Plain text only —
+ * the editor's StarterKit has no link mark.
+ */
+const buildProvenanceDescription = (esDataset: any, parent: EngineDataset, roiName: string) => {
+  const submitter = esDataset._source.ds_submitter_name
+  const licence = esDataset._source.ds_is_public
+    ? ' Original data licensed CC BY 4.0.'
+    : ''
+  const text = `Derived from the dataset "${parent.name}" (${parent.id})`
+    + `${submitter ? `, submitted by ${submitter}` : ''}, by splitting along the region of `
+    + `interest "${roiName}".${licence}`
+  return JSON.stringify({
+    type: 'doc',
+    content: [{ type: 'paragraph', content: [{ type: 'text', text }] }],
+  })
+}
+
+/**
+ * The dataset doc sm-engine will pass to SMapiDatasetManager.add once the child's files exist.
+ *
+ * Keys are snake_case because the engine reads this straight out of the database rather than
+ * through smApiDatasetRequest's key mapping, and are limited to what generate_ds_config accepts —
+ * passing e.g. analysis_version would be a TypeError there. Processing settings are flattened out
+ * of the parent's config so the child is annotated exactly as the parent was.
+ */
+const buildChildDoc = (parent: EngineDataset, childId: string, name: string, isPublic: boolean) => {
+  const dsConfig = parent.config || {}
+  const isotopeGeneration = dsConfig.isotope_generation || {}
+  const fdr = dsConfig.fdr || {}
+  const imageGeneration = dsConfig.image_generation || {}
+
+  return {
+    id: childId,
+    name,
+    // The engine writes the child's files here before submitting it for annotation.
+    input_path: `s3a://${config.upload.bucket}/${uuid.v4()}`,
+    upload_dt: moment.utc().toISOString(),
+    metadata: parent.metadata,
+    is_public: isPublic,
+    moldb_ids: dsConfig.database_ids,
+    ontology_db_ids: dsConfig.ontology_db_ids,
+    adducts: isotopeGeneration.adducts,
+    n_peaks: isotopeGeneration.n_peaks,
+    neutral_losses: isotopeGeneration.neutral_losses,
+    chem_mods: isotopeGeneration.chem_mods,
+    decoy_sample_size: fdr.decoy_sample_size,
+    scoring_model_id: fdr.scoring_model_id,
+    ppm: imageGeneration.ppm,
+    min_px: imageGeneration.min_px,
+    compute_unused_metrics: imageGeneration.compute_unused_metrics,
+  }
+}
+
+interface ResolveSplitProjectArgs {
+  projectId?: string | null;
+  newProjectName?: string | null;
+  parentName: string;
+  isPublic: boolean;
+}
+
+/** Find the project the children go into, creating one if the user asked for a new one. */
+const resolveSplitProject = async(
+  ctx: Context, userId: string, args: ResolveSplitProjectArgs
+): Promise<string> => {
+  const { projectId, newProjectName, parentName, isPublic } = args
+
+  if (projectId != null) {
+    const roles = await getUserProjectRoles(ctx.entityManager, userId)
+    if (![UPRO.MEMBER, UPRO.MANAGER].includes(roles[projectId])) {
+      throw new UserError('You do not have permission to add datasets to that project')
+    }
+    return projectId
+  }
+
+  const name = newProjectName || `${parentName} — ROI split`
+  await assertCanPerformAction(ctx, {
+    actionType: 'create',
+    userId,
+    type: 'project',
+    visibility: isPublic ? 'public' : 'private',
+    actionDt: moment.utc(moment.utc().toDate()),
+    source: (ctx as any).getSource(),
+  })
+
+  const project = ctx.entityManager.getRepository(ProjectModel)
+    .create({ name, isPublic, createdDT: moment.utc() })
+  await ctx.entityManager.getRepository(ProjectModel).insert(project as any)
+  await ctx.entityManager.insert(UserProjectModel, {
+    projectId: project.id,
+    userId,
+    role: UPRO.MANAGER,
+  } as any)
+  return project.id
 }
 
 const newDatasetId = () => {
@@ -575,6 +687,144 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     } catch (e) {
       return JSON.stringify(e)
     }
+  },
+
+  splitDatasetByRois: async(source, { input, useLithops }, ctx: Context) => {
+    const userId = ctx.getUserIdOrFail()
+    const { datasetId, rois, projectId, newProjectName, groupId, isPublic } = input
+
+    if (!rois || rois.length === 0) {
+      throw new UserError('Select at least one ROI to split along')
+    }
+
+    const esDataset = await esDatasetByID(datasetId, ctx.user)
+    if (!esDataset) {
+      throw new UserError('Dataset does not exist')
+    }
+    // Copies the raw files into the requester's account, so the licence — not view access — is
+    // the gate. See assertCanSplitDataset.
+    await assertCanSplitDataset(esDataset, ctx)
+    const canEditParent = await canEditEsDataset(esDataset, ctx)
+
+    const parent = await ctx.entityManager.findOne(EngineDataset, datasetId)
+    if (parent == null) {
+      throw new UserError('Dataset does not exist')
+    }
+    const parentGraphqlDs = await ctx.entityManager.findOne(DatasetModel, datasetId)
+
+    const roiIds = rois.map((roi: any) => String(roi.roiId))
+    const roiRows = await ctx.entityManager.createQueryBuilder(Roi, 'roi')
+      .where('roi.datasetId = :datasetId', { datasetId })
+      .andWhere('roi.id IN (:...roiIds)', { roiIds })
+      .andWhere(new Brackets(qb => {
+        qb.where('roi.userId = :userId', { userId }).orWhere('roi.isDefault = true')
+      }))
+      .getMany()
+    if (roiRows.length !== roiIds.length) {
+      throw new UserError('One or more of the selected ROIs no longer exists')
+    }
+
+    // Re-check the size floor server-side: the dialog's numbers could be stale, and a dataset
+    // below the floor cannot produce usable annotations.
+    const stats = await fetchRoiSplitStats(datasetId, roiIds)
+    const statsById = new Map(stats.map(stat => [stat.roiId, stat]))
+    const tooSmall = stats.filter(stat => stat.blocked)
+    if (tooSmall.length > 0) {
+      throw new UserError(JSON.stringify({
+        type: 'roi_too_small',
+        hint: `These ROIs are below the ${MIN_ROI_PIXELS} pixel minimum and cannot be split into `
+          + `usable datasets: ${tooSmall.map(stat => `${stat.name} (${stat.nPixels} px)`).join(', ')}`,
+      }))
+    }
+
+    // Each child runs the full annotation pipeline, so each counts against the plan. Checked
+    // up front so a split is refused before any files are written.
+    const actionTemplate = {
+      actionType: 'create',
+      userId,
+      type: 'dataset',
+      visibility: isPublic ? 'public' : 'private',
+      source: (ctx as any).getSource(),
+      deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),
+      ipHash: hashIp(ctx.req?.ip),
+    }
+    for (const roi of roiRows) {
+      await assertCanPerformAction(ctx, {
+        ...actionTemplate,
+        datasetId: `split-preflight-${roi.id}`,
+        actionDt: moment.utc(moment.utc().toDate()),
+      })
+    }
+
+    const targetProjectId = await resolveSplitProject(ctx, userId, {
+      projectId,
+      newProjectName,
+      parentName: parent.name || datasetId,
+      isPublic: isPublic ?? false,
+    })
+
+    const childIds = await generateChildDatasetIds(roiRows.length, async(id: string) =>
+      await ctx.entityManager.findOne(EngineDataset, id) != null
+      || await ctx.entityManager.findOne(DatasetModel, id) != null)
+
+    // Children of a stranger's public dataset start private so nobody republishes someone else's
+    // data under their own name by accident; your own datasets keep their visibility.
+    const childIsPublic = isPublic ?? (canEditParent ? parent.isPublic : false)
+    const nameByRoiId = new Map(rois.map((roi: any) => [String(roi.roiId), roi.name]))
+
+    const jobId = await ctx.entityManager.transaction(async txn => {
+      const job = await txn.save(DatasetSplitJob, {
+        parentDsId: datasetId,
+        parentDsName: parent.name || datasetId,
+        userId,
+        submitterEmail: ctx.user.email,
+        projectId: targetProjectId,
+        status: 'QUEUED',
+        emailSent: false,
+      } as any)
+
+      for (const [index, roi] of roiRows.entries()) {
+        const childId = childIds[index]
+        const childName = nameByRoiId.get(String(roi.id)) || `${parent.name} — ${roi.name}`
+
+        await saveDataset(txn, {
+          datasetId: childId,
+          submitterId: userId,
+          groupId: groupId ?? undefined,
+          // PI describes who generated the data, not who pressed split, so it is inherited.
+          principalInvestigator: parentGraphqlDs?.piName != null
+            ? { name: parentGraphqlDs.piName, email: parentGraphqlDs.piEmail as string }
+            : undefined,
+          projectIds: [targetProjectId],
+          description: buildProvenanceDescription(esDataset, parent, roi.name),
+        }, true)
+
+        await txn.save(DatasetSplitChild, {
+          jobId: job.id,
+          childDsId: childId,
+          roiId: String(roi.id),
+          roiName: roi.name,
+          roiGeojson: roi.geojson,
+          nPixels: statsById.get(String(roi.id))?.nPixels ?? null,
+          status: 'PENDING',
+          doc: buildChildDoc(parent, childId, childName, childIsPublic),
+        } as any)
+      }
+      return job.id
+    })
+
+    for (const roi of roiRows) {
+      await performAction(ctx, {
+        ...actionTemplate,
+        datasetId: childIds[roiRows.indexOf(roi)],
+        actionDt: moment.utc(moment.utc().toDate()),
+      })
+    }
+
+    await smApiDatasetRequest('/v1/split/run', { job_id: jobId, use_lithops: useLithops })
+
+    logger.info(`Dataset '${datasetId}' split into ${childIds.length} datasets by '${userId}'`)
+    return JSON.stringify({ jobId, projectId: targetProjectId, datasetIds: childIds })
   },
 
   deleteOpticalImage: async(source, { datasetId }, ctx: Context) => {

@@ -2,6 +2,7 @@ import { computed, defineComponent, inject, reactive } from 'vue'
 import {
   checkIfHasBrowserFiles,
   DatasetDetailItem,
+  datasetSplitPreviewQuery,
   deleteDatasetQuery,
   getSegmentationJobsQuery,
   reprocessDatasetQuery,
@@ -20,6 +21,7 @@ import reportError from '../../../lib/reportError'
 import DownloadDialog from '../list/DownloadDialog'
 import { DatasetComparisonDialog } from '../comparison/DatasetComparisonDialog'
 import { SegmentationDialog } from '../segmentation/SegmentationDialog'
+import { SplitDialog } from '../split/SplitDialog'
 import config from '../../../lib/config'
 import NewFeatureBadge, { hideFeatureBadge } from '../../../components/NewFeatureBadge'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
@@ -41,6 +43,7 @@ interface DatasetActionsDropdownProps {
   enrichmentActionLabel: string
   opticalImageActionLabel: string
   segmentationActionLabel: string
+  splitActionLabel: string
   dataset: DatasetDetailItem
   currentUser: CurrentUserRoleResult
   isPublishedOrUnderReview: boolean
@@ -53,6 +56,7 @@ interface DatasetActionsDropdownState {
   showEnrichmentDialog: boolean
   showDownloadDialog: boolean
   showSegmentationDialog: boolean
+  showSplitDialog: boolean
 }
 
 export const DatasetActionsDropdown = defineComponent({
@@ -64,6 +68,7 @@ export const DatasetActionsDropdown = defineComponent({
     compareActionLabel: { type: String, default: 'Compare with other datasets...' },
     browserActionLabel: { type: String, default: 'Imzml browser' },
     segmentationActionLabel: { type: String, default: 'Image segmentation' },
+    splitActionLabel: { type: String, default: 'Split by ROIs' },
     enrichmentActionLabel: { type: String, default: 'Ontology enrichment' },
     opticalImageActionLabel: { type: String, default: 'Add optical image' },
     reprocessActionLabel: { type: String, default: 'Reprocess data' },
@@ -87,6 +92,7 @@ export const DatasetActionsDropdown = defineComponent({
       showEnrichmentDialog: false,
       showDownloadDialog: false,
       showSegmentationDialog: false,
+      showSplitDialog: false,
     })
 
     const { result: enrichmentResult, refetch: enrichmentRefetch } = useQuery<any>(
@@ -105,6 +111,17 @@ export const DatasetActionsDropdown = defineComponent({
     )
     const segmentationJobs = computed(() =>
       segmentationJobsResult.value != null ? segmentationJobsResult.value.segmentationJobs : null
+    )
+
+    // Drives whether the Split action appears at all: it reports both the eligible ROIs and
+    // whether this user may copy the dataset's raw files.
+    const { result: splitPreviewResult } = useQuery<any>(
+      datasetSplitPreviewQuery,
+      { datasetId: props.dataset?.id },
+      { fetchPolicy: 'no-cache' }
+    )
+    const splitPreview = computed(() =>
+      splitPreviewResult.value != null ? splitPreviewResult.value.datasetSplitPreview : null
     )
 
     const confirmReprocessEnrichment = async () => {
@@ -381,6 +398,13 @@ export const DatasetActionsDropdown = defineComponent({
             // }
           }
           break
+        case 'split':
+          if (splitPreview.value?.canSplit) {
+            state.showSplitDialog = true
+          } else {
+            ElNotification.warning(splitPreview.value?.reason || 'This dataset has no ROIs to split along.')
+          }
+          break
         case 'reprocess':
           handleReprocess()
           break
@@ -403,6 +427,7 @@ export const DatasetActionsDropdown = defineComponent({
         browserActionLabel,
         opticalImageActionLabel,
         segmentationActionLabel,
+        splitActionLabel,
       } = props
       const { role } = currentUser || {}
       const { canEdit, canDelete, canDownload } = dataset || {}
@@ -432,6 +457,10 @@ export const DatasetActionsDropdown = defineComponent({
           )}
           {config.features.enrichment && (enrichmentRequested.value || canEdit) && (
             <ElDropdownItem command="enrichment">{enrichmentActionLabel}</ElDropdownItem>
+          )}
+          {/* Hidden entirely unless there is something to split along and the licence permits it. */}
+          {splitPreview.value?.canSplit && splitPreview.value?.rois?.length > 0 && (
+            <ElDropdownItem command="split">{splitActionLabel}</ElDropdownItem>
           )}
           {canDelete && (
             <ElDropdownItem class="text-red-500" command="delete">
@@ -490,6 +519,16 @@ export const DatasetActionsDropdown = defineComponent({
                     databases={props.dataset?.databases}
                     config={JSON.parse(props.dataset?.configJson || '{}')}
                     onClose={closeSegmentationDialog}
+                  />
+                )}
+                {state.showSplitDialog && (
+                  <SplitDialog
+                    datasetId={id}
+                    datasetName={name}
+                    visible={state.showSplitDialog}
+                    onClose={() => {
+                      state.showSplitDialog = false
+                    }}
                   />
                 )}
                 {state.showCompareDialog && (

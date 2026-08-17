@@ -7,6 +7,7 @@ class DaemonAction:
     SEGMENTATION = 'segmentation'
     EXPERIMENT_PREP = 'experiment_prep'
     EXPERIMENT_STATS = 'experiment_stats'
+    SPLIT = 'split'
 
 
 class DaemonActionStage:

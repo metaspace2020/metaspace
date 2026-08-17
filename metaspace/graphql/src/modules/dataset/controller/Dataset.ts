@@ -6,6 +6,7 @@ import { Dataset as DatasetModel, DatasetProject as DatasetProjectModel } from '
 import { Project as ProjectModel } from '../../project/model'
 import {
   DatasetDiagnostic as DatasetDiagnosticModel,
+  DatasetSplitChild,
   EngineDataset,
   OpticalImage as OpticalImageModel,
   ScoringModel as ScoringModelModel,
@@ -610,6 +611,25 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       })
     } else {
       return null
+    }
+  },
+
+  async splitProvenance(ds: DatasetSource, args: any, ctx: Context) {
+    const child = await ctx.entityManager.findOne(DatasetSplitChild, {
+      where: { childDsId: ds._source.ds_id },
+      relations: ['job'],
+    })
+    if (child == null) {
+      return null
+    }
+    // parentDsName and roiName are read from the split record rather than followed through to the
+    // parent dataset or ROI: both may have been deleted since, and the provenance must survive it.
+    return {
+      parentDatasetId: child.job?.parentDsId ?? null,
+      parentDatasetName: child.job?.parentDsName ?? '',
+      roiName: child.roiName,
+      cropOriginX: child.cropOrigin?.x0 ?? null,
+      cropOriginY: child.cropOrigin?.y0 ?? null,
     }
   },
 

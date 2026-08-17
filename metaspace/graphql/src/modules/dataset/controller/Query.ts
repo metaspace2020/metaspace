@@ -1,3 +1,4 @@
+import { Brackets } from 'typeorm'
 import { DatasetSource, FieldResolversFor, ScopeRoleOptions as SRO } from '../../../bindingTypes'
 import { Query } from '../../../binding'
 import { esCountGroupedResults, esCountResults, esDatasetByID, esSearchResults } from '../../../../esConnector'
@@ -14,6 +15,7 @@ import {
   ImageSegmentationJob,
   Segmentation,
   SegmentationIonProfile,
+  DatasetSplitJob,
 } from '../../engine/model'
 import {
   EnrichmentBootstrap,
@@ -22,6 +24,7 @@ import {
   EnrichmentTerm,
 } from '../../enrichmentdb/model'
 import canEditEsDataset from '../operation/canEditEsDataset'
+import { canSplitDataset, fetchRoiSplitStats } from '../operation/datasetSplit'
 import normalizeLegacyRoiFeature from '../operation/normalizeLegacyRoiFeature'
 import { smApiJsonPost, smApiJsonGet } from '../../../utils/smApi/smApiCall'
 import { smApiDatasetRequest } from '../../../utils'
@@ -527,6 +530,66 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     }
     return null
   },
+  async datasetSplitPreview(source: any, { datasetId }: any, ctx: Context) {
+    const esDataset = await esDatasetByID(datasetId, ctx.user)
+    if (!esDataset) {
+      throw new UserError('Dataset does not exist')
+    }
+
+    const empty = { rois: [], canSplit: false, previousSplitProjectId: null, previousSplitDate: null }
+    if (!await canSplitDataset(esDataset, ctx)) {
+      return {
+        ...empty,
+        reason: ctx.user.id == null
+          ? 'You must be signed in to split a dataset.'
+          : 'This dataset is not public and you do not have permission to edit it.',
+      }
+    }
+
+    // Unlike the `rois` query, which shows the user's own ROIs *or* the defaults, a split may be
+    // made along either: your own regions and the ones the dataset's editors published are both
+    // legitimate things to cut on.
+    const rois = await ctx.entityManager.createQueryBuilder(Roi, 'roi')
+      .where('roi.datasetId = :datasetId', { datasetId })
+      .andWhere(new Brackets(qb => {
+        qb.where('roi.userId = :userId', { userId: ctx.user.id })
+          .orWhere('roi.isDefault = true')
+      }))
+      .orderBy('roi.isDefault', 'DESC')
+      .addOrderBy('roi.name', 'ASC')
+      .getMany()
+
+    if (rois.length === 0) {
+      return { ...empty, canSplit: false, reason: 'This dataset has no ROIs to split along.' }
+    }
+
+    const stats = await fetchRoiSplitStats(datasetId, rois.map(roi => String(roi.id)))
+    const byId = new Map(stats.map(stat => [stat.roiId, stat]))
+
+    const previous = await ctx.entityManager.findOne(DatasetSplitJob, {
+      where: { parentDsId: datasetId, userId: ctx.user.id },
+      order: { createdAt: 'DESC' } as any,
+    })
+
+    return {
+      rois: rois.map(roi => {
+        const stat = byId.get(String(roi.id))
+        return {
+          roiId: String(roi.id),
+          name: roi.name,
+          isDefault: roi.isDefault,
+          nPixels: stat?.nPixels ?? 0,
+          blocked: stat?.blocked ?? true,
+          warning: stat?.warning ?? false,
+        }
+      }),
+      canSplit: true,
+      reason: null,
+      previousSplitProjectId: previous?.projectId ?? null,
+      previousSplitDate: previous?.createdAt?.toString() ?? null,
+    }
+  },
+
   async segmentationJobs(source: any, { datasetId }: any, ctx: Context) {
     if (!await esDatasetByID(datasetId, ctx.user)) {
       return []

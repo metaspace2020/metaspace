@@ -1,6 +1,6 @@
 import { computed, defineComponent, ref } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
-import { GetDatasetByIdQuery, getDatasetByIdQuery } from '../../../api/dataset'
+import { GetDatasetByIdQuery, getDatasetByIdQuery, getDatasetSplitProvenanceQuery } from '../../../api/dataset'
 import { AnnotationCountTable } from './AnnotationCountTable'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import { DatasetMetadataViewer } from './DatasetMetadataViewer'
@@ -56,6 +56,11 @@ const DatasetOverviewPage = defineComponent({
       inpFdrLvls: props.inpFdrLvls,
     })
     const dataset = computed(() => (datasetResult.value != null ? datasetResult.value.dataset : null))
+
+    const { result: provenanceResult } = useQuery<any>(getDatasetSplitProvenanceQuery, { id: datasetId })
+    // Only set when this dataset was produced by splitting another along one of its ROIs. The
+    // parent name is stored on the split record, so it survives the parent being deleted.
+    const splitProvenance = computed(() => provenanceResult.value?.dataset?.splitProvenance ?? null)
     const { result: currentUserResult, loading: userLoading } = useQuery<CurrentUserRoleResult | any>(
       currentUserRoleQuery
     )
@@ -165,6 +170,21 @@ const DatasetOverviewPage = defineComponent({
                 )}
               </p>
               <div>{upDate}</div>
+              {splitProvenance.value && (
+                <p class="dataset-split-provenance">
+                  Split from{' '}
+                  {splitProvenance.value.parentDatasetId ? (
+                    <router-link
+                      to={{ name: 'dataset-overview', params: { dataset_id: splitProvenance.value.parentDatasetId } }}
+                    >
+                      {splitProvenance.value.parentDatasetName}
+                    </router-link>
+                  ) : (
+                    <span>{splitProvenance.value.parentDatasetName}</span>
+                  )}{' '}
+                  (ROI: {splitProvenance.value.roiName})
+                </p>
+              )}
               {description && (
                 <RichText class="dataset-opt-description p-0" placeholder=" " content={dsDescription} readonly={true} />
               )}

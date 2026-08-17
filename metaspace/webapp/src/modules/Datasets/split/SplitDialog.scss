@@ -1,0 +1,72 @@
+.split-dialog {
+  .split-dialog-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .split-intro {
+    margin: 0;
+    color: #606266;
+  }
+
+  .split-section {
+    h4 {
+      margin: 0 0 0.5rem 0;
+      font-weight: 600;
+    }
+  }
+
+  .split-roi-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.35rem 0;
+  }
+
+  .split-roi-pixels {
+    color: #909399;
+    font-size: 0.85rem;
+
+    &.is-warning {
+      color: #e6a23c;
+    }
+  }
+
+  .split-roi-name {
+    flex: 1 1 220px;
+    min-width: 180px;
+  }
+
+  .split-project-input {
+    display: block;
+    margin-top: 0.75rem;
+    width: 100%;
+  }
+
+  .split-note {
+    margin: 0;
+    padding: 0.75rem;
+    border-radius: 6px;
+    background: #f5f7fa;
+    color: #606266;
+    font-size: 0.85rem;
+  }
+
+  .split-quota {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #606266;
+
+    &.is-error {
+      color: #f56c6c;
+    }
+  }
+
+  .split-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+}

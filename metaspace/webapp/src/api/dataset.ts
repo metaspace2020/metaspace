@@ -814,3 +814,60 @@ export const getSegmentationJobsQuery = gql`
     }
   }
 `
+
+export const datasetSplitPreviewQuery = gql`
+  query datasetSplitPreviewQuery($datasetId: String!) {
+    datasetSplitPreview(datasetId: $datasetId) {
+      canSplit
+      reason
+      previousSplitProjectId
+      previousSplitDate
+      rois {
+        roiId
+        name
+        isDefault
+        nPixels
+        blocked
+        warning
+      }
+    }
+  }
+`
+
+export const splitDatasetByRoisMutation = gql`
+  mutation splitDatasetByRois($input: SplitDatasetInput!, $useLithops: Boolean) {
+    splitDatasetByRois(input: $input, useLithops: $useLithops)
+  }
+`
+
+export interface RoiSplitPreview {
+  roiId: string
+  name: string
+  isDefault: boolean
+  nPixels: number
+  blocked: boolean
+  warning: boolean
+}
+
+export interface DatasetSplitPreview {
+  canSplit: boolean
+  reason: string | null
+  previousSplitProjectId: string | null
+  previousSplitDate: string | null
+  rois: RoiSplitPreview[]
+}
+
+// Kept out of DatasetDetailItem on purpose: that fragment is also used by dataset lists, where
+// resolving provenance per row would mean one extra lookup per listed dataset.
+export const getDatasetSplitProvenanceQuery = gql`
+  query getDatasetSplitProvenanceQuery($id: String!) {
+    dataset(id: $id) {
+      id
+      splitProvenance {
+        parentDatasetId
+        parentDatasetName
+        roiName
+      }
+    }
+  }
+`

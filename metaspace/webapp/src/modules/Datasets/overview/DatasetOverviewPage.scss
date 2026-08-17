@@ -54,3 +54,6 @@ $opt-desc-color: #C4C4C4;
 .dataset-overview-menu{
   z-index: 2000 !important;
 }
+.dataset-split-provenance {
+  @apply text-sm text-gray-500 m-0 mt-1;
+}

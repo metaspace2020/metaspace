@@ -6,7 +6,7 @@ import { DatasetActionsDropdown } from './DatasetActionsDropdown'
 import { SegmentationDialog } from '../segmentation/SegmentationDialog'
 import { initMockGraphqlClient } from '../../../tests/utils/mockGraphqlClient'
 import { DefaultApolloClient, useMutation, useQuery } from '@vue/apollo-composable'
-import { checkIfHasBrowserFiles, getSegmentationJobsQuery } from '../../../api/dataset'
+import { checkIfHasBrowserFiles, datasetSplitPreviewQuery, getSegmentationJobsQuery } from '../../../api/dataset'
 import { checkIfEnrichmentRequested } from '../../../api/enrichmentdb'
 import { proFeatureWhitelistQuery } from '../../../api/plan'
 import { getActiveUserSubscriptionQuery } from '../../../api/subscription'
@@ -124,6 +124,10 @@ describe('DatasetActionsDropdown', () => {
       }
       if (query === checkIfHasBrowserFiles) {
         return mockQueryResult({ hasImzmlFiles: false })
+      }
+      if (query === datasetSplitPreviewQuery) {
+        // No ROIs, so the Split action stays hidden in these cases.
+        return mockQueryResult({ datasetSplitPreview: { canSplit: false, reason: null, rois: [] } })
       }
       // Entitlement queries owned by useProFeatures
       if (query === proFeatureWhitelistQuery) {

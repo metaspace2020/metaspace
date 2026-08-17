@@ -66,6 +66,9 @@ type Dataset {
 
   # Additional metadata and output data generated during processing
   diagnostics: [DatasetDiagnostic!]!
+
+  # Set when this dataset was produced by splitting another dataset along one of its ROIs.
+  splitProvenance: DatasetSplitProvenance
 }
 
 type FdrCounts {
@@ -440,6 +443,52 @@ type Roi {
   geojson: String!  # JSON string representation of GeoJSON
 }
 
+# One ROI's eligibility for being split into its own dataset.
+type RoiSplitPreview {
+  roiId: ID!
+  name: String!
+  isDefault: Boolean!
+  # Pixels with data inside the polygon. Below ~500 nothing usable comes out, so `blocked` is set;
+  # between 500 and 2000 metrics and FDR get unreliable, so `warning` is set instead.
+  nPixels: Int!
+  blocked: Boolean!
+  warning: Boolean!
+}
+
+# What the split dialog needs to open: eligible ROIs plus any previous split of this dataset.
+type DatasetSplitPreview {
+  rois: [RoiSplitPreview!]!
+  canSplit: Boolean!
+  # Why splitting is unavailable, when canSplit is false.
+  reason: String
+  previousSplitProjectId: ID
+  previousSplitDate: String
+}
+
+type DatasetSplitProvenance {
+  parentDatasetId: String
+  parentDatasetName: String!
+  roiName: String!
+  cropOriginX: Int
+  cropOriginY: Int
+}
+
+input SplitDatasetRoiInput {
+  roiId: ID!
+  # Defaults to "{parent name} — {ROI name}" when omitted.
+  name: String
+}
+
+input SplitDatasetInput {
+  datasetId: String!
+  rois: [SplitDatasetRoiInput!]!
+  # Exactly one of these must be given.
+  projectId: ID
+  newProjectName: String
+  groupId: ID
+  isPublic: Boolean
+}
+
 type DiffRoiResult {
   roi: Roi!
   lfc: Float!
@@ -500,6 +549,8 @@ type Query {
   rois(datasetId: String!, isDefault: Boolean): [Roi!]!
   roi(id: ID!): Roi
 
+  datasetSplitPreview(datasetId: String!): DatasetSplitPreview!
+
   segmentationJobs(datasetId: String!): [ImageSegmentationJob!]!
   segmentations(datasetId: String!): [Segmentation!]!
   segmentationIonProfiles(segmentationId: ID!, filter: SegmentationIonProfileFilter = {}): [SegmentationIonProfileResult!]!
@@ -544,6 +595,11 @@ type Mutation {
   copyRawOpticalImage(originDatasetId: String!, destinyDatasetId: String!): String!
 
   addRoi(datasetId: String!, geoJson: GeoJson!): String
+
+  # Split a dataset into one new dataset per ROI, collected in a project owned by the requester.
+  # Returns JSON: { jobId, projectId, datasetIds }.
+  # Throws errors of types: "no_permission", "roi_too_small", "quota_exceeded"
+  splitDatasetByRois(input: SplitDatasetInput!, useLithops: Boolean=true): String!
 
   deleteOpticalImage(datasetId: String!): String!
 

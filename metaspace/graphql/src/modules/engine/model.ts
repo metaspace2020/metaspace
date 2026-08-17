@@ -538,6 +538,116 @@ export class SegmentationIonProfile {
   annotation: Annotation;
 }
 
+export type DatasetSplitJobStatus = 'QUEUED' | 'STARTED' | 'FILES_DONE' | 'FINISHED' | 'FAILED';
+export type DatasetSplitChildStatus = 'PENDING' | 'ANNOTATING' | 'FINISHED' | 'FAILED';
+
+/**
+ * One user-initiated split of a parent dataset along its ROIs.
+ *
+ * Provenance is deliberately denormalised (parentDsName here, roiName/roiGeojson on the child
+ * rows): `public.roi` cascade-deletes with its dataset, and deleting a parent must leave the
+ * children and their provenance intact, so nothing here may depend on those rows surviving.
+ */
+@Entity({ schema: 'public', name: 'dataset_split_job' })
+export class DatasetSplitJob {
+  @PrimaryGeneratedColumn({ type: 'bigint' })
+  id: string;
+
+  @Index('dataset_split_job_parent_ds_id_index')
+  @Column({ name: 'parent_ds_id', type: 'text', nullable: true })
+  parentDsId: string | null;
+
+  @Column({ name: 'parent_ds_name', type: 'text' })
+  parentDsName: string;
+
+  @Index('dataset_split_job_user_id_index')
+  @Column({ name: 'user_id', type: 'uuid' })
+  userId: string;
+
+  @Column({ name: 'submitter_email', type: 'text', nullable: true })
+  submitterEmail: string | null;
+
+  @Column({ name: 'project_id', type: 'uuid', nullable: true })
+  projectId: string | null;
+
+  @Index('dataset_split_job_status_index')
+  @Column({ type: 'text' })
+  status: DatasetSplitJobStatus;
+
+  @Column({ type: 'text', nullable: true })
+  error: string | null;
+
+  @Column({ name: 'email_sent', type: 'boolean', default: false })
+  emailSent: boolean;
+
+  @Column({
+    name: 'created_at',
+    type: 'timestamp without time zone',
+    default: () => 'NOW()',
+    transformer: new MomentValueTransformer(),
+  })
+  createdAt: Date;
+
+  @Column({
+    name: 'updated_at',
+    type: 'timestamp without time zone',
+    default: () => 'NOW()',
+    transformer: new MomentValueTransformer(),
+  })
+  updatedAt: Date;
+
+  @ManyToOne(() => EngineDataset, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'parent_ds_id' })
+  parentDataset: EngineDataset | null;
+
+  @OneToMany(() => DatasetSplitChild, child => child.job)
+  children: DatasetSplitChild[];
+}
+
+@Entity({ schema: 'public', name: 'dataset_split_child' })
+export class DatasetSplitChild {
+  @PrimaryGeneratedColumn({ type: 'bigint' })
+  id: string;
+
+  @Index('dataset_split_child_job_id_index')
+  @Column({ name: 'job_id', type: 'bigint' })
+  jobId: string;
+
+  @Index('dataset_split_child_ds_id_uindex', { unique: true })
+  @Column({ name: 'child_ds_id', type: 'text' })
+  childDsId: string;
+
+  @Column({ name: 'roi_id', type: 'bigint', nullable: true })
+  roiId: string | null;
+
+  @Column({ name: 'roi_name', type: 'text' })
+  roiName: string;
+
+  @Column({ name: 'roi_geojson', type: 'jsonb' })
+  roiGeojson: any;
+
+  /** `{x0, y0}` in the parent's re-based ion-image space; maps child pixels back to the parent. */
+  @Column({ name: 'crop_origin', type: 'jsonb', nullable: true })
+  cropOrigin: { x0: number, y0: number } | null;
+
+  @Column({ name: 'n_pixels', type: 'integer', nullable: true })
+  nPixels: number | null;
+
+  /** The dataset doc sm-engine passes to `SMapiDatasetManager.add` once the files exist. */
+  @Column({ type: 'jsonb' })
+  doc: any;
+
+  @Column({ type: 'text' })
+  status: DatasetSplitChildStatus;
+
+  @Column({ type: 'text', nullable: true })
+  error: string | null;
+
+  @ManyToOne(() => DatasetSplitJob, job => job.children, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'job_id' })
+  job: DatasetSplitJob;
+}
+
 export const ENGINE_ENTITIES = [
   EngineDataset,
   OpticalImage,
@@ -552,4 +662,6 @@ export const ENGINE_ENTITIES = [
   ImageSegmentationJob,
   Segmentation,
   SegmentationIonProfile,
+  DatasetSplitJob,
+  DatasetSplitChild,
 ]

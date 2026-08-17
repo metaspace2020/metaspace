@@ -7,6 +7,7 @@ import redis
 
 from sm.engine.daemons.actions import DaemonActionStage, DaemonAction
 from sm.engine.dataset import DatasetStatus
+from sm.engine.dataset_split_runner import SplitChildStatus
 from sm.engine.errors import ImzMLError, AnnotationError
 from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.engine.config import SMConfig
@@ -49,6 +50,11 @@ class SMAnnotateDaemon:
 
     def _on_failure(self, msg, e):
         self._manager.ds_failure_handler(msg, e)
+
+        # A split child that fails to annotate never reaches INDEX, so its job would otherwise
+        # wait forever for it and never send the summary email.
+        if msg.get('ds_id'):
+            self._manager.handle_split_child_terminal(msg['ds_id'], SplitChildStatus.FAILED, str(e))
 
         if 'email' in msg:
             traceback = e.__cause__.traceback if isinstance(e.__cause__, ImzMLError) else None

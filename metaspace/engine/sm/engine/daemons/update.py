@@ -5,6 +5,7 @@ from traceback import format_exc
 from sm.engine.daemons.actions import DaemonAction, DaemonActionStage
 from sm.engine.daemons.dataset_manager import DatasetManager
 from sm.engine.dataset import DatasetStatus
+from sm.engine.dataset_split_runner import SplitChildStatus
 from sm.engine.errors import UnknownDSID, SMError, IndexUpdateError
 
 
@@ -26,6 +27,11 @@ class SMUpdateDaemon:
         if msg['action'] in (DaemonAction.EXPERIMENT_PREP, DaemonAction.EXPERIMENT_STATS):
             return
 
+        if msg['action'] == DaemonAction.SPLIT:
+            # The parent dataset is untouched by a split, and the children report their own
+            # completion via the INDEX branch below, so there is nothing to notify here.
+            return
+
         if msg['action'] == DaemonAction.DELETE:
             self._manager.notify_update(
                 msg['ds_id'], action=DaemonAction.DELETE, stage=DaemonActionStage.FINISHED
@@ -34,6 +40,9 @@ class SMUpdateDaemon:
             ds = self._manager.load_ds(msg['ds_id'])
             if msg['action'] == DaemonAction.INDEX:
                 self._manager.set_ds_status(ds, DatasetStatus.FINISHED)
+                # A dataset only becomes fully available here, which is also the earliest point a
+                # split child can be given its optical image (that needs an annotation image).
+                self._manager.handle_split_child_terminal(ds.id, SplitChildStatus.FINISHED)
             self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.FINISHED)
 
         if msg['action'] in [DaemonAction.UPDATE, DaemonAction.INDEX]:
@@ -54,6 +63,9 @@ class SMUpdateDaemon:
     def _on_failure(self, msg, e):
         self._manager.ds_failure_handler(msg, e)
 
+        if msg.get('ds_id'):
+            self._manager.handle_split_child_terminal(msg['ds_id'], SplitChildStatus.FAILED, str(e))
+
         if 'email' in msg:
             self._manager.send_failed_email(msg)
 
@@ -66,6 +78,11 @@ class SMUpdateDaemon:
                 return
             if msg['action'] == DaemonAction.EXPERIMENT_STATS:
                 self._manager.run_experiment_stats(msg)
+                return
+            if msg['action'] == DaemonAction.SPLIT:
+                # Handled without loading the parent dataset: a split neither reads nor changes
+                # the parent's status, so it must not mark it busy or failed.
+                self._manager.run_split(msg)
                 return
 
             ds = self._manager.load_ds(msg['ds_id'])

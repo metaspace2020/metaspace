@@ -18,7 +18,17 @@ from sm.engine.postprocessing.cloudwatch import get_costs, add_cost_to_perf_prof
 from sm.engine.postprocessing.colocalization import Colocalization
 from sm.engine.daemons.actions import DaemonActionStage
 from sm.engine.dataset import Dataset, DatasetStatus
+from sm.engine.dataset_split_runner import (
+    SplitChildStatus,
+    SplitJobStatus,
+    attach_optical_image,
+    find_child,
+    mark_child_terminal,
+    run_split_job,
+)
 from sm.engine.db import DB
+from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_LITHOPS, SM_UPDATE
+from sm.rest.dataset_manager import SMapiDatasetManager
 from sm.engine.es_export import ESExporter
 from sm.engine.postprocessing.ion_thumbnail import (
     generate_ion_thumbnail,
@@ -387,6 +397,119 @@ class DatasetManager:  # pylint: disable=too-many-public-methods
                     self.logger.warning(
                         f'Failed to send failure email for job {job_id}: {email_err}'
                     )
+
+    def _create_api_dataset_manager(self):
+        """Build an SMapiDatasetManager so split children can be submitted for annotation.
+
+        The daemon is only given a status queue, so the annotate/lithops publishers are created
+        on demand here rather than widening the daemon's constructor for one action.
+        """
+        return SMapiDatasetManager(
+            db=self._db,
+            es=self._es,
+            annot_queue=QueuePublisher(self._sm_config['rabbitmq'], SM_ANNOTATE, self.logger),
+            update_queue=QueuePublisher(self._sm_config['rabbitmq'], SM_UPDATE, self.logger),
+            lit_queue=QueuePublisher(self._sm_config['rabbitmq'], SM_LITHOPS, self.logger),
+            status_queue=self._status_queue,
+            logger=self.logger,
+        )
+
+    def create_project_web_app_link(self, project_id):
+        try:
+            base_url = self._sm_config['services']['web_app_url']
+            return f'{base_url}/project/{project_id}'
+        except Exception as e:  # pylint: disable=broad-except
+            self.logger.error(e)
+            return None
+
+    def run_split(self, msg):
+        """Write each ROI's raw files and submit the resulting child datasets for annotation."""
+        job_id = msg['job_id']
+        self.logger.info(f'Running dataset split job {job_id}')
+        try:
+            run_split_job(
+                db=self._db,
+                ds_man=self._create_api_dataset_manager(),
+                job_id=job_id,
+                use_lithops=msg.get('use_lithops', False),
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            # A split failure must not mark the parent dataset FAILED — it is untouched.
+            self.logger.exception(f'Dataset split job {job_id} failed')
+            self._db.alter(
+                'UPDATE dataset_split_job SET status = %s, error = %s, updated_at = NOW()'
+                ' WHERE id = %s',
+                params=(SplitJobStatus.FAILED, str(e), job_id),
+            )
+            job = self._db.select_one(
+                'SELECT submitter_email, parent_ds_name FROM dataset_split_job WHERE id = %s',
+                params=(job_id,),
+            )
+            if job and job[0]:
+                self.send_split_failed_email(job[0], job[1], str(e))
+
+    def handle_split_child_terminal(self, ds_id, status, error=None):
+        """Finish off a split child that has reached a terminal state.
+
+        Attaches the parent's optical image (only possible now that annotation images exist) and,
+        once every child of the job is terminal, sends the single summary email.
+        """
+        try:
+            child = find_child(self._db, ds_id)
+            if child is None:
+                return
+
+            if status == SplitChildStatus.FINISHED:
+                try:
+                    attach_optical_image(self._db, self._create_api_dataset_manager(), child)
+                except Exception as e:  # pylint: disable=broad-except
+                    # A missing or unusable optical image must not fail an annotated child.
+                    self.logger.warning(f'Could not attach optical image to {ds_id}: {e}')
+
+            summary = mark_child_terminal(self._db, ds_id, status, error)
+            if summary and summary['email']:
+                self.send_split_summary_email(summary)
+        except Exception as e:  # pylint: disable=broad-except
+            self.logger.exception(f'Failed to finalise split child {ds_id}: {e}')
+
+    def send_split_summary_email(self, summary):
+        """One email per split, listing every ROI's outcome, once all children are terminal."""
+        succeeded = [c for c in summary['children'] if c['status'] == SplitChildStatus.FINISHED]
+        failed = [c for c in summary['children'] if c['status'] != SplitChildStatus.FINISHED]
+        link = self.create_project_web_app_link(summary['project_id'])
+
+        lines = [
+            'Dear METASPACE user,',
+            '',
+            f'The dataset "{summary["parent_ds_name"]}" has been split along its regions of '
+            f'interest and all resulting datasets have finished processing.',
+            '',
+            f'{len(succeeded)} of {len(summary["children"])} datasets were created successfully:',
+        ]
+        lines += [f'  - {c["roi_name"]}' for c in succeeded]
+        if failed:
+            lines += ['', 'The following regions could not be processed:']
+            lines += [f'  - {c["roi_name"]}: {c["error"] or "unknown error"}' for c in failed]
+        if link:
+            lines += ['', f'You can find them in your project here: {link}']
+        lines += ['', 'Best regards,', 'METASPACE Team']
+
+        self._send_email(
+            summary['email'], 'METASPACE service notification (DATASET SPLIT)', '\n'.join(lines)
+        )
+
+    def send_split_failed_email(self, email, ds_name, error_msg):
+        email_body = (
+            'Dear METASPACE user,\n\n'
+            f'We regret to inform you that splitting the "{ds_name}" dataset along its regions '
+            f'of interest has failed.\n'
+            f'Error details: {error_msg}\n\n'
+            'The original dataset has not been modified. If the problem persists, please contact '
+            'our support team at contact@metaspace2020.org.\n\n'
+            'Best regards,\n'
+            'METASPACE Team'
+        )
+        self._send_email(email, 'METASPACE service notification (SPLIT FAILED)', email_body)
 
     def run_experiment_prep(self, msg):
         """Submit a cross-dataset experiment prep + stats analysis job.
