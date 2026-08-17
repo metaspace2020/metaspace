@@ -3,6 +3,9 @@ import { clear, drawIn, fadeIn, seededRng, svgEl, svgText, viridis } from './dra
 // Only the base peak is labelled now; the rest of the key ions get a tick and a
 // centroid dot but no text, so the axis stays readable at hero size.
 const LABELLED_MZ = '760.5851'
+
+const SPEED = 0.7
+const t = (seconds: number): number => seconds * SPEED
 const KEY_PEAK_X = [28.5, 52.4, 71.8, 96.2, 118.6, 141.3]
 const LABELLED_PEAK_INDEX = 1
 
@@ -56,7 +59,7 @@ const flowArrow = (parent: SVGElement, x: number, y: number, dx: number, dy: num
   const py = dx
   const bx = x2 - dx * 5
   const by = y2 - dy * 5
-  parent.appendChild(fadeIn(svgEl('line', { x1: x, y1: y, x2, y2, ...ARROW_ATTRS }), delay))
+  parent.appendChild(fadeIn(svgEl('line', { x1: x, y1: y, x2, y2, ...ARROW_ATTRS }), t(delay)))
   parent.appendChild(
     fadeIn(
       svgEl('path', {
@@ -66,7 +69,7 @@ const flowArrow = (parent: SVGElement, x: number, y: number, dx: number, dy: num
           ` L ${(bx - px * 4).toFixed(1)} ${(by - py * 4).toFixed(1)}`,
         ...ARROW_ATTRS,
       }),
-      delay
+      t(delay)
     )
   )
 }
@@ -145,7 +148,7 @@ export const drawSignatureStrip = (svg: SVGSVGElement): void => {
   // Append first: the dash reveal measures the real path length off the live
   // node, and an unattached path can measure as 0.
   gSpectrum.appendChild(sticks)
-  drawIn(sticks, 'stroke-dashoffset 2s cubic-bezier(.3,.7,.3,1)')
+  drawIn(sticks, `stroke-dashoffset ${t(2)}s cubic-bezier(.3,.7,.3,1)`)
 
   // The orange apex dots are the visual signature of centroided data. They are
   // staggered left to right so the panel still reads as arriving across the
@@ -156,8 +159,8 @@ export const drawSignatureStrip = (svg: SVGSVGElement): void => {
     gSpectrum.appendChild(
       fadeIn(
         svgEl('circle', { cx: a.x, cy: a.y, r: a.key ? 1.7 : 1.15, fill: '#F0961F' }),
-        0.2 + ((a.x - SPEC_START) / span) * 1.4,
-        0.3
+        t(0.2 + ((a.x - SPEC_START) / span) * 1.4),
+        t(0.3)
       )
     )
   })
@@ -166,7 +169,7 @@ export const drawSignatureStrip = (svg: SVGSVGElement): void => {
     gSpectrum.appendChild(
       fadeIn(
         svgEl('line', { x1: keyX, y1: 152, x2: keyX, y2: 161, stroke: '#C6CFD6', 'stroke-width': 1 }),
-        1.5 + i * 0.04
+        t(1.5 + i * 0.04)
       )
     )
   })
@@ -177,11 +180,11 @@ export const drawSignatureStrip = (svg: SVGSVGElement): void => {
         'font-size': 8.5,
         fill: '#101820',
       }),
-      1.6
+      t(1.6)
     )
   )
   gSpectrum.appendChild(
-    fadeIn(svgText(SPEC_END, 170, '(centroided)', { 'text-anchor': 'end', 'font-size': 7, fill: '#7C8892' }), 1.65)
+    fadeIn(svgText(SPEC_END, 170, '(centroided)', { 'text-anchor': 'end', 'font-size': 7, fill: '#7C8892' }), t(1.65))
   )
 
   gSpectrum.setAttribute('transform', 'translate(0,-8)')
@@ -196,7 +199,7 @@ export const drawSignatureStrip = (svg: SVGSVGElement): void => {
   const imgW = cols * (cell + gap) - gap
   const imgH = rows * (cell + gap) - gap
 
-  gImage.appendChild(fadeIn(svgText(x0, 36, 'm/z 760.5851', { 'font-size': 9.5, fill: '#101820' }), 0.9))
+  gImage.appendChild(fadeIn(svgText(x0, 36, 'm/z 760.5851', { 'font-size': 9.5, fill: '#101820' }), t(0.9)))
 
   const cellGroup = svgEl('g')
   gImage.appendChild(cellGroup)
@@ -220,8 +223,8 @@ export const drawSignatureStrip = (svg: SVGSVGElement): void => {
             rx: 1.1,
             fill: viridis(v),
           }),
-          1.1 + c * 0.018 + row * 0.005,
-          0.5
+          t(1.1 + c * 0.018 + row * 0.005),
+          t(0.5)
         )
       )
     }
@@ -263,12 +266,12 @@ export const drawSignatureStrip = (svg: SVGSVGElement): void => {
   }
   roiBox(x0 + 10, y0 + imgH * 0.24, imgW * 0.29, imgH * 0.52, false)
   roiBox(x0 + imgW * 0.6, y0 + imgH * 0.3, imgW * 0.27, imgH * 0.44, true)
-  gImage.appendChild(fadeIn(roi, 1.75))
+  gImage.appendChild(fadeIn(roi, t(1.75)))
 
   gImage.appendChild(
-    fadeIn(svgEl('line', { x1: x0, y1: 152, x2: x0 + 46, y2: 152, stroke: '#B4BCC4', 'stroke-width': 2 }), 1.75)
+    fadeIn(svgEl('line', { x1: x0, y1: 152, x2: x0 + 46, y2: 152, stroke: '#B4BCC4', 'stroke-width': 2 }), t(1.75))
   )
-  gImage.appendChild(fadeIn(svgText(x0 + 52, 155.5, '500 µm', { 'font-size': 9, fill: '#7C8892' }), 1.75))
+  gImage.appendChild(fadeIn(svgText(x0 + 52, 155.5, '500 µm', { 'font-size': 9, fill: '#7C8892' }), t(1.75)))
 
   // --- bottom right: differential test between the two ROIs ---------------
   const vx = 192
@@ -305,9 +308,9 @@ export const drawSignatureStrip = (svg: SVGSVGElement): void => {
       })
     )
   }
-  gVolcano.appendChild(fadeIn(vol, 1.95, 0.6))
+  gVolcano.appendChild(fadeIn(vol, t(1.95), t(0.6)))
   gVolcano.appendChild(
-    fadeIn(svgText(186, 334, '14 metabolites · q < 0.05', { 'font-size': 8, fill: '#7C8892' }), 2.15)
+    fadeIn(svgText(186, 334, '14 metabolites · q < 0.05', { 'font-size': 8, fill: '#7C8892' }), t(2.15))
   )
 
   // --- bottom left: cross-dataset heatmap ---------------------------------
@@ -332,8 +335,8 @@ export const drawSignatureStrip = (svg: SVGSVGElement): void => {
       gCross.appendChild(
         fadeIn(
           svgEl('rect', { x: hx0 + c * hPitch, y: hy0 + row * hPitch, width: hCell, height: hCell, fill: viridis(v) }),
-          2.15 + c * 0.02 + row * 0.006,
-          0.4
+          t(2.15 + c * 0.02 + row * 0.006),
+          t(0.4)
         )
       )
     }
@@ -344,7 +347,7 @@ export const drawSignatureStrip = (svg: SVGSVGElement): void => {
   for (let b = 1; b < 3; b++) {
     const sx = hx0 + b * blockCols * hPitch - (hPitch - hCell) / 2
     gCross.appendChild(
-      fadeIn(svgEl('line', { x1: sx, y1: hy0, x2: sx, y2: hy0 + hH, stroke: '#FFFFFF', 'stroke-width': 1.6 }), 2.45)
+      fadeIn(svgEl('line', { x1: sx, y1: hy0, x2: sx, y2: hy0 + hH, stroke: '#FFFFFF', 'stroke-width': 1.6 }), t(2.45))
     )
   }
   ;['ctrl', 'treat', 'recov'].forEach((label, i) => {
@@ -355,11 +358,13 @@ export const drawSignatureStrip = (svg: SVGSVGElement): void => {
           'font-size': 7.5,
           fill: '#7C8892',
         }),
-        2.2 + i * 0.05
+        t(2.2 + i * 0.05)
       )
     )
   })
-  gCross.appendChild(fadeIn(svgText(hx0, 334, '40 datasets · 3 conditions', { 'font-size': 8, fill: '#7C8892' }), 2.5))
+  gCross.appendChild(
+    fadeIn(svgText(hx0, 334, '40 datasets · 3 conditions', { 'font-size': 8, fill: '#7C8892' }), t(2.5))
+  )
 
   // --- flow arrows, ROI legend and figure caption -------------------------
   // The eye runs clockwise: spectrum, annotation, differential test, then back
@@ -369,9 +374,9 @@ export const drawSignatureStrip = (svg: SVGSVGElement): void => {
   flowArrow(gFlow, 177, 280, -1, 0, 2.5)
 
   gFlow.appendChild(
-    fadeIn(svgEl('line', { x1: 14, y1: 350, x2: 27, y2: 350, stroke: '#101820', 'stroke-width': 1.3 }), 2.65)
+    fadeIn(svgEl('line', { x1: 14, y1: 350, x2: 27, y2: 350, stroke: '#101820', 'stroke-width': 1.3 }), t(2.65))
   )
-  gFlow.appendChild(fadeIn(svgText(32, 353.5, 'ROI A', { 'font-size': 8.5, fill: '#7C8892' }), 2.65))
+  gFlow.appendChild(fadeIn(svgText(32, 353.5, 'ROI A', { 'font-size': 8.5, fill: '#7C8892' }), t(2.65)))
   gFlow.appendChild(
     fadeIn(
       svgEl('line', {
@@ -383,10 +388,10 @@ export const drawSignatureStrip = (svg: SVGSVGElement): void => {
         'stroke-width': 1.3,
         'stroke-dasharray': '3 3',
       }),
-      2.65
+      t(2.65)
     )
   )
-  gFlow.appendChild(fadeIn(svgText(94, 353.5, 'ROI B', { 'font-size': 8.5, fill: '#7C8892' }), 2.65))
+  gFlow.appendChild(fadeIn(svgText(94, 353.5, 'ROI B', { 'font-size': 8.5, fill: '#7C8892' }), t(2.65)))
 
   gFlow.appendChild(
     fadeIn(
@@ -396,7 +401,7 @@ export const drawSignatureStrip = (svg: SVGSVGElement): void => {
         fill: '#7C8892',
         'letter-spacing': '0.06em',
       }),
-      2.75
+      t(2.75)
     )
   )
 }

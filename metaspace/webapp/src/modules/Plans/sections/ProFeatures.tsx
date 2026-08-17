@@ -20,7 +20,7 @@ const FEATURES: FeatureRow[] = [
       'p-values and effect sizes you can drop straight into a figure.',
     instead: 'exporting masks, running ad-hoc t-tests, and hoping nobody asks about multiple testing.',
     chart: 'volcano',
-    caption: 'Volcano plot + linked ion image · real tissue section, real annotations',
+    caption: 'Volcano plot + linked ion image · real annotations',
   },
   {
     question: '“Where are the compartments?”',
@@ -30,7 +30,7 @@ const FEATURES: FeatureRow[] = [
       'the annotations that define it.',
     instead: 'clustering in a separate tool, then hand-mapping clusters back to ions.',
     chart: 'segmentation',
-    caption: 'Segment map + per-segment driver ions',
+    caption: 'Segment map + per-segment annotations',
   },
   {
     question: '“Does it hold across experiments?”',
@@ -69,7 +69,8 @@ const PRIVACY = [
   {
     title: 'Nothing private enters the knowledgebase',
     body:
-      'Your private datasets and annotations stay inside your group until you explicitly choose to publish them. Nothing ' +
+      'Your private datasets and annotations stay inside' +
+      ' your group until you explicitly choose to publish them. Nothing ' +
       'is contributed to the public knowledgebase on your behalf.',
   },
   {

@@ -80,7 +80,7 @@ describe('ProFeatures', () => {
     expect(rows[0].get('.pro-feature__instead').text()).toBe(
       'Instead of: exporting masks, running ad-hoc t-tests, and hoping nobody asks about multiple testing.'
     )
-    expect(rows[0].text()).toContain('Volcano plot + linked ion image · real tissue section, real annotations')
+    expect(rows[0].text()).toContain('Volcano plot + linked ion image · real annotations')
 
     expect(rows[1].text()).toContain('“Where are the compartments?”')
     expect(rows[1].text()).toContain(
@@ -90,7 +90,7 @@ describe('ProFeatures', () => {
     expect(rows[1].get('.pro-feature__instead').text()).toBe(
       'Instead of: clustering in a separate tool, then hand-mapping clusters back to ions.'
     )
-    expect(rows[1].text()).toContain('Segment map + per-segment driver ions')
+    expect(rows[1].text()).toContain('Segment map + per-segment annotations')
 
     expect(rows[2].text()).toContain('“Does it hold across experiments?”')
     expect(rows[2].get('.pro-feature__instead').text()).toBe(
@@ -115,7 +115,8 @@ describe('ProFeatures', () => {
     expect(text).toContain('Two guarantees, in plain terms, with no asterisks.')
     expect(text).toContain('Nothing private enters the knowledgebase')
     expect(text).toContain(
-      'Your private datasets and annotations stay inside your group until you explicitly choose to publish them. Nothing ' +
+      'Your private datasets and annotations stay inside' +
+        ' your group until you explicitly choose to publish them. Nothing ' +
         'is contributed to the public knowledgebase on your behalf.'
     )
     expect(text).toContain('Nothing is locked in')

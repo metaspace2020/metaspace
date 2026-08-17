@@ -288,7 +288,7 @@ $pro-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 .pro-hero__row {
   display: grid;
   grid-template-columns: 1fr minmax(240px, 420px);
-  align-items: center;
+  // align-items: center;
   gap: clamp(32px, 6vw, 64px);
 
   @media (max-width: 899px) {
