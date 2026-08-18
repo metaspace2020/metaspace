@@ -50,7 +50,7 @@ const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GET', bod
 
     if (body && (method === 'POST' || method === 'PUT')) {
       options.body = JSON.stringify(body)
-      logger.info(`Request to ${endpoint}:`, { method, body })
+      logger.info(`Request to ${endpoint}:`, { method })
     }
 
     const response = await fetch(`${apiUrl}${endpoint}`, options)
