@@ -22,8 +22,9 @@ export default defineComponent({
   props: {
     experimentId: { type: String, required: true },
     initialExcluded: { type: Array as () => string[], default: () => [] },
-    /** sampleId → human-readable label (dataset name). Falls back to the
-     *  sampleId itself for entries not in the map. */
+    /** sampleId → human-readable sample name, consumed by the QC charts and
+     *  the exclude dropdown. Falls back to the sampleId itself for entries
+     *  not in the map. */
     sampleLabels: { type: Object as () => Record<string, string>, default: () => ({}) },
     /** When true, the experiment's run is still PREP/RUNNING. The stage polls
      *  the QC query while this holds so charts refresh as soon as the
@@ -81,10 +82,12 @@ export default defineComponent({
       return { pc1: v.pc1 ?? 0, pc2: v.pc2 ?? 0 }
     })
 
+    /** Distinct sampleIds, sorted alphabetically by their display label so
+     *  the exclude dropdown reads in order. */
     const samples = computed<string[]>(() => {
       const ids = new Set<string>()
       for (const row of allQcRows.value) ids.add(row.sampleId)
-      return Array.from(ids).sort()
+      return Array.from(ids).sort((a, b) => labelFor(a).localeCompare(labelFor(b)))
     })
 
     const apolloClient: any = inject(DefaultApolloClient)
