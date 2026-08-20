@@ -210,7 +210,11 @@ class LithopsImzMLReader(ImzMLReader):
         ):
             raise Exception('Incomplete .ibd file')
 
-    def iter_spectra(self, storage: Storage, sp_inds: Sequence[int]):
+    def _read_ranges(self, storage: Storage, sp_inds: Sequence[int]):
+        """Download the raw mz/intensity buffers for the given spectra.
+
+        Returns (mz_data, int_data) - one bytes object per spectrum each.
+        """
         # pylint: disable=import-outside-toplevel # avoid pulling Lithops into Spark pipeline
         from sm.engine.annotation_lithops.io import get_ranges_from_cobject
 
@@ -229,9 +233,10 @@ class LithopsImzMLReader(ImzMLReader):
         int_ranges = np.stack([int_starts, int_ends], axis=1)
         ranges_to_read = np.vstack([mz_ranges, int_ranges])
         data_ranges = get_ranges_from_cobject(storage, self._ibd_cobject, ranges_to_read)
-        mz_data = data_ranges[: len(sp_inds)]
-        int_data = data_ranges[len(sp_inds) :]
-        del data_ranges
+        return data_ranges[: len(sp_inds)], data_ranges[len(sp_inds) :]
+
+    def iter_spectra(self, storage: Storage, sp_inds: Sequence[int]):
+        mz_data, int_data = self._read_ranges(storage, sp_inds)
 
         for i, sp_idx in enumerate(sp_inds):
             # Copy the arrays, as np.frombuffer only makes a view over the existing buffer,
@@ -252,3 +257,71 @@ class LithopsImzMLReader(ImzMLReader):
                 sp_idx, mzs, ints = self._process_spectrum(sp_idx, mzs, ints)
 
             yield sp_idx, mzs, ints
+
+    def read_spectra_chunk(self, storage: Storage, sp_inds: Sequence[int], int_dtype=np.float32):
+        """Read a run of spectra and decode them in bulk into three flat arrays
+        (mzs, ints, sp_lens) - the same peaks iter_spectra yields, in sp_inds order.
+
+        Decoding spectra one at a time was the bottleneck of the read stage; bulk decode
+        removes that per-spectrum overhead and also lowers peak memory, as downloaded
+        buffers are freed as soon as they are consumed instead of piling up as
+        per-spectrum copies.
+        """
+        sp_inds = np.asarray(sp_inds)
+        mz_data, int_data = self._read_ranges(storage, sp_inds)
+        return self._decode_chunk(sp_inds, mz_data, int_data, int_dtype)
+
+    def _decode_chunk(self, sp_inds, mz_data, int_data, int_dtype):
+        # pylint: disable=too-many-locals
+        reader = self.imzml_reader
+        n_spectra = len(sp_inds)
+        mz_lens = np.asarray(reader.mzLengths)[sp_inds]
+        int_lens = np.asarray(reader.intensityLengths)[sp_inds]
+
+        # Data validation: vectorised equivalent of the per-spectrum _check_consistency
+        mz_bytes = np.fromiter(map(len, mz_data), np.int64, n_spectra)
+        int_bytes = np.fromiter(map(len, int_data), np.int64, n_spectra)
+        bad = mz_lens != int_lens
+        if bad.any():
+            raise IbdError(f"Spectrum {sp_inds[bad.argmax()]} mz and intensity counts don't match")
+        bad = (mz_bytes != mz_lens * np.dtype(reader.mzPrecision).itemsize) | (
+            int_bytes != int_lens * np.dtype(reader.intensityPrecision).itemsize
+        )
+        if bad.any():
+            raise IbdError(f'Incomplete .ibd file (spectrum {sp_inds[bad.argmax()]})')
+
+        ends = np.cumsum(mz_lens)
+        starts = ends - mz_lens
+        mzs = np.empty(int(mz_lens.sum()), reader.mzPrecision)
+        ints = np.empty(len(mzs), int_dtype)
+        for i in range(n_spectra):
+            # Slice assignment casts in C, so there are no per-spectrum .copy()/.astype()
+            # temporaries, and the buffers can be dropped as soon as they are consumed.
+            mzs[starts[i] : ends[i]] = np.frombuffer(mz_data[i], reader.mzPrecision)
+            ints[starts[i] : ends[i]] = np.frombuffer(int_data[i], reader.intensityPrecision)
+            mz_data[i] = None
+            int_data[i] = None
+
+        # Remove zero-intensity peaks, as some export processes generate them in large
+        # numbers, but they add no value at all.
+        keep = ints > 0
+        sp_lens = mz_lens.astype(np.int64, copy=False)
+        if not keep.all():
+            kept_counts = np.concatenate([[0], np.cumsum(keep)])
+            sp_lens = kept_counts[ends] - kept_counts[starts]
+            mzs = mzs[keep]
+            ints = ints[keep]
+
+        chunk_min_mz = chunk_max_mz = None
+        if len(mzs) and not self.is_mz_from_metadata:
+            chunk_min_mz, chunk_max_mz = mzs.min(), mzs.max()
+        with _process_spectrum_lock:
+            if not self.is_tic_from_metadata:
+                cum_ints = np.concatenate([[0.0], np.cumsum(ints, dtype=np.float64)])
+                sp_ends = np.cumsum(sp_lens)
+                self._sp_tic[sp_inds] = cum_ints[sp_ends] - cum_ints[sp_ends - sp_lens]
+            if chunk_min_mz is not None:
+                self.min_mz = min(self.min_mz, chunk_min_mz)
+                self.max_mz = max(self.max_mz, chunk_max_mz)
+
+        return mzs, ints, sp_lens
