@@ -17,11 +17,12 @@ display only.
 import hashlib
 import json
 import logging
-from io import BytesIO
+import threading
+import time
+from collections import OrderedDict
 from typing import Optional, Tuple
 
 import numpy as np
-import redis
 
 from sm.engine.annotation.isocalc_wrapper import mass_accuracy_half_width
 from sm.engine.config import SMConfig
@@ -53,10 +54,49 @@ MIN_SUPPORT_FRAC = 0.01
 MIN_SUPPORT_PIXELS = 3
 
 CACHE_TTL_S = 86_400
+CACHE_MAX_ENTRIES = 64
 # Bump to invalidate every cached result after an algorithm change.
 ALGO_VERSION = 1
 
 WHOLE_DATASET = 'whole'
+
+_cache: 'OrderedDict[str, Tuple[float, dict]]' = OrderedDict()
+_cache_lock = threading.Lock()
+
+
+def _cache_get(key: str) -> Optional[dict]:
+    with _cache_lock:
+        entry = _cache.get(key)
+        if entry is None:
+            return None
+        expires_at, result = entry
+        if expires_at < time.monotonic():
+            del _cache[key]
+            return None
+        _cache.move_to_end(key)
+        return result
+
+
+def _cache_put(key: str, result: dict):
+    with _cache_lock:
+        _cache[key] = (time.monotonic() + CACHE_TTL_S, result)
+        _cache.move_to_end(key)
+        while len(_cache) > CACHE_MAX_ENTRIES:
+            _cache.popitem(last=False)
+
+
+def _format_peak_count(n: int) -> str:
+    """Round to a legible magnitude for user-facing messages.
+
+    102_216_984 -> 'over 100 million'; 30_000_000 -> '30 million'; 8_432_100 -> 'over 8 million'.
+    """
+    if n < 1_000_000:
+        return f'{n:,}'
+    millions = n // 1_000_000
+    if millions >= 100:
+        millions = millions // 10 * 10
+    label = f'{millions} million'
+    return label if n == millions * 1_000_000 else f'over {label}'
 
 
 def _cluster_bounds_strict(mzs, pix, instrument, ppm) -> np.ndarray:
@@ -192,16 +232,6 @@ class MeanSpectrumManager:
         self._s3_client = get_s3_client(sm_config=self._sm_config)
         self._image_storage = ImageStorage()
         self._browser_bucket = self._sm_config['imzml_browser_storage']['bucket']
-        self._redis = self._connect_redis()
-
-    def _connect_redis(self):
-        try:
-            client = redis.Redis(**self._sm_config.get('redis', {}))
-            client.ping()
-            return client
-        except Exception as e:  # pylint: disable=broad-except
-            logger.warning(f'Mean spectrum cache unavailable, computing uncached: {e}')
-            return None
 
     def _dataset_uuid(self, ds_id: str) -> str:
         res = self._db.select_one('SELECT input_path FROM dataset WHERE id = %s', params=(ds_id,))
@@ -214,9 +244,11 @@ class MeanSpectrumManager:
             "SELECT config->'isotope_generation'->>'instrument' FROM dataset WHERE id = %s",
             params=(ds_id,),
         )
-        if not res or not res[0]:
-            raise ValueError(f'Dataset {ds_id} has no instrument configured')
-        return res[0]
+        if not res:
+            raise ValueError(f'Dataset {ds_id} does not exist')
+        # Datasets processed before the instrument config field existed have no value;
+        # default to TOF, matching IsocalcWrapper's convention.
+        return res[0] or 'TOF'
 
     def peak_count(self, ds_id: str) -> int:
         """Total peaks in the dataset, from the size of mzs.npy. No download."""
@@ -242,8 +274,8 @@ class MeanSpectrumManager:
                 'available': False,
                 'whole_dataset_available': False,
                 'reason': (
-                    f'Dataset has {total_peaks:,} peaks, above the '
-                    f'{MEAN_SPECTRUM_MAX_PEAKS:,} peak limit for mean spectra'
+                    f'Dataset has {_format_peak_count(total_peaks)} peaks, above the '
+                    f'{_format_peak_count(MEAN_SPECTRUM_MAX_PEAKS)} peak limit for mean spectra'
                 ),
                 'total_peaks': total_peaks,
             }
@@ -257,8 +289,8 @@ class MeanSpectrumManager:
                 if whole_ok
                 else (
                     f'Whole-dataset spectra are unavailable above '
-                    f'{MEAN_SPECTRUM_WHOLE_DS_MAX_PEAKS:,} peaks '
-                    f'(this dataset has {total_peaks:,})'
+                    f'{_format_peak_count(MEAN_SPECTRUM_WHOLE_DS_MAX_PEAKS)} peaks '
+                    f'(this dataset has {_format_peak_count(total_peaks)})'
                 )
             ),
             'total_peaks': total_peaks,
@@ -305,36 +337,6 @@ class MeanSpectrumManager:
             region_hash = f'{roi_id}:{hashlib.sha256(canonical.encode()).hexdigest()[:16]}'
         return f'mean_spectrum:v{ALGO_VERSION}:{ds_id}:{region_hash}:{instrument}:{ppm}'
 
-    @staticmethod
-    def _serialize(result: dict) -> bytes:
-        buf = BytesIO()
-        np.savez_compressed(
-            buf,
-            mzs=result['mzs'],
-            summed_ints=result['summed_ints'],
-            support=result['support'],
-            scalars=np.array(
-                [result['n_pixels'], result['total_peaks'], result['returned_peaks']],
-                dtype=np.int64,
-            ),
-        )
-        return buf.getvalue()
-
-    @staticmethod
-    def _deserialize(blob: bytes, instrument: str, ppm: float) -> dict:
-        with np.load(BytesIO(blob), allow_pickle=False) as data:
-            n_pixels, total_peaks, returned_peaks = data['scalars'].tolist()
-            return {
-                'mzs': data['mzs'],
-                'summed_ints': data['summed_ints'],
-                'support': data['support'],
-                'n_pixels': int(n_pixels),
-                'total_peaks': int(total_peaks),
-                'returned_peaks': int(returned_peaks),
-                'instrument': instrument,
-                'clustering_ppm': ppm,
-            }
-
     def _compute_uncached(self, ds_id: str, roi_id, instrument: str, ppm: float) -> dict:
         mask = self.region_mask(ds_id, roi_id)
         n_pixels = int(mask.sum())
@@ -366,36 +368,28 @@ class MeanSpectrumManager:
         }
 
     def compute(self, ds_id: str, roi_id=None) -> dict:
-        """Reference axis and summed intensities for the region. Cached in Redis.
+        """Reference axis and summed intensities for the region. Cached in-process.
 
         The result is stat-independent -- mean and sum differ only by ``n_pixels`` -- so
-        the aggregation stat is deliberately not part of the cache key.
+        the aggregation stat is deliberately not part of the cache key. The cache is
+        consulted before the availability check: an entry can only exist because it was
+        computed under the peak limits, so a hit skips the S3 head request entirely.
         """
+        instrument = self._instrument(ds_id)
+        ppm = get_ppm(self._db, ds_id)
+        cache_key = self._cache_key(ds_id, roi_id, instrument, ppm)
+
+        cached = _cache_get(cache_key)
+        if cached is not None:
+            logger.info(f'Mean spectrum cache hit for {cache_key}')
+            return cached
+
         availability = self.availability(ds_id)
         if not availability['available']:
             raise ValueError(availability['reason'])
         if roi_id is None and not availability['whole_dataset_available']:
             raise ValueError(availability['reason'])
 
-        instrument = self._instrument(ds_id)
-        ppm = get_ppm(self._db, ds_id)
-        cache_key = self._cache_key(ds_id, roi_id, instrument, ppm)
-
-        if self._redis is not None:
-            try:
-                cached = self._redis.get(cache_key)
-                if cached:
-                    logger.info(f'Mean spectrum cache hit for {cache_key}')
-                    return self._deserialize(cached, instrument, ppm)
-            except Exception as e:  # pylint: disable=broad-except
-                logger.warning(f'Mean spectrum cache read failed: {e}')
-
         result = self._compute_uncached(ds_id, roi_id, instrument, ppm)
-
-        if self._redis is not None:
-            try:
-                self._redis.set(cache_key, self._serialize(result), ex=CACHE_TTL_S)
-            except Exception as e:  # pylint: disable=broad-except
-                logger.warning(f'Mean spectrum cache write failed: {e}')
-
+        _cache_put(cache_key, result)
         return result

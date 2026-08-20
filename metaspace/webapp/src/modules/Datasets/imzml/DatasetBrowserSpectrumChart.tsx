@@ -46,6 +46,10 @@ export const DatasetBrowserSpectrumChart = defineComponent({
       type: Boolean,
       default: true,
     },
+    customStyle: {
+      type: Object,
+      default: () => ({}),
+    },
     isLoading: {
       type: Boolean,
       default: false,
@@ -309,7 +313,7 @@ export const DatasetBrowserSpectrumChart = defineComponent({
       const { isLoading, isDataLoading } = props
 
       return (
-        <div class="chart-holder">
+        <div class="chart-holder" style={props.customStyle}>
           {!(isLoading || isDataLoading) && props.annotatedLabel && (
             <div class="annotated-legend">{props.annotatedLabel}</div>
           )}

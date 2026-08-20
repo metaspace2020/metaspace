@@ -1,4 +1,4 @@
-import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, defineComponent, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import {
   ElSelect,
   ElOption,
@@ -346,12 +346,19 @@ export default defineComponent({
       return meanAvailability.value?.wholeDatasetAvailable ? WHOLE_DATASET_REGION : undefined
     })
 
-    const { result: meanSpectrumResult, loading: meanSpectrumLoading } = useQuery<any>(
+    watch(datasetId, () => {
+      state.meanSpectrumRegion = undefined
+    })
+
+    const {
+      result: meanSpectrumResult,
+      loading: meanSpectrumLoading,
+      error: meanSpectrumError,
+    } = useQuery<any>(
       meanSpectrumQuery,
       () => ({
         datasetId: datasetId.value,
         roiId: resolvedRegion.value === WHOLE_DATASET_REGION ? null : resolvedRegion.value,
-        stat: state.meanSpectrumStat,
       }),
       () => ({
         enabled: meanSpectrumEnabled.value && resolvedRegion.value !== undefined,
@@ -365,10 +372,20 @@ export default defineComponent({
       if (!spectrum) {
         return []
       }
-      return spectrum.mzs.map((mz: number, i: number) => [mz, spectrum.intensities[i], spectrum.support[i]])
+      // The server always returns summed intensities; the mean/sum toggle is a pure
+      // client-side division, so flipping it never triggers a request.
+      const factor = state.meanSpectrumStat === 'SUM' ? 1 : 1 / spectrum.nPixels
+      return spectrum.mzs.map((mz: number, i: number) => [
+        mz,
+        spectrum.summedIntensities[i] * factor,
+        spectrum.support[i],
+      ])
     })
 
     const meanSpectrumEmptyMessage = computed(() => {
+      if (meanSpectrumError.value) {
+        return meanSpectrumError.value.message.replace(/^GraphQL error:\s*/, '')
+      }
       if (meanAvailability.value && !meanAvailability.value.available) {
         return meanAvailability.value.reason
       }
@@ -1349,7 +1366,9 @@ export default defineComponent({
           class="w-full flex ml-4"
           onChange={(value: any) => {
             state.currentView = value
-            buildChartData(pixelSpectrum.value?.ints, pixelSpectrum.value?.mzs)
+            if (value !== VIEWS.MEAN) {
+              buildChartData(pixelSpectrum.value?.ints, pixelSpectrum.value?.mzs)
+            }
           }}
           modelValue={state.currentView}
         >
@@ -1366,63 +1385,74 @@ export default defineComponent({
       const spectrum = meanSpectrum.value
 
       return (
-        <div class="dataset-browser-mean-controls flex flex-wrap items-center gap-4 px-4 pt-2">
-          <div class="flex flex-col">
-            <span class="text-xs">Region</span>
-            <ElSelect
-              class="select-box-mini"
-              modelValue={resolvedRegion.value}
-              onChange={(value: string) => {
-                state.meanSpectrumRegion = value
-              }}
-              placeholder="Select a region"
-              size="small"
-            >
-              {rois.value.map((roi: any) => (
-                <ElOption key={roi.id} label={roi.name} value={String(roi.id)} />
-              ))}
-              {/* Greyed out rather than hidden, so the size limit stays discoverable.
-                  The reason is spelled out below rather than in a tooltip, since a
-                  disabled option does not reliably receive hover events. */}
-              <ElOption
-                label={wholeAvailable ? 'Whole dataset' : 'Whole dataset (unavailable)'}
-                value={WHOLE_DATASET_REGION}
-                disabled={!wholeAvailable}
-              />
-            </ElSelect>
-            {!wholeAvailable && availability?.reason && (
-              <span class="text-xs text-gray-500 mt-1">{availability.reason}</span>
+        <div class="dataset-browser-mean-controls p-0 m-0 flex items-center justify-start h-[48px] w-full">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-2 w-full ml-6 mr-4">
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-600">Region</span>
+              <ElSelect
+                class="region-select"
+                modelValue={resolvedRegion.value}
+                onChange={(value: string) => {
+                  state.meanSpectrumRegion = value
+                }}
+                placeholder="Select a region"
+                size="small"
+              >
+                {rois.value.map((roi: any) => (
+                  <ElOption key={roi.id} label={roi.name} value={String(roi.id)} />
+                ))}
+                <ElOption
+                  label={wholeAvailable ? 'Whole dataset' : 'Whole dataset (unavailable)'}
+                  value={WHOLE_DATASET_REGION}
+                  disabled={!wholeAvailable}
+                />
+              </ElSelect>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-600">Aggregation</span>
+              <ElSelect
+                class="select-box-mini"
+                modelValue={state.meanSpectrumStat}
+                onChange={(value: string) => {
+                  state.meanSpectrumStat = value
+                }}
+                size="small"
+              >
+                <ElOption label="Mean" value="MEAN" />
+                <ElOption label="Sum" value="SUM" />
+              </ElSelect>
+            </div>
+            {spectrum && (
+              <div class="ml-auto flex items-center gap-1 text-xs text-gray-500">
+                {/* Computation parameter, not the ion-image tolerance the user controls */}
+                <ElTooltip
+                  popperClass="max-w-md"
+                  content={
+                    'Peaks from all pixels in the region are clustered onto a reference ' +
+                    `m/z axis at ${spectrum.clusteringPpm} ppm (${spectrum.instrument} ` +
+                    'peak-width scaling). This tolerance is independent of the ion image ppm.' +
+                    (spectrum.returnedPeaks < spectrum.totalPeaks
+                      ? ` Showing the ${spectrum.returnedPeaks.toLocaleString()} most intense` +
+                        ` of ${spectrum.totalPeaks.toLocaleString()} peaks.`
+                      : '')
+                  }
+                  placement="top"
+                >
+                  <ElIcon class="text-sm cursor-pointer">
+                    <InfoFilled />
+                  </ElIcon>
+                </ElTooltip>
+                <span>
+                  {`${spectrum.clusteringPpm} ppm clustering (${spectrum.instrument}), ` +
+                    `${spectrum.nPixels.toLocaleString()} pixels` +
+                    (spectrum.returnedPeaks < spectrum.totalPeaks
+                      ? ` · top ${spectrum.returnedPeaks.toLocaleString()}` +
+                        ` of ${spectrum.totalPeaks.toLocaleString()} peaks`
+                      : '')}
+                </span>
+              </div>
             )}
           </div>
-          <div class="flex flex-col">
-            <span class="text-xs">Aggregation</span>
-            <ElSelect
-              class="select-box-mini"
-              modelValue={state.meanSpectrumStat}
-              onChange={(value: string) => {
-                state.meanSpectrumStat = value
-              }}
-              size="small"
-            >
-              <ElOption label="Mean" value="MEAN" />
-              <ElOption label="Sum" value="SUM" />
-            </ElSelect>
-          </div>
-          {spectrum && (
-            <div class="text-xs text-gray-500 self-end pb-1">
-              {/* Computation parameter, not the ion-image tolerance the user controls */}
-              <div>
-                Peaks clustered at {spectrum.clusteringPpm} ppm ({spectrum.instrument} scaling),{' '}
-                {spectrum.nPixels.toLocaleString()} pixels
-              </div>
-              {spectrum.returnedPeaks < spectrum.totalPeaks && (
-                <div>
-                  Showing the {spectrum.returnedPeaks.toLocaleString()} most intense of{' '}
-                  {spectrum.totalPeaks.toLocaleString()} peaks
-                </div>
-              )}
-            </div>
-          )}
         </div>
       )
     }
@@ -1431,7 +1461,7 @@ export default defineComponent({
       const hasData = meanSpectrumData.value.length > 0
 
       return (
-        <div>
+        <div class="relative">
           {renderMeanSpectrumControls()}
           <DatasetBrowserMeanSpectrum
             isEmpty={!hasData}
@@ -1459,7 +1489,8 @@ export default defineComponent({
     const renderKmChart = (isEmpty: boolean) => {
       return (
         <DatasetBrowserKendrickPlot
-          style={{
+          customStyle={{
+            marginTop: '48px',
             visibility: state.currentView === VIEWS.KENDRICK ? '' : 'hidden',
             height: state.currentView === VIEWS.KENDRICK ? '' : 0,
           }}
@@ -1489,7 +1520,8 @@ export default defineComponent({
     const renderSpectrum = (isEmpty: boolean) => {
       return (
         <DatasetBrowserSpectrumChart
-          style={{
+          customStyle={{
+            marginTop: '48px',
             visibility: state.currentView === VIEWS.SPECTRUM ? '' : 'hidden',
             height: state.currentView === VIEWS.SPECTRUM ? '' : 0,
           }}
@@ -1529,7 +1561,6 @@ export default defineComponent({
               {renderDatasetFilters()}
               {renderBrowsingFilters()}
               {!state.noData && renderChartOptions()}
-              {/* The pixel-selection prompt is irrelevant to the region-based mean spectrum */}
               {isEmpty && !state.chartLoading && state.currentView !== VIEWS.MEAN && renderEmptySpectrum()}
               {state.currentView === VIEWS.KENDRICK && !state.noData && renderKmChart(isEmpty)}
               {state.currentView === VIEWS.SPECTRUM && !state.noData && renderSpectrum(isEmpty)}

@@ -334,7 +334,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       return { available: false, wholeDatasetAvailable: false, reason: 'Mean spectrum is unavailable' }
     }
   },
-  async meanSpectrum(source, { datasetId, roiId, stat }, ctx: Context) {
+  async meanSpectrum(source, { datasetId, roiId }, ctx: Context) {
     if (!await esDatasetByID(datasetId, ctx.user)) {
       return null
     }
@@ -365,16 +365,13 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     }
     const resp = content
 
-    // The engine returns summed intensities and is deliberately stat-agnostic, so its
-    // cache entry serves both toggle positions.
-    const nPixels = resp.n_pixels
-    const intensities = stat === 'SUM' ? resp.summed_ints : resp.summed_ints.map((v: number) => v / nPixels)
-
+    // Summed intensities are returned as-is; the client derives the mean by dividing
+    // by nPixels, so toggling mean/sum never re-fires this resolver.
     return {
       mzs: resp.mzs,
-      intensities,
+      summedIntensities: resp.summed_ints,
       support: resp.support,
-      nPixels,
+      nPixels: resp.n_pixels,
       totalPeaks: resp.total_peaks,
       returnedPeaks: resp.returned_peaks,
       clusteringPpm: resp.clustering_ppm,

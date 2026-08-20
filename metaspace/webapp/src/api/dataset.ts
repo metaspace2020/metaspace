@@ -258,12 +258,11 @@ export const meanSpectrumAvailabilityQuery = gql`
   }
 `
 
-// roiId omitted means the whole dataset.
 export const meanSpectrumQuery = gql`
-  query ($datasetId: String!, $roiId: ID, $stat: MeanSpectrumStat) {
-    meanSpectrum(datasetId: $datasetId, roiId: $roiId, stat: $stat) {
+  query ($datasetId: String!, $roiId: ID) {
+    meanSpectrum(datasetId: $datasetId, roiId: $roiId) {
       mzs
-      intensities
+      summedIntensities
       support
       nPixels
       totalPeaks

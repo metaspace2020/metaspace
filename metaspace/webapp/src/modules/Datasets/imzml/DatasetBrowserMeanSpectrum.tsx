@@ -204,7 +204,7 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
 
     const handleItemSelect = (item: any) => {
       if (item.targetType === 'axisName') {
-        state.scaleIntensity = !state.scaleIntensity
+        // state.scaleIntensity = !state.scaleIntensity
       } else {
         // The intensity-weighted centroid, not the most intense raw peak. Goes into the
         // existing manual m/z entry path, so the ion image uses the user's own ppm.
@@ -216,7 +216,7 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
       const { isLoading } = props
 
       return (
-        <div class="chart-holder">
+        <div class="chart-holder !mt-0">
           {isLoading && (
             <div class="loader-holder">
               <div>

@@ -346,7 +346,7 @@ jobs:
           command: |
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
             coverage run --source=./sm/engine --omit=./sm/engine/tests/*,./tests/* \
-            -m pytest --tb=short sm/engine/tests tests
+            -m pytest --tb=short sm/engine/tests sm/rest/tests tests
       - run:
           name: Upload test coverage
           command: |

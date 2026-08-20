@@ -11,6 +11,7 @@ import pytest
 
 from sm.engine.annotation.isocalc_wrapper import mass_accuracy_half_width
 from sm.rest.mean_spectrum_manager import (
+    _format_peak_count,
     build_reference_axis_strict,
     select_top_peaks,
 )
@@ -184,6 +185,21 @@ def test_select_top_peaks_returns_mz_sorted_subset():
     assert got_ints.tolist() == [5.0, 4.0, 3.0]
     assert got_support.tolist() == [5, 4, 3]
     assert np.all(np.diff(got_mzs) > 0)
+
+
+@pytest.mark.parametrize(
+    'n, expected',
+    [
+        (102_216_984, 'over 100 million'),
+        (30_000_000, '30 million'),
+        (10_000_000, '10 million'),
+        (8_432_100, 'over 8 million'),
+        (45_678_901, 'over 45 million'),
+        (999_999, '999,999'),
+    ],
+)
+def test_format_peak_count(n, expected):
+    assert _format_peak_count(n) == expected
 
 
 def test_select_top_peaks_passthrough_when_under_cap():
