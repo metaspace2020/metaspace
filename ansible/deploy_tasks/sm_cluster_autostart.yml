@@ -1,6 +1,0 @@
----
-
-- import_role:
-    name: sm_cluster_autostart_app
-
-- import_tasks: ../restart_supervisor.yml  supervisor_app=sm-cluster-autostart

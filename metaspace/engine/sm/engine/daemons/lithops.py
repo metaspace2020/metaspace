@@ -16,7 +16,7 @@ from sm.rest.dataset_manager import DatasetActionPriority
 class LithopsDaemon:
     logger = logging.getLogger('lithops-daemon')
 
-    def __init__(self, manager, lit_qdesc, annot_qdesc, upd_qdesc):
+    def __init__(self, manager, lit_qdesc, upd_qdesc):
         self._sm_config = SMConfig.get_conf()
         self._stopped = False
         self._manager = manager
@@ -31,9 +31,6 @@ class LithopsDaemon:
         )
         self._lithops_queue_pub = QueuePublisher(
             config=self._sm_config['rabbitmq'], qdesc=lit_qdesc, logger=self.logger
-        )
-        self._annot_queue_pub = QueuePublisher(
-            config=self._sm_config['rabbitmq'], qdesc=annot_qdesc, logger=self.logger
         )
         self._update_queue_pub = QueuePublisher(
             config=self._sm_config['rabbitmq'], qdesc=upd_qdesc, logger=self.logger
@@ -88,13 +85,10 @@ class LithopsDaemon:
                 f" [x] Annotation failed, retrying: {json.dumps(msg)}\n```{exc}```",
             )
         else:
-            self.logger.critical(f'Lithops annotation failed. Falling back to Spark\n{exc}')
-            self._annot_queue_pub.publish(msg)
-
-            self._manager.post_to_slack(
-                'bomb',
-                f" [x] Annotation failed, retrying on Spark: {json.dumps(msg)}\n```{exc}```",
-            )
+            self.logger.critical(f'Lithops annotation failed, marking dataset as failed\n{exc}')
+            if 'email' in msg:
+                self._manager.send_failed_email(msg)
+            self._manager.ds_failure_handler(msg, e)
 
         # Exit the process and let supervisor restart it, in case Lithops was left in
         # an unrecoverable state

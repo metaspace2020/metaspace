@@ -1,6 +1,0 @@
----
-
-- import_role:
-    name: sm_annotate_daemon
-
-- import_tasks: ../../restart_supervisor.yml supervisor_app=sm-annotate-daemon

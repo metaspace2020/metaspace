@@ -71,7 +71,7 @@ class Metrics:
 @dataclass()
 class FormulaImageItem:
     """Holds the images and theoretical mz/intensity for one peak from one dataset segment.
-    Needed for the Spark implementation's m/z-ordered iteration of images, as one image set may be
+    Needed for m/z-ordered iteration of images, as one image set may be
     spread across multiple dataset segments.
     """
 
@@ -92,8 +92,8 @@ class FormulaImageSet:
     formula_i: int
     is_target: bool
     targeted: bool
-    # NOTE: On the Spark codepath, centroids outside of the mass range of the dataset are unlikely
-    # to be included in theo_mzs/theo_ints
+    # NOTE: Centroids outside of the mass range of the dataset may not
+    # be included in theo_mzs/theo_ints
     theo_mzs: np.ndarray
     theo_ints: np.ndarray
     images: List[Optional[coo_matrix]]

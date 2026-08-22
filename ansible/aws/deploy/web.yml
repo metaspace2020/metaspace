@@ -25,9 +25,6 @@
     - role: sm_web_app
       tags: [sm-web-app]
 
-    - role: sm_cluster_autostart_app
-      tags: [sm-cluster-autostart]
-
     - role: sm_update_daemon
       tags: [sm-update-daemon]
 

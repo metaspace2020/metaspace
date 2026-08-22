@@ -294,7 +294,7 @@ class AWSInstManager:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SM AWS instances management tool')
     parser.add_argument('action', type=str, help='create|stop|clone')
-    parser.add_argument('--components', help='all,web,master,slave')
+    parser.add_argument('--components', help='all,web,elk')
     parser.add_argument('--key-name', type=str, help='AWS key name to use')
     parser.add_argument(
         '--stage', dest='stage', default='dev', type=str, help='One of dev/stage/prod'
@@ -327,7 +327,7 @@ if __name__ == '__main__':
     if args.components:
         components = args.components.strip(' ').split(',')
         if 'all' in components:
-            components = ['web', 'master', 'slave', 'elk']
+            components = ['web', 'elk']
     else:
         components = []
 

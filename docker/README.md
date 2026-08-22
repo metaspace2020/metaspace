@@ -41,7 +41,7 @@ file that is excluded from git:
 * Update `.env` with `COMPOSE_FILE=docker-compose.custom.yml`
 
 Webapp and graphql are set to auto-reload if code changes, but they'll need to be restarted
-if dependencies change. Api, update-daemon and annotate-daemon will need to be manually
+if dependencies change. Api, update-daemon and lithops-daemon will need to be manually
 restarted for code changes to take effect.
 
 ### Recommended bash aliases
@@ -50,7 +50,7 @@ Add these to your `~/.bashrc` or `~/.bash_profile`:
 
 ```
 alias dc="docker-compose"
-alias dclogs="dc logs -f --tail 0 api update-daemon annotate-daemon lithops-daemon graphql webapp"
+alias dclogs="dc logs -f --tail 0 api update-daemon lithops-daemon graphql webapp"
 dcr() {
     docker-compose kill "$@" ; docker-compose up -d --no-deps --no-recreate "$@"
 }
@@ -88,7 +88,7 @@ Development tools:
 
 Watching application logs:
 
-* `docker-compose logs --tail 5 -f api update-daemon annotate-daemon lithops-daemon graphql webapp`
+* `docker-compose logs --tail 5 -f api update-daemon lithops-daemon graphql webapp`
 
 Rebuilding the Elasticsearch index:
 

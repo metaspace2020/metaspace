@@ -13,7 +13,6 @@ from sm.engine.annotation.diagnostics import del_diagnostics
 from sm.engine.annotation.job import del_jobs
 from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
 from sm.engine.annotation_lithops.executor import Executor
-from sm.engine.annotation_spark.annotation_job import AnnotationJob
 from sm.engine.postprocessing.cloudwatch import get_costs, add_cost_to_perf_profile_entries
 from sm.engine.postprocessing.colocalization import Colocalization
 from sm.engine.daemons.actions import DaemonActionStage
@@ -21,7 +20,6 @@ from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.postprocessing.ion_thumbnail import (
-    generate_ion_thumbnail,
     generate_ion_thumbnail_lithops,
     delete_ion_thumbnail,
 )
@@ -111,23 +109,6 @@ class DatasetManager:  # pylint: disable=too-many-public-methods
 
     def classify_dataset_images(self, ds):
         classify_dataset_ion_images(self._db, ds, self._sm_config['services'])
-
-    def annotate(self, ds, del_first=False):
-        """Run an annotation job for the dataset. If del_first provided, delete first"""
-        if del_first:
-            self.logger.warning(f'Deleting all results for dataset: {ds.id}')
-            del_jobs(ds)
-        ds.save(self._db, self._es)
-        with perf_profile(self._db, 'annotate_spark', ds.id) as perf:
-            AnnotationJob(ds=ds, sm_config=self._sm_config, perf=perf).run()
-
-            if self._sm_config['services'].get('colocalization', True):
-                Colocalization(self._db).run_coloc_job(ds, reprocess=del_first)
-                perf.record_entry('ran colocalization')
-
-            if self._sm_config['services'].get('ion_thumbnail', True):
-                generate_ion_thumbnail(db=self._db, ds=ds, only_if_needed=not del_first)
-                perf.record_entry('generated ion thumbnail')
 
     def annotate_lithops(self, ds: Dataset, del_first=False, perform_enrichment=False):
         if del_first:

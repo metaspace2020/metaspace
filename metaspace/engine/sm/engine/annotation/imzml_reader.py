@@ -36,7 +36,7 @@ class ImzMLReader:  # pylint: disable=too-many-instance-attributes
     like
 
     The main purpose of this class is to consolidate functionality that's shared between
-    the Lithops and Spark implementations and migration scripts.
+    the Lithops implementation and migration scripts.
     """
 
     def __init__(self, imzml_parser: ImzMLParser):
@@ -211,7 +211,7 @@ class LithopsImzMLReader(ImzMLReader):
             raise Exception('Incomplete .ibd file')
 
     def iter_spectra(self, storage: Storage, sp_inds: Sequence[int]):
-        # pylint: disable=import-outside-toplevel # avoid pulling Lithops into Spark pipeline
+        # pylint: disable=import-outside-toplevel # defer Lithops import until needed
         from sm.engine.annotation_lithops.io import get_ranges_from_cobject
 
         mz_starts = np.array(self.imzml_reader.mzOffsets)[sp_inds]
