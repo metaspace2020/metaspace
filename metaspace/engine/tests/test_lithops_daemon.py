@@ -274,6 +274,67 @@ def test_lithops_daemon_es_export_fails(
     assert row[0] == DatasetStatus.FAILED
 
 
+OFF_SAMPLE_PRED = {'label': 'off', 'prob': 0.99}
+
+
+@patch('sm.engine.image_storage.get_image', return_value=b'fake-png-bytes')
+@patch('sm.engine.postprocessing.off_sample_wrapper.call_api')
+@patch.object(DatasetManager, 'annotate_lithops')
+def test_lithops_daemon_off_sample_wiring(
+    annotate_lithops_mock,
+    call_api_mock,
+    get_image_mock,
+    # fixtures
+    test_db,
+    reset_queues,
+    metadata,
+    ds_config,
+    queue_pub,
+    local_sm_config,
+    sm_index,
+):
+    """Port of the off-sample coverage from the old Spark test_sm_daemons: after a successful
+    annotation the lithops daemon publishes a CLASSIFY_OFF_SAMPLE message, and the update daemon
+    classifies the ion images (API call mocked) and stores predictions in annotation.off_sample."""
+    moldb = init_moldb()
+    db = DB()
+    es = ESExporter(db, local_sm_config)
+    manager = make_manager(db, es, local_sm_config)
+    annotate_lithops_mock.side_effect = make_fake_annotate_lithops(db, moldb)
+    call_api_mock.side_effect = lambda url='', batch_id=None, doc=None: {
+        'predictions': [OFF_SAMPLE_PRED] * len(doc['images'])
+    }
+
+    # local_sm_config is the shared SMConfig dict, so the daemons see this too; restore after
+    local_sm_config['services']['off_sample'] = 'http://off-sample-api'
+    try:
+        ds = create_test_ds(
+            name=test_ds_name,
+            config={**ds_config, 'database_ids': [moldb.id]},
+            status=DatasetStatus.QUEUED,
+            es=es,
+        )
+        queue_pub.publish(
+            {'ds_id': ds.id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE}
+        )
+
+        run_lithops_daemon(manager, wait_s=2.0)
+        # The update daemon has two messages to process: INDEX (high prio), then
+        # CLASSIFY_OFF_SAMPLE (low prio)
+        run_update_daemon(manager, local_sm_config, wait_s=4.0)
+
+        row = db.select_one('SELECT status FROM dataset WHERE id = %s', params=(ds.id,))
+        assert row[0] == DatasetStatus.FINISHED
+
+        # All 3 annotations share one ion image -> one API call with 3 images
+        call_api_mock.assert_called_once()
+        rows = db.select('SELECT off_sample FROM annotation')
+        assert len(rows) == 3
+        assert all(row[0] == OFF_SAMPLE_PRED for row in rows)
+    finally:
+        local_sm_config['services']['off_sample'] = False
+
+
 @patch('sm.engine.daemons.lithops.os.kill')  # daemon suicides for supervisor restart; disarm it
 @patch.object(DatasetManager, 'annotate_lithops', side_effect=Exception('Test exception'))
 def test_lithops_daemon_failure_marks_ds_failed(
