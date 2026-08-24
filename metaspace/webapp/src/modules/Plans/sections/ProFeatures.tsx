@@ -16,11 +16,12 @@ const FEATURES: FeatureRow[] = [
     question: '“Which metabolites actually differ?”',
     title: 'Differential analysis by region',
     body:
-      'Draw a region of interest on the tissue. Get the metabolites that differ between regions, with corrected ' +
-      'p-values and effect sizes you can drop straight into a figure.',
-    instead: 'exporting masks, running ad-hoc t-tests, and hoping nobody asks about multiple testing.',
+      'Draw a region of interest on the tissue. Get the metabolites that differ between regions, ranked by log2 ' +
+      'fold change and AUC — how strongly each ion discriminates that region from everywhere else — ready to drop ' +
+      'straight into a figure.',
+    instead: 'exporting masks and scripting the comparison yourself.',
     chart: 'volcano',
-    caption: 'Volcano plot + linked ion image · real annotations',
+    caption: 'Every annotated ion, by intensity change and how well it discriminates the region',
   },
   {
     question: '“Where are the compartments?”',
@@ -36,9 +37,9 @@ const FEATURES: FeatureRow[] = [
     question: '“Does it hold across experiments?”',
     title: 'Cross-dataset statistics',
     body:
-      'Compare forty datasets across conditions, timepoints and batches in a single test, with experiments ' +
-      'modelled rather than ignored.',
-    instead: 'the comparison you keep postponing because the bookkeeping is worse than the science.',
+      'Compare datasets across conditions, timepoints and batches in a single test, with your experimental ' +
+      'design built into the statistics.',
+    instead: 'wrangling annotations and metadata across datasets yourself, every time.',
     chart: 'heatmap',
     caption: 'Cross-dataset comparison that fits your experimental design',
   },
@@ -111,11 +112,12 @@ export default defineComponent({
               Your annotations are done. Now what?
             </h2>
             <p class="pro-lede">
-              You have forty datasets, twelve thousand annotations and a hypothesis. Today that means a CSV export,
-              three weeks of scripting, and a pipeline nobody else in the lab can rerun.
+              As your datasets and annotations grow, so does the work of turning them into answers — normally that
+              means stepping outside the platform, exporting results, and stitching together scripts by hand.
             </p>
             <p style={{ margin: '20px 0 0', color: '#55636E', maxWidth: '66ch', fontSize: '18px' }}>
-              METASPACE Pro closes that gap inside the browser, on the annotations you already trust.
+              METASPACE Pro brings that analysis into the browser, directly on the annotations you already trust —
+              interactive, and built for anyone working with the data, not just people who script.
             </p>
           </div>
         </section>
@@ -146,7 +148,7 @@ export default defineComponent({
               ])}
             </div>
 
-            <p class="pro-tools-caption">Three questions your annotations can now answer</p>
+            <p class="pro-tools-caption">Questions your annotations can now answer</p>
 
             {FEATURES.map((feature, index) => (
               <div class={`pro-feature ${index === 1 ? 'pro-feature--flip' : ''}`} key={feature.chart}>
@@ -167,8 +169,8 @@ export default defineComponent({
             ))}
 
             <p style={{ margin: '0 0 0', fontSize: '15px', color: '#55636E', fontWeight: 'bold' }}>
-              * All three features enabled for on your three free private datasets a year, so you can judge them on your
-              own data before you spend anything.
+              * Every analysis tool — including new ones as they ship — is enabled on your three free private
+              datasets a year, so you can judge them on your own data before you spend anything.
             </p>
           </div>
         </section>

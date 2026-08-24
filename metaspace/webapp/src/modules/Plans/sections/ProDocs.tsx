@@ -19,7 +19,7 @@ const DOC_CARDS: DocCard[] = [
   {
     kicker: 'Guide',
     title: 'Differential analysis by region',
-    body: 'Drawing regions, choosing a correction, and reading p-values and effect sizes.',
+    body: 'Drawing regions and reading how strongly each ion differs between them.',
     href: '/docs/features/spatial-pattern-analysis/roi-differential-analysis.html',
   },
   {
@@ -31,7 +31,7 @@ const DOC_CARDS: DocCard[] = [
   {
     kicker: 'Guide',
     title: 'Cross-dataset statistics',
-    body: 'Grouping datasets by condition.',
+    body: 'Comparing datasets across your experimental design, without the manual bookkeeping.',
     href: '/help',
   },
 ]

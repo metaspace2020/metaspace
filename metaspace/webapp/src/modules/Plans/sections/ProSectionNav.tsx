@@ -6,7 +6,7 @@ const LINKS = [
   { label: 'Privacy', hash: '#privacy' },
   { label: 'Docs', hash: '#docs' },
   { label: 'Plans', hash: '#plans' },
-  { label: 'Procurement', hash: '#procurement' },
+  { label: 'Institutions', hash: '#procurement' },
   { label: 'FAQ', hash: '#faq' },
 ]
 

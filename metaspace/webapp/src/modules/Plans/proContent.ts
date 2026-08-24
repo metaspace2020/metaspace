@@ -81,7 +81,7 @@ export const TIER_SPECS: Record<ProTier, TierSpec> = {
     bullets: [
       [{ text: '3 private datasets a year' }],
       [{ text: '6 reprocessings' }],
-      [{ text: 'all three analysis tools ' }, { text: 'on those datasets', style: 'em' }],
+      [{ text: 'all analysis tools ' }, { text: 'on those datasets', style: 'em' }],
       [{ text: 'email support in 3 working days' }],
     ],
     datasets: '3',

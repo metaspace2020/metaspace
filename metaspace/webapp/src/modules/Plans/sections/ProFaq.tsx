@@ -17,10 +17,9 @@ const FAQS: FaqEntry[] = [
   {
     question: 'Do I have to pay to try the analysis tools?',
     answer: [
-      'No. Differential analysis, spatial segmentation and cross-dataset statistics all run on the free tier, on ' +
-        "your three free private datasets a year. Paid plans raise that ceiling — they don't unlock the features. " +
-        "Three datasets is enough to judge the tools on your own dataset; it isn't enough for a real cross-dataset " +
-        'study.',
+      "No. All analysis tools run on the free tier, on your three free private datasets a year. Paid plans raise " +
+        "that ceiling — they don't unlock the features. Three datasets is enough to judge the tools on your own " +
+        "dataset; it isn't enough for a real cross-dataset study.",
     ],
   },
   {
@@ -114,8 +113,8 @@ export default defineComponent({
             <div class="pro-cta">
               <h2 class="pro-h2">Try it on your own data today</h2>
               <p class="pro-cta__lede">
-                Three private datasets a year are included with every METASPACE account. Run a differential analysis
-                before you decide anything.
+                Three private datasets a year are included with every METASPACE account. Try the analysis tools on
+                your own data before you decide anything.
               </p>
               <div class="pro-cta__actions">
                 <a href="/upload" target="_blank" rel="noopener noreferrer" class="pro-btn pro-btn--accent">

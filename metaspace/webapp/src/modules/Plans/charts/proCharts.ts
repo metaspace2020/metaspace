@@ -34,7 +34,7 @@ export const drawVolcano = (svg: SVGSVGElement): void => {
   }
 
   svg.appendChild(svgText(270, 274, 'log₂ fold change', { 'text-anchor': 'middle', 'font-size': 10 }))
-  svg.appendChild(svgText(22, 140, '−log₁₀ q', { 'font-size': 10, transform: 'rotate(-90 22 140)' }))
+  svg.appendChild(svgText(22, 140, 'AUC', { 'font-size': 10, transform: 'rotate(-90 22 140)' }))
 }
 
 /** Spatial segmentation: four compartments assigned by nearest seeded centroid. */

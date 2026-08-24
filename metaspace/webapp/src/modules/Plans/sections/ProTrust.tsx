@@ -31,13 +31,13 @@ export default defineComponent({
           style={{ display: 'flex', flexWrap: 'wrap', gap: 'clamp(36px, 5vw, 56px)', alignItems: 'flex-start' }}
         >
           <div style={{ flex: '1 1 420px' }}>
-            <p class="pro-eyebrow">Procurement</p>
+            <p class="pro-eyebrow">For institutions</p>
             <h2 class="pro-h2" style={{ maxWidth: '18ch' }}>
-              Built for how institutions actually buy
+              Set up for how institutions already pay
             </h2>
             <p style={{ margin: 0, color: '#55636E', maxWidth: '60ch' }}>
-              Nobody expects a group leader to put $2,999 on a personal card. Everything below is standard, and none of
-              it needs a sales call.
+              No subscription needs to go on a personal card. Every paid plan works with how institutions actually
+              pay — purchase orders, invoices, and budgets that plan more than a year out.
             </p>
             <ul class="pro-checklist">
               {PROCUREMENT_LINES.filter((line) => !line.detail || PRO_FLAGS.procurementDetail).map((line, index) => (
@@ -66,7 +66,7 @@ export default defineComponent({
           </div>
 
           <div class="pro-quote-box">
-            <div class="pro-quote-box__head">Paste into a grant budget justification</div>
+            <div class="pro-quote-box__head">Ready to paste into a budget request</div>
             <div class="pro-quote-box__body">
               <p style={{ margin: 0 }}>
                 METASPACE Pro subscription (Advanced tier) — cloud-based spatial metabolomics annotation and statistical
