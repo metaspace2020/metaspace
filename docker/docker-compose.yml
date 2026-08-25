@@ -148,35 +148,6 @@ services:
       - postgres
       - elasticsearch
 
-  annotate-daemon:
-    build:
-      context: ..
-      dockerfile: docker/sm-engine/Dockerfile
-    command: /sm-engine/start-annotate-daemon.sh
-    volumes:
-      - "/etc/timezone:/etc/timezone:ro"
-      - "/etc/localtime:/etc/localtime:ro"
-      - "${DEV_ROOT}:/opt/dev/metaspace:z"
-      - "${DATA_ROOT}:/opt/data/metaspace:z"
-      - "./sm-engine:/sm-engine:ro"
-    user: "$SM_USER"
-    environment:
-      SPARK_WORKER_CORES: 4
-    # deploy:
-    #   resources:
-    #     limits:
-    #       memory: 16gb
-    ports:
-      - "4040:4040"
-    networks:
-      - sm
-    depends_on:
-      - rabbitmq
-      - postgres
-      - elasticsearch
-    # extra_hosts: # Uncomment if graphql is run outside of Docker
-    #  - "graphql:172.17.0.1"
-
   graphql:
     build:
       context: ./sm-graphql

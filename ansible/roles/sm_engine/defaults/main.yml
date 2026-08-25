@@ -1,3 +1,4 @@
+sm_user: ubuntu
 sm_home: "{{ metaspace_home }}/metaspace/engine"
 sm_miniconda_prefix: /opt/dev/miniconda3
 sm_miniconda_env_name: sm

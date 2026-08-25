@@ -364,8 +364,8 @@ jobs:
          command: black --check .
 
   test-engine-sci:
-    # parallelism: 4  # Uncomment to run all combinations of --analysis-version & --lithops
-    resource_class: large  # Needed when using --lithops. Optional but faster with Spark
+    # parallelism: 2  # Uncomment to run all --analysis-version variants
+    resource_class: large  # Needed for Lithops
     docker:
       - image: metaspace2020/sm-engine:2.0.0
 
@@ -417,9 +417,7 @@ jobs:
             # $CIRCLE_NODE_INDEX is 0-based, so the "first" run (or default if
             # not using parallelism) is 0, matching the *) case
             case $CIRCLE_NODE_INDEX in
-              1) PARAMS="--analysis-version=3 --lithops" ;;
-              2) PARAMS="--analysis-version=1" ;;
-              3) PARAMS="--analysis-version=1 --lithops" ;;
+              1) PARAMS="--analysis-version=1" ;;
               *) PARAMS="--analysis-version=3" ;;
             esac
             echo $PARAMS

@@ -65,7 +65,6 @@ sm_es_password: "{{ vault_sm_es_password }}"
 sm_send_email: true
 sm_create_schema: true  # set to false to avoid database dropping during provisioning
 sm_create_es_index: true  # set to false to avoid Elasticsearch index dropping during provisioning
-sm_isotope_storage_path: "{{ vault_sm_isotope_storage_path }}"  # cache path for generated centroids
 sm_default_adducts:
   "+": ["+H", "+Na", "+K"]
   "-": ["-H", "+Cl"]
@@ -77,12 +76,8 @@ off_sample_api_endpoint: OFF_SAMPLE_API_ENDPOINT
 sm_image_segmentation_endpoint: IMAGE_SEGMENTATION_ENDPOINT
 
 sm_ansible_home: "{{ metaspace_home }}/ansible"
-sm_cluster_autostart_ansible_version: 2.8.6
-sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
-sm_cluster_autostart_redis:
-  host: "{{ web_redis.host }}"
-  port: "{{ web_redis.port }}"
-
+sm_user: ubuntu  # system user that owns the METASPACE installation
+sm_aws_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 # Configuration for AWS Cloud / Lithops.
 # See metaspace/engine/docs/Lithops.md for instructions on setting up an IBM Cloud environment.
 # TODO: Update documentation
@@ -243,23 +238,8 @@ sm_webapp_features:
 sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 sm_activate_nvm: source {{ ansible_env.HOME }}/.nvm/nvm.sh && nvm use
 
-spark_key_file: ~/.ssh/ubuntu_spark
-spark_version: "3.0.1-bin-hadoop2.7"
-spark_mirror: https://archive.apache.org/dist/spark/spark-3.0.1/
-spark_home: /usr/lib/spark
-spark_user: ubuntu
 
 elk_enable: false  # set "true" to enable logs aggregation in ELK
-
-spark_env_extras_slave:
-  SPARK_WORKER_DIR: /tmp/spark
-  SPARK_LOCAL_DIRS: /tmp/spark
-  PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
-
-spark_env_extras_master:
-  AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
-  AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
-  PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
 slack_channel: "{{ vault_slack_channel }}"
 slack_webhook_url: "{{ vault_slack_webhook_url }}"
@@ -495,37 +475,6 @@ cluster_configuration:
             DeleteOnTermination: True
             VolumeType: gp2
 
-    master:
-      hostgroup: MASTER_HOSTGROUP  # specify a custom name for the group of hosts
-      type: c4.4xlarge
-      n: 1
-      elipalloc:
-      price:  1.0
-      sec_group: default
-      image: ami-07174474  # public ubuntu 16.04, create custom AMI and put its id here
-
-      block_dev_maps:
-        - DeviceName: /dev/sda1
-          Ebs:
-            VolumeSize: 500
-            DeleteOnTermination: True
-            VolumeType: gp2
-
-    slave:
-      hostgroup: SLAVE_HOSTGROUP  # specify a custom name for the group of hosts
-      type: c4.4xlarge
-      n: 1
-      elipalloc:
-      price: 1.0
-      sec_group: default
-      image: ami-07174474  # public ubuntu 16.04, create custom AMI and put its id here
-
-      block_dev_maps:
-        - DeviceName: /dev/sda1
-          Ebs:
-            VolumeSize: 500
-            DeleteOnTermination: True
-            VolumeType: gp2
 # uncomment below if you want to use Elasticsearch for logs aggregation
     elk:
       hostgroup: elk

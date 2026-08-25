@@ -10,11 +10,8 @@ from sm.rest.dataset_manager import DatasetActionPriority, DatasetStatus
 from tests.utils import create_test_ds
 
 
-def create_api_ds_man(
-    es=None, annot_queue=None, update_queue=None, lit_queue=None, status_queue=None
-):
+def create_api_ds_man(es=None, update_queue=None, lit_queue=None, status_queue=None):
     es_mock = es or MagicMock(spec=ESExporter)
-    annot_queue_mock = annot_queue or MagicMock(QueuePublisher)
     update_queue_mock = update_queue or MagicMock(QueuePublisher)
     lit_queue_mock = lit_queue or MagicMock(QueuePublisher)
     status_queue_mock = status_queue or MagicMock(QueuePublisher)
@@ -22,7 +19,6 @@ def create_api_ds_man(
     return SMapiDatasetManager(
         db=DB(),
         es=es_mock,
-        annot_queue=annot_queue_mock,
         update_queue=update_queue_mock,
         lit_queue=lit_queue_mock,
         status_queue=status_queue_mock,
@@ -68,12 +64,12 @@ def create_ds_doc(
 class TestSMapiDatasetManager:
     def test_add_new_ds(self, fill_db, ds_config):
         action_queue_mock = MagicMock(spec=QueuePublisher)
-        ds_man = create_api_ds_man(annot_queue=action_queue_mock)
+        ds_man = create_api_ds_man(lit_queue=action_queue_mock)
 
         ds_id = '2000-01-01'
         ds_doc = create_ds_doc(ds_id=ds_id)
 
-        ds_man.add(ds_doc, use_lithops=False, priority=DatasetActionPriority.HIGH)
+        ds_man.add(ds_doc, priority=DatasetActionPriority.HIGH)
 
         msg = {
             'ds_id': ds_id,

@@ -304,7 +304,7 @@ def weighted_stddev(values, weights):
     # results even with 64-bit precision. np.longdouble (80-bit precision on x86 platforms)
     # significantly reduces the order-dependent error, but beware that results may still differ
     # depending on how the input values are ordered.
-    # The Spark and Lithops pipelines often collect pixels into a coo_matrix in a different order.
+    # The Lithops pipeline may collect pixels into a coo_matrix in a different order.
     values = values.astype(np.longdouble)
     weights = weights.astype(np.longdouble)
 

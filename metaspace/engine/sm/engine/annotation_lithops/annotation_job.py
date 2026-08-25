@@ -21,7 +21,7 @@ from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
 from sm.engine.annotation_lithops.pipeline import Pipeline
 from sm.engine.annotation_lithops.utils import jsonhash
-from sm.engine.annotation_spark.search_results import SearchResults
+from sm.engine.annotation.search_results import SearchResults
 from sm.engine.config import SMConfig
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
