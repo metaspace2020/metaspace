@@ -93,26 +93,37 @@ def _upload_if_needed(
             return cobject
 
 
-def _return_imzml_ibd_cobj(src_path, storage, s3_client=None):
+def _return_imzml_ibd_cobj(src_path, storage, sm_storage, s3_client=None):
     """
     Return CloudObject for imzML/ibd files.
-    Check that there is only one imzML/ibd file in the directory in the AWS S3.
+    Check that there is only one imzML/ibd file in the directory.
+    s3a:// paths are referenced in place (Lithops shares the S3 backend in production);
+    local directory paths (dev & sci tests) are uploaded to the Lithops storage backend.
     """
-    bucket, prefix = split_s3_path(src_path)
-    response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
-    if 'Contents' in response:
-        keys = [f"s3a://{bucket}/{item['Key']}" for item in response['Contents']]
+    is_s3_path = str(src_path).startswith('s3a://')
+    if is_s3_path:
+        bucket, prefix = split_s3_path(src_path)
+        response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+        if 'Contents' in response:
+            keys = [f"s3a://{bucket}/{item['Key']}" for item in response['Contents']]
+        else:
+            keys = []
     else:
-        keys = []
+        keys = [str(p) for p in Path(src_path).iterdir()]
 
     imzml_keys = [key for key in keys if key.lower().endswith('.imzml')]
     ibd_keys = [key for key in keys if key.lower().endswith('.ibd')]
     assert len(imzml_keys) == 1, imzml_keys
     assert len(ibd_keys) == 1, ibd_keys
-    _, imzml_key = split_s3_path(imzml_keys[0])
-    _, ibd_key = split_s3_path(ibd_keys[0])
-    imzml_cobj = CloudObject(storage.backend, bucket, imzml_key)
-    ibd_cobj = CloudObject(storage.backend, bucket, ibd_key)
+
+    if is_s3_path:
+        _, imzml_key = split_s3_path(imzml_keys[0])
+        _, ibd_key = split_s3_path(ibd_keys[0])
+        imzml_cobj = CloudObject(storage.backend, bucket, imzml_key)
+        ibd_cobj = CloudObject(storage.backend, bucket, ibd_key)
+    else:
+        imzml_cobj = _upload_if_needed(imzml_keys[0], storage, sm_storage, 'imzml', s3_client)
+        ibd_cobj = _upload_if_needed(ibd_keys[0], storage, sm_storage, 'imzml', s3_client)
 
     return imzml_cobj, ibd_cobj
 
@@ -284,7 +295,7 @@ class ServerAnnotationJob:
         self.db = DB()
         self.es = ESExporter(self.db, sm_config)
         self.imzml_cobj, self.ibd_cobj = _return_imzml_ibd_cobj(
-            self.ds.input_path, self.storage, self.s3_client
+            self.ds.input_path, self.storage, self.sm_storage, self.s3_client
         )
         self.moldb_defs = _upload_moldbs_from_db(
             self.ds.config['database_ids'], self.storage, self.sm_storage
