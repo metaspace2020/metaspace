@@ -18,7 +18,7 @@ from sm.engine.annotation.diagnostics import (
 from sm.engine.annotation.enrichment import add_enrichment, delete_ds_enrichments
 from sm.engine.annotation.job import del_jobs, insert_running_job, update_finished_job, JobStatus
 from sm.engine.annotation_lithops.executor import Executor
-from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
+from sm.engine.annotation_lithops.io import save_cobj, load_cobj, iter_cobjs_with_prefetch
 from sm.engine.annotation_lithops.pipeline import Pipeline
 from sm.engine.annotation_lithops.utils import jsonhash
 from sm.engine.annotation.search_results import SearchResults
@@ -32,7 +32,6 @@ from sm.engine.storage import get_s3_client
 from sm.engine.util import split_s3_path, split_cos_path
 from sm.engine.utils.db_mutex import DBMutex
 from sm.engine.utils.perf_profile import Profiler
-
 
 logger = logging.getLogger('engine')
 
@@ -139,11 +138,32 @@ def _upload_moldbs_from_db(moldb_ids, storage, sm_storage):
             continue
 
         key = f'{prefix}/{moldb_id}'
+        cobject = None
         try:
             storage.head_object(bucket, key)
-            logger.debug(f'Found mol db at {key}')
-            cobject = CloudObject(storage.backend, bucket, key)
         except StorageNoSuchKeyError:
+            pass
+        else:
+            candidate = CloudObject(storage.backend, bucket, key)
+            try:
+                # Validate the existing blob actually deserializes before trusting it. Moldb
+                # formula lists are small, so a full load_cobj is cheap here, and (unlike a
+                # header-only check) it catches truncated/corrupt bodies too, not just legacy
+                # magic bytes.
+                load_cobj(storage, candidate)
+            except Exception:
+                # Covers legacy cache entries written by the removed pa.serialize (now raising
+                # pickle.UnpicklingError/EOFError/etc. instead of decoding), or any other corrupt
+                # payload. Treat it the same as a cache miss instead of crashing the whole run.
+                logger.warning(
+                    f'Legacy or corrupt moldb cache blob at {bucket}/{key} — regenerating.',
+                    exc_info=True,
+                )
+            else:
+                logger.debug(f'Found mol db at {key}')
+                cobject = candidate
+
+        if cobject is None:
             logger.info(f'Uploading {key}...')
             mols_query = DB().select(
                 'SELECT DISTINCT formula FROM molecule WHERE moldb_id = %s', (moldb_id,)

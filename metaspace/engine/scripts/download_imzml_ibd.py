@@ -35,7 +35,10 @@ def get_datasets_from_db(sql_where: str) -> Dict[str, Dict[str, str]]:
     db = DB()
     datasets = {
         input_path: id
-        for (id, input_path,) in db.select(
+        for (
+            id,
+            input_path,
+        ) in db.select(
             f'SELECT DISTINCT ON (input_path) id, input_path FROM dataset WHERE {sql_where}'
         )
     }

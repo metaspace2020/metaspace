@@ -1,5 +1,5 @@
 import * as config from 'config'
-import { IConfig } from 'config'
+import { Config as NodeConfig } from 'config'
 import { Algorithm } from 'jsonwebtoken'
 import { Config as AWSConfig, S3 } from 'aws-sdk/index.d'
 
@@ -121,6 +121,6 @@ export interface Config {
   };
 }
 
-const _config = config as any as (Config & IConfig)
+const _config = config as any as (Config & NodeConfig)
 
 export default _config

@@ -11,5 +11,5 @@ def format_size(bytes_val, precision=2):
     bytes_val = max(bytes_val, 0)
     power = min((len(units) - 1), (bytes_val.bit_length() - 1) // 10)
     # Divide bytes by 1024 to the power of the unit index
-    converted = bytes_val / (1024 ** power)
+    converted = bytes_val / (1024**power)
     return f"{converted:.{precision}f} {units[power]}"

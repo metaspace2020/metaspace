@@ -8,7 +8,7 @@ Since most datasets are either animal or plant based datasets, we have developed
 
 These can be installed with the following commands (assuming engine is already set up):
 ```bash
-source activate sm38
+source activate sm314
 cd ../engine
 # Usage: python -m scripts.import_scoring_model <name> <version> <model type> <model path> <S3 bucket to upload to>
 python -m scripts.import_scoring_model "Animal" "v2.2023-12-14" "catboost" --model="../scoring-models/models_default/v2.2023-12-14_(METASPACE-ML_Animal).cbm" --bucket="sm-engine-dev"

@@ -32,7 +32,7 @@ def _hill_system_sort(ion_elements):
 
 
 def _chnops_sort(ion_elements):
-    """ Reorder elements to be consistently ordered per the method in pyMSpec """
+    """Reorder elements to be consistently ordered per the method in pyMSpec"""
     return [
         *'CHNOPS',
         *sorted(key for key in ion_elements.keys() if len(key) > 1 or key not in 'CHNOPS'),

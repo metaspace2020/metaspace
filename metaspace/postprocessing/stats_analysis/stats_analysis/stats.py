@@ -4,6 +4,7 @@ No I/O; deterministic given inputs. Statistical functions are tested
 against scipy reference values; helpers are tested against hand-built
 fixtures.
 """
+
 # pylint: disable=invalid-name  # short stats notation (p, t, b, cv) is conventional
 from __future__ import annotations
 

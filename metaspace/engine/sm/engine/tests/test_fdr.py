@@ -4,7 +4,7 @@ import pytest
 
 import numpy as np
 import pandas as pd
-from pandas.util.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal
 
 from sm.engine.annotation.fdr import FDR, run_fdr_ranking
 from sm.engine.formula_parser import format_modifiers

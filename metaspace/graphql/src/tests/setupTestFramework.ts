@@ -12,9 +12,7 @@ jest.mock('aws-sdk')
 jest.mock('@elastic/elasticsearch', () => {
   return {
     Client: jest.fn(() => ({
-      index: jest.fn().mockResolvedValue({
-        body: { result: 'created' },
-      }),
+      index: jest.fn().mockResolvedValue({ result: 'created' }),
     })),
   }
 })

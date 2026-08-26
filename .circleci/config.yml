@@ -5,9 +5,9 @@ jobs:
 
   test-graphql:
     docker:
-      - image: metaspace2020/sm-webapp:0.13
+      - image: metaspace2020/sm-webapp:0.14
 
-      - image: postgres:16.3-alpine
+      - image: postgres:18-alpine
         environment:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
@@ -58,9 +58,9 @@ jobs:
 
   generate-graphql-schema:
     docker:
-      - image: metaspace2020/sm-webapp:0.13
+      - image: metaspace2020/sm-webapp:0.14
 
-      - image: postgres:16.3-alpine
+      - image: postgres:18-alpine
         environment:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
@@ -110,7 +110,7 @@ jobs:
 
   test-webapp:
     docker:
-      - image: metaspace2020/sm-webapp:0.13
+      - image: metaspace2020/sm-webapp:0.14
 
     working_directory: ~/metaspace/metaspace/webapp
     steps:
@@ -169,22 +169,22 @@ jobs:
 
   test-webapp-e2e:
     docker:
-      - image: metaspace2020/sm-webapp:0.13
+      - image: metaspace2020/sm-webapp:0.14
 
-      - image: postgres:16.3-alpine
+      - image: postgres:18-alpine
         environment:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
 
-      - image: elasticsearch:8.15.1
+      - image: elasticsearch:9.5.2
         environment:
           ES_JAVA_OPTS: "-Xms512m -Xmx512m"
           xpack.security.enabled: "false"
         command: [elasticsearch, -Etransport.host=127.0.0.1]
 
-      - image: redis:7.4.0-alpine
+      - image: redis:8-alpine
 
-      - image: rabbitmq:3.13.7-management
+      - image: rabbitmq:4.3-management
         environment:
           RABBITMQ_DEFAULT_USER: sm
           RABBITMQ_DEFAULT_PASS: password
@@ -201,7 +201,6 @@ jobs:
           name: Install npm packages
           command: |
             yarn install
-            npm rebuild node-sass  # https://github.com/sass/node-sass/issues/1804
             cd ../graphql
             yarn install
       - save_cache:
@@ -237,7 +236,7 @@ jobs:
 
   test-pycode-format:
     docker:
-      - image: metaspace2020/sm-engine:2.0.0
+      - image: metaspace2020/sm-engine:3.0.0
     working_directory: ~/metaspace
     steps:
       - checkout:
@@ -260,7 +259,7 @@ jobs:
 
   test-postprocessing:
     docker:
-      - image: metaspace2020/sm-engine:2.0.0
+      - image: metaspace2020/sm-engine:3.0.0
     working_directory: ~/metaspace/metaspace/postprocessing
     steps:
       - checkout:
@@ -300,27 +299,27 @@ jobs:
 
   test-engine:
     docker:
-      - image: metaspace2020/sm-engine:2.0.0
+      - image: metaspace2020/sm-engine:3.0.0
 
-      - image: redis:7.4.0-alpine
+      - image: redis:8-alpine
 
-      - image: postgres:16.3-alpine
+      - image: postgres:18-alpine
         environment:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
 
-      - image: elasticsearch:8.15.1
+      - image: elasticsearch:9.5.2
         environment:
           ES_JAVA_OPTS: "-Xms512m -Xmx512m"
           xpack.security.enabled: "false"
         command: [elasticsearch, -Etransport.host=127.0.0.1]
 
-      - image: rabbitmq:3.13.7-management
+      - image: rabbitmq:4.3-management
         environment:
           RABBITMQ_DEFAULT_USER: sm
           RABBITMQ_DEFAULT_PASS: password
 
-      - image: minio/minio:RELEASE.2024-06-29T01-20-47Z
+      - image: minio/minio:RELEASE.2025-09-07T16-13-09Z
         entrypoint: sh
         command: -c 'mkdir -p /data/sm-engine-upload && mkdir -p /data/sm-imzml-browser-test && mkdir -p /data/sm-lithops-test && /usr/bin/minio server /data --console-address ":9001"'
 
@@ -367,27 +366,27 @@ jobs:
     # parallelism: 2  # Uncomment to run all --analysis-version variants
     resource_class: large  # Needed for Lithops
     docker:
-      - image: metaspace2020/sm-engine:2.0.0
+      - image: metaspace2020/sm-engine:3.0.0
 
-      - image: redis:7.4.0-alpine
+      - image: redis:8-alpine
 
-      - image: postgres:16.3-alpine
+      - image: postgres:18-alpine
         environment:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
 
-      - image: elasticsearch:8.15.1
+      - image: elasticsearch:9.5.2
         environment:
           ES_JAVA_OPTS: "-Xms512m -Xmx512m"
           xpack.security.enabled: "false"
         command: [elasticsearch, -Etransport.host=127.0.0.1]
 
-      - image: rabbitmq:3.13.7-management
+      - image: rabbitmq:4.3-management
         environment:
           RABBITMQ_DEFAULT_USER: sm
           RABBITMQ_DEFAULT_PASS: password
 
-      - image: minio/minio:RELEASE.2024-06-29T01-20-47Z
+      - image: minio/minio:RELEASE.2025-09-07T16-13-09Z
         entrypoint: sh
         command: -c 'mkdir -p /data/sm-image-storage-sci-test && /usr/bin/minio server /data --console-address ":9001"'
 

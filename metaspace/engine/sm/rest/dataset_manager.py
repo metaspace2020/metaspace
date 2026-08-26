@@ -17,7 +17,7 @@ from sm.engine.utils.files_util import format_size
 
 
 class DatasetActionPriority:
-    """ Priorities used for messages sent to queue """
+    """Priorities used for messages sent to queue"""
 
     LOW = 0
     STANDARD = 1
@@ -99,13 +99,13 @@ class SMapiDatasetManager:
         return doc['id']
 
     def delete(self, ds_id, **kwargs):
-        """ Send delete message to the queue """
+        """Send delete message to the queue"""
         ds = Dataset.load(self._db, ds_id)
         self._set_ds_busy(ds, kwargs.get('force', False))
         self._post_sm_msg(ds=ds, queue=self._update_queue, action=DaemonAction.DELETE, **kwargs)
 
     def update(self, ds_id, doc, async_es_update, **kwargs):
-        """ Save dataset and send update message to the queue """
+        """Save dataset and send update message to the queue"""
         ds = Dataset.load(self._db, ds_id)
         ds.name = doc.get('name', ds.name)
         ds.input_path = doc.get('input_path', ds.input_path)

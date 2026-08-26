@@ -18,7 +18,7 @@ def save_size_hash(
 ) -> None:
     """Calculate md5 hash of imzML/ibd files and store this with file size."""
 
-    def calc_hash(file_object: CloudObject, chunk_size: int = 8 * 1024 ** 2) -> str:
+    def calc_hash(file_object: CloudObject, chunk_size: int = 8 * 1024**2) -> str:
         md5_hash = hashlib.md5()
         chunk = file_object.read(chunk_size)
         while chunk:

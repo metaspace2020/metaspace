@@ -171,7 +171,8 @@ def _add_thumbnail_optical_image(db, ds, dims, optical_img, transform):
     thumbnail_size = (200, 200)
     db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, params=(None, None, ds.id))
     img = _transform_image_to_ion_space(optical_img, transform, dims, zoom=1)[0]
-    img.thumbnail(thumbnail_size, Image.ANTIALIAS)
+    # Image.ANTIALIAS was removed in Pillow 10; Image.LANCZOS is its documented replacement.
+    img.thumbnail(thumbnail_size, Image.LANCZOS)
     buf = _save_jpeg(img)
     img_thumb_id = image_storage.post_image(image_storage.OPTICAL, ds.id, buf.read())
     img_thumb_url = image_storage.get_image_url(image_storage.OPTICAL, ds.id, img_thumb_id)

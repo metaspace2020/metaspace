@@ -15,6 +15,7 @@ the simplified single-phase 3-table flow:
 * A callback whose ``run_generation`` does not match the row's current
   generation is treated as stale and ignored.
 """
+
 # pylint: disable=no-value-for-parameter
 # (handlers are wrapped by the @sm_modify_experiment decorator which injects
 # `experiment_man` and `params`; pylint can't see through the decorator.)
@@ -29,7 +30,6 @@ from botocore.exceptions import ClientError
 
 from sm.rest import experiment
 from sm.rest.experiment_manager import ExperimentManager
-
 
 # --- helpers ---------------------------------------------------------------
 
@@ -101,13 +101,17 @@ def fake_db():
 def patch_db_and_publisher(fake_db):
     """Wire FakeDB into the manager and stub out RabbitMQ publish."""
     publisher = MagicMock()
-    with patch('sm.rest.experiment.DB', return_value=fake_db), patch(
-        'sm.rest.experiment_manager.SMConfig.get_conf',
-        return_value={
-            'rabbitmq': {'host': 'h', 'user': 'u', 'password': 'p'},
-            'image_storage': {'bucket': 'sm-test-bucket'},
-        },
-    ), patch('sm.rest.experiment_manager.QueuePublisher', return_value=publisher) as publisher_cls:
+    with (
+        patch('sm.rest.experiment.DB', return_value=fake_db),
+        patch(
+            'sm.rest.experiment_manager.SMConfig.get_conf',
+            return_value={
+                'rabbitmq': {'host': 'h', 'user': 'u', 'password': 'p'},
+                'image_storage': {'bucket': 'sm-test-bucket'},
+            },
+        ),
+        patch('sm.rest.experiment_manager.QueuePublisher', return_value=publisher) as publisher_cls,
+    ):
         yield {'publisher': publisher, 'publisher_cls': publisher_cls, 'db': fake_db}
 
 
@@ -274,9 +278,10 @@ def test_callback_finished_writes_intensity_blob_to_s3(patch_db_and_publisher):
             ],
         },
     }
-    with patch(
-        'sm.rest.experiment_manager.get_s3_resource', return_value=s3_resource
-    ), _patch_bottle_request(body):
+    with (
+        patch('sm.rest.experiment_manager.get_s3_resource', return_value=s3_resource),
+        _patch_bottle_request(body),
+    ):
         resp = experiment.experiment_callback()
 
     assert resp['status'] == 'success'

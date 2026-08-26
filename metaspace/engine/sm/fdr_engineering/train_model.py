@@ -210,9 +210,9 @@ def cv_train(metrics_df, splits, features, cb_params):
         return {
             'best_iteration': model.get_best_iteration(),
             'train': next(iter(best_score.get('learn', {}).values()), None) if best_score else None,
-            'validate': next(iter(best_score.get('validation', {}).values()), None)
-            if best_score
-            else None,
+            'validate': (
+                next(iter(best_score.get('validation', {}).values()), None) if best_score else None
+            ),
             'model': model,
         }
 

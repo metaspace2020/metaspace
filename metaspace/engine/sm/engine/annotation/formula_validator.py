@@ -1,6 +1,7 @@
 """
 Classes and functions for isotope image validation
 """
+
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field, fields

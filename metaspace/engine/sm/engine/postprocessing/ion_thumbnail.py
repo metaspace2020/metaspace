@@ -47,13 +47,13 @@ logger = logging.getLogger('engine')
 
 
 def _get_good_images(images, mask):
-    """ Try to discard images with very many or very few populated pixels """
+    """Try to discard images with very many or very few populated pixels"""
     fill_factor = np.count_nonzero(images > 0.25, axis=1) / np.count_nonzero(mask)
     good_fill = (fill_factor > 0.2) * (fill_factor < 0.8)
     if np.count_nonzero(good_fill) < 20:
         good_fill = np.nonzero(fill_factor > 0)
     if np.count_nonzero(good_fill) < 20:
-        good_fill = np.ones(len(images), dtype=np.bool)
+        good_fill = np.ones(len(images), dtype=bool)
     return images[good_fill]
 
 
@@ -131,7 +131,7 @@ def _thumb_from_image_clusters(images, mask, h, w, use_centroids):
 
 
 def _thumb_from_pixel_clusters(images, mask, h, w, use_distance_from_centroid=False):
-    """ Alternate implementation. Results are sharper, but noisier """
+    """Alternate implementation. Results are sharper, but noisier"""
     # 6-color
     # colors = np.array([[1, 0, 1, 0], [1, 0, 0, 0], [1, 1, 0, 0],
     #                    [0, 1, 0, 0], [0, 1, 1, 0], [0, 0, 1, 0]],

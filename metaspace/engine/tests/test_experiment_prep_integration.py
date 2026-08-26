@@ -4,6 +4,7 @@ Validates the SQL queries `build_prep_block` issues against the real
 `public.job` / `public.annotation` / `public.roi` schema. Image loading
 is stubbed since image_storage round-trips are out of scope here.
 """
+
 import json
 import uuid
 from datetime import datetime
@@ -15,6 +16,7 @@ from sm.engine.db import DB
 from sm.engine.postprocessing.experiment_prep import build_prep_block
 
 from .utils import create_test_molecular_db
+
 
 # pylint: disable=unused-argument
 @pytest.fixture()

@@ -23,7 +23,7 @@ from sm.engine.annotation_lithops.io import (
 MIN_CENTR_SEGMS = 32
 
 logger = logging.getLogger('annotation-pipeline')
-MAX_MZ_VALUE = 10 ** 5
+MAX_MZ_VALUE = 10**5
 
 
 def clip_centr_df(
@@ -240,7 +240,9 @@ def validate_centroid_segments(fexec, db_segms_cobjs, ds_segms_bounds, isocalc_w
                     .peak_i.apply(lambda peak_is: len(set(range(max(peak_is))) - set(peak_is)))
                     .sum()
                 ),
-                'is_sorted': segm.mz.is_monotonic,
+                # Series.is_monotonic was removed in pandas 2.0; is_monotonic_increasing
+                # replaces it.
+                'is_sorted': segm.mz.is_monotonic_increasing,
                 'n_formulas': segm.formula_i.nunique(),
             }
         )

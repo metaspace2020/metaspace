@@ -1,4 +1,5 @@
 """Ensure the package directory is importable when running ``pytest`` directly."""
+
 import sys
 from pathlib import Path
 

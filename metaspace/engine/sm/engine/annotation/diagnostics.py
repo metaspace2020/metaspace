@@ -314,12 +314,9 @@ def extract_dataset_diagnostics(
                 'n_spectra': imzml_reader.n_spectra,
                 'min_coords': imzml_reader.raw_coord_bounds[0].tolist(),
                 'max_coords': imzml_reader.raw_coord_bounds[1].tolist(),
-                'min_mz': (
-                    np.asscalar(imzml_reader.min_mz) if np.isfinite(imzml_reader.min_mz) else 0
-                ),
-                'max_mz': (
-                    np.asscalar(imzml_reader.max_mz) if np.isfinite(imzml_reader.max_mz) else 0
-                ),
+                # np.asscalar() was removed in numpy 1.23; ndarray/scalar.item() replaces it.
+                'min_mz': (imzml_reader.min_mz.item() if np.isfinite(imzml_reader.min_mz) else 0),
+                'max_mz': (imzml_reader.max_mz.item() if np.isfinite(imzml_reader.max_mz) else 0),
                 'metadata': imzml_reader.metadata_summary,
             },
             'images': [mask_image],

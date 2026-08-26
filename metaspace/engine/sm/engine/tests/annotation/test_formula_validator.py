@@ -1,8 +1,9 @@
 from itertools import product
 from unittest.mock import patch
 
+import numpy as np
 import pandas as pd
-from pandas.util.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal
 from scipy.sparse import coo_matrix
 
 from sm.engine.annotation.formula_validator import (
@@ -91,6 +92,16 @@ def test_formula_image_metrics(chaos_mock, spatial_mock, spectral_mock):
     expected_metrics_df = pd.DataFrame(
         [expected_metrics] * 3, index=pd.Index([1, 2, 3], name='formula_i')
     )
+    # 'spatial'/'spectral' are declared Optional[float] on Metrics (not one of the fields the
+    # "Most of these are float32" comment above covers - that's about the mass metrics). Here
+    # they come out float32 anyway because spatial_mock/spectral_mock's side_effect returns a
+    # value sliced straight out of `imgs_flat`, the float32 accumulator array built internally
+    # by compute_metrics - i.e. a np.float32 scalar, not a Python float. pandas>=2 preserves
+    # that scalar's real dtype when building metrics_df from a list of Metrics objects; pandas 1
+    # upcast every such column to float64 regardless of the scalar's dtype. Update the expected
+    # frame to match rather than relaxing the dtype check.
+    expected_metrics_df['spatial'] = expected_metrics_df['spatial'].astype(np.float32)
+    expected_metrics_df['spectral'] = expected_metrics_df['spectral'].astype(np.float32)
     assert_frame_equal(metrics_df, expected_metrics_df)
 
 

@@ -1,3 +1,4 @@
+# Historical migration — requires the ES/client versions of its era
 import argparse
 import logging
 import time

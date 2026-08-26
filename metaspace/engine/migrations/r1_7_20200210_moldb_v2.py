@@ -1,7 +1,6 @@
 from sm.engine.db import DB
 from sm.engine.util import GlobalInit
 
-
 if __name__ == '__main__':
     with GlobalInit() as sm_config:
         db = DB()

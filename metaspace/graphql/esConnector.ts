@@ -557,10 +557,10 @@ export const esSearchResults = async(args: any, docType: DocType,
 
   const body = await constructESQuery(args, docType, user, bypassAuth)
   const request = {
-    body,
     index: docType === 'dataset' ? esDatasetIndex : esAnnotationIndex,
     from: args.offset,
     size: args.limit,
+    ...body,
   }
   const resp = await es.search(request)
   return resp.hits.hits
@@ -568,7 +568,7 @@ export const esSearchResults = async(args: any, docType: DocType,
 
 export const esCountResults = async(args: any, docType: DocType, user: ContextUser): Promise<number> => {
   const body = await constructESQuery(args, docType, user)
-  const request = { body, index: docType === 'dataset' ? esDatasetIndex : esAnnotationIndex }
+  const request = { index: docType === 'dataset' ? esDatasetIndex : esAnnotationIndex, ...body }
   const resp = await es.count(request)
 
   return resp.count
@@ -629,18 +629,16 @@ export const esCountGroupedResults = async(args: any, docType: DocType, user: Co
 
   if (args.groupingFields.length === 0) {
     // handle case of no grouping for convenience
-    const request = { body, index: docType === 'dataset' ? esDatasetIndex : esAnnotationIndex }
+    const request = { index: docType === 'dataset' ? esDatasetIndex : esAnnotationIndex, ...body }
     const resp = await es.count(request)
     return { counts: [{ fieldValues: [], count: resp.count }] }
   }
 
   const aggRequest = {
-    body: {
-      ...body,
-      aggs: constructTermAggregations(args.groupingFields),
-    },
     index: docType === 'dataset' ? esDatasetIndex : esAnnotationIndex,
     size: 0,
+    ...body,
+    aggs: constructTermAggregations(args.groupingFields),
   }
   const resp = await es.search(aggRequest)
   return flattenAggResponse(args.groupingFields, resp.aggregations, 0)
@@ -651,29 +649,29 @@ export const esRawAggregationResults = async(args: any, docType: DocType,
   const body = await constructESQuery(args, docType, user)
 
   const aggRequest = {
-    body: {
-      ...body,
-      aggs: {
-        unique_formulas: {
-          terms: {
-            field: 'ion',
-            size: 1000000, // given ES agg pagination lacking, here we need a big number to return everything
-          },
-          aggs: {
-            unique_db_ids: {
-              terms: {
-                field: 'db_id',
-              },
-              aggs: {
-                unique_ds_ids: {
-                  terms: {
-                    field: 'ds_id',
-                  },
-                  aggs: {
-                    include_source: {
-                      top_hits: {
-                        _source: {},
-                      },
+    index: docType === 'dataset' ? esDatasetIndex : esAnnotationIndex,
+    size: 0,
+    ...body,
+    aggs: {
+      unique_formulas: {
+        terms: {
+          field: 'ion',
+          size: 1000000, // given ES agg pagination lacking, here we need a big number to return everything
+        },
+        aggs: {
+          unique_db_ids: {
+            terms: {
+              field: 'db_id',
+            },
+            aggs: {
+              unique_ds_ids: {
+                terms: {
+                  field: 'ds_id',
+                },
+                aggs: {
+                  include_source: {
+                    top_hits: {
+                      _source: {},
                     },
                   },
                 },
@@ -683,8 +681,6 @@ export const esRawAggregationResults = async(args: any, docType: DocType,
         },
       },
     },
-    index: docType === 'dataset' ? esDatasetIndex : esAnnotationIndex,
-    size: 0,
   }
   const resp = await es.search(aggRequest)
   const aggAnnotations : ESAggAnnotationSource[] = []
@@ -714,12 +710,10 @@ export const esCountMatchingAnnotationsPerDataset = async(
 ): Promise<Record<string, number>> => {
   const body = await constructESQuery(args, 'annotation', user)
   const aggRequest = {
-    body: {
-      ...body,
-      aggs: { ds_id: { terms: { field: 'ds_id', size: 1000000 } } },
-    },
     index: esAnnotationIndex,
     size: 0,
+    ...body,
+    aggs: { ds_id: { terms: { field: 'ds_id', size: 1000000 } } },
   }
   const resp = await es.search(aggRequest)
   const counts = resp?.aggregations?.ds_id.buckets.map(({ key, doc_count }: any) => [key, doc_count])
@@ -735,7 +729,9 @@ export interface FilterValueCountArgs {
 
 export const esFilterValueCountResults = async(args: FilterValueCountArgs): Promise<any> => {
   const { filters, aggsTerms, user, docType = 'dataset' } = args
-  const body = {
+
+  const resp = await es.search({
+    index: docType === 'dataset' ? esDatasetIndex : esAnnotationIndex,
     query: {
       bool: {
         filter: [
@@ -746,11 +742,6 @@ export const esFilterValueCountResults = async(args: FilterValueCountArgs): Prom
     },
     size: 0, // return only aggregations
     aggs: { field_counts: aggsTerms },
-  }
-
-  const resp = await es.search({
-    body,
-    index: docType === 'dataset' ? esDatasetIndex : esAnnotationIndex,
   })
   const itemCounts: { [key: string]: number } = {}
   resp?.aggregations?.field_counts.buckets.forEach((o: any) => {

@@ -73,10 +73,8 @@ class SegmentationManager:
             params = {}
 
         start_time = time.time()
-        logger.info(
-            f"""[SEGMENTATION_PERF] SegmentationManager.run_segmentation started
-             for dataset {ds_id} with algorithm {algorithm}"""
-        )
+        logger.info(f"""[SEGMENTATION_PERF] SegmentationManager.run_segmentation started
+             for dataset {ds_id} with algorithm {algorithm}""")
 
         # Store all job parameters for restart functionality
         job_parameters = {
@@ -100,10 +98,8 @@ class SegmentationManager:
         job_id = job_ids[0]
 
         db_insert_time = time.time() - start_time
-        logger.info(
-            f"""[SEGMENTATION_PERF] Job {job_id} inserted in DB for dataset {ds_id}
-             in {db_insert_time:.3f}s"""
-        )
+        logger.info(f"""[SEGMENTATION_PERF] Job {job_id} inserted in DB for dataset {ds_id}
+             in {db_insert_time:.3f}s""")
 
         # Publish the job to the SM_UPDATE queue for the daemon to pick up
         queue_publisher = self._create_update_queue_publisher()
@@ -131,10 +127,8 @@ class SegmentationManager:
 
         total_time = time.time() - start_time
         logger.info(f'[SEGMENTATION_PERF] Segmentation job {job_id} queued for dataset {ds_id}')
-        logger.info(
-            f"""[SEGMENTATION_PERF] Queue publish
-             time: {queue_publish_time:.3f}s, Total manager time: {total_time:.3f}s"""
-        )
+        logger.info(f"""[SEGMENTATION_PERF] Queue publish
+             time: {queue_publish_time:.3f}s, Total manager time: {total_time:.3f}s""")
 
         return {'job_id': job_id, 'ds_id': ds_id}
 
@@ -161,10 +155,8 @@ class SegmentationManager:
             dict: Status information
         """
         callback_start_time = time.time()
-        logger.info(
-            f"""[SEGMENTATION_PERF] Callback received for job {job_id},
-             dataset {ds_id}, status: {status}"""
-        )
+        logger.info(f"""[SEGMENTATION_PERF] Callback received for job {job_id},
+             dataset {ds_id}, status: {status}""")
 
         # If email is not provided, retrieve it from the database
         if not email:
@@ -206,10 +198,8 @@ class SegmentationManager:
                     logger.warning(f'Failed to send failure email for job {job_id}: {e}')
 
         callback_total_time = time.time() - callback_start_time
-        logger.info(
-            f"""[SEGMENTATION_PERF] Callback processing completed
-             for job {job_id} in {callback_total_time:.3f}s"""
-        )
+        logger.info(f"""[SEGMENTATION_PERF] Callback processing completed
+             for job {job_id} in {callback_total_time:.3f}s""")
 
         return {'status': 'processed', 'job_id': job_id, 'ds_id': ds_id}
 

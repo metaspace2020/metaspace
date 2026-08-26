@@ -4,6 +4,7 @@ DB and image-loading hooks are faked here. Real-DB + real image_storage
 integration coverage lives in
 metaspace/engine/tests/test_experiment_prep_integration.py.
 """
+
 import numpy as np
 
 from sm.engine.postprocessing.experiment_prep import build_prep_block

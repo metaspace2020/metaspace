@@ -1,6 +1,6 @@
-bottle==0.12.25
-requests==2.32.0
-numpy==1.19.5
-scipy==1.5.4
-scikit-learn==0.24.2
-statsmodels==0.12.2
+bottle==0.13.4  # 0.12.25 imports the stdlib 'cgi' module, removed in Python 3.13+
+requests==2.34.2
+numpy==2.5.2
+scipy==1.18.1
+scikit-learn==1.9.0
+statsmodels==0.14.6

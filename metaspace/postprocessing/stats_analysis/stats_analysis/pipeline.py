@@ -1,4 +1,5 @@
 """Public entry points for the stats_analysis microservice."""
+
 from typing import Dict
 
 from .runner import (

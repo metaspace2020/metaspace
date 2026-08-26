@@ -52,7 +52,7 @@ all_features = [
     'mz_err_abs_fdr',
     'mz_err_rel_fdr',
 ]
-#%% Download the data or load it from a local cache file
+# %% Download the data or load it from a local cache file
 downloaded_data_file = data_dir / 'metrics_df_fdr20.parquet'
 FORCE_REDOWNLOAD = False
 if downloaded_data_file.exists() and not FORCE_REDOWNLOAD:
@@ -66,7 +66,8 @@ else:
     metrics_df = get_ranking_data(ds_diags, all_features)
     metrics_df.to_parquet(downloaded_data_file)
 
-#%% Recalculate FDR fields
+
+# %% Recalculate FDR fields
 def calc_fdr_fields(df):
     target = df.target == 1.0
     target_df = df[target].copy()
@@ -86,7 +87,7 @@ train_metrics_df = metrics_df = metrics_df.drop(
     columns=fdr_fields_df.columns, errors='ignore'
 ).join(fdr_fields_df)
 
-#%% Make a smaller dataset for training, using this opportunity to balance targets & decoys
+# %% Make a smaller dataset for training, using this opportunity to balance targets & decoys
 # (Skip this unless using very expensive loss functions like YetiRank)
 
 # def subsample(df, max_group_size=5000):
@@ -105,7 +106,7 @@ train_metrics_df = metrics_df = metrics_df.drop(
 #     [subsample(df) for ds_id, df in metrics_df.groupby('group_name', observed=True)]
 # )
 
-#%% Model parameters
+# %% Model parameters
 features = [
     'chaos',
     'spatial',
@@ -134,12 +135,12 @@ cb_params = {
     # 'task_type': 'GPU',
 }
 
-#%% Evaluate with cross-validation if desired
+# %% Evaluate with cross-validation if desired
 splits = get_cv_splits(metrics_df.ds_id.unique(), 5)
 results = cv_train(train_metrics_df, splits, features, cb_params)
 # Sum to make an ensemble model - sometimes it's interesting for debugging
 ens_model = sum_models(results.model.to_list())
-#%% Make final model from all data
+# %% Make final model from all data
 final_params = {
     **cb_params,
     'iterations': 1000,
@@ -153,7 +154,8 @@ final_model = train_catboost_model(
     metrics_df, metrics_df.ds_id.unique(), None, features, final_params
 )
 
-#%% Evaluate the model and print a summary
+
+# %% Evaluate the model and print a summary
 def eval_model(model, metrics_df):
     res = []
     # observed=True prevents empty grp_metrics_dfs when there's an empty group_name category
@@ -204,7 +206,7 @@ print(
     f'={n_fewer_anns / len(stats_df):.2%}'
 )
 
-#%% Export raw results for comparison with other implementations
+# %% Export raw results for comparison with other implementations
 
 export_df = metrics_df.drop(
     columns=[
@@ -229,7 +231,7 @@ export_df['pred_fdr'] = pd.concat(
 
 export_df.to_csv('local/ml_scoring/prod_impl.csv', index=False)
 
-#%% Save model to S3
+# %% Save model to S3
 
 # set MODEL_NAME and MODEL_VERSION to match the desired model name and version
 MODEL_NAME = ''

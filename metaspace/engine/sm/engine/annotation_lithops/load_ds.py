@@ -33,7 +33,7 @@ def _load_spectra(storage, imzml_reader):
 
     # Break into approx. 100MB chunks to read in parallel
     n_peaks = np.sum(imzml_reader.imzml_reader.mzLengths)
-    n_chunks = min(int(np.ceil(n_peaks / (10 * 2 ** 20))), imzml_reader.n_spectra)
+    n_chunks = min(int(np.ceil(n_peaks / (10 * 2**20))), imzml_reader.n_spectra)
     chunk_bounds = np.linspace(0, imzml_reader.n_spectra, n_chunks + 1, dtype=np.int64)
     spectrum_chunks = zip(chunk_bounds, chunk_bounds[1:])
 
@@ -78,7 +78,7 @@ def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs)
     # Split into segments no larger than ds_segm_size_mb
     total_n_mz = len(sp_idxs)
     row_size = (4 if imzml_reader.mz_precision == 'f' else 8) + 4 + 4
-    segm_n = int(np.ceil(total_n_mz * row_size / (ds_segm_size_mb * 2 ** 20)))
+    segm_n = int(np.ceil(total_n_mz * row_size / (ds_segm_size_mb * 2**20)))
     segm_bounds = np.linspace(0, total_n_mz, segm_n + 1, dtype=np.int64)
     segm_ranges = list(zip(segm_bounds[:-1], segm_bounds[1:]))
     ds_segm_lens = np.diff(segm_bounds)
@@ -122,7 +122,7 @@ def _upload_imzml_browser_files(
         bytes_data = data.astype('f').tobytes()
         size_bytes = len(bytes_data)
 
-        if size_bytes < 5 * 1024 ** 3:
+        if size_bytes < 5 * 1024**3:
             return browser_storage.put_cloudobject(bytes_data, key=key)
 
         return multipart_upload_cobj(browser_storage, bytes_data, key=key)
@@ -197,12 +197,17 @@ def load_ds(
     ibd_cobject: CloudObject,
     ds_segm_size_mb: int,
     ds_id: Union[str, None],
-) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,]:
+) -> Tuple[
+    LithopsImzMLReader,
+    np.ndarray,
+    List[CObj[pd.DataFrame]],
+    np.ndarray,
+]:
     try:
         imzml_head = executor.storage.head_object(imzml_cobject.bucket, imzml_cobject.key)
         ibd_head = executor.storage.head_object(ibd_cobject.bucket, ibd_cobject.key)
-        imzml_size_mb = int(int(imzml_head['content-length']) / 1024 ** 2)
-        ibd_size_mb = int(int(ibd_head['content-length']) / 1024 ** 2)
+        imzml_size_mb = int(int(imzml_head['content-length']) / 1024**2)
+        ibd_size_mb = int(int(ibd_head['content-length']) / 1024**2)
     except Exception:
         logger.warning("Couldn't read ibd or imzml size", exc_info=True)
         ibd_size_mb = 1024
@@ -222,7 +227,12 @@ def load_ds(
 
     conf = SMConfig.get_conf()
 
-    (imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens,) = executor.call(
+    (
+        imzml_reader,
+        ds_segments_bounds,
+        ds_segms_cobjs,
+        ds_segm_lens,
+    ) = executor.call(
         _load_ds,
         (imzml_cobject, ibd_cobject, ds_segm_size_mb, conf),
         runtime_memory=runtime_memory,
@@ -250,7 +260,9 @@ def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjs
                 'n_rows': len(segm),
                 'min_mz': segm.mz.min(),
                 'max_mz': segm.mz.max(),
-                'is_sorted': segm.mz.is_monotonic,
+                # Series.is_monotonic was removed in pandas 2.0; is_monotonic_increasing
+                # replaces it.
+                'is_sorted': segm.mz.is_monotonic_increasing,
             }
         )
 

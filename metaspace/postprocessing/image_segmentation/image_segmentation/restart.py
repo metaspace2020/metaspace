@@ -3,6 +3,7 @@
 Lives outside ``app.py`` so the umbrella server can call it without importing
 the Bottle app module.
 """
+
 import logging
 
 import requests

@@ -4,6 +4,7 @@ Mirrors :mod:`image_segmentation.restart` — when this container restarts mid-r
 the engine still has rows in ``PREPARING``/``RUNNING`` whose RabbitMQ messages
 were already acked. Without this hook they'd be stranded.
 """
+
 import logging
 
 import requests

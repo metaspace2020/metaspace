@@ -1,4 +1,4 @@
-FROM nginx:1.26.2-alpine
+FROM nginx:1.30-alpine
 
 RUN rm -rf /etc/nginx/sites-enabled && \
     rm /etc/nginx/nginx.conf && \

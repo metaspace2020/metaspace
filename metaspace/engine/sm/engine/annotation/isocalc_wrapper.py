@@ -163,10 +163,10 @@ def mass_accuracy_half_width(mzs: Union[np.array, float], instrument: str, ppm: 
     if instrument == 'TOF':
         return mzs * ppm * 1e-6
     elif instrument == 'Orbitrap':
-        return mzs ** 1.5 * (ppm * 1e-6 / BASE_MZ ** 0.5)
+        return mzs**1.5 * (ppm * 1e-6 / BASE_MZ**0.5)
     elif instrument == 'FTICR':
         # NOTE: In previous versions the FTICR scaling was incorrect, however it only affected
         # analysis_version==2
-        return mzs ** 2 * (ppm * 1e-6 / BASE_MZ)
+        return mzs**2 * (ppm * 1e-6 / BASE_MZ)
     else:
         raise ValueError(f'Unknown instrument: {instrument}')

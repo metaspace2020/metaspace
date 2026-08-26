@@ -6,6 +6,7 @@ use ``feature.properties.coordinates`` as a list of ``{x, y}`` dicts in
 ion-image pixel space; segmentation label maps store one int per pixel
 where the int is the cluster ``segment_index``.
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, Optional

@@ -1,4 +1,5 @@
 """Pure-Python reimplementation of limma's GLS + empirical Bayes pipeline."""
+
 # pylint: disable=invalid-name  # short linear-model notation (Y, X, W, V, beta) is conventional
 from __future__ import annotations
 
@@ -135,7 +136,7 @@ def duplicate_correlation(  # pylint: disable=too-many-locals
         k = idx.size
         block_res = residuals[idx, :]
         block_mean = block_res.mean(axis=0)
-        SS_between += k * (block_mean ** 2)
+        SS_between += k * (block_mean**2)
         SS_within += ((block_res - block_mean) ** 2).sum(axis=0)
         if k >= 2:
             k_multi.append(k)
@@ -158,7 +159,7 @@ def duplicate_correlation(  # pylint: disable=too-many-locals
     n_multi_total = float(k_arr.sum())
     n_multi_blocks = len(k_multi)
     k0 = (
-        (n_multi_total - np.sum(k_arr ** 2) / n_multi_total) / (n_multi_blocks - 1)
+        (n_multi_total - np.sum(k_arr**2) / n_multi_total) / (n_multi_blocks - 1)
         if n_multi_blocks > 1
         else float(k_arr[0])
     )
@@ -200,7 +201,7 @@ def gls_fit(
     residuals = Y_w.T - fitted
 
     df_res = int(n_samples - np.linalg.matrix_rank(X_w))
-    sigma2 = np.sum(residuals ** 2, axis=0) / df_res
+    sigma2 = np.sum(residuals**2, axis=0) / df_res
     XtX_inv = _linalg.inv(X_w.T @ X_w)
 
     return GlsFitResult(beta=beta, sigma2=sigma2, df_res=df_res, XtX_inv=XtX_inv)

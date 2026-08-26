@@ -1,6 +1,5 @@
 from pyimzml.ImzMLParser import ImzMLParser
 
-
 WATERS_ACCESSION = 'MS:1000126'
 
 

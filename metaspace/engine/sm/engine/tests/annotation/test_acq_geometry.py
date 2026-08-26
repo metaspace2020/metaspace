@@ -28,7 +28,7 @@ def test_ims_geometry_factory_empty():
     }
 
 
-@pytest.mark.skip(reason="pyopenms doesn't support Python 3.8")
+@pytest.mark.skip(reason="pyopenms not installed / not a dependency")
 def test_lcms_geometry_factory():
     lcms_file_path = join(
         proj_root(), 'tests/data/lcms_acq_geometry_example/apple_surface_swab.mzML'

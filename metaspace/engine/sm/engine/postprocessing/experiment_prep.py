@@ -12,6 +12,7 @@ Per dataset:
 5. Load each surviving annotation's principal iso-image (PNG-decoded into a 2D
    float32 array) and compute the mean intensity over the region mask.
 """
+
 from __future__ import annotations
 
 import logging

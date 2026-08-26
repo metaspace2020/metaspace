@@ -20,6 +20,7 @@ BAD_DATA = {'status_code': 400, 'status': 'bad_data'}
 logger = logging.getLogger('api')
 app = bottle.Bottle()
 
+
 # pylint: disable=too-many-return-statements
 @app.post('/create')
 def create():

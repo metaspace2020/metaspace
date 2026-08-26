@@ -2,7 +2,6 @@ import os
 
 import boto3
 
-
 # pylint: disable=invalid-name
 if __name__ == '__main__':
     print(

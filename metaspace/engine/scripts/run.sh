@@ -3,5 +3,5 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . $DIR/sm-env.sh
 
-source activate sm38
+source activate sm314
 exec $@

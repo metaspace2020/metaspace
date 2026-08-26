@@ -39,14 +39,16 @@ dataset_ids_file = data_dir / 'dataset_ids.txt'
 dataset_ids = [ds_id.strip() for ds_id in dataset_ids_file.open().readlines()]
 dst_dataset_ids = [ds_id + DST_SUFFIX for ds_id in dataset_ids]
 
-#%%
+# %%
 # # Test VPC
 # from sm.engine.annotation_lithops.executor import Executor
 # from sm.engine.config import SMConfig
 #
 # Executor(SMConfig.get_conf()['lithops']).call(lambda i: i, (0,), runtime_memory=32768)
 print()
-#%%
+
+
+# %%
 def update_metadata(metadata: Any, config: DSConfig) -> Tuple[Any, DSConfig]:
     """The purpose of this function is to reset every dataset's config to the desired values for
     training.
@@ -77,7 +79,7 @@ def update_metadata(metadata: Any, config: DSConfig) -> Tuple[Any, DSConfig]:
     return ds_metadata, ds_config
 
 
-#%% Process all datasets on the destination server
+# %% Process all datasets on the destination server
 
 errors = []
 for i, ds_id in enumerate(dataset_ids):
@@ -102,6 +104,6 @@ for i, ds_id in enumerate(dataset_ids):
     # not a production server) and resetting their status in the database with e.g.:
     # UPDATE public.dataset SET status='FINISHED' WHERE id LIKE '%_ml_training';
 
-#%% Wait for datasets to finish
+# %% Wait for datasets to finish
 dst_dataset_ids, errors = wait_for_datasets(sm_dst, dst_dataset_ids, raise_on_error=False)
 print(errors)

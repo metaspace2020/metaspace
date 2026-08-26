@@ -142,8 +142,8 @@ def _compute_morans_i(  # pylint: disable=invalid-name,too-many-locals
         E_I = -1.0 / (N - 1)
         S1 = 2.0 * S0
         degrees = np.asarray(W.sum(axis=1)).ravel()
-        S2 = 4.0 * float((degrees ** 2).sum())
-        var_I = (N ** 2 * S1 - N * S2 + 3 * S0 ** 2) / (S0 ** 2 * (N ** 2 - 1)) - E_I ** 2
+        S2 = 4.0 * float((degrees**2).sum())
+        var_I = (N**2 * S1 - N * S2 + 3 * S0**2) / (S0**2 * (N**2 - 1)) - E_I**2
         std_I = np.sqrt(max(var_I, 0.0))
         z_score = np.zeros(K) if std_I == 0.0 else (I_observed - E_I) / std_I
         p_value = scipy_norm.sf(z_score)  # one-sided: P(Z > z)
@@ -197,8 +197,14 @@ def _find_elbow(k_values: List[int], scores: List[float]) -> int:  # pylint: dis
     distances = []
     for i in range(len(valid_k)):
         point_vec = np.array([k_norm[i] - k_norm[0], s_norm[i] - s_norm[0]])
-        # Perpendicular distance from the line
-        cross = np.abs(np.cross(line_vec_norm, point_vec))
+        # Perpendicular distance from the line.
+        # NumPy 2.0 removed np.cross() support for 2-D vectors (it used to
+        # return the scalar z-component of the 3-D cross product with z=0).
+        # Reproduce that exact semantics explicitly — see
+        # https://numpy.org/doc/stable/release/2.0.0-notes.html#np-cross-2d-2d-support-removed.
+        cross = np.abs(
+            line_vec_norm[0] * point_vec[1] - line_vec_norm[1] * point_vec[0]
+        )
         distances.append(cross)
 
     elbow_idx = int(np.argmax(distances))

@@ -1,7 +1,7 @@
 import json
 import re
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from hashlib import sha1
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -177,8 +177,8 @@ class CatBoostScoringModel(ScoringModel):
         # for the model to predict values outside this range for unseen data.
         # Values > 1.0 are a mainly cosmetic problem
         # Values < 0.0 would change the behavior of the worst-case FDR bin
-        target_df.msm.clip(0.0, 1.0, inplace=True)
-        decoy_df.msm.clip(0.0, 1.0, inplace=True)
+        target_df['msm'] = target_df.msm.clip(0.0, 1.0)
+        decoy_df['msm'] = decoy_df.msm.clip(0.0, 1.0)
 
         remove_uninteresting_features(target_df, decoy_df)
 
@@ -341,7 +341,7 @@ def save_scoring_model_to_db(name, type_, version, params, created_dt=None):
         params = json.dumps(params)
 
     if not created_dt:
-        created_dt = datetime.utcnow()
+        created_dt = datetime.now(timezone.utc).replace(tzinfo=None)
 
     db = DB()
     if db.select_one(

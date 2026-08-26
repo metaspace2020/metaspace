@@ -31,7 +31,7 @@ def cpu_ram_consumption(run, metrics, pid):
         start = round(time.time(), 3)
         cpu = psutil.cpu_percent(percpu=True)
         memory = psutil.virtual_memory()
-        inference_rss_mb = inference_process.memory_info().rss / 1024.0 ** 2
+        inference_rss_mb = inference_process.memory_info().rss / 1024.0**2
         metrics.append(
             {start: {'cpu': cpu, 'memory': memory.percent, 'inf_rss_mb': int(inference_rss_mb)}}
         )

@@ -24,8 +24,7 @@ import seaborn as sns
 from Levenshtein import distance
 from metaspace.sm_annotation_utils import SMInstance
 
-
-#%% Functions for cleaning up metadata fields
+# %% Functions for cleaning up metadata fields
 
 
 def normalize_analyzer(analyzer):
@@ -116,7 +115,7 @@ def normalize_matrix(matrix):
     return 'Other'
 
 
-#%%
+# %%
 
 sm = SMInstance()  # Call sm.save_login() to save a credentials file to access private DSs
 all_datasets = sm.datasets(status='FINISHED')
@@ -203,7 +202,7 @@ ds_mask = (
     & (all_ds_df.hmdb_10 > 10)
 )
 
-#%% Add derived columns
+# %% Add derived columns
 norm_ds_df = all_ds_df.copy()
 
 norm_ds_df['matrix_solvent'] = np.where(
@@ -222,7 +221,8 @@ ds_df = norm_ds_df[ds_mask]
 
 print(f'{len(ds_df)} / {len(norm_ds_df)}')
 
-#%%  Try to select a diverse but relatively representative sample of datasets
+
+# %%  Try to select a diverse but relatively representative sample of datasets
 def get_stratified_sample(ds_df, count):
     weights = ds_df.batch_weight.copy()
     # For (col, count), take the top `count` values of `col` and compact the rest into an "Other"
@@ -264,9 +264,9 @@ random_subsubsample = get_stratified_sample(random_subsample, 50)
 random_sample['include_in_recal'] = random_sample.index.isin(random_subsample.index)
 random_sample['include_in_pilot'] = random_sample.index.isin(random_subsubsample.index)
 random_sample.to_csv('ml_scoring/datasets.csv', index=False)
-#%%  Make a link to view the datasets online
+# %%  Make a link to view the datasets online
 print('https://metaspace2020.org/datasets?ds=' + ','.join(random_subsubsample.ds_id))
-#%% Plot distributions of datasets before/after sampling
+# %% Plot distributions of datasets before/after sampling
 cols = [
     ('group', 8),
     ('analyzer', 3),

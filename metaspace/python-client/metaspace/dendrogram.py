@@ -58,9 +58,7 @@ class Dendrogram(FF):
         self.sign[self.xaxis] = 1 if self.orientation in ['left', 'bottom'] else -1
         self.sign[self.yaxis] = 1 if self.orientation in ['right', 'bottom'] else -1
 
-        (dd_traces, xvals, yvals, ordered_labels, leaves) = self.get_dendrogram_traces(
-            X, colorscale
-        )
+        dd_traces, xvals, yvals, ordered_labels, leaves = self.get_dendrogram_traces(X, colorscale)
 
         self.labels = ordered_labels
         self.leaves = leaves

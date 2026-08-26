@@ -86,7 +86,7 @@ def _save_subtask_perf(
     cost_factors_plain = cost_factors.to_dict('list') if cost_factors is not None else None
     if futures:
         exec_times = [f.stats.get('worker_func_exec_time', -1) for f in futures]
-        mem_usages = [int(f.stats.get('worker_peak_memory_end', -1) / 1024 ** 2) for f in futures]
+        mem_usages = [int(f.stats.get('worker_peak_memory_end', -1) / 1024**2) for f in futures]
         request_ids = [f.activation_id for f in futures]
         if isinstance(futures.executor, StandaloneExecutor):
             instance_type = futures.executor.compute_handler.backend.master.get_instance_data()[

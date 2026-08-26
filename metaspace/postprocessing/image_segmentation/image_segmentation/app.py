@@ -4,6 +4,7 @@ Exposes ``POST /run`` (relative to whatever prefix the umbrella server mounts
 this app under). The umbrella owns config loading, port binding, and the
 pending-jobs restart hook (see ``image_segmentation.restart``).
 """
+
 import json
 import logging
 import threading

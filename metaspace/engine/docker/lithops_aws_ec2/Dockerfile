@@ -1,20 +1,20 @@
-FROM python:3.8.20-slim
+FROM python:3.14-slim
 
 ENV FLASK_PROXY_PORT 8080
 
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --no-cache-dir \
-        cloudpickle==3.0.0 \
-        flask==2.3.3 \
-        gevent==21.8.0 \
+        cloudpickle==3.1.2 \
+        flask==3.1.3 \
+        gevent==26.8.0 \
         pika==1.3.2 \
         ps-mem==3.14 \
-        redis==5.0.8 \
-        requests==2.29.0 \
-        tblib==3.0.0
+        redis==8.1.0 \
+        requests==2.34.2 \
+        tblib==3.2.2
 
 COPY requirements.txt /tmp/requirements.txt
-RUN grep -E "^(c?pyMSpec|c?pyImagingMSpec|numpy|scipy|pandas|msgpack|pyimzML|pyarrow|scikit-learn|Pillow|boto3)" /tmp/requirements.txt > /tmp/requirements-lithops.txt
+RUN grep -E "^(c?pyMSpec|c?pyImagingMSpec|numpy|scipy|pandas|msgpack|pyimzML|scikit-learn|Pillow|boto3)" /tmp/requirements.txt > /tmp/requirements-lithops.txt
 # CatBoost installs large optional dependencies (plotly, matplotlib), so install it with --no-deps
 RUN grep -E "^(catboost)" /tmp/requirements.txt > /tmp/requirements-catboost.txt
 RUN pip install --no-cache-dir -r /tmp/requirements-lithops.txt && pip install --no-cache-dir -r /tmp/requirements-catboost.txt --no-deps

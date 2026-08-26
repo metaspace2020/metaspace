@@ -7,10 +7,8 @@ from typing import TypeVar, Generic, List, Iterable, overload, Any, Tuple, Union
 
 import uuid
 import numpy as np
-import pyarrow as pa
 from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
-
 
 logger = logging.getLogger('annotation-pipeline')
 TItem = TypeVar('TItem')
@@ -32,27 +30,20 @@ class CObj(Generic[TItem], CloudObject):
 
 def serialize_to_file(obj, path):
     with open(path, 'wb') as file:
-        file.write(pa.serialize(obj).to_buffer())
+        pickle.dump(obj, file, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def deserialize_from_file(path):
     with open(path, 'rb') as file:
-        data = pa.deserialize(file.read())
-    return data
+        return pickle.load(file)
 
 
 def serialize(obj):
-    try:
-        return pa.serialize(obj).to_buffer().to_pybytes()
-    except pa.lib.SerializationCallbackError:
-        return pickle.dumps(obj)
+    return pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def deserialize(data):
-    try:
-        return pa.deserialize(data)
-    except (pa.lib.ArrowInvalid, OSError):
-        return pickle.loads(data)
+    return pickle.loads(data)
 
 
 def multipart_upload_cobj(
@@ -141,7 +132,7 @@ def save_cobj(storage: Storage, obj: TItem, bucket: str = None, key: str = None)
     data_size = len(data)
 
     # # # Use regular upload for files under 5GB
-    if data_size < 5 * 1024 ** 3:
+    if data_size < 5 * 1024**3:
         return storage.put_cloudobject(data, bucket, key)
 
     # For files >= 5GB, use multipart upload
@@ -149,13 +140,11 @@ def save_cobj(storage: Storage, obj: TItem, bucket: str = None, key: str = None)
 
 
 @overload
-def load_cobj(storage: Storage, cobj: CObj[TItem]) -> TItem:
-    ...
+def load_cobj(storage: Storage, cobj: CObj[TItem]) -> TItem: ...
 
 
 @overload
-def load_cobj(storage: Storage, cobj: CloudObject):
-    ...
+def load_cobj(storage: Storage, cobj: CloudObject): ...
 
 
 def load_cobj(storage: Storage, cobj):
@@ -172,13 +161,11 @@ def save_cobjs(storage: Storage, objs: Iterable[TItem]) -> List[CObj[TItem]]:
 
 
 @overload
-def load_cobjs(storage: Storage, cobjs: Iterable[CObj[TItem]]) -> List[TItem]:
-    ...
+def load_cobjs(storage: Storage, cobjs: Iterable[CObj[TItem]]) -> List[TItem]: ...
 
 
 @overload
-def load_cobjs(storage: Storage, cobjs: Iterable[CloudObject]) -> List[Any]:
-    ...
+def load_cobjs(storage: Storage, cobjs: Iterable[CloudObject]) -> List[Any]: ...
 
 
 def load_cobjs(storage: Storage, cobjs):
@@ -232,10 +219,10 @@ def get_ranges_from_cobject(
     """Download partial ranges from a CloudObject. This combines adjacent/overlapping ranges
     to minimize the number of requests without wasting any bandwidth if there are large gaps
     between requested ranges."""
-    max_jump = 2 ** 16  # Largest gap between ranges before a new request should be made
+    max_jump = 2**16  # Largest gap between ranges before a new request should be made
     # Limit chunks to 256MB to avoid large memory allocations, and because SSL fails if requests
     # are >2GB https://bugs.python.org/issue42853 (Fixed in Python 3.9.7, broken in 3.8.*)
-    max_chunk_size = 256 * 2 ** 20
+    max_chunk_size = 256 * 2**20
 
     request_ranges: List[Tuple[int, int]] = []
     tasks = []

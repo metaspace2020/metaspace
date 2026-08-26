@@ -7,7 +7,6 @@ from sm.engine.image_store import ImageStoreServiceWrapper
 from sm.engine.config import init_loggers, SMConfig
 from sm.engine.db import DB
 
-
 MIGRATION_SQL_WHERE = "status != 'FAILED' ORDER BY id DESC"
 
 

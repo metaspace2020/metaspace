@@ -64,10 +64,8 @@ def main():
                     }
                 )
                 data.append(item)
-                logging.info(
-                    f'{item["md5"]} {item["sha256"]} {item["calc_time"]:>9.3f}\
-                     {item["size"]} {item["version_id"]} {item["key"]}'
-                )
+                logging.info(f'{item["md5"]} {item["sha256"]} {item["calc_time"]:>9.3f}\
+                     {item["size"]} {item["version_id"]} {item["key"]}')
             except botocore.exceptions.ClientError:
                 logging.error(f'{file["Key"]}')
 

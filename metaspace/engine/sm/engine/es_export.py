@@ -458,9 +458,11 @@ class ESExporter:
             mzs, _ = isocalc.centroids(ion_without_pol)
             doc['centroid_mzs'] = list(mzs) if mzs is not None else []
             doc['iso_image_urls'] = [
-                image_storage.get_image_url(image_storage.ISO, ds_id, image_id)
-                if image_id
-                else None
+                (
+                    image_storage.get_image_url(image_storage.ISO, ds_id, image_id)
+                    if image_id
+                    else None
+                )
                 for image_id in doc['iso_image_ids']
             ]
 
@@ -698,8 +700,14 @@ class ESExporterIsobars:
         mzs_df = peaks_df.sort_values('mz')
 
         mzs_df['lower_mz'], mzs_df['upper_mz'] = isocalc.mass_accuracy_bounds(mzs_df['mz'])
-        mzs_df['lower_idx'] = np.searchsorted(mzs_df.upper_mz.values, mzs_df.lower_mz.values, 'l')
-        mzs_df['upper_idx'] = np.searchsorted(mzs_df.lower_mz.values, mzs_df.upper_mz.values, 'r')
+        # numpy>=2.0 requires the full 'left'/'right' side value; the 'l'/'r' abbreviations
+        # it used to accept now raise ValueError.
+        mzs_df['lower_idx'] = np.searchsorted(
+            mzs_df.upper_mz.values, mzs_df.lower_mz.values, 'left'
+        )
+        mzs_df['upper_idx'] = np.searchsorted(
+            mzs_df.lower_mz.values, mzs_df.upper_mz.values, 'right'
+        )
         return mzs_df
 
     @staticmethod

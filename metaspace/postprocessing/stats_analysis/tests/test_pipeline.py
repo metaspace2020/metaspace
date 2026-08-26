@@ -1,4 +1,5 @@
 """Smoke test: pipeline.run_experiment_prep delegates to the real runner."""
+
 from unittest.mock import patch
 
 from tests.fixtures import make_payload

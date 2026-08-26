@@ -74,7 +74,7 @@ def make_formula_metrics_df():
             'chaos': [0.9, 0.9, 0.9],
             'spatial': [0.9, 0.9, 0.9],
             'spectral': [0.9, 0.9, 0.9],
-            'msm': [0.9 ** 3, 0.9 ** 3, 0.9 ** 3],
+            'msm': [0.9**3, 0.9**3, 0.9**3],
             'total_iso_ints': [[100.0], [100.0], [100.0]],
             'min_iso_ints': [[0], [0], [0]],
             'max_iso_ints': [[10.0], [10.0], [10.0]],
@@ -210,7 +210,7 @@ def test_lithops_daemon_stores_results_and_indexes(
         formula, adduct, msm, stats, iso_image_ids = row
         assert formula == 'C12H24O'
         assert adduct == expected_adduct
-        assert np.isclose(msm, 0.9 ** 3)
+        assert np.isclose(msm, 0.9**3)
         assert stats == {
             'chaos': 0.9,
             'spatial': 0.9,

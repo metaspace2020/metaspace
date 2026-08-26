@@ -1,6 +1,6 @@
 from copy import deepcopy
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pandas as pd
 
@@ -52,7 +52,7 @@ def create_test_molecular_db(
     **kwargs,
 ) -> MolecularDB:
     if not created_dt:
-        created_dt = datetime.utcnow()
+        created_dt = datetime.now(timezone.utc).replace(tzinfo=None)
 
     (moldb_id,) = DB().insert_return(
         'INSERT INTO molecular_db (name, version, created_dt, group_id, archived) '

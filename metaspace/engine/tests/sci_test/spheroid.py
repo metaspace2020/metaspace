@@ -8,7 +8,6 @@ from urllib.request import urlretrieve
 import numpy as np
 import pandas as pd
 import psycopg2
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 from sm.engine import molecular_db
 from sm.engine.annotation.scoring_model import (
@@ -31,7 +30,7 @@ MOL_DBS = {
     'hmdb': {
         'name': 'HMDB',
         'version': 'v4',
-        'url': 'https://sm-engine.s3-eu-west-1.amazonaws.com/tests/hmdb_4.tsv',
+        'url': 'https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/hmdb/hmdb_4.tsv',
     },
     'cm3': {
         'name': 'CoreMetabolome',
@@ -269,11 +268,23 @@ def ensure_db_exists(sm_config):
             db_owner = db_config['user']
 
             print(f'Creating database {db_name}')
-            # Connect to postgres database so that the configured DB can be created
-            with psycopg2.connect(**{**db_config, 'database': 'postgres'}) as conn:
-                conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+            # Connect to postgres database so that the configured DB can be created.
+            # NOTE: Deliberately not using `with psycopg2.connect(...) as conn:` here. On
+            # psycopg2-binary>=2.9, entering the connection via that context manager leaves the
+            # session in a state where the subsequent CREATE DATABASE is rejected with
+            # "psycopg2.errors.ActiveSqlTransaction: CREATE DATABASE cannot run inside a
+            # transaction block", even though conn.autocommit/get_transaction_status() report
+            # autocommit/idle at that point (verified via isolated repro against psycopg2-binary
+            # 2.9.12 + Postgres 18; the same connect+cursor code without the `with conn:` wrapper
+            # succeeds). CREATE DATABASE cannot run inside a transaction, so we connect without a
+            # context manager and set autocommit directly instead of via set_isolation_level.
+            conn = psycopg2.connect(**{**db_config, 'database': 'postgres'})
+            try:
+                conn.autocommit = True
                 with conn.cursor() as curs:
                     curs.execute(f'CREATE DATABASE {db_name} OWNER {db_owner}')
+            finally:
+                conn.close()
 
 
 def ensure_db_populated(sm_config, analysis_version, database):
@@ -293,7 +304,7 @@ def ensure_db_populated(sm_config, analysis_version, database):
         print(f'Importing {database}')
         with TemporaryDirectory() as tmp:
             urlretrieve(moldb['url'], f'{tmp}/moldb.tsv')
-            molecular_db.create(moldb['name'], moldb['version'], f'{tmp}/moldb.tsv')
+            molecular_db.create(moldb['name'], moldb['version'], f'{tmp}/moldb.tsv', bypass_row_limit=True)
 
     if analysis_version > 1:
         if len(db.select("SELECT name FROM scoring_model WHERE type = 'catboost'")) == 0:

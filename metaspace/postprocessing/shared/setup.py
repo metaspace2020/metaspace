@@ -7,6 +7,6 @@ setup(
     url='https://github.com/metaspace2020/metaspace',
     author='METASPACE Team',
     packages=find_packages(),
-    python_requires='>=3.8',
+    python_requires='>=3.14',
     install_requires=['requests'],
 )

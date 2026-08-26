@@ -1,4 +1,4 @@
-FROM python:3.8.20-slim
+FROM python:3.14-slim
 
 RUN apt-get update \
     # Install aws-lambda-cpp build dependencies
@@ -11,14 +11,14 @@ RUN apt-get update \
 # Update pip
 RUN pip install --upgrade --ignore-installed pip wheel six setuptools \
     && pip install --upgrade --no-cache-dir --ignore-installed \
-        awslambdaric==2.2.1 \
-        boto3==1.35.16 \
-        cloudpickle==3.0.0 \
+        awslambdaric==4.0.2 \
+        boto3==1.43.79 \
+        cloudpickle==3.1.2 \
         pika==1.3.2 \
         ps-mem==3.14 \
-        redis==5.0.8 \
-        requests==2.29.0 \
-        tblib==3.0.0
+        redis==8.1.0 \
+        requests==2.34.2 \
+        tblib==3.2.2
 
 ARG FUNCTION_DIR="/function"
 
@@ -38,7 +38,7 @@ RUN unzip lithops_lambda.zip \
 
 # Install M\ requirements
 COPY requirements.txt /tmp/requirements.txt
-RUN grep -E "^(c?pyMSpec|c?pyImagingMSpec|numpy|scipy|pandas|msgpack|pyimzML|pyarrow|scikit-learn|Pillow|boto3)" /tmp/requirements.txt > /tmp/requirements-lithops.txt
+RUN grep -E "^(c?pyMSpec|c?pyImagingMSpec|numpy|scipy|pandas|msgpack|pyimzML|scikit-learn|Pillow|boto3)" /tmp/requirements.txt > /tmp/requirements-lithops.txt
 # CatBoost installs large optional dependencies (plotly, matplotlib), so install it with --no-deps
 RUN grep -E "^(catboost)" /tmp/requirements.txt > /tmp/requirements-catboost.txt
 RUN pip install --no-cache-dir -r /tmp/requirements-lithops.txt && pip install --no-cache-dir -r /tmp/requirements-catboost.txt --no-deps

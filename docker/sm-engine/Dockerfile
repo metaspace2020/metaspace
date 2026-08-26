@@ -1,61 +1,36 @@
-FROM  --platform=linux/amd64  ubuntu:20.04
+FROM --platform=linux/amd64 ubuntu:26.04
 
-MAINTAINER Vitaly Kovalev <kovalev@embl.de>
-WORKDIR /
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential cmake git curl wget nano netcat-openbsd sudo ca-certificates adduser \
+    libpq-dev postgresql-client libsm6 libxrender1 libxext6 \
+    python3 python3-dev python3-venv \
+ && rm -rf /var/lib/apt/lists/*
 
-# Use the fastest apt mirror
-RUN sed -i -e 's|http://.*archive.ubuntu.com/ubuntu/|mirror://mirrors.ubuntu.com/mirrors.txt|' /etc/apt/sources.list
+# Keep uid 1000 — bind-mount ownership and the compose SM_USER contract depend on it.
+# ubuntu:24.04+ images ship a default 'ubuntu' user that already owns uid 1000 — remove it first.
+RUN userdel -r ubuntu 2>/dev/null || true \
+ && adduser --disabled-password --uid 1000 --gecos "" sm-engine \
+ && echo "sm-engine ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
-    apt-get update && \
-# ----- Tools -----
-    DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
-        build-essential \
-        ca-certificates \
-        cmake \
-        wget \
-        git \
-        nano \
-        netcat \
-        netcat-openbsd \
-        sudo \
-        && \
-# ----- Python -----
-    DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
-        software-properties-common && \
-    add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && \
-    DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
-        python3.8 \
-        python3.8-dev \
-        python3-distutils \
-        libsm6 libxrender1 libxext6 \
-        git curl postgresql-client libpq-dev \
-        && \
-    wget -O /tmp/get-pip.py https://bootstrap.pypa.io/pip/3.8/get-pip.py && \
-    python3.8 /tmp/get-pip.py && \
-    ln -s /usr/bin/python3.8 /usr/local/bin/python3 && \
-    ln -s /usr/bin/python3.8 /usr/local/bin/python && \
-    apt-get clean -y && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/* /tmp/* ~/.cache/*
+# Create the venv's parent dir owned by sm-engine so it (and everything pip writes
+# into it below) is populated by that user directly — no post-hoc chown -R of a
+# populated tree, which would bloat this layer.
+RUN mkdir /opt/venv && chown sm-engine:sm-engine /opt/venv
 
-# --- Engine dependencies ---
-COPY metaspace/engine/requirements.txt /requirements.txt
-COPY metaspace/engine/requirements-dev.txt /requirements-dev.txt
+COPY metaspace/engine/requirements.txt metaspace/engine/requirements-dev.txt /
 
-RUN PIP_INSTALL="python -m pip install --upgrade" && \
-    $PIP_INSTALL pip setuptools && \
-    $PIP_INSTALL -r requirements.txt -r requirements-dev.txt && \
-    rm -rf /var/lib/apt/lists/* /tmp/* ~/.cache/*
-
-# Create a user (this may need to be fixed if someone has a non-1000 UID)
-RUN adduser --disabled-password --uid 1000 --gecos "" sm-engine \
-    && echo "sm-engine ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/sm-engine \
-    && chmod 0440 /etc/sudoers.d/sm-engine
-
-# # Silence MPL warnings about home directory not being writable
-# ENV MPLCONFIGDIR=/tmp/matplotlib
+# Ubuntu 23.04+ marks the system Python externally-managed (PEP 668) — a venv is required.
+# It also mirrors prod more closely, where the engine runs in its own conda env, not system python.
+# Run as sm-engine so /opt/venv (and everything installed into it) ends up owned by the
+# runtime user — this is what lets start-common.sh's startup `pip install -qr requirements.txt`
+# actually work instead of silently no-op'ing against a root-owned venv.
+USER sm-engine
+ENV PATH=/opt/venv/bin:$PATH
+RUN python3 -m venv /opt/venv \
+ && pip install --no-cache-dir --upgrade pip setuptools \
+ && pip install --no-cache-dir -r /requirements.txt -r /requirements-dev.txt
+USER root
 
 ENTRYPOINT [ ]
 CMD [ "/sm-engine/start-api.sh" ]

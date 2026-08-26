@@ -11,6 +11,7 @@ from sm.engine.util import GlobalInit
 
 logger = logging.getLogger('engine')
 
+
 # pylint: disable=inconsistent-return-statements
 def main():
     help_msg = 'Import a new enrichment database'

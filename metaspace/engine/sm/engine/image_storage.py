@@ -54,7 +54,11 @@ class ImageStorage:
 
     @staticmethod
     def _make_key(image_type, ds_id, img_id):
-        return f'{image_type}/{ds_id}/{img_id}'
+        # Python 3.11+ changed Enum.__format__ for `class X(str, Enum)` to no longer delegate
+        # to str's formatting, so f'{image_type}' now renders 'ImageType.ISO' instead of 'iso'.
+        # Use .value explicitly to keep the S3 key stable across Python versions.
+        image_type_str = image_type.value if isinstance(image_type, ImageType) else image_type
+        return f'{image_type_str}/{ds_id}/{img_id}'
 
     def _get_object(self, image_type, ds_id, img_id):
         key = self._make_key(image_type, ds_id, img_id)
@@ -209,8 +213,7 @@ class _GetIonImagesForAnalysis(Protocol):
         hotspot_percentile: int = 99,
         max_size: Tuple[int, int] = None,
         max_mem_mb: int = 2048,
-    ) -> Tuple[np.ndarray, np.ndarray, Tuple[int, int]]:
-        ...
+    ) -> Tuple[np.ndarray, np.ndarray, Tuple[int, int]]: ...
 
 
 # pylint: disable=invalid-name

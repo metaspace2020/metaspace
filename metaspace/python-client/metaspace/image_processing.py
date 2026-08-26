@@ -39,13 +39,11 @@ def colocalization(img_a: np.ndarray, img_b: np.ndarray):
 
 
 @overload
-def colocalization_matrix(images: List[np.ndarray], labels: None = None) -> np.ndarray:
-    ...
+def colocalization_matrix(images: List[np.ndarray], labels: None = None) -> np.ndarray: ...
 
 
 @overload
-def colocalization_matrix(images: List[np.ndarray], labels: List[str]) -> pd.DataFrame:
-    ...
+def colocalization_matrix(images: List[np.ndarray], labels: List[str]) -> pd.DataFrame: ...
 
 
 def colocalization_matrix(images: List[np.ndarray], labels=None):

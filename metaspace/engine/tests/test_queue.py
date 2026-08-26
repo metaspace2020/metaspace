@@ -6,7 +6,6 @@ import logging
 
 from sm.engine.queue import QueuePublisher, QueueConsumer
 
-
 logging.basicConfig(level=logging.DEBUG)
 
 QDESC = {'name': 'sm_test', 'durable': True, 'arguments': {'x-max-priority': 3}}

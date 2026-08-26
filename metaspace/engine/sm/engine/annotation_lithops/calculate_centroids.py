@@ -67,7 +67,7 @@ def calculate_centroids(
         df = pd.concat(load_cobjs(storage, peaks_cobjs))
         first_peak_mz = df.mz[df.peak_i == 0].sort_values()
 
-        peaks_chunk_size = 64 * 2 ** 20
+        peaks_chunk_size = 64 * 2**20
         n_chunks = int(np.ceil(df.memory_usage().sum() / peaks_chunk_size))
         cnt = len(first_peak_mz)
         chunks = (
@@ -81,7 +81,7 @@ def calculate_centroids(
         _sort_peaks_cobjs,
         (),
         cost_factors={'num_centroids': num_centroids, 'num_peak_cobjects': len(peaks_cobjs)},
-        runtime_memory=256 + 100 * num_centroids / 2 ** 20,
+        runtime_memory=256 + 100 * num_centroids / 2**20,
     )
 
     logger.info(f'Sorted centroids chunks into {len(sorted_peaks_cobjs)} chunks')

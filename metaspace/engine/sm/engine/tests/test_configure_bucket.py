@@ -2,6 +2,7 @@
 
 These tests are fully mocked and do not require a running S3/MinIO service.
 """
+
 from unittest.mock import MagicMock, patch
 
 from sm.engine import image_storage

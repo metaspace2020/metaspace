@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
 cd /opt/dev/metaspace/metaspace/engine
+export PYTHONPATH="$(pwd)${PYTHONPATH:+:$PYTHONPATH}"
 
 pip install -qr requirements.txt
-pip install -e .
+# pip install -e .
 
 # TODO: This doesn't include all databases, and the only way to exclude databases is to comment them out.
 # It would be much better as a Python script that interactively allowed databases to be selected.

@@ -143,7 +143,7 @@ def extract_value(message: str) -> Dict[str, Union[float, int]]:
 
 
 def extract_data_from_cloudwatch_logs(
-    records: List[List[Dict[str, str]]]
+    records: List[List[Dict[str, str]]],
 ) -> Dict[str, Dict[str, Union[float, int]]]:
     """For each record in CW logs, extract info about Duration and Memory"""
     data = {}

@@ -318,14 +318,10 @@ class DatasetManager:  # pylint: disable=too-many-public-methods
             )
             submit_time = time.time() - submit_start_time
             total_daemon_time = time.time() - daemon_start_time
-            self.logger.info(
-                f"""[SEGMENTATION_PERF] Segmentation
-                 job {job_id} submitted successfully"""
-            )
-            self.logger.info(
-                f"""[SEGMENTATION_PERF] Submit time: {submit_time:.3f}s,
-                 Total daemon time: {total_daemon_time:.3f}s"""
-            )
+            self.logger.info(f"""[SEGMENTATION_PERF] Segmentation
+                 job {job_id} submitted successfully""")
+            self.logger.info(f"""[SEGMENTATION_PERF] Submit time: {submit_time:.3f}s,
+                 Total daemon time: {total_daemon_time:.3f}s""")
         except Exception as e:
             # Don't propagate — a segmentation failure
             # should not change the dataset status to FAILED.

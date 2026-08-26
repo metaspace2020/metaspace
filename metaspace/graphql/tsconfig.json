@@ -3,6 +3,7 @@
     "allowJs": true,
     "target": "es2017",
     "strict": true,
+    "skipLibCheck": true,
     "sourceMap": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,

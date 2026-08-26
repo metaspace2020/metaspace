@@ -2,6 +2,7 @@
 
 Output shape: { inferred_test, results, run_qc } per the engine callback contract.
 """
+
 # pylint: disable=invalid-name  # short loop/stats vars (r, p, q, rk, lg, md, s) are conventional
 from __future__ import annotations
 

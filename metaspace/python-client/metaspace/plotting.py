@@ -116,6 +116,7 @@ def bar_by_ds(
 # --------------------------------------------------------------------
 alignment = {'horizontalalignment': 'center', 'verticalalignment': 'center'}
 
+
 # --------------------------------------------------------------------
 def venn(data, names=None, fill="number", show_names=True, show_plot=True, **kwds):
     # Credit: https://github.com/ksahlin/pyinfor/blob/master/venn.py
@@ -177,7 +178,7 @@ def get_labels(data, fill="number"):
 
     # bin(3) --> '0b11', so bin(3).split('0b')[-1] will remove "0b"
     set_collections = {}
-    for n in range(1, 2 ** N):
+    for n in range(1, 2**N):
         key = bin(n).split('0b')[-1].zfill(N)
         value = s_all
         sets_for_intersection = [sets_data[i] for i in range(N) if key[i] == '1']
@@ -290,7 +291,7 @@ def venn3_fixed(data=None, names=None, fill="number", show_names=True, show_plot
     # r: radius of the circles
     # (x1, y1), (x2, y2), (x3, y3): center of circles
     r, x1, y1, x2, y2 = 2.0, 3.0, 3.0, 5.0, 3.0
-    x3, y3 = (x1 + x2) / 2.0, y1 + 3 ** 0.5 / 2 * r
+    x3, y3 = (x1 + x2) / 2.0, y1 + 3**0.5 / 2 * r
 
     # set colors for different Circles or ellipses
     if 'colors' in kwds and isinstance(kwds['colors'], Iterable) and len(kwds['colors']) >= 3:

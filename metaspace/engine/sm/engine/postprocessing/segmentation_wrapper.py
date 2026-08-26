@@ -60,10 +60,8 @@ def submit_segmentation_job(  # pylint: disable=too-many-arguments, too-many-loc
             max_mz=max_mz,
         )
         data_load_time = time.time() - data_load_start
-        logger.info(
-            f"""[SEGMENTATION_PERF] Data loading completed
-             in {data_load_time:.3f}s for dataset {ds_id}"""
-        )
+        logger.info(f"""[SEGMENTATION_PERF] Data loading completed
+             in {data_load_time:.3f}s for dataset {ds_id}""")
         logger.info(
             f'Successfully prepared segmentation input for dataset {ds_id}, S3 key: {input_s3_key}'
         )
@@ -95,10 +93,8 @@ def submit_segmentation_job(  # pylint: disable=too-many-arguments, too-many-loc
             timeout=30,
         )
         service_call_time = time.time() - service_call_start
-        logger.info(
-            f"""[SEGMENTATION_PERF] Service call completed
-             in {service_call_time:.3f}s for job {job_id}"""
-        )
+        logger.info(f"""[SEGMENTATION_PERF] Service call completed
+             in {service_call_time:.3f}s for job {job_id}""")
         logger.info(
             f'Segmentation service responded with status {resp.status_code} for job {job_id}'
         )
@@ -117,10 +113,8 @@ def submit_segmentation_job(  # pylint: disable=too-many-arguments, too-many-loc
         raise RuntimeError(f"Failed to connect to segmentation service: {e}") from e
 
     total_submit_time = time.time() - submit_start_time
-    logger.info(
-        f"""[SEGMENTATION_PERF] submit_segmentation_job completed
-         in {total_submit_time:.3f}s for job {job_id}"""
-    )
+    logger.info(f"""[SEGMENTATION_PERF] submit_segmentation_job completed
+         in {total_submit_time:.3f}s for job {job_id}""")
     logger.info(f'Segmentation job {job_id} accepted by service for dataset {ds_id}')
 
 
@@ -132,10 +126,8 @@ def save_segmentation_result(
     Called from the API callback endpoint when the microservice posts back.
     """
     save_start_time = time.time()
-    logger.info(
-        f"""[SEGMENTATION_PERF] save_segmentation_result started
-         for dataset {ds_id}, job {job_id}"""
-    )
+    logger.info(f"""[SEGMENTATION_PERF] save_segmentation_result started
+         for dataset {ds_id}, job {job_id}""")
     logger.info(f'Saving segmentation result for dataset {ds_id}, job {job_id}')
     logger.debug(f'Result keys: {list(result.keys())}')
 
@@ -176,10 +168,8 @@ def save_segmentation_result(
         ds_id, label_map, key=DiagnosticImageKey.LABEL_MAP, fmt=DiagnosticImageFormat.NPY
     )
     label_map_save_time = time.time() - label_map_save_start
-    logger.info(
-        f"""[SEGMENTATION_PERF] Label map saved in {label_map_save_time:.3f}s
-         for dataset {ds_id}"""
-    )
+    logger.info(f"""[SEGMENTATION_PERF] Label map saved in {label_map_save_time:.3f}s
+         for dataset {ds_id}""")
 
     add_diagnostics(
         [
@@ -211,10 +201,8 @@ def save_segmentation_result(
         rows=[(ds_id, job_id, seg_idx, algorithm, 'FINISHED') for seg_idx in range(n_segments)],
     )
     segmentation_insert_time = time.time() - segmentation_insert_start
-    logger.info(
-        f"""[SEGMENTATION_PERF] Inserted {n_segments} segmentation rows
-         in {segmentation_insert_time:.3f}s"""
-    )
+    logger.info(f"""[SEGMENTATION_PERF] Inserted {n_segments} segmentation rows
+         in {segmentation_insert_time:.3f}s""")
     logger.info(f'Inserted {n_segments} segmentation rows for dataset {ds_id} (job {job_id})')
 
     # 3. Populate segmentation_ion_profile
@@ -267,10 +255,8 @@ def save_segmentation_result(
                 profile_rows,
             )
             profile_insert_time = time.time() - profile_insert_start
-            logger.info(
-                f"""[SEGMENTATION_PERF] Inserted {len(profile_rows)}
-                 ion profiles in {profile_insert_time:.3f}s"""
-            )
+            logger.info(f"""[SEGMENTATION_PERF] Inserted {len(profile_rows)}
+                 ion profiles in {profile_insert_time:.3f}s""")
         logger.info(
             f'Inserted {len(profile_rows)} segmentation_ion_profile rows for dataset {ds_id}'
             f' ({skipped} skipped — missing annotation or NaN score)'
@@ -286,8 +272,6 @@ def save_segmentation_result(
 
     total_save_time = time.time() - save_start_time
     logger.info(f'[SEGMENTATION_PERF] Job marked as FINISHED in {job_finish_time:.3f}s')
-    logger.info(
-        f"""[SEGMENTATION_PERF] save_segmentation_result completed
-         in {total_save_time:.3f}s for dataset {ds_id}"""
-    )
+    logger.info(f"""[SEGMENTATION_PERF] save_segmentation_result completed
+         in {total_save_time:.3f}s for dataset {ds_id}""")
     logger.info(f'Segmentation result saved for dataset {ds_id} (job {job_id})')

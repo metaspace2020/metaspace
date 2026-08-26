@@ -63,12 +63,24 @@ class CentroidsCacheEntry:
 
     def load(self):
         try:
-            db_data_cobjs, peaks_cobjs = deserialize(
-                self.storage.get_object(self.bucket, self.meta_key)
-            )
-            return db_data_cobjs, peaks_cobjs
+            raw = self.storage.get_object(self.bucket, self.meta_key)
         except StorageNoSuchKeyError:
             return None
+
+        try:
+            db_data_cobjs, peaks_cobjs = deserialize(raw)
+        except Exception:
+            # Covers legacy cache entries written by the removed pa.serialize (now raising
+            # pickle.UnpicklingError/EOFError/etc. instead of decoding), or any other corrupt
+            # payload. Treat it the same as a cache miss instead of crashing the whole run.
+            logger.warning(
+                f'Failed to deserialize centroids cache entry {self.bucket}/{self.meta_key}. '
+                'Treating as a cache miss and recomputing.',
+                exc_info=True,
+            )
+            return None
+
+        return db_data_cobjs, peaks_cobjs
 
     def save(self, db_data_cobjs: List[CObj[DbFDRData]], peaks_cobjs: List[CObj[pd.DataFrame]]):
         def batch_copy(src_cobjs: List[CloudObject], dest_prefix: str, *, storage: Storage):

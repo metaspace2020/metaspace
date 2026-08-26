@@ -34,7 +34,6 @@ from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
 from sm.engine.errors import LimitError
 
-
 logger = logging.getLogger('annotation-pipeline')
 
 

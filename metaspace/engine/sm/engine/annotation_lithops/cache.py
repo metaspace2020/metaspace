@@ -81,10 +81,14 @@ def use_pipeline_cache(f):
             return f(self, *args, **kwargs)
 
         if use_cache and cacher.exists(f_name):
-            updates, ret = cacher.load(f_name)
-            self.__dict__.update(updates)
-            logger.debug(f'Loaded {f_name} from cache. Keys: {list(updates.keys())}')
-            return ret
+            try:
+                updates, ret = cacher.load(f_name)
+            except Exception:
+                logger.warning(f'Failed to load {f_name} from cache. Recomputing.', exc_info=True)
+            else:
+                self.__dict__.update(updates)
+                logger.debug(f'Loaded {f_name} from cache. Keys: {list(updates.keys())}')
+                return ret
 
         dict_before = self.__dict__.copy()
         ret = f(self, *args, **kwargs)

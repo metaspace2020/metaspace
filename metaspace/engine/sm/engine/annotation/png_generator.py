@@ -281,21 +281,21 @@ class PngGenerator:
                 (250, 230, 34),
                 (253, 231, 36),
             ],
-            dtype=np.float,
+            dtype=np.float64,
         )
         self._colors = np.c_[colors, np.ones_like(colors[:, 0])]
 
     def _to_image(self, array):
-        image = ((array - array.min()) / (array.max() - array.min())) * (2 ** self._bitdepth - 1)
+        image = ((array - array.min()) / (array.max() - array.min())) * (2**self._bitdepth - 1)
         if self._greyscale:
             grey = np.empty(shape=image.shape + (2,), dtype=np.uint16)
             grey[:, :, 0] = image.astype(np.uint16)
-            grey[:, :, 1] = (self._mask * (2 ** self._bitdepth - 1)).astype(np.uint16)
+            grey[:, :, 1] = (self._mask * (2**self._bitdepth - 1)).astype(np.uint16)
             image = grey
         else:
             rgba = np.empty(shape=image.shape + (4,), dtype=self._colors.dtype)
             self._colors.take(image.astype(np.uint8), axis=0, mode='clip', out=rgba)
-            rgba[:, :, 3] = self._mask * (2 ** self._bitdepth - 1)
+            rgba[:, :, 3] = self._mask * (2**self._bitdepth - 1)
             image = rgba
         return image
 

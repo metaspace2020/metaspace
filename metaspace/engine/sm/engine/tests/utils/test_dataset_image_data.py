@@ -7,7 +7,6 @@ import numpy as np
 
 from sm.engine.utils import dataset_image_data
 
-
 DS_ID = '2020-01-01_00h00m00s'
 
 

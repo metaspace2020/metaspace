@@ -2,6 +2,7 @@
 """
 Script for running molecule search
 """
+
 import argparse
 from pathlib import Path
 

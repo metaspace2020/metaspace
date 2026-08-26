@@ -155,7 +155,7 @@ class DB:
 
     @db_call
     def select_onecol(self, sql: str, params=None):
-        """ Execute select query and return a list containing values from the first column"""
+        """Execute select query and return a list containing values from the first column"""
         return [row[0] for row in self._select(sql, params)]
 
     @db_call

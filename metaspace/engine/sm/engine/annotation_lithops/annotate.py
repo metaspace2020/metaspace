@@ -33,7 +33,7 @@ class ImagesManager:
     prevent using too much memory, and to control the batch size during PNG conversion.
     """
 
-    chunk_size = 50 * 1024 ** 2  # 50MB
+    chunk_size = 50 * 1024**2  # 50MB
 
     def __init__(self, storage: Storage):
 
@@ -138,9 +138,11 @@ def gen_iso_image_sets(
         centr_df = centr_df.sort_values(['formula_i', 'peak_i'])
         lower_mz, upper_mz = isocalc_wrapper.mass_accuracy_bounds(centr_df.mz.values)
         cols = ['formula_i', 'peak_i', 'int', 'mz', 'target', 'targeted']
+        # numpy>=2.0 requires the full 'left'/'right' side value; the 'l'/'r' abbreviations
+        # it used to accept now raise ValueError.
         centr_df = centr_df[cols].assign(
-            lower_idx=np.searchsorted(sp_mzs, lower_mz, 'l'),
-            upper_idx=np.searchsorted(sp_mzs, upper_mz, 'r'),
+            lower_idx=np.searchsorted(sp_mzs, lower_mz, 'left'),
+            upper_idx=np.searchsorted(sp_mzs, upper_mz, 'right'),
         )
 
         buffer: List[Tuple[Any, coo_matrix, coo_matrix]] = []
@@ -195,7 +197,8 @@ def read_ds_segments(
         row_start, row_end = 0, 0
         for segm_i, cobj in enumerate(ds_segms_cobjs):
             sub_sp_df = load_cobj(storage, cobj)
-            assert sub_sp_df.mz.is_monotonic
+            # Series.is_monotonic was removed in pandas 2.0; is_monotonic_increasing replaces it.
+            assert sub_sp_df.mz.is_monotonic_increasing
             assert len(sub_sp_df) == ds_segm_lens[segm_i], 'unexpected ds_segm length'
             row_end = row_start + len(sub_sp_df)
             print(
@@ -211,7 +214,8 @@ def read_ds_segments(
     else:
         sp_df = pd.concat(load_cobjs(storage, ds_segms_cobjs), ignore_index=True, sort=False)
 
-    assert sp_df.mz.is_monotonic
+    # Series.is_monotonic was removed in pandas 2.0; is_monotonic_increasing replaces it.
+    assert sp_df.mz.is_monotonic_increasing
 
     return sp_df
 

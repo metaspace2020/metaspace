@@ -1,4 +1,5 @@
 """Unit tests for region-mask rasterisation helpers."""
+
 import numpy as np
 
 from sm.engine.postprocessing.experiment_masks import (

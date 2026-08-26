@@ -6,7 +6,6 @@ from logging.config import dictConfig
 from pathlib import Path
 from typing import Dict
 
-
 logger = logging.getLogger('engine')
 
 
@@ -45,7 +44,7 @@ def init_loggers(config=None):
 
 
 class SMConfig:
-    """ Engine configuration manager """
+    """Engine configuration manager"""
 
     _path = 'conf/config.json'
     _config_dict: Dict = {}

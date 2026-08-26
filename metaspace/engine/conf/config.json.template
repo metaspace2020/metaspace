@@ -3,7 +3,7 @@
     "host": "localhost",
     "port": 5123,
     "debug": false,
-    "server": "cherrypy"
+    "server": "cheroot"
   },
   "redis": {{ sm_redis | to_json }},
   "db": {
