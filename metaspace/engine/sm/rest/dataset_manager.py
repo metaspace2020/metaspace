@@ -17,7 +17,7 @@ from sm.engine.utils.files_util import format_size
 
 
 class DatasetActionPriority:
-    """ Priorities used for messages sent to queue """
+    """Priorities used for messages sent to queue"""
 
     LOW = 0
     STANDARD = 1
@@ -79,7 +79,15 @@ class SMapiDatasetManager:
             self._set_ds_busy(ds, kwargs.get('force', False))
             config = update_ds_config(ds.config, doc['metadata'], **ds_config_kwargs)
         except UnknownDSID:
-            config = generate_ds_config(doc.get('metadata'), **ds_config_kwargs)
+            clone_from_ds_id = doc.get('clone_from_ds_id')
+            if clone_from_ds_id:
+                # A split child: clone the parent's own processing config rather than having the
+                # caller re-specify every field, so a config field added later can't be silently
+                # dropped just because some doc-building code forgot to mirror it.
+                parent_ds = Dataset.load(self._db, clone_from_ds_id)
+                config = update_ds_config(parent_ds.config, doc.get('metadata'), **ds_config_kwargs)
+            else:
+                config = generate_ds_config(doc.get('metadata'), **ds_config_kwargs)
 
         ds = Dataset(
             id=doc['id'],
@@ -102,13 +110,13 @@ class SMapiDatasetManager:
         return doc['id']
 
     def delete(self, ds_id, **kwargs):
-        """ Send delete message to the queue """
+        """Send delete message to the queue"""
         ds = Dataset.load(self._db, ds_id)
         self._set_ds_busy(ds, kwargs.get('force', False))
         self._post_sm_msg(ds=ds, queue=self._update_queue, action=DaemonAction.DELETE, **kwargs)
 
     def update(self, ds_id, doc, async_es_update, **kwargs):
-        """ Save dataset and send update message to the queue """
+        """Save dataset and send update message to the queue"""
         ds = Dataset.load(self._db, ds_id)
         ds.name = doc.get('name', ds.name)
         ds.input_path = doc.get('input_path', ds.input_path)

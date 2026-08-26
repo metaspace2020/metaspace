@@ -61,6 +61,11 @@ def _open(path: Path):
     return ImzMLParser(str(path) + '.imzML', ibd_file=None)
 
 
+def _coords_xy(parser):
+    """The (x, y) array callers are now expected to compute once and pass in."""
+    return np.array(parser.coordinates)[:, :2]
+
+
 def _reader(path: Path):
     return CoalescingRangeReader(local_range_fetcher(Path(str(path) + '.ibd')))
 
@@ -76,7 +81,7 @@ def test_rebase_coordinates_matches_imzml_reader_convention(tmp_path):
     _make_parent(tmp_path / 'parent')
     parser = _open(tmp_path / 'parent')
 
-    xs, ys, width, height = rebase_coordinates(parser.coordinates)
+    xs, ys, width, height = rebase_coordinates(_coords_xy(parser))
 
     assert (width, height) == (GRID_W, GRID_H)
     assert xs.min() == 0 and ys.min() == 0
@@ -94,9 +99,9 @@ def test_plan_child_selects_pixels_in_rebased_space(tmp_path):
 
     # Left half of the ion image, in ion-image coordinates.
     geojson = _roi([(0, 0), (1, 0), (1, 2), (0, 2)])
-    spec = plan_child(parser.coordinates, geojson, roi_id=1, roi_name='left')
+    spec = plan_child(_coords_xy(parser), geojson, roi_id=1, roi_name='left')
 
-    xs, ys, _, _ = rebase_coordinates(parser.coordinates)
+    xs, ys, _, _ = rebase_coordinates(_coords_xy(parser))
     assert set(xs[spec.sp_idxs]) == {0, 1}
     assert spec.crop_origin == (0, 0)
     assert (spec.width, spec.height) == (2, 3)
@@ -108,7 +113,7 @@ def test_plan_child_crop_origin_is_offset_for_non_origin_roi(tmp_path):
     parser = _open(tmp_path / 'parent')
 
     geojson = _roi([(2, 1), (3, 1), (3, 2), (2, 2)])
-    spec = plan_child(parser.coordinates, geojson, roi_id=1, roi_name='bottom-right')
+    spec = plan_child(_coords_xy(parser), geojson, roi_id=1, roi_name='bottom-right')
 
     assert spec.crop_origin == (2, 1)
     assert (spec.width, spec.height) == (2, 2)
@@ -120,9 +125,9 @@ def test_plan_child_keeps_every_spectrum_at_a_selected_coordinate(tmp_path):
     parser = _open(tmp_path / 'parent')
 
     geojson = _roi([(0, 0), (1, 0), (1, 1), (0, 1)])
-    spec = plan_child(parser.coordinates, geojson, roi_id=1, roi_name='corner')
+    spec = plan_child(_coords_xy(parser), geojson, roi_id=1, roi_name='corner')
 
-    xs, ys, _, _ = rebase_coordinates(parser.coordinates)
+    xs, ys, _, _ = rebase_coordinates(_coords_xy(parser))
     selected = list(zip(xs[spec.sp_idxs], ys[spec.sp_idxs]))
     # (0, 0) appears twice in the parent and must appear twice in the child.
     assert selected.count((0, 0)) == 2
@@ -136,7 +141,7 @@ def test_plan_child_rejects_roi_outside_sample_area(tmp_path):
 
     geojson = _roi([(50, 50), (60, 50), (60, 60), (50, 60)])
     with pytest.raises(DatasetSplitError, match='does not overlap any spectra'):
-        plan_child(parser.coordinates, geojson, roi_id=1, roi_name='off-tissue')
+        plan_child(_coords_xy(parser), geojson, roi_id=1, roi_name='off-tissue')
 
 
 def test_plan_child_rejects_missing_polygon(tmp_path):
@@ -144,7 +149,7 @@ def test_plan_child_rejects_missing_polygon(tmp_path):
     parser = _open(tmp_path / 'parent')
 
     with pytest.raises(DatasetSplitError, match='no usable polygon'):
-        plan_child(parser.coordinates, {'features': []}, roi_id=1, roi_name='missing')
+        plan_child(_coords_xy(parser), {'features': []}, roi_id=1, roi_name='missing')
 
 
 @pytest.mark.parametrize('mode', ['processed', 'continuous'])
@@ -156,8 +161,10 @@ def test_write_child_round_trips_spectra_and_crops_coordinates(tmp_path, mode):
     assert fmt.polarity == 'positive'
 
     geojson = _roi([(2, 1), (3, 1), (3, 2), (2, 2)])
-    spec = plan_child(parser.coordinates, geojson, roi_id=1, roi_name='roi')
-    files = write_child_imzml(parser, _reader(tmp_path / 'parent'), spec, fmt, tmp_path / 'child')
+    spec = plan_child(_coords_xy(parser), geojson, roi_id=1, roi_name='roi')
+    files = write_child_imzml(
+        parser, _coords_xy(parser), _reader(tmp_path / 'parent'), spec, fmt, tmp_path / 'child'
+    )
 
     assert files.imzml_size > 0 and files.ibd_size > 0
     child = ImzMLParser(str(files.imzml_path), ibd_file=None)
@@ -194,9 +201,15 @@ def test_write_child_preserves_mz_dtype(tmp_path):
     assert parser.mzPrecision == 'f'
 
     geojson = _roi([(0, 0), (3, 0), (3, 2), (0, 2)])
-    spec = plan_child(parser.coordinates, geojson, roi_id=1, roi_name='all')
+    coords_xy = _coords_xy(parser)
+    spec = plan_child(coords_xy, geojson, roi_id=1, roi_name='all')
     files = write_child_imzml(
-        parser, _reader(tmp_path / 'parent'), spec, read_parent_format(parser), tmp_path / 'child'
+        parser,
+        coords_xy,
+        _reader(tmp_path / 'parent'),
+        spec,
+        read_parent_format(parser),
+        tmp_path / 'child',
     )
 
     assert ImzMLParser(str(files.imzml_path), ibd_file=None).mzPrecision == 'f'

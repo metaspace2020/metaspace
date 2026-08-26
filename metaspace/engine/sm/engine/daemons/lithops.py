@@ -8,6 +8,7 @@ from sm.engine.annotation_lithops.executor import LithopsStalledException
 from sm.engine.config import SMConfig
 from sm.engine.daemons.actions import DaemonActionStage, DaemonAction
 from sm.engine.dataset import DatasetStatus
+from sm.engine.dataset_split_runner import SplitChildStatus
 from sm.engine.errors import AnnotationError, ImzMLError, IbdError, LimitError, UnknownDSID
 from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.rest.dataset_manager import DatasetActionPriority
@@ -55,6 +56,10 @@ class LithopsDaemon:
 
             os.kill(os.getpid(), signal.SIGINT)
             self._manager.ds_failure_handler(msg, e)
+            if msg.get('ds_id'):
+                self._manager.handle_split_child_terminal(
+                    msg['ds_id'], SplitChildStatus.FAILED, str(e)
+                )
             return
 
         # Stop processing in case of other exception (without sending an email)
@@ -65,6 +70,10 @@ class LithopsDaemon:
             )
             os.kill(os.getpid(), signal.SIGINT)
             self._manager.ds_failure_handler(msg, e)
+            if msg.get('ds_id'):
+                self._manager.handle_split_child_terminal(
+                    msg['ds_id'], SplitChildStatus.FAILED, str(e)
+                )
             return
 
         # Stop processing in case of limit error
@@ -74,6 +83,10 @@ class LithopsDaemon:
 
             os.kill(os.getpid(), signal.SIGINT)
             self._manager.ds_failure_handler(msg, e)
+            if msg.get('ds_id'):
+                self._manager.handle_split_child_terminal(
+                    msg['ds_id'], SplitChildStatus.FAILED, str(e)
+                )
             return
 
         exc = format_exc(limit=10)

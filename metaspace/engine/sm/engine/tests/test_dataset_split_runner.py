@@ -119,38 +119,12 @@ def test_mark_child_terminal_waits_for_remaining_children():
     assert db.alter.call_count == 1
 
 
-def test_mark_child_terminal_summarises_once_all_children_are_terminal():
+def test_mark_child_terminal_finishes_the_job_once_all_children_are_terminal():
     db = MagicMock()
-    db.select_one.side_effect = [
-        _child_row(),
-        (0,),  # nothing pending
-        ('Parent name', 'user@example.org', 'project-1', False),  # job row, email not yet sent
-    ]
-    db.select.return_value = [
-        ('roi A', 'child-a', SplitChildStatus.FINISHED, None),
-        ('roi B', 'child-b', SplitChildStatus.FAILED, 'boom'),
-    ]
+    db.select_one.side_effect = [_child_row(), (0,)]  # child row, then nothing pending
 
-    summary = mark_child_terminal(db, 'child-ds', SplitChildStatus.FINISHED)
-
-    assert summary['email'] == 'user@example.org'
-    assert summary['project_id'] == 'project-1'
-    assert [c['status'] for c in summary['children']] == [
-        SplitChildStatus.FINISHED,
-        SplitChildStatus.FAILED,
-    ]
-    # Job is closed out and flagged so a later terminal event cannot email twice.
-    altered = ' '.join(call.args[0] for call in db.alter.call_args_list)
-    assert SplitJobStatus.FINISHED in str(db.alter.call_args_list)
-    assert 'email_sent = true' in altered
-
-
-def test_mark_child_terminal_does_not_email_twice():
-    db = MagicMock()
-    db.select_one.side_effect = [
-        _child_row(),
-        (0,),
-        ('Parent name', 'user@example.org', 'project-1', True),  # email already sent
-    ]
-
+    # Each child now emails its own submitter like any other dataset, so there is no job-wide
+    # summary to return — only the child's own status update and the job's terminal flip.
     assert mark_child_terminal(db, 'child-ds', SplitChildStatus.FINISHED) is None
+    assert db.alter.call_count == 2
+    assert SplitJobStatus.FINISHED in str(db.alter.call_args_list)

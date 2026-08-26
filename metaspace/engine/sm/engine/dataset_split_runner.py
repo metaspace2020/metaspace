@@ -73,7 +73,7 @@ SEL_JOB = '''
 '''
 SEL_CHILDREN = '''
     SELECT id, child_ds_id, roi_id, roi_name, roi_geojson, doc, status
-    FROM dataset_split_child WHERE job_id = %s ORDER BY id
+    FROM dataset_split_child WHERE job_id = %s AND status = %s ORDER BY id
 '''
 
 
@@ -146,7 +146,12 @@ def _upload_child_files(s3_client, bucket: str, uuid: str, files, base_name: str
 
 
 def run_split_job(db, ds_man, job_id: int, use_lithops: bool = False) -> Dict[str, Any]:
-    """Write every child's raw files and submit each for annotation.
+    """Write every PENDING child's raw files and submit each for annotation.
+
+    Only children still in PENDING are (re)processed — this is what makes it safe to call this
+    both for a job's first run (every child starts PENDING) and to restart a job left mid-flight
+    by a daemon crash, without re-running (and thereby corrupting) children already annotating or
+    finished.
 
     Returns a summary of per-child outcomes. Raises only if the job itself cannot start (e.g. the
     parent's files are unreadable); individual child failures are recorded and reported.
@@ -154,16 +159,25 @@ def run_split_job(db, ds_man, job_id: int, use_lithops: bool = False) -> Dict[st
     job = db.select_one(SEL_JOB, params=(job_id,))
     if not job:
         raise DatasetSplitError(f'Split job {job_id} does not exist')
-    _, parent_ds_id, parent_ds_name, _, _, _, _ = job
+    _, parent_ds_id, parent_ds_name, _, submitter_email, _, _ = job
 
-    children = db.select(SEL_CHILDREN, params=(job_id,))
+    children = db.select(SEL_CHILDREN, params=(job_id, SplitChildStatus.PENDING))
     if not children:
-        raise DatasetSplitError(f'Split job {job_id} has no children')
+        total = db.select_one(
+            'SELECT COUNT(*) FROM dataset_split_child WHERE job_id = %s', params=(job_id,)
+        )
+        if not total or total[0] == 0:
+            raise DatasetSplitError(f'Split job {job_id} has no children')
+        # Every child already left PENDING in an earlier run (e.g. a restart after the daemon
+        # crashed just past the last child) — nothing left to do.
+        logger.info(f'Split job {job_id} has no PENDING children left to process')
+        _update_job(db, job_id, SplitJobStatus.FILES_DONE)
+        return {'job_id': job_id, 'children': []}
 
     _update_job(db, job_id, SplitJobStatus.STARTED)
     logger.info(f'Splitting dataset {parent_ds_id} into {len(children)} children (job {job_id})')
 
-    results = _write_all_children(db, ds_man, parent_ds_id, children, use_lithops)
+    results = _write_all_children(db, ds_man, parent_ds_id, children, use_lithops, submitter_email)
 
     _update_job(db, job_id, SplitJobStatus.FILES_DONE)
     n_failed = sum(1 for r in results if not r['ok'])
@@ -174,7 +188,9 @@ def run_split_job(db, ds_man, job_id: int, use_lithops: bool = False) -> Dict[st
     return {'job_id': job_id, 'children': results}
 
 
-def _write_all_children(db, ds_man, parent_ds_id, children, use_lithops) -> List[Dict[str, Any]]:
+def _write_all_children(
+    db, ds_man, parent_ds_id, children, use_lithops, submitter_email
+) -> List[Dict[str, Any]]:
     """Parse the parent once, then write and submit each child from it."""
     s3_client, bucket, imzml_key, ibd_key = _locate_parent_files(db, parent_ds_id)
 
@@ -185,6 +201,9 @@ def _write_all_children(db, ds_man, parent_ds_id, children, use_lithops) -> List
         s3_client.download_file(bucket, imzml_key, str(local_imzml))
         parser = ImzMLParser(str(local_imzml), ibd_file=None)
         fmt = read_parent_format(parser)
+        # The parent's coordinate list is invariant across every child — convert it once here
+        # rather than inside each child's processing, which used to redo it twice per child.
+        coords_xy = np.array(parser.coordinates)[:, :2]
 
         return [
             _process_child(
@@ -192,12 +211,14 @@ def _write_all_children(db, ds_man, parent_ds_id, children, use_lithops) -> List
                 ds_man=ds_man,
                 child=child,
                 parser=parser,
+                coords_xy=coords_xy,
                 fmt=fmt,
                 s3_client=s3_client,
                 bucket=bucket,
                 ibd_key=ibd_key,
                 tmp_path=tmp_path,
                 use_lithops=use_lithops,
+                submitter_email=submitter_email,
             )
             for child in children
         ]
@@ -226,7 +247,18 @@ def _find_parent_keys(s3_client, bucket: str, uuid: str) -> Tuple[str, str]:
 
 
 def _process_child(  # pylint: disable=too-many-arguments,too-many-locals
-    db, ds_man, child, parser, fmt, s3_client, bucket, ibd_key, tmp_path, use_lithops
+    db,
+    ds_man,
+    child,
+    parser,
+    coords_xy,
+    fmt,
+    s3_client,
+    bucket,
+    ibd_key,
+    tmp_path,
+    use_lithops,
+    submitter_email,
 ):
     """Write and submit one child; record and swallow its failure so siblings still run."""
     child_id, child_ds_id, roi_id, roi_name, roi_geojson, doc, _ = child
@@ -236,7 +268,7 @@ def _process_child(  # pylint: disable=too-many-arguments,too-many-locals
         doc = json.loads(doc)
 
     try:
-        spec: ChildSpec = plan_child(parser.coordinates, roi_geojson, roi_id, roi_name)
+        spec: ChildSpec = plan_child(coords_xy, roi_geojson, roi_id, roi_name)
         if spec.n_pixels < MIN_ROI_PIXELS:
             raise DatasetSplitError(
                 f'ROI "{roi_name}" covers {spec.n_pixels} pixels, below the {MIN_ROI_PIXELS} '
@@ -245,12 +277,16 @@ def _process_child(  # pylint: disable=too-many-arguments,too-many-locals
 
         out_path = tmp_path / child_ds_id
         reader = CoalescingRangeReader(s3_range_fetcher(s3_client, bucket, ibd_key))
-        files = write_child_imzml(parser, reader, spec, fmt, out_path)
+        files = write_child_imzml(parser, coords_xy, reader, spec, fmt, out_path)
 
         # The child's own input path decides where its files go — it need not share the parent's
         # bucket, since sm-graphql allocates it from its own upload configuration.
         child_bucket, child_uuid = parse_input_path(doc['input_path'])
         _upload_child_files(s3_client, child_bucket, child_uuid, files, child_ds_id)
+        # Free this child's local files now rather than at the end of the whole job — otherwise
+        # peak disk usage is the sum of every child's files instead of just the largest one.
+        files.imzml_path.unlink(missing_ok=True)
+        files.ibd_path.unlink(missing_ok=True)
 
         doc['size_hash'] = {'imzml_size': files.imzml_size, 'ibd_size': files.ibd_size}
         _update_child(
@@ -264,9 +300,9 @@ def _process_child(  # pylint: disable=too-many-arguments,too-many-locals
             'UPDATE dataset_split_child SET doc = %s WHERE id = %s',
             params=(json.dumps(doc), child_id),
         )
-        # email=None: the per-child annotation emails are suppressed in favour of one summary
-        # email when the whole split finishes.
-        ds_man.add(doc, use_lithops=use_lithops, email=None)
+        # The submitter's email rides along exactly like a normal dataset submission, so this
+        # child's own finish/fail email fires the same way any other dataset's would.
+        ds_man.add(doc, use_lithops=use_lithops, email=submitter_email)
         return {'child_ds_id': child_ds_id, 'roi_name': roi_name, 'ok': True, 'error': None}
     except Exception as e:  # pylint: disable=broad-except
         logger.exception(f'Failed to prepare split child "{roi_name}" ({child_ds_id})')
@@ -340,11 +376,17 @@ def _child_ion_image_size(db, ds_id: str) -> Tuple[int, int]:
     return width, height
 
 
-def mark_child_terminal(db, ds_id: str, status: str, error: str = None) -> Optional[Dict]:
-    """Record a child's final state; return its job summary once every child is terminal."""
+def mark_child_terminal(db, ds_id: str, status: str, error: str = None) -> None:
+    """Record a child's final state, and flip the job to FINISHED once every child is terminal.
+
+    Each child now emails its own submitter on finish/fail exactly like a normal dataset, so
+    unlike the original design this no longer needs to build or report a job-wide summary — it
+    only keeps the bookkeeping other things still rely on: per-child status (used by the restart
+    path to avoid reprocessing children that already ran) and the job's own terminal status.
+    """
     child = find_child(db, ds_id)
     if child is None:
-        return None
+        return
 
     db.alter(
         'UPDATE dataset_split_child SET status = %s, error = COALESCE(%s, error) WHERE id = %s',
@@ -358,29 +400,6 @@ def mark_child_terminal(db, ds_id: str, status: str, error: str = None) -> Optio
         params=(job_id, TERMINAL_CHILD_STATUSES),
     )
     if pending and pending[0] > 0:
-        return None
+        return
 
-    job = db.select_one(
-        '''SELECT parent_ds_name, submitter_email, project_id, email_sent
-           FROM dataset_split_job WHERE id = %s''',
-        params=(job_id,),
-    )
-    if not job or job[3]:  # already reported
-        return None
-
-    children = db.select(
-        'SELECT roi_name, child_ds_id, status, error FROM dataset_split_child'
-        ' WHERE job_id = %s ORDER BY id',
-        params=(job_id,),
-    )
     _update_job(db, job_id, SplitJobStatus.FINISHED)
-    db.alter('UPDATE dataset_split_job SET email_sent = true WHERE id = %s', params=(job_id,))
-    return {
-        'job_id': job_id,
-        'parent_ds_name': job[0],
-        'email': job[1],
-        'project_id': job[2],
-        'children': [
-            {'roi_name': c[0], 'ds_id': c[1], 'status': c[2], 'error': c[3]} for c in children
-        ],
-    }

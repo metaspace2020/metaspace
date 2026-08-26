@@ -108,15 +108,19 @@ def read_parent_format(parser: ImzMLParser) -> ParentFormat:
     )
 
 
-def rebase_coordinates(coordinates: Sequence[Tuple]) -> Tuple[np.ndarray, np.ndarray, int, int]:
-    """Convert raw imzML coordinates to the ion-image grid ROI polygons are drawn on.
+def rebase_coordinates(coords_xy: np.ndarray) -> Tuple[np.ndarray, np.ndarray, int, int]:
+    """Convert raw imzML (x, y) coordinates to the ion-image grid ROI polygons are drawn on.
+
+    ``coords_xy`` is the parent's ``coordinates`` list already reduced to its x/y columns
+    (``np.array(parser.coordinates)[:, :2]``) — computed once per job by the caller, since it is
+    invariant across every child and this function used to be a hot spot for redoing that
+    conversion once per child.
 
     Returns ``(xs, ys, width, height)``. Identical to the re-basing in ``ImzMLReader.__init__``,
     which is what makes the returned grid line up with the stored TIC image and hence with the
     ROI polygons.
     """
-    coords = np.array(coordinates)[:, :2]
-    coords = coords - np.min(coords, axis=0)
+    coords = coords_xy - np.min(coords_xy, axis=0)
     width, height = np.max(coords, axis=0) + 1
     return coords[:, 0], coords[:, 1], int(width), int(height)
 
@@ -135,12 +139,15 @@ class ChildSpec:
 
 
 def plan_child(
-    coordinates: Sequence[Tuple],
+    coords_xy: np.ndarray,
     roi_geojson: Dict[str, Any],
     roi_id: Optional[int],
     roi_name: str,
 ) -> ChildSpec:
     """Work out which spectra of the parent fall inside one ROI.
+
+    ``coords_xy`` is ``np.array(parser.coordinates)[:, :2]``, computed once per job by the caller
+    (see ``rebase_coordinates``).
 
     ``rasterise_roi_mask`` is reused verbatim rather than reimplemented so that the child contains
     exactly the pixels the user saw highlighted in the ROI editor and exactly the pixels their
@@ -149,7 +156,7 @@ def plan_child(
     Every spectrum at a selected coordinate is kept, including duplicates at the same (x, y) and
     separate z-slices, so the child reproduces the parent's file semantics.
     """
-    xs, ys, width, height = rebase_coordinates(coordinates)
+    xs, ys, width, height = rebase_coordinates(coords_xy)
 
     mask = rasterise_roi_mask(roi_geojson, roi_id, width, height)
     if mask is None:
@@ -292,12 +299,15 @@ def spectrum_ranges(parser: ImzMLParser, sp_idxs: Sequence[int]) -> List[Tuple[i
 
 def write_child_imzml(
     parser: ImzMLParser,
+    coords_xy: np.ndarray,
     ibd_reader: CoalescingRangeReader,
     spec: ChildSpec,
     fmt: ParentFormat,
     out_path: Path,
 ) -> ChildFiles:
     """Write one child imzML/ibd pair containing only ``spec``'s spectra.
+
+    ``coords_xy`` is ``np.array(parser.coordinates)[:, :2]``, computed once per job by the caller.
 
     Child coordinates are re-based to (1, 1) so the child is a self-contained dataset cropped to
     the ROI's bounding box; ``spec.crop_origin`` is what maps them back to the parent. The z
@@ -308,7 +318,7 @@ def write_child_imzml(
 
     # Raw imzML coordinate → child coordinate, in one shift: undo the parent's origin offset,
     # apply the ROI crop, and re-base to 1 (the imzML convention).
-    raw_origin = np.min(np.array(parser.coordinates)[:, :2], axis=0)
+    raw_origin = np.min(coords_xy, axis=0)
     shift_x = int(raw_origin[0]) + spec.crop_origin[0] - 1
     shift_y = int(raw_origin[1]) + spec.crop_origin[1] - 1
 

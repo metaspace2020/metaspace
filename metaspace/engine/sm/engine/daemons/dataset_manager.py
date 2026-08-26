@@ -414,14 +414,6 @@ class DatasetManager:  # pylint: disable=too-many-public-methods
             logger=self.logger,
         )
 
-    def create_project_web_app_link(self, project_id):
-        try:
-            base_url = self._sm_config['services']['web_app_url']
-            return f'{base_url}/project/{project_id}'
-        except Exception as e:  # pylint: disable=broad-except
-            self.logger.error(e)
-            return None
-
     def run_split(self, msg):
         """Write each ROI's raw files and submit the resulting child datasets for annotation."""
         job_id = msg['job_id']
@@ -434,25 +426,35 @@ class DatasetManager:  # pylint: disable=too-many-public-methods
                 use_lithops=msg.get('use_lithops', False),
             )
         except Exception as e:  # pylint: disable=broad-except
-            # A split failure must not mark the parent dataset FAILED — it is untouched.
+            # A split failure must not mark the parent dataset FAILED — it is untouched. Nothing
+            # below this point may be allowed to raise: an exception here would escape to the
+            # generic queue failure handler, which only knows the *parent's* dataset id (the
+            # SPLIT message carries it, not a child's) and would wrongly mark it FAILED.
             self.logger.exception(f'Dataset split job {job_id} failed')
             self._db.alter(
                 'UPDATE dataset_split_job SET status = %s, error = %s, updated_at = NOW()'
                 ' WHERE id = %s',
                 params=(SplitJobStatus.FAILED, str(e), job_id),
             )
-            job = self._db.select_one(
-                'SELECT submitter_email, parent_ds_name FROM dataset_split_job WHERE id = %s',
-                params=(job_id,),
-            )
-            if job and job[0]:
-                self.send_split_failed_email(job[0], job[1], str(e))
+            try:
+                job = self._db.select_one(
+                    'SELECT submitter_email, parent_ds_name FROM dataset_split_job WHERE id = %s',
+                    params=(job_id,),
+                )
+                if job and job[0]:
+                    self.send_split_failed_email(job[0], job[1], str(e))
+            except Exception:  # pylint: disable=broad-except
+                # The job's FAILED status above is what actually matters; a failure while
+                # notifying the submitter must not resurface as a split-daemon exception.
+                self.logger.exception(f'Failed to send split-failed email for job {job_id}')
 
     def handle_split_child_terminal(self, ds_id, status, error=None):
         """Finish off a split child that has reached a terminal state.
 
-        Attaches the parent's optical image (only possible now that annotation images exist) and,
-        once every child of the job is terminal, sends the single summary email.
+        Attaches the parent's optical image (only possible now that annotation images exist) and
+        records the child as terminal, flipping the job to FINISHED once every child is. Each
+        child emails its own submitter on finish/fail like any other dataset, so there is no
+        job-wide summary to send here.
         """
         try:
             child = find_child(self._db, ds_id)
@@ -466,37 +468,9 @@ class DatasetManager:  # pylint: disable=too-many-public-methods
                     # A missing or unusable optical image must not fail an annotated child.
                     self.logger.warning(f'Could not attach optical image to {ds_id}: {e}')
 
-            summary = mark_child_terminal(self._db, ds_id, status, error)
-            if summary and summary['email']:
-                self.send_split_summary_email(summary)
+            mark_child_terminal(self._db, ds_id, status, error)
         except Exception as e:  # pylint: disable=broad-except
             self.logger.exception(f'Failed to finalise split child {ds_id}: {e}')
-
-    def send_split_summary_email(self, summary):
-        """One email per split, listing every ROI's outcome, once all children are terminal."""
-        succeeded = [c for c in summary['children'] if c['status'] == SplitChildStatus.FINISHED]
-        failed = [c for c in summary['children'] if c['status'] != SplitChildStatus.FINISHED]
-        link = self.create_project_web_app_link(summary['project_id'])
-
-        lines = [
-            'Dear METASPACE user,',
-            '',
-            f'The dataset "{summary["parent_ds_name"]}" has been split along its regions of '
-            f'interest and all resulting datasets have finished processing.',
-            '',
-            f'{len(succeeded)} of {len(summary["children"])} datasets were created successfully:',
-        ]
-        lines += [f'  - {c["roi_name"]}' for c in succeeded]
-        if failed:
-            lines += ['', 'The following regions could not be processed:']
-            lines += [f'  - {c["roi_name"]}: {c["error"] or "unknown error"}' for c in failed]
-        if link:
-            lines += ['', f'You can find them in your project here: {link}']
-        lines += ['', 'Best regards,', 'METASPACE Team']
-
-        self._send_email(
-            summary['email'], 'METASPACE service notification (DATASET SPLIT)', '\n'.join(lines)
-        )
 
     def send_split_failed_email(self, email, ds_name, error_msg):
         email_body = (
