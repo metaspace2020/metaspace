@@ -63,7 +63,7 @@ interface AllApiUsagesArgs {
 }
 
 // Helper function to make API requests
-const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GET', body?: any) => {
+export const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GET', body?: any) => {
   try {
     const apiUrl = config.manager_api_url
     const token = ctx.req?.headers?.authorization || ''
@@ -99,6 +99,21 @@ const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GET', bod
   } catch (error) {
     logger.error(`Error making API request to ${endpoint}:`, error)
     throw error
+  }
+}
+
+// For server-side code that needs to check quota up front for a batch of actions (e.g. splitting
+// a dataset into several children) before doing any work, using the same manager-api endpoint the
+// `remainingApiUsages` resolver and the webapp's own pre-submit check already read from — `null`
+// means unlimited/unknown, matching how the webapp already treats it.
+export const fetchRemainingUsage = async(ctx: Context, actionType: string): Promise<number | null> => {
+  try {
+    const response = await makeApiRequest(ctx, `/api/api-usages/remaining-usages?actionType=${actionType}`)
+    const usage = (response.remainingUsages || []).find((item: any) => item.actionType === actionType)
+    return usage?.remaining ?? null
+  } catch (error) {
+    logger.error(`Error fetching remaining api usage for actionType ${actionType}:`, error)
+    return null
   }
 }
 

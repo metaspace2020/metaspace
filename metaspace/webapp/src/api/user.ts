@@ -208,6 +208,13 @@ export const currentUserRoleWithGroupQuery = gql`
           label: name
         }
       }
+      projects {
+        role
+        project {
+          id
+          name
+        }
+      }
     }
   }
 `

@@ -615,22 +615,32 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   },
 
   async splitProvenance(ds: DatasetSource, args: any, ctx: Context) {
-    const child = await ctx.entityManager.findOne(DatasetSplitChild, {
-      where: { childDsId: ds._source.ds_id },
-      relations: ['job'],
+    const dataloader = ctx.contextCacheGet('Dataset.splitProvenanceDataLoader', [], () => {
+      return new DataLoader(async(datasetIds: string[]) => {
+        const children = await ctx.entityManager.find(DatasetSplitChild, {
+          where: { childDsId: In(datasetIds) },
+          relations: ['job'],
+        })
+        const keyedResults = _.keyBy(children, 'childDsId')
+        return datasetIds.map(id => {
+          const child = keyedResults[id]
+          if (child == null) {
+            return null
+          }
+          // parentDsName and roiName are read from the split record rather than followed through
+          // to the parent dataset or ROI: both may have been deleted since, and the provenance
+          // must survive it.
+          return {
+            parentDatasetId: child.job?.parentDsId ?? null,
+            parentDatasetName: child.job?.parentDsName ?? '',
+            roiName: child.roiName,
+            cropOriginX: child.cropOrigin?.x0 ?? null,
+            cropOriginY: child.cropOrigin?.y0 ?? null,
+          }
+        })
+      })
     })
-    if (child == null) {
-      return null
-    }
-    // parentDsName and roiName are read from the split record rather than followed through to the
-    // parent dataset or ROI: both may have been deleted since, and the provenance must survive it.
-    return {
-      parentDatasetId: child.job?.parentDsId ?? null,
-      parentDatasetName: child.job?.parentDsName ?? '',
-      roiName: child.roiName,
-      cropOriginX: child.cropOrigin?.x0 ?? null,
-      cropOriginY: child.cropOrigin?.y0 ?? null,
-    }
+    return await dataloader.load(ds._source.ds_id)
   },
 
   async diagnostics(ds: DatasetSource, args: any, ctx: Context) {

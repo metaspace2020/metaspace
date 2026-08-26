@@ -53,6 +53,7 @@ import { DatasetEnrichment as DatasetEnrichmentModel } from '../../enrichmentdb/
 import { getS3Client } from '../../../utils/awsClient'
 import config from '../../../utils/config'
 import { assertCanPerformAction, getDeviceInfo, hashIp, performAction } from '../../plan/util/canPerformAction'
+import { fetchRemainingUsage } from '../../plan/controller/Query'
 import { cleanEmptyStrings } from '../../../utils/regexSanitizer'
 import canEditEsDataset from '../operation/canEditEsDataset'
 
@@ -264,16 +265,13 @@ const buildProvenanceDescription = (esDataset: any, parent: EngineDataset, roiNa
  * The dataset doc sm-engine will pass to SMapiDatasetManager.add once the child's files exist.
  *
  * Keys are snake_case because the engine reads this straight out of the database rather than
- * through smApiDatasetRequest's key mapping, and are limited to what generate_ds_config accepts —
- * passing e.g. analysis_version would be a TypeError there. Processing settings are flattened out
- * of the parent's config so the child is annotated exactly as the parent was.
+ * through smApiDatasetRequest's key mapping. Processing settings are NOT mirrored here field by
+ * field — `clone_from_ds_id` tells the engine's `add()` to clone the parent's own config verbatim
+ * (via `update_ds_config`), the same primitive already used when reprocessing a dataset in place.
+ * That way a new config field added later can't be silently dropped just because this function
+ * forgot to copy it.
  */
 const buildChildDoc = (parent: EngineDataset, childId: string, name: string, isPublic: boolean) => {
-  const dsConfig = parent.config || {}
-  const isotopeGeneration = dsConfig.isotope_generation || {}
-  const fdr = dsConfig.fdr || {}
-  const imageGeneration = dsConfig.image_generation || {}
-
   return {
     id: childId,
     name,
@@ -282,17 +280,7 @@ const buildChildDoc = (parent: EngineDataset, childId: string, name: string, isP
     upload_dt: moment.utc().toISOString(),
     metadata: parent.metadata,
     is_public: isPublic,
-    moldb_ids: dsConfig.database_ids,
-    ontology_db_ids: dsConfig.ontology_db_ids,
-    adducts: isotopeGeneration.adducts,
-    n_peaks: isotopeGeneration.n_peaks,
-    neutral_losses: isotopeGeneration.neutral_losses,
-    chem_mods: isotopeGeneration.chem_mods,
-    decoy_sample_size: fdr.decoy_sample_size,
-    scoring_model_id: fdr.scoring_model_id,
-    ppm: imageGeneration.ppm,
-    min_px: imageGeneration.min_px,
-    compute_unused_metrics: imageGeneration.compute_unused_metrics,
+    clone_from_ds_id: parent.id,
   }
 }
 
@@ -318,14 +306,15 @@ const resolveSplitProject = async(
   }
 
   const name = newProjectName || `${parentName} — ROI split`
-  await assertCanPerformAction(ctx, {
+  const action: any = {
     actionType: 'create',
     userId,
     type: 'project',
     visibility: isPublic ? 'public' : 'private',
     actionDt: moment.utc(moment.utc().toDate()),
     source: (ctx as any).getSource(),
-  })
+  }
+  await assertCanPerformAction(ctx, action)
 
   const project = ctx.entityManager.getRepository(ProjectModel)
     .create({ name, isPublic, createdDT: moment.utc() })
@@ -335,6 +324,13 @@ const resolveSplitProject = async(
     userId,
     role: UPRO.MANAGER,
   } as any)
+
+  // Matches createProject's own resolver: the quota gate above only checks the plan allows this;
+  // it must still be recorded, or a split's new project never actually counts against usage.
+  action.projectId = project.id
+  action.canEdit = true
+  await performAction(ctx, action)
+
   return project.id
 }
 
@@ -710,6 +706,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     if (parent == null) {
       throw new UserError('Dataset does not exist')
     }
+    // Children inherit the parent's molecular databases unchecked below, so the requester must be
+    // allowed to use every one of them — the same check createDataset makes for a fresh upload.
+    await assertUserCanUseMolecularDBs(ctx, parent.config?.database_ids)
     const parentGraphqlDs = await ctx.entityManager.findOne(DatasetModel, datasetId)
 
     const roiIds = rois.map((roi: any) => String(roi.roiId))
@@ -737,23 +736,31 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       }))
     }
 
+    // Children of a stranger's public dataset start private so nobody republishes someone else's
+    // data under their own name by accident; your own datasets keep their visibility. Resolved up
+    // front so the child's own doc and every plan-usage record below agree on the same value.
+    const childIsPublic = isPublic ?? (canEditParent ? parent.isPublic : false)
+
     // Each child runs the full annotation pipeline, so each counts against the plan. Checked
-    // up front so a split is refused before any files are written.
+    // up front, as a single request against the number of children, so a split is refused before
+    // any files are written rather than letting each ROI pass a separately-fetched snapshot.
     const actionTemplate = {
       actionType: 'create',
       userId,
       type: 'dataset',
-      visibility: isPublic ? 'public' : 'private',
+      visibility: childIsPublic ? 'public' : 'private',
       source: (ctx as any).getSource(),
       deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),
       ipHash: hashIp(ctx.req?.ip),
     }
-    for (const roi of roiRows) {
-      await assertCanPerformAction(ctx, {
-        ...actionTemplate,
-        datasetId: `split-preflight-${roi.id}`,
-        actionDt: moment.utc(moment.utc().toDate()),
-      })
+    if (!ctx.isAdmin) {
+      const remaining = await fetchRemainingUsage(ctx, 'create')
+      if (remaining != null && remaining < roiRows.length) {
+        throw new UserError(
+          `This split would create ${roiRows.length} datasets, but only ${remaining} remain in `
+          + 'your plan.'
+        )
+      }
     }
 
     const targetProjectId = await resolveSplitProject(ctx, userId, {
@@ -767,9 +774,6 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       await ctx.entityManager.findOne(EngineDataset, id) != null
       || await ctx.entityManager.findOne(DatasetModel, id) != null)
 
-    // Children of a stranger's public dataset start private so nobody republishes someone else's
-    // data under their own name by accident; your own datasets keep their visibility.
-    const childIsPublic = isPublic ?? (canEditParent ? parent.isPublic : false)
     const nameByRoiId = new Map(rois.map((roi: any) => [String(roi.roiId), roi.name]))
 
     const jobId = await ctx.entityManager.transaction(async txn => {
@@ -813,10 +817,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       return job.id
     })
 
-    for (const roi of roiRows) {
+    for (const childId of childIds) {
       await performAction(ctx, {
         ...actionTemplate,
-        datasetId: childIds[roiRows.indexOf(roi)],
+        datasetId: childId,
         actionDt: moment.utc(moment.utc().toDate()),
       })
     }

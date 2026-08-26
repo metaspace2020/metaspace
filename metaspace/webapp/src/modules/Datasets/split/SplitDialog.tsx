@@ -34,7 +34,6 @@ interface SplitDialogState {
   newProjectName: string | null
   projectId: string | null
   groupId: string | null
-  isPublic: boolean | null
   loading: boolean
   error: string | null
 }
@@ -57,7 +56,6 @@ export const SplitDialog = defineComponent({
       newProjectName: null,
       projectId: null,
       groupId: null,
-      isPublic: null,
       loading: false,
       error: null,
     })
@@ -130,7 +128,8 @@ export const SplitDialog = defineComponent({
               projectId: state.projectMode === 'existing' ? state.projectId : null,
               newProjectName: state.projectMode === 'new' ? state.newProjectName : null,
               groupId: state.groupId,
-              isPublic: state.isPublic,
+              // Visibility is not user-chosen here: the server inherits the parent's visibility
+              // when the requester can edit it, and defaults to private otherwise.
             },
             useLithops: config.features.lithops,
           },
@@ -138,8 +137,8 @@ export const SplitDialog = defineComponent({
 
         const { projectId } = JSON.parse(data.splitDatasetByRois)
         ElNotification.success(
-          `Splitting into ${state.selectedRoiIds.length} datasets. You will receive an email when ` +
-            'they have all finished processing.'
+          `Splitting into ${state.selectedRoiIds.length} datasets. You will receive an email for ` +
+            'each one as it finishes processing.'
         )
         emit('close')
         if (projectId) {
@@ -275,7 +274,7 @@ export const SplitDialog = defineComponent({
                     }}
                   >
                     {groupOptions.value.map((group: any) => (
-                      <ElOption key={group.id} value={group.id} label={group.name} />
+                      <ElOption key={group.id} value={group.id} label={group.label} />
                     ))}
                   </ElSelect>
                 )}
