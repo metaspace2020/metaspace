@@ -202,9 +202,7 @@ def _find_elbow(k_values: List[int], scores: List[float]) -> int:  # pylint: dis
         # return the scalar z-component of the 3-D cross product with z=0).
         # Reproduce that exact semantics explicitly — see
         # https://numpy.org/doc/stable/release/2.0.0-notes.html#np-cross-2d-2d-support-removed.
-        cross = np.abs(
-            line_vec_norm[0] * point_vec[1] - line_vec_norm[1] * point_vec[0]
-        )
+        cross = np.abs(line_vec_norm[0] * point_vec[1] - line_vec_norm[1] * point_vec[0])
         distances.append(cross)
 
     elbow_idx = int(np.argmax(distances))

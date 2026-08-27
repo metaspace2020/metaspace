@@ -18,8 +18,7 @@ logger = logging.getLogger('update-daemon')
 def make_chunk_gen(items, chunk_size):
     chunk_n = (len(items) - 1) // chunk_size + 1
     chunks = [items[i * chunk_size : (i + 1) * chunk_size] for i in range(chunk_n)]
-    for image_path_chunk in chunks:
-        yield image_path_chunk
+    yield from chunks
 
 
 def base64_images_to_doc(images):

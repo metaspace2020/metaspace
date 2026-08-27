@@ -414,7 +414,7 @@ def _per_label_group_results_limma(  # pylint: disable=too-many-locals
             groups, intensities, surviving_ids
         )
         result = _run_limma(Y, X, block_ids, contrasts)
-    except (ValueError, np.linalg.LinAlgError):
+    except ValueError, np.linalg.LinAlgError:
         return _null_pair_rows(label_group_name, cond_order, groups, intensities, surviving_ids)
 
     cond_rkeys = {c: [r['regionKey'] for r in regs] for c, regs in groups.items()}

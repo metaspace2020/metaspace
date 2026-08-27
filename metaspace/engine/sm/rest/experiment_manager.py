@@ -134,7 +134,7 @@ class ExperimentManager:
             return self.run_prep(experiment_id, run_generation + 1)
 
         self._db.alter(
-            "UPDATE experiment SET run_status='RUNNING_STATS', run_stage='STATS' " "WHERE id=%s",
+            "UPDATE experiment SET run_status='RUNNING_STATS', run_stage='STATS' WHERE id=%s",
             params=(experiment_id,),
         )
         publisher = self._create_update_queue_publisher()
@@ -397,7 +397,7 @@ class ExperimentManager:
         # Drop rows from older generations and any prior rows at this
         # generation (so retries are idempotent).
         self._db.alter(
-            'DELETE FROM experiment_result WHERE experiment_id=%s ' 'AND run_generation <= %s',
+            'DELETE FROM experiment_result WHERE experiment_id=%s AND run_generation <= %s',
             params=(experiment_id, run_generation),
         )
 

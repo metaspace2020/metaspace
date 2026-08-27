@@ -391,6 +391,10 @@ variable-naming-style=snake_case
 # naming-style.
 #variable-rgx=
 
+# This project's convention for TypeVar names is TPascalCase (e.g. TItem, TArg, TRet in
+# annotation_lithops/io.py and executor.py), not pylint's default single-uppercase-letter style.
+typevar-rgx=^T[A-Za-z0-9]*$
+
 
 [LOGGING]
 
@@ -440,7 +444,9 @@ ignored-classes=optparse.Values,thread._local,_thread._local
 # (useful for modules/projects where namespaces are manipulated during runtime
 # and thus existing member attributes cannot be deduced by static analysis. It
 # supports qualified module names, as well as Unix pattern matching.
-ignored-modules=metaspace,Levenshtein
+# seaborn is used only by offline research/analysis tooling (sm/fdr_engineering/) and is
+# deliberately not a declared runtime dependency.
+ignored-modules=metaspace,Levenshtein,seaborn
 
 # Show a hint with possible names when a member name was not found. The aspect
 # of finding the hint is based on edit distance.

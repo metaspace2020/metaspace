@@ -353,7 +353,7 @@ def save_scoring_model_to_db(name, type_, version, params, created_dt=None):
     ):
         logger.info(f'Updating existing scoring model {name}')
         DB().alter(
-            'UPDATE scoring_model SET type = %s, version = %s, ' ' params = %s WHERE name = %s',
+            'UPDATE scoring_model SET type = %s, version = %s, params = %s WHERE name = %s',
             (type_, version, params, name),
         )
     else:

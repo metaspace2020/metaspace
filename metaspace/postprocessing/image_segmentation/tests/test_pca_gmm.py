@@ -34,9 +34,7 @@ def _reference_elbow_k(k_values, scores):
     valid_scores = [s for k, s in valid]
 
     k_norm = (np.array(valid_k) - valid_k[0]) / (valid_k[-1] - valid_k[0])
-    s_norm = (np.array(valid_scores) - min(valid_scores)) / (
-        max(valid_scores) - min(valid_scores)
-    )
+    s_norm = (np.array(valid_scores) - min(valid_scores)) / (max(valid_scores) - min(valid_scores))
 
     line_vec = np.array([k_norm[-1] - k_norm[0], s_norm[-1] - s_norm[0], 0.0])
     line_vec_norm = line_vec / np.linalg.norm(line_vec)

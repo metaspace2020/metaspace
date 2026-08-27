@@ -26,7 +26,7 @@ def wait_for_api_ready(
             if response.status_code in (200, 404):
                 logger.info(f"API service is ready at {engine_url}")
                 return True
-        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+        except requests.exceptions.ConnectionError, requests.exceptions.Timeout:
             pass
         except Exception as e:
             logger.debug(f"Health check attempt failed: {e}")

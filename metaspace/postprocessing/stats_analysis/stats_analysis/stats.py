@@ -38,7 +38,7 @@ def friedman_test(arms: List[np.ndarray]) -> Tuple[float, float]:
     try:
         stat, p = _scistats.friedmanchisquare(*arms)
         return float(stat), float(p)
-    except (ValueError, ZeroDivisionError):
+    except ValueError, ZeroDivisionError:
         return math.nan, math.nan
 
 
@@ -52,7 +52,7 @@ def wilcoxon_paired(a: np.ndarray, b: np.ndarray) -> Tuple[float, float]:
     try:
         stat, p = _scistats.wilcoxon(a, b, zero_method='wilcox')
         return float(stat), float(p)
-    except (ValueError, ZeroDivisionError):
+    except ValueError, ZeroDivisionError:
         return math.nan, math.nan
 
 

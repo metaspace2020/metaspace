@@ -32,7 +32,7 @@ def _load_experiment_payload(
         Exception: If no ``experiment`` row is found for ``experiment_id``.
     """
     row = db.select_one(
-        'SELECT label_groups, run_excluded_samples, run_filters ' 'FROM experiment WHERE id=%s',
+        'SELECT label_groups, run_excluded_samples, run_filters FROM experiment WHERE id=%s',
         params=(experiment_id,),
     )
     if not row:

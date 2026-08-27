@@ -67,20 +67,20 @@ def _trim(mzs, ints, k):
     return [top_mzs[i] for i in mz_order], [top_ints[i] for i in mz_order]
 
 
-def _centroid_pattern(cpyMSpec_module, formula, version_lt2):
+def _centroid_pattern(cpy_mspec_module, formula, version_lt2):
     """Mirrors IsocalcWrapper._centroids_uncached for a single (module, formula) pair."""
-    iso_pattern = cpyMSpec_module.isotopePattern(formula)
+    iso_pattern = cpy_mspec_module.isotopePattern(formula)
     iso_pattern.addCharge(CHARGE)
     fwhm = SIGMA * SIGMA_TO_FWHM
 
     if version_lt2:
         # analysis_version < 2 path (cpyMSpec_0_3_5)
         resolving_power = iso_pattern.masses[0] / fwhm
-        instrument_model = cpyMSpec_module.InstrumentModel('tof', resolving_power)
+        instrument_model = cpy_mspec_module.InstrumentModel('tof', resolving_power)
     else:
         # analysis_version >= 2 path (cpyMSpec 0.4.2)
         resolving_power = BASE_MZ / fwhm
-        instrument_model = cpyMSpec_module.InstrumentModel(
+        instrument_model = cpy_mspec_module.InstrumentModel(
             INSTRUMENT.lower(), resolving_power, at_mz=BASE_MZ
         )
 

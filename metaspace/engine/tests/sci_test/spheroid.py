@@ -304,7 +304,9 @@ def ensure_db_populated(sm_config, analysis_version, database):
         print(f'Importing {database}')
         with TemporaryDirectory() as tmp:
             urlretrieve(moldb['url'], f'{tmp}/moldb.tsv')
-            molecular_db.create(moldb['name'], moldb['version'], f'{tmp}/moldb.tsv', bypass_row_limit=True)
+            molecular_db.create(
+                moldb['name'], moldb['version'], f'{tmp}/moldb.tsv', bypass_row_limit=True
+            )
 
     if analysis_version > 1:
         if len(db.select("SELECT name FROM scoring_model WHERE type = 'catboost'")) == 0:

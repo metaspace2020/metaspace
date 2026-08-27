@@ -168,9 +168,10 @@ def test_upload_moldbs_from_db_regenerates_legacy_moldb_blob(corrupt_bytes):
     sm_storage = {'moldb': (bucket, prefix)}
     storage = _StubMoldbStorage(existing={(bucket, f'{prefix}/1'): corrupt_bytes})
 
-    with patch(
-        'sm.engine.annotation_lithops.annotation_job.molecular_db.find_by_id'
-    ), patch('sm.engine.annotation_lithops.annotation_job.DB', return_value=_StubMoldbDB()):
+    with (
+        patch('sm.engine.annotation_lithops.annotation_job.molecular_db.find_by_id'),
+        patch('sm.engine.annotation_lithops.annotation_job.DB', return_value=_StubMoldbDB()),
+    ):
         moldb_defs = _upload_moldbs_from_db([1], storage, sm_storage)
 
     assert len(moldb_defs) == 1
@@ -193,9 +194,10 @@ def test_upload_moldbs_from_db_reuses_valid_existing_blob():
         def select_one(self, query, params):
             return (False,)
 
-    with patch(
-        'sm.engine.annotation_lithops.annotation_job.molecular_db.find_by_id'
-    ), patch('sm.engine.annotation_lithops.annotation_job.DB', return_value=_FailingDB()):
+    with (
+        patch('sm.engine.annotation_lithops.annotation_job.molecular_db.find_by_id'),
+        patch('sm.engine.annotation_lithops.annotation_job.DB', return_value=_FailingDB()),
+    ):
         moldb_defs = _upload_moldbs_from_db([1], storage, sm_storage)
 
     assert len(moldb_defs) == 1
