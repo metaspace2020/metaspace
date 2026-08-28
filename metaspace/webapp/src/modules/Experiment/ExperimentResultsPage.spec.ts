@@ -119,6 +119,33 @@ describe('ExperimentResultsPage', () => {
     expect(html).toContain('Sample quality control')
   })
 
+  it('builds sample labels from the sampleId, falling back to "dataset – region" for opaque UUIDs', async () => {
+    resultRef.value = buildExperiment('FINISHED')
+    resultRef.value.experiment.datasets = [
+      {
+        dataset: { id: 'd1', name: 'Brain slice 1' },
+        regions: [
+          { labelGroupName: 'Circle', metadata: { sampleId: 'Cond1_A1_S1_Circle', condition: 'c1' } },
+          {
+            labelGroupName: 'Square',
+            metadata: { sampleId: '22ecb7a6-8792-4ec6-8451-24164aee3eb7', condition: 'c1' },
+          },
+        ],
+      },
+    ]
+
+    const wrapper = mountPage()
+    await flushPromises()
+    await nextTick()
+
+    const qcStage = wrapper.findComponent({ name: 'SampleQcStage' })
+    expect(qcStage.exists()).toBe(true)
+    expect(qcStage.props('sampleLabels')).toEqual({
+      Cond1_A1_S1_Circle: 'Cond1_A1_S1_Circle',
+      '22ecb7a6-8792-4ec6-8451-24164aee3eb7': 'Brain slice 1 – Square',
+    })
+  })
+
   it('stops polling when run.status transitions from RUNNING to FINISHED', async () => {
     mountPage()
     await flushPromises()

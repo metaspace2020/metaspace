@@ -167,19 +167,27 @@ export default defineComponent({
       return map
     })
 
-    /** sampleId → dataset name. A sample belongs to exactly one dataset in
-     *  practice, so first-wins is fine. Used to label exclude options with the
-     *  human-readable dataset name instead of the raw metadata sampleId. */
+    /** sampleId → human-readable sample name, used by the QC/explore charts
+     *  and the Stage-1 exclude dropdown. Prefers the user-entered sampleId;
+     *  when that is an opaque UUID (regions created before sample naming
+     *  existed) it falls back to "datasetName – regionLabel". A sampleId
+     *  belongs to exactly one region in practice, so first-wins is fine. */
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     const sampleLabels = computed<Record<string, string>>(() => {
       const e = exp.value
       const map: Record<string, string> = {}
       if (!e) return map
       for (const ed of e.datasets ?? []) {
         const dsName: string | undefined = ed.dataset?.name
-        if (!dsName) continue
         for (const r of ed.regions ?? []) {
           const sid = r.metadata?.sampleId
-          if (sid && !(sid in map)) map[sid] = dsName
+          if (!sid || sid in map) continue
+          if (!UUID_RE.test(sid)) {
+            map[sid] = sid
+          } else if (dsName) {
+            const regionLabel = (r as any).labelGroupName
+            map[sid] = regionLabel ? `${dsName} – ${regionLabel}` : dsName
+          }
         }
       }
       return map
