@@ -44,7 +44,6 @@ export default defineConfig({
               { text: 'Ion Image Visualization', link: '/features/visualization/ion-image-visualization' },
               { text: 'Multi-Channel Ion Image Viewer', link: '/features/visualization/multi-channel-viewer' },
               { text: 'Optical Image Overlay', link: '/features/visualization/optical-image-overlay' },
-              { text: 'Multi-Dataset Comparison', link: '/features/visualization/multi-dataset-comparison' },
             ],
           },
           {
@@ -54,6 +53,14 @@ export default defineConfig({
               { text: 'ROI Selection', link: '/features/spatial-pattern-analysis/roi-selection' },
               { text: 'Spatial Segmentation', link: '/features/spatial-pattern-analysis/spatial-segmentation' },
               { text: 'ROI Differential Analysis', link: '/features/spatial-pattern-analysis/roi-differential-analysis' },
+            ],
+          },
+          {
+            text: 'Cross-Dataset Comparison',
+            collapsed: true,
+            items: [
+              { text: 'Multi-Dataset Comparison', link: '/features/cross-dataset-comparison/multi-dataset-comparison' },
+              { text: 'Cross-Dataset Statistical Analysis', link: '/features/cross-dataset-comparison/cross-dataset-statistical-analysis' },
             ],
           },
           {
@@ -105,6 +112,7 @@ export default defineConfig({
               { text: 'Colocalization', link: '/guides/interpreting-results/colocalization' },
               { text: 'Understanding Differential Analysis', link: '/guides/interpreting-results/understanding-differential-analysis' },
               { text: 'Understanding Spatial Segmentation', link: '/guides/interpreting-results/understanding-spatial-segmentation' },
+              { text: 'Understanding Cross-Dataset Statistical Results', link: '/guides/interpreting-results/understanding-cross-dataset-statistical-results' },
             ],
           },
         ],

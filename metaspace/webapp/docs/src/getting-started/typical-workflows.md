@@ -79,7 +79,6 @@ METASPACE runs two analyses automatically alongside annotation. These guides exp
 - **[Ion Image Visualization](/features/visualization/ion-image-visualization)** — the core viewer for exploring annotated ion images, applying color maps, and adjusting intensity.
 - **[Multi-Channel Ion Image Viewer](/features/visualization/multi-channel-viewer)** — overlay multiple ion images in separate color channels to compare spatial distributions side by side.
 - **[Optical Image Overlay](/features/visualization/optical-image-overlay)** — align an H&E or fluorescence image with ion images to correlate molecular distributions with histology.
-- **[Multi-Dataset Comparison](/features/visualization/multi-dataset-comparison)** — compare ion images for the same metabolite across multiple datasets.
 
 ### Per-pixel spectra and normalization
 
@@ -91,13 +90,22 @@ If you want to inspect the raw spectral data behind annotations, or explore inte
 </details>
 
 <details>
-<summary><strong>Stage 6 — Downstream Analysis</strong> &nbsp;·&nbsp; Spatial analysis and export</summary>
+<summary><strong>Stage 6 — Downstream Analysis</strong> &nbsp;·&nbsp; Spatial analysis, cross-dataset comparison, and export</summary>
 
 ### Spatial pattern analysis
 
 Draw regions of interest directly on your ion images and use them for focused exploration or comparison:
 
 - **[ROI Selection](/features/spatial-pattern-analysis/roi-selection)** — define regions based on histology, anatomy, or any visible spatial structure.
+- **[Spatial Segmentation](/features/spatial-pattern-analysis/spatial-segmentation)** — automatically partition a dataset into chemically coherent tissue regions, without drawing ROIs by hand.
+- **[ROI Differential Analysis](/features/spatial-pattern-analysis/roi-differential-analysis)** — identify metabolites enriched or depleted in one ROI relative to all others.
+
+### Cross-dataset comparison
+
+Bring regions from several datasets in a project together for side-by-side or statistical comparison:
+
+- **[Multi-Dataset Comparison](/features/cross-dataset-comparison/multi-dataset-comparison)** — compare ion images for the same metabolite across multiple datasets.
+- **[Cross-Dataset Statistical Analysis](/features/cross-dataset-comparison/cross-dataset-statistical-analysis)** — test which ions differ significantly between experimental conditions spread across multiple datasets, using a moderated statistical model built for small replicate counts.
 
 ### Export for external tools
 
