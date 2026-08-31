@@ -331,8 +331,9 @@ export default defineComponent({
       if (project.value === null) {
         return []
       }
-      // The experiments tab is behind the `experiment` feature flag.
-      const experimentsTab = config.features.experiment ? ['experiments'] : []
+      // The experiments tab is behind the `experiment` feature flag and only shown
+      // to project members/managers and admins.
+      const experimentsTab = config.features.experiment && canEditExperiments.value ? ['experiments'] : []
       if (canEdit.value) {
         return ['about', 'datasets', 'members', ...experimentsTab, 'publishing', 'settings']
       }
