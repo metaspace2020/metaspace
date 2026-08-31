@@ -36,8 +36,8 @@ export default defineComponent({
               Set up for how institutions already pay
             </h2>
             <p style={{ margin: 0, color: '#55636E', maxWidth: '60ch' }}>
-              No subscription needs to go on a personal card. Every paid plan works with how institutions actually
-              pay — purchase orders, invoices, and budgets that plan more than a year out.
+              No subscription needs to go on a personal card. Every paid plan works with how institutions actually pay —
+              purchase orders, invoices, and budgets that plan more than a year out.
             </p>
             <ul class="pro-checklist">
               {PROCUREMENT_LINES.filter((line) => !line.detail || PRO_FLAGS.procurementDetail).map((line, index) => (
@@ -72,7 +72,7 @@ export default defineComponent({
                 METASPACE Pro subscription (Advanced tier) — cloud-based spatial metabolomics annotation and statistical
                 analysis platform.
               </p>
-              <p style={{ margin: '1.75em 0 0' }}>$2,999 per year × 3 years = $8,997</p>
+              <p style={{ margin: '1.75em 0 0' }}>$2,999 per year × 2 years = $5,698</p>
               <p style={{ margin: '1.75em 0 0', color: '#7C8892' }}>Metacloud Inc. · quote ref. on request</p>
             </div>
           </div>

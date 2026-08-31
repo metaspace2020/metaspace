@@ -28,17 +28,20 @@ describe('ProFeatures', () => {
     expect(text).toContain('The gap')
     expect(text).toContain('Your annotations are done. Now what?')
     expect(text).toContain(
-      'You have forty datasets, twelve thousand annotations and a hypothesis. Today that means a CSV export, three ' +
-        'weeks of scripting, and a pipeline nobody else in the lab can rerun.'
+      'As your datasets and annotations grow, so does the work of turning them into answers — normally that means ' +
+        'stepping outside the platform, exporting results, and stitching together scripts by hand.'
     )
-    expect(text).toContain('METASPACE Pro closes that gap inside the browser, on the annotations you already trust.')
+    expect(text).toContain(
+      'METASPACE Pro brings that analysis into the browser, directly on the annotations you already trust — ' +
+        'interactive, and built for anyone working with the data, not just people who script.'
+    )
   })
 
   it('heads the analysis section and captions the rail', () => {
     const section = mount(ProFeatures).get('#analysis')
     expect(section.text()).toContain('How it works')
     expect(section.text()).toContain('From imzML to answer, without an export')
-    expect(section.text()).toContain('Three questions your annotations can now answer')
+    expect(section.text()).toContain('Questions your annotations can now answer')
   })
 
   // The caption is a styled label pointing at the three feature rows (centred
@@ -46,7 +49,7 @@ describe('ProFeatures', () => {
   // a class instead of inline type styles.
   it('marks the rail caption up as a caption', () => {
     const caption = mount(ProFeatures).get('.pro-tools-caption')
-    expect(caption.text()).toBe('Three questions your annotations can now answer')
+    expect(caption.text()).toBe('Questions your annotations can now answer')
     expect(caption.attributes('style')).toBeUndefined()
   })
 
@@ -74,13 +77,16 @@ describe('ProFeatures', () => {
 
     expect(rows[0].text()).toContain('“Which metabolites actually differ?”')
     expect(rows[0].text()).toContain(
-      'Draw a region of interest on the tissue. Get the metabolites that differ between regions, with corrected ' +
-        'p-values and effect sizes you can drop straight into a figure.'
+      'Draw a region of interest on the tissue. Get the metabolites that differ between regions, ranked by log2 ' +
+        'fold change and AUC — how strongly each ion discriminates that region from everywhere else — ready to drop ' +
+        'straight into a figure.'
     )
     expect(rows[0].get('.pro-feature__instead').text()).toBe(
-      'Instead of: exporting masks, running ad-hoc t-tests, and hoping nobody asks about multiple testing.'
+      'Instead of: exporting masks and scripting the comparison yourself.'
     )
-    expect(rows[0].text()).toContain('Volcano plot + linked ion image · real annotations')
+    expect(rows[0].text()).toContain(
+      'Every annotated ion, by intensity change and how well it discriminates the region'
+    )
 
     expect(rows[1].text()).toContain('“Where are the compartments?”')
     expect(rows[1].text()).toContain(
@@ -94,7 +100,7 @@ describe('ProFeatures', () => {
 
     expect(rows[2].text()).toContain('“Does it hold across experiments?”')
     expect(rows[2].get('.pro-feature__instead').text()).toBe(
-      'Instead of: the comparison you keep postponing because the bookkeeping is worse than the science.'
+      'Instead of: wrangling annotations and metadata across datasets yourself, every time.'
     )
   })
 

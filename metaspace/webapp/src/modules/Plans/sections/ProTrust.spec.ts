@@ -56,14 +56,14 @@ describe('ProTrust', () => {
     expect(link!.attributes('rel')).toBe('noopener noreferrer')
   })
 
-  it('heads the procurement section and names the price nobody puts on a personal card', async () => {
+  it('heads the institutions section and says no subscription needs a personal card', async () => {
     const wrapper = await mountWithFlags({ procurementDetail: true })
     const text = wrapper.get('#procurement').text()
-    expect(text).toContain('Procurement')
-    expect(text).toContain('Built for how institutions actually buy')
+    expect(text).toContain('For institutions')
+    expect(text).toContain('Set up for how institutions already pay')
     expect(text).toContain(
-      'Nobody expects a group leader to put $2,999 on a personal card. Everything below is standard, and none of ' +
-        'it needs a sales call.'
+      'No subscription needs to go on a personal card. Every paid plan works with how institutions actually pay — ' +
+        'purchase orders, invoices, and budgets that plan more than a year out.'
     )
   })
 
@@ -86,15 +86,15 @@ describe('ProTrust', () => {
     expect(buttons[1].classes()).toContain('pro-btn--ghost')
   })
 
-  it('renders a pasteable grant budget justification with the three-year total', async () => {
+  it('renders a pasteable budget request with the two-year total', async () => {
     const wrapper = await mountWithFlags({ procurementDetail: true })
-    expect(wrapper.get('.pro-quote-box__head').text()).toBe('Paste into a grant budget justification')
+    expect(wrapper.get('.pro-quote-box__head').text()).toBe('Ready to paste into a budget request')
     const body = wrapper.get('.pro-quote-box__body').text()
     expect(body).toContain(
       'METASPACE Pro subscription (Advanced tier) — cloud-based spatial metabolomics annotation and statistical ' +
         'analysis platform.'
     )
-    expect(body).toContain('$2,999 per year × 3 years = $8,997')
+    expect(body).toContain('$2,999 per year × 2 years = $5,698')
     expect(body).toContain('Metacloud Inc. · quote ref. on request')
   })
 

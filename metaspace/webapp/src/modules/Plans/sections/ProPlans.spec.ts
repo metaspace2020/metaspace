@@ -177,7 +177,7 @@ describe('ProPlans Free strip', () => {
     const wrapper = mountPlans()
     const copy = wrapper.find('.pro-strip__copy')
     expect(copy.text()).toBe(
-      '3 private datasets a year · 6 reprocessings · all three analysis tools on those datasets · ' +
+      '3 private datasets a year · 6 reprocessings · all analysis tools on those datasets · ' +
         'email support in 3 working days'
     )
     expect(copy.find('em').text()).toBe('on those datasets')

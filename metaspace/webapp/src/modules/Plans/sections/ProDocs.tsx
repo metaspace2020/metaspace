@@ -32,7 +32,7 @@ const DOC_CARDS: DocCard[] = [
     kicker: 'Guide',
     title: 'Cross-dataset statistics',
     body: 'Comparing datasets across your experimental design, without the manual bookkeeping.',
-    href: '/help',
+    href: '/docs/features/cross-dataset-comparison/cross-dataset-statistical-analysis.html',
   },
 ]
 

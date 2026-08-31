@@ -99,9 +99,8 @@ describe('ProHero', () => {
     expect(text).toContain('METASPACE Pro · ALL IN ONE · end-to-end')
     expect(text).toContain('Turning peaks into insights')
     expect(text).toContain(
-      'Differential analysis, spatial segmentation and cross-dataset statistics, downstream analysis built directly ' +
-        'onto the annotation engine you already trust and use, on data that never enters the public database until ' +
-        'you say so.'
+      'Downstream functional analysis, now built directly onto the annotation engine you already trust and use — ' +
+        'on data that never enters the public database until you say so.'
     )
   })
 

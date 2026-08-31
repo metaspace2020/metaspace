@@ -22,8 +22,8 @@ export default defineComponent({
             <p class="pro-eyebrow pro-eyebrow--accent">METASPACE Pro · ALL IN ONE · end-to-end</p>
             <h1 class="pro-h1">Turning peaks into insights</h1>
             <p class="pro-lede" style={{ maxWidth: '57ch' }}>
-              Downstream functional analysis, now built directly onto the annotation engine you already trust and
-              use — on data that never enters the public database until you say so.
+              Downstream functional analysis, now built directly onto the annotation engine you already trust and use —
+              on data that never enters the public database until you say so.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', margin: '34px 0 16px' }}>
               <a

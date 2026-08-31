@@ -112,8 +112,8 @@ export default defineComponent({
               Your annotations are done. Now what?
             </h2>
             <p class="pro-lede">
-              As your datasets and annotations grow, so does the work of turning them into answers — normally that
-              means stepping outside the platform, exporting results, and stitching together scripts by hand.
+              As your datasets and annotations grow, so does the work of turning them into answers — normally that means
+              stepping outside the platform, exporting results, and stitching together scripts by hand.
             </p>
             <p style={{ margin: '20px 0 0', color: '#55636E', maxWidth: '66ch', fontSize: '18px' }}>
               METASPACE Pro brings that analysis into the browser, directly on the annotations you already trust —
@@ -169,8 +169,8 @@ export default defineComponent({
             ))}
 
             <p style={{ margin: '0 0 0', fontSize: '15px', color: '#55636E', fontWeight: 'bold' }}>
-              * Every analysis tool — including new ones as they ship — is enabled on your three free private
-              datasets a year, so you can judge them on your own data before you spend anything.
+              * Every analysis tool — including new ones as they ship — is enabled on your three free private datasets a
+              year, so you can judge them on your own data before you spend anything.
             </p>
           </div>
         </section>

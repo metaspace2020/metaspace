@@ -1,23 +1,35 @@
 import { defineComponent, reactive } from 'vue'
+import type { VNode } from 'vue'
 
 interface FaqEntry {
   question: string
-  answer: string[]
+  answer: (string | (() => VNode))[]
 }
 
 const FAQS: FaqEntry[] = [
   {
     question: 'Is METASPACE Academic still free?',
     answer: [
-      'Yes, and it stays that way. Public submissions, the annotation engine and the community knowledgebase ' +
-        'remain free and open source, developed by the Alexandrov team at UCSD. Pro is a separate subscription ' +
-        'service from Metacloud Inc. for private work.',
+      () => (
+        <>
+          Yes, and it stays that way. Public submissions, the annotation engine and the community knowledgebase remain
+          free and open source, developed by the{' '}
+          <a href="https://ateam.bio/" target="_blank" rel="noopener noreferrer">
+            Alexandrov team
+          </a>{' '}
+          at UCSD. Pro is a separate subscription service from{' '}
+          <a href="https://metacloud.bio/" target="_blank" rel="noopener noreferrer">
+            Metacloud Inc.
+          </a>{' '}
+          for private work.
+        </>
+      ),
     ],
   },
   {
     question: 'Do I have to pay to try the analysis tools?',
     answer: [
-      "No. All analysis tools run on the free tier, on your three free private datasets a year. Paid plans raise " +
+      'No. All analysis tools run on the free tier, on your three free private datasets a year. Paid plans raise ' +
         "that ceiling — they don't unlock the features. Three datasets is enough to judge the tools on your own " +
         "dataset; it isn't enough for a real cross-dataset study.",
     ],
@@ -34,9 +46,23 @@ const FAQS: FaqEntry[] = [
   {
     question: 'Can I cite METASPACE Pro analysis in a paper?',
     answer: [
-      'Yes. The statistical methods, corrections and assumptions are documented in full, and the underlying ' +
-        'annotation engine is published in Nature Methods (Palmer et al., 2017). Citation guidance is on the ' +
-        'methods page.',
+      () => (
+        <>
+          Yes. The statistical methods, corrections and assumptions are{' '}
+          <a
+            href="/docs/features/cross-dataset-comparison/cross-dataset-statistical-analysis.html"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            documented in full
+          </a>
+          , and the underlying annotation engine is published in{' '}
+          <a href="https://www.nature.com/articles/nmeth.4072" target="_blank" rel="noopener noreferrer">
+            Nature Methods (Palmer et al., 2017)
+          </a>
+          . Citation guidance is on the methods page.
+        </>
+      ),
     ],
   },
   {
@@ -96,8 +122,8 @@ export default defineComponent({
                     </button>
                     {isOpen && (
                       <div class="pro-faq__answer">
-                        {entry.answer.map((paragraph) => (
-                          <p key={paragraph}>{paragraph}</p>
+                        {entry.answer.map((paragraph, paragraphIndex) => (
+                          <p key={paragraphIndex}>{typeof paragraph === 'function' ? paragraph() : paragraph}</p>
                         ))}
                       </div>
                     )}
@@ -113,8 +139,8 @@ export default defineComponent({
             <div class="pro-cta">
               <h2 class="pro-h2">Try it on your own data today</h2>
               <p class="pro-cta__lede">
-                Three private datasets a year are included with every METASPACE account. Try the analysis tools on
-                your own data before you decide anything.
+                Three private datasets a year are included with every METASPACE account. Try the analysis tools on your
+                own data before you decide anything.
               </p>
               <div class="pro-cta__actions">
                 <a href="/upload" target="_blank" rel="noopener noreferrer" class="pro-btn pro-btn--accent">

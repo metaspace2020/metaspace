@@ -38,10 +38,9 @@ describe('ProFaq', () => {
       'Yes, and it stays that way. Public submissions, the annotation engine and the community knowledgebase remain ' +
         'free and open source, developed by the Alexandrov team at UCSD. Pro is a separate subscription service ' +
         'from Metacloud Inc. for private work.',
-      'No. Differential analysis, spatial segmentation and cross-dataset statistics all run on the free tier, on ' +
-        "your three free private datasets a year. Paid plans raise that ceiling — they don't unlock the features. " +
-        "Three datasets is enough to judge the tools on your own dataset; it isn't enough for a real cross-dataset " +
-        'study.',
+      'No. All analysis tools run on the free tier, on your three free private datasets a year. Paid plans raise ' +
+        "that ceiling — they don't unlock the features. Three datasets is enough to judge the tools on your own " +
+        "dataset; it isn't enough for a real cross-dataset study.",
       'No. Private datasets and their annotations stay inside your group. If you later choose to make a dataset ' +
         'public, you do that explicitly, one dataset at a time.',
       'Yes. The statistical methods, corrections and assumptions are documented in full, and the underlying ' +

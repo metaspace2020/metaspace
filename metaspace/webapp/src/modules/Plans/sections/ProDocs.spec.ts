@@ -58,9 +58,9 @@ describe('ProDocs', () => {
     })
     expect(bodies).toEqual([
       'From imzML upload and the private toggle through annotation to a finished result.',
-      'Drawing regions, choosing a correction, and reading p-values and effect sizes.',
+      'Drawing regions and reading how strongly each ion differs between them.',
       'Picking the number of segments and tracing each one back to its driver ions.',
-      'Grouping datasets by condition.',
+      'Comparing datasets across your experimental design, without the manual bookkeeping.',
     ])
   })
 

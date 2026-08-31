@@ -6,7 +6,7 @@ describe('ProSectionNav', () => {
   it('renders the six section links in order', () => {
     const wrapper = mount(ProSectionNav)
     const links = wrapper.findAll('a')
-    expect(links.map((a) => a.text())).toEqual(['Analysis', 'Privacy', 'Docs', 'Plans', 'Procurement', 'FAQ'])
+    expect(links.map((a) => a.text())).toEqual(['Analysis', 'Privacy', 'Docs', 'Plans', 'Institutions', 'FAQ'])
   })
 
   it('targets the anchor of every tab on the page', () => {
