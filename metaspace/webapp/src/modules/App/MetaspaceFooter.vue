@@ -13,10 +13,8 @@
       </p>
       <p class="m-0 mt-8">
         &copy; 2014&ndash;2025
-        <a target="_blank" href="https://ateam.bio/">
-          <span v-if="themeVariant === 'pro'">Metacloud Inc.</span>
-          <span v-else>Alexandrov Team</span>
-        </a>
+        <a v-if="themeVariant === 'pro'" target="_blank" href="https://metacloud.bio">Metacloud Inc.</a>
+        <a v-else target="_blank" href="https://ateam.bio/">Alexandrov Team</a>
       </p>
     </div>
   </footer>

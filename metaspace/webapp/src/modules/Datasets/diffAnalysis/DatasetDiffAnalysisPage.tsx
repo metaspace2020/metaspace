@@ -26,7 +26,6 @@ import CopyButton from '../../../components/CopyButton.vue'
 import { parseFormulaAndCharge } from '../../../lib/formulaParser'
 import SimpleIonImageViewer from '../imzml/SimpleIonImageViewer'
 import { userProfileQuery, UserProfileQuery } from '../../../api/user'
-import { useProFeatures } from '../../../lib/useProFeatures'
 import './DatasetDiffAnalysisPage.scss'
 
 interface DatasetDiffAnalysisPageState {
@@ -78,7 +77,6 @@ export default defineComponent({
     })
 
     const currentUser = computed(() => (currentUserResult.value != null ? currentUserResult.value.currentUser : null))
-    const { canUse, loading: proLoading } = useProFeatures()
 
     const { result: datasetResult, onResult: handleDatasetLoad } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, {
       id: datasetId.value,
@@ -562,27 +560,6 @@ export default defineComponent({
     }
 
     return () => {
-      if (!canUse('diffAnalysis')) {
-        return (
-          <div class="dataset-diff-page">
-            <div class="flex w-full flex-wrap flex-row items-center justify-center">
-              {proLoading.value && (
-                <div class="flex items-center justify-center h-48 text-gray-500">
-                  <ElIcon class="is-loading">
-                    <Loading />
-                  </ElIcon>
-                </div>
-              )}
-              {!proLoading.value && (
-                <div class="flex items-center justify-center h-48 text-gray-500">
-                  Please upgrade to METASPACE Pro to view this page
-                </div>
-              )}
-            </div>
-          </div>
-        )
-      }
-
       return (
         <div class="dataset-diff-page">
           <div class={`${state.databaseOptions ? 'visible' : 'invisible'} min-h-[50px]`}>

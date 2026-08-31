@@ -7,6 +7,24 @@ import { FieldResolversFor } from '../../../bindingTypes'
 import { Mutation } from '../../../binding'
 import { assertCanEditGroup } from '../../group/controller'
 
+interface ManagerApiError extends Error {
+  status?: number
+  managerMessage?: string
+}
+
+const toPurchaseUserError = (
+  error: ManagerApiError, conflictStatus: number, conflictType: string, fallbackMessage: string
+): UserError => {
+  const message = error?.managerMessage || fallbackMessage
+  if (error?.status === conflictStatus) {
+    return new UserError(JSON.stringify({ type: conflictType, message }))
+  }
+  if (error?.status === 400) {
+    return new UserError(JSON.stringify({ type: 'failed_validation', message }))
+  }
+  return new UserError(JSON.stringify({ type: 'purchase_failed', message: fallbackMessage }))
+}
+
 const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GET', body?: any) => {
   try {
     const apiUrl = config.manager_api_url
@@ -32,14 +50,21 @@ const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GET', bod
 
     if (body && (method === 'POST' || method === 'PUT')) {
       options.body = JSON.stringify(body)
-      logger.info(`Request to ${endpoint}:`, { method, body })
+      logger.info(`Request to ${endpoint}:`, { method })
     }
 
     const response = await fetch(`${apiUrl}${endpoint}`, options)
     if (!response.ok) {
       const errorText = response.text ? await response.text() : 'Internal server error'
       logger.error(`API request failed with status ${response.status}: ${errorText}`)
-      throw new Error(errorText)
+      const error: ManagerApiError = new Error(errorText)
+      error.status = response.status
+      try {
+        error.managerMessage = JSON.parse(errorText)?.message
+      } catch (parseError) {
+        // Error body was not JSON - keep the raw text as the message
+      }
+      throw error
     }
 
     if (method === 'DELETE') {
@@ -121,6 +146,96 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       return result.subscription
     } catch (error) {
       throw new UserError('Failed to cancel subscription')
+    }
+  },
+
+  createPackSubscription: async(_, args, ctx: Context) => {
+    const { input } = args
+    const apiInput: any = {
+      userId: input.userId,
+      planId: input.planId,
+      email: input.email,
+      name: input.name,
+    }
+
+    if (input.pricingId) {
+      apiInput.pricingId = input.pricingId
+    }
+
+    if (input.groupId) {
+      apiInput.groupId = input.groupId
+      try {
+        await assertCanEditGroup(ctx.entityManager, ctx.user, input.groupId)
+      } catch (error) {
+        throw new UserError('You must be a group admin to buy a pack for this group.')
+      }
+    }
+
+    if (input.groupName) {
+      apiInput.groupName = input.groupName
+    }
+
+    if (input.address) {
+      apiInput.customerAddress = input.address
+    }
+
+    if (input.paymentMethodId) {
+      apiInput.paymentMethodId = input.paymentMethodId
+    }
+
+    if (input.couponCode && input.couponCode.trim()) {
+      apiInput.couponCode = input.couponCode.trim()
+    }
+
+    try {
+      return await makeApiRequest(ctx, '/api/subscriptions/pack', 'POST', apiInput)
+    } catch (error) {
+      // 409: target already has an active subscription - the webapp offers
+      // a top-up instead.
+      throw toPurchaseUserError(error as ManagerApiError, 409, 'already_subscribed',
+        'Failed to purchase the dataset pack')
+    }
+  },
+
+  purchaseTopup: async(_, args, ctx: Context) => {
+    const { input } = args
+
+    if (input.groupId) {
+      try {
+        await assertCanEditGroup(ctx.entityManager, ctx.user, input.groupId)
+      } catch (error) {
+        throw new UserError('You must be a group admin to top up this group.')
+      }
+    }
+
+    const apiInput: any = {
+      email: input.email,
+      topupOptionId: input.topupOptionId,
+    }
+
+    if (input.userId) {
+      apiInput.userId = input.userId
+    }
+
+    if (input.groupId) {
+      apiInput.groupId = input.groupId
+    }
+
+    if (input.address) {
+      apiInput.customerAddress = input.address
+    }
+
+    if (input.paymentMethodId) {
+      apiInput.paymentMethodId = input.paymentMethodId
+    }
+
+    try {
+      return await makeApiRequest(ctx, '/api/usage-credits/purchase', 'POST', apiInput)
+    } catch (error) {
+      // 403: no active subscription to top up - the webapp offers a pack
+      // instead.
+      throw toPurchaseUserError(error as ManagerApiError, 403, 'no_active_subscription',
+        'Failed to purchase the top-up')
     }
   },
 }

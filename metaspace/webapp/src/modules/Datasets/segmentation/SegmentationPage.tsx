@@ -32,7 +32,6 @@ import AspectRatioIcon from '../../../assets/inline/material/aspect-ratio.svg'
 import { MonitorSvg } from '@/design/refactoringUIIcons'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
 import { Setting } from '@element-plus/icons-vue'
-import { useProFeatures } from '../../../lib/useProFeatures'
 
 export default defineComponent({
   name: 'DatasetSegmentationPage',
@@ -81,8 +80,6 @@ export default defineComponent({
       id: datasetId.value,
     })
     const currentDataset = computed(() => datasetResult.value?.dataset)
-
-    const { canUse, loading: proLoading } = useProFeatures()
 
     const {
       result: segmentationsResult,
@@ -468,41 +465,6 @@ export default defineComponent({
                 <Loading />
               </ElIcon>
               <p>Loading segmentation data...</p>
-            </div>
-          </div>
-        )
-      }
-
-      if (!canUse('segmentation')) {
-        if (proLoading.value) {
-          return (
-            <div class="segmentation-page">
-              <div class="loading-container">
-                <ElIcon class="loading-icon">
-                  <Loading />
-                </ElIcon>
-                <p>Loading segmentation data...</p>
-              </div>
-            </div>
-          )
-        }
-
-        return (
-          <div class="segmentation-page">
-            <div class="no-data-container">
-              <ElAlert
-                title="METASPACE Pro feature"
-                type="info"
-                description="You need to be a METASPACE Pro user to access image segmentation."
-                show-icon
-                closable={false}
-              />
-              <ElButton onClick={goBack} class="back-button">
-                <ElIcon>
-                  <ArrowLeft />
-                </ElIcon>
-                Go Back
-              </ElButton>
             </div>
           </div>
         )

@@ -17,11 +17,22 @@ import {
 import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
 import { userProfileQuery } from '../../api/user'
 import { useStore } from 'vuex'
-import { useRoute } from 'vue-router'
-import { getPlanQuery, Plan } from '../../api/plan'
+import { useRoute, useRouter } from 'vue-router'
+import { getPlanQuery, getRemainingApiUsagesQuery, Plan } from '../../api/plan'
 import './PaymentPage.scss'
 import { Fragment } from 'vue'
-import { createSubscriptionMutation, validateCouponQuery } from '../../api/subscription'
+import {
+  createSubscriptionMutation,
+  createPackSubscriptionMutation,
+  purchaseTopupMutation,
+  getTopupOptionsQuery,
+  getActiveGroupSubscriptionSimpleQuery,
+  validateCouponQuery,
+  PurchaseCheckout,
+  TopupOption,
+  TopupOptionsData,
+} from '../../api/subscription'
+import { getActionTypeText } from '../../lib/usageActions'
 import CreateGroupPage from '../Group/CreateGroupPage.vue'
 import {
   formatPrice,
@@ -65,6 +76,7 @@ export default defineComponent({
   setup() {
     const store = useStore()
     const route = useRoute()
+    const router = useRouter()
     const cardNumberRef = ref<HTMLElement | null>(null)
     const cardExpiryRef = ref<HTMLElement | null>(null)
     const cardCvcRef = ref<HTMLElement | null>(null)
@@ -135,6 +147,8 @@ export default defineComponent({
       orderId: null as string | null,
       selectedPricingOption: null as any,
       planError: null as string | null,
+      pendingCheckout: null as PurchaseCheckout | null,
+      fulfillmentPending: false,
       termsAccepted: false,
       privacyDpaAccepted: false,
       showModal: false,
@@ -316,13 +330,79 @@ export default defineComponent({
       ...(state.form.selectedState && { customerState: state.form.selectedState }),
     }))
 
-    const { result: planResult, refetch: refetchPlan } = useQuery<{ plan: Plan }>(getPlanQuery, planQueryVariables, {
-      fetchPolicy: 'network-only',
-    })
+    const { result: planResult, refetch: refetchPlan } = useQuery<{ plan: Plan }>(
+      getPlanQuery,
+      planQueryVariables,
+      // Top-up checkouts have no planId, so the plan query must not fire.
+      () => ({ fetchPolicy: 'network-only' as const, enabled: !!route.query?.planId })
+    )
     const plan = computed(() => {
       const planData = planResult.value?.plan
       return planData
     })
+
+    // What this page is selling: a regular subscription, a one-off pack
+    // (planId pointing at a type='pack' plan), or a usage-credit top-up
+    // (topupOptionId + groupId, no plan at all). Packs and top-ups are
+    // fulfilled asynchronously by webhook after the card is confirmed.
+    const checkoutMode = computed<'subscription' | 'pack' | 'topup'>(() => {
+      if (route.query?.topupOptionId) {
+        return 'topup'
+      }
+      if (plan.value?.type === 'pack') {
+        return 'pack'
+      }
+      return 'subscription'
+    })
+    const topupGroupId = computed(() => (route.query?.groupId as string) || '')
+    const topupGroupName = computed(
+      () => groups.value?.find((group: any) => group.id === topupGroupId.value)?.name || ''
+    )
+
+    const { result: topupOptionsResult, loading: topupOptionsLoading } = useQuery<TopupOptionsData>(
+      getTopupOptionsQuery,
+      () => ({ groupId: topupGroupId.value }),
+      () => ({
+        fetchPolicy: 'network-only' as const,
+        enabled: checkoutMode.value === 'topup' && !!topupGroupId.value,
+      })
+    )
+    const selectedTopup = computed<TopupOption | null>(
+      () =>
+        (topupOptionsResult.value?.topupOptions || []).find((option) => option.id === route.query?.topupOptionId) ||
+        null
+    )
+
+    // Reuse the period-based price/VAT machinery for top-ups by presenting
+    // the selected option as a pricing option (fallback VAT estimation and
+    // the Pay button both read from selectedPeriod).
+    watch(
+      selectedTopup,
+      (option) => {
+        if (option) {
+          state.selectedPeriod = {
+            id: option.id,
+            priceCents: option.priceCents,
+            displayName: option.displayName,
+            periodMonths: 0,
+          }
+        }
+      },
+      { immediate: true }
+    )
+
+    // A top-up is always bought for the group in the URL - there is no group
+    // picker in that mode.
+    watch(
+      [topupGroupId, checkoutMode],
+      () => {
+        if (checkoutMode.value === 'topup' && topupGroupId.value) {
+          state.form.groupId = topupGroupId.value
+          validateGroupId(topupGroupId.value)
+        }
+      },
+      { immediate: true }
+    )
 
     // Get all unique periods from the plan
     const availablePeriods = computed(() => {
@@ -732,7 +812,9 @@ export default defineComponent({
         store.commit('account/showDialog', {
           dialog: 'signIn',
           dialogCloseRedirect: '/plans',
-          loginSuccessRedirect: `/payment?planId=${route.query.planId}`,
+          // Keep the whole query string: top-up checkouts carry
+          // topupOptionId + groupId rather than planId.
+          loginSuccessRedirect: route.fullPath,
         })
       }
     })
@@ -840,6 +922,214 @@ export default defineComponent({
       }
     }
 
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+    const FULFILLMENT_TIMEOUT_MS = 60000
+    const FULFILLMENT_POLL_MS = 3000
+
+    // Purchase mutations reject with a JSON-encoded UserError
+    // ({ type, message }) so the page can react to the REST semantics:
+    // already_subscribed (pack on a subscribed group) and
+    // no_active_subscription (top-up without a subscription).
+    const parseCheckoutError = (error: any): { type?: string; message: string } => {
+      const raw = error?.graphQLErrors?.[0]?.message ?? error?.message ?? ''
+      try {
+        const parsed = JSON.parse(raw)
+        return { type: parsed.type, message: parsed.message || 'The purchase failed. Please try again.' }
+      } catch (parseError) {
+        return { message: raw || 'An unexpected error occurred. Please try again.' }
+      }
+    }
+
+    // Runs the purchase mutation unless a quote from a failed previous
+    // attempt is still pending - paying the existing invoice instead of
+    // creating a second one.
+    const obtainCheckout = async (
+      execute: () => Promise<any>,
+      field: 'createPackSubscription' | 'purchaseTopup'
+    ): Promise<PurchaseCheckout> => {
+      if (state.pendingCheckout?.clientSecret) {
+        return state.pendingCheckout
+      }
+      const { data } = await execute()
+      const checkout = data?.[field]
+      if (!checkout?.clientSecret) {
+        throw new Error('Payment could not be started. Please try again.')
+      }
+      state.pendingCheckout = checkout
+      return checkout
+    }
+
+    const confirmCheckout = async (checkout: PurchaseCheckout, paymentMethodId: string) => {
+      const { error: confirmError } = await state.stripe!.confirmCardPayment(checkout.clientSecret!, {
+        payment_method: paymentMethodId,
+      })
+      if (confirmError) {
+        throw new Error(confirmError.message || 'The card could not be charged. Please try again.')
+      }
+      // Paid - this quote must never be reused.
+      state.pendingCheckout = null
+    }
+
+    // Fulfillment is webhook-driven; poll until the entitlement reflects the
+    // purchase. Pack: the group's active subscription becomes the pack plan.
+    const pollPackFulfillment = async (): Promise<string | null> => {
+      const deadline = Date.now() + FULFILLMENT_TIMEOUT_MS
+      while (Date.now() < deadline) {
+        try {
+          const { data } = await (apolloClient as any).query({
+            query: getActiveGroupSubscriptionSimpleQuery,
+            variables: { groupId: state.form.groupId },
+            fetchPolicy: 'network-only',
+          })
+          const subscription = data?.activeGroupSubscription
+          if (subscription && subscription.planId === plan.value?.id) {
+            return subscription.id
+          }
+        } catch (pollError) {
+          console.debug('Pack fulfillment poll failed:', pollError)
+        }
+        await sleep(FULFILLMENT_POLL_MS)
+      }
+      return null
+    }
+
+    const fetchGroupCreditsTotal = async (): Promise<number> => {
+      const { data } = await (apolloClient as any).query({
+        query: getRemainingApiUsagesQuery,
+        variables: { groupId: topupGroupId.value },
+        fetchPolicy: 'network-only',
+      })
+      return (data?.remainingApiUsages || []).reduce((total: number, row: any) => total + (row.creditsTotal || 0), 0)
+    }
+
+    // Top-up: the group's credit balance grows once the webhook lands.
+    const pollTopupFulfillment = async (baselineCredits: number): Promise<boolean> => {
+      const deadline = Date.now() + FULFILLMENT_TIMEOUT_MS
+      while (Date.now() < deadline) {
+        try {
+          if ((await fetchGroupCreditsTotal()) > baselineCredits) {
+            return true
+          }
+        } catch (pollError) {
+          console.debug('Top-up fulfillment poll failed:', pollError)
+        }
+        await sleep(FULFILLMENT_POLL_MS)
+      }
+      return false
+    }
+
+    const goToGroupSubscriptionTab = () => {
+      router.push({
+        name: 'group',
+        params: { groupIdOrSlug: state.form.groupId || topupGroupId.value },
+        query: { tab: 'subscription' },
+      })
+    }
+
+    const notifyFulfillmentPending = () => {
+      ElNotification({
+        title: 'Payment received',
+        message:
+          'Your payment went through, but activation is still pending. It usually completes within a few minutes - ' +
+          'contact contact@metaspacepro.com if it does not appear.',
+        type: 'warning',
+        duration: 0,
+      })
+    }
+
+    const customerAddress = () => ({
+      line1: state.form.address,
+      postalCode: state.form.zipCode,
+      country: state.form.selectedCountry,
+      ...(state.form.selectedState && { state: state.form.selectedState }),
+    })
+
+    const submitPackCheckout = async (paymentMethodId: string) => {
+      const checkout = await obtainCheckout(
+        () =>
+          apolloClient!.mutate({
+            mutation: createPackSubscriptionMutation,
+            variables: {
+              input: {
+                userId: currentUser.value!.id,
+                planId: plan.value!.id,
+                pricingId: state.selectedPricingOption?.id,
+                groupId: state.form.groupId,
+                email: state.form.email,
+                name: `${state.form.firstName} ${state.form.lastName}`.trim(),
+                address: customerAddress(),
+                paymentMethodId,
+                couponCode: state.coupon.applied ? state.coupon.code : undefined,
+              },
+            },
+          }),
+        'createPackSubscription'
+      )
+
+      await confirmCheckout(checkout, paymentMethodId)
+
+      state.fulfillmentPending = true
+      const subscriptionId = await pollPackFulfillment()
+      if (subscriptionId) {
+        ElNotification({
+          title: 'Payment Successful!',
+          message: 'Your dataset pack is now active. Redirecting you to the confirmation page...',
+          type: 'success',
+          duration: 5000,
+        })
+        setTimeout(() => {
+          window.location.href = `/success?subscriptionId=${subscriptionId}&groupId=${state.form.groupId}`
+        }, 100)
+      } else {
+        notifyFulfillmentPending()
+        goToGroupSubscriptionTab()
+      }
+    }
+
+    const submitTopupCheckout = async (paymentMethodId: string) => {
+      // Baseline before purchase, so fulfillment is detected as a change.
+      let baselineCredits = 0
+      try {
+        baselineCredits = await fetchGroupCreditsTotal()
+      } catch (baselineError) {
+        console.debug('Could not read the credit baseline:', baselineError)
+      }
+
+      const checkout = await obtainCheckout(
+        () =>
+          apolloClient!.mutate({
+            mutation: purchaseTopupMutation,
+            variables: {
+              input: {
+                groupId: topupGroupId.value,
+                email: state.form.email,
+                topupOptionId: selectedTopup.value!.id,
+                address: customerAddress(),
+                paymentMethodId,
+              },
+            },
+          }),
+        'purchaseTopup'
+      )
+
+      await confirmCheckout(checkout, paymentMethodId)
+
+      state.fulfillmentPending = true
+      const fulfilled = await pollTopupFulfillment(baselineCredits)
+      if (fulfilled) {
+        ElNotification({
+          title: 'Top-up applied!',
+          message: 'Your extra credits are now available on the group subscription.',
+          type: 'success',
+          duration: 5000,
+        })
+      } else {
+        notifyFulfillmentPending()
+      }
+      goToGroupSubscriptionTab()
+    }
+
     const handleSubmit = async () => {
       if (!state.stripe || !state.cardNumberElement) {
         ElNotification({
@@ -883,7 +1173,14 @@ export default defineComponent({
           throw new Error('User authentication required')
         }
 
-        if (!route.query.planId) {
+        if (checkoutMode.value === 'topup') {
+          if (!topupGroupId.value) {
+            throw new Error('This top-up link is missing its group. Please start again from the Subscription tab.')
+          }
+          if (!selectedTopup.value) {
+            throw new Error('This top-up option is no longer available. Please start again from the Subscription tab.')
+          }
+        } else if (!route.query.planId) {
           throw new Error('Plan ID is required')
         }
 
@@ -908,6 +1205,17 @@ export default defineComponent({
 
         if (!paymentMethod) {
           throw new Error('Failed to create payment method')
+        }
+
+        // One-off checkouts (pack / top-up): quote -> confirm card -> poll
+        // the webhook-driven fulfillment. Nothing below applies to them.
+        if (checkoutMode.value === 'pack') {
+          await submitPackCheckout(paymentMethod!.id)
+          return
+        }
+        if (checkoutMode.value === 'topup') {
+          await submitTopupCheckout(paymentMethod!.id)
+          return
         }
 
         // Create subscription with the token
@@ -969,14 +1277,22 @@ export default defineComponent({
       } catch (error: any) {
         console.error('Payment error:', error)
 
-        let errorMessage = 'An unexpected error occurred. Please try again.'
+        const parsed = parseCheckoutError(error)
+        let errorMessage = parsed.message
 
-        if (error.message) {
-          errorMessage = error.message
-        } else if (error.graphQLErrors && error.graphQLErrors.length > 0) {
-          errorMessage = error.graphQLErrors[0].message
-        } else if (error.networkError) {
+        if (parsed.type === 'already_subscribed') {
+          // The complementary product: a subscribed group cannot buy a pack,
+          // but it can top up.
+          errorMessage =
+            'This group already has an active subscription, so a pack cannot be added on top. ' +
+            'You can buy a top-up from the group Subscription tab instead.'
+        } else if (parsed.type === 'no_active_subscription') {
+          errorMessage =
+            'There is no active subscription to top up. You can buy a dataset pack from the Plans page instead.'
+        } else if (!errorMessage && error.networkError) {
           errorMessage = 'Network error. Please check your connection and try again.'
+        } else if (!errorMessage) {
+          errorMessage = 'An unexpected error occurred. Please try again.'
         }
 
         state.error = errorMessage
@@ -988,6 +1304,7 @@ export default defineComponent({
         })
       } finally {
         state.loading = false
+        state.fulfillmentPending = false
       }
     }
 
@@ -1000,96 +1317,117 @@ export default defineComponent({
             <div class="payment-form">
               <h2>Enter payment details</h2>
 
-              {/* Billing Frequency Section */}
-              <div class="form-section">
-                <h3>Billing Frequency</h3>
-                <div class="billing-frequency">
-                  <ElRadioGroup
-                    modelValue={availablePeriods.value.findIndex((option) => option.id === state.selectedPeriod?.id)}
-                    onUpdate:modelValue={(index: number) => {
-                      state.selectedPeriod = availablePeriods.value[index]
-                    }}
-                    class="frequency-options"
-                  >
-                    {availablePeriods.value.map((period, index) => {
-                      const totalPrice = period.priceCents
-                      const monthlyPrice = getMonthlyPriceFromCents(period.priceCents, period.periodMonths)
-                      const savingsPercentage = getSavingsPercentageFromPrices(
-                        monthlyPrice,
-                        getMonthlyPriceFromCents(
-                          availablePeriods.value[0].priceCents,
-                          availablePeriods.value[0].periodMonths
+              {checkoutMode.value === 'pack' && (
+                <div class="form-section">
+                  <h3>Billing</h3>
+                  <p class="text-sm" data-test="pack-billing-note">
+                    METASPACE Pro pack (Expires in {state.selectedPeriod?.displayName || '6 months'}).
+                  </p>
+                </div>
+              )}
+              {checkoutMode.value === 'subscription' && (
+                <div class="form-section">
+                  <h3>Billing Frequency</h3>
+                  <div class="billing-frequency">
+                    <ElRadioGroup
+                      modelValue={availablePeriods.value.findIndex((option) => option.id === state.selectedPeriod?.id)}
+                      onUpdate:modelValue={(index: number) => {
+                        state.selectedPeriod = availablePeriods.value[index]
+                      }}
+                      class="frequency-options"
+                    >
+                      {availablePeriods.value.map((period, index) => {
+                        const totalPrice = period.priceCents
+                        const monthlyPrice = getMonthlyPriceFromCents(period.priceCents, period.periodMonths)
+                        const savingsPercentage = getSavingsPercentageFromPrices(
+                          monthlyPrice,
+                          getMonthlyPriceFromCents(
+                            availablePeriods.value[0].priceCents,
+                            availablePeriods.value[0].periodMonths
+                          )
                         )
-                      )
-                      return (
-                        <div class="frequency-option" key={period.id}>
-                          <ElRadio label={index} class="frequency-radio">
-                            <div class="option-content">
-                              <div class="option-title">{period.displayName}</div>
-                              <div class="option-price">
-                                ${formatPrice(totalPrice)}/{period.displayName.toLowerCase()}
-                                {savingsPercentage > 0 && (
-                                  <span class="savings">Save {savingsPercentage.toFixed(1)}%</span>
-                                )}
+                        return (
+                          <div class="frequency-option" key={period.id}>
+                            <ElRadio label={index} class="frequency-radio">
+                              <div class="option-content">
+                                <div class="option-title">{period.displayName}</div>
+                                <div class="option-price">
+                                  ${formatPrice(totalPrice)}/{period.displayName.toLowerCase()}
+                                  {savingsPercentage > 0 && (
+                                    <span class="savings">Save {savingsPercentage.toFixed(1)}%</span>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          </ElRadio>
-                        </div>
-                      )
-                    })}
-                  </ElRadioGroup>
-                  <div class="autorenew-toggle flex items-center gap-2 mt-10">
-                    <label style="font-weight: 500;">Auto-renew</label>
-                    <ElSwitch
-                      modelValue={state.autoRenew}
-                      onUpdate:modelValue={(val: boolean) => (state.autoRenew = val)}
-                      activeText="On"
-                      inactiveText="Off"
-                    />
+                            </ElRadio>
+                          </div>
+                        )
+                      })}
+                    </ElRadioGroup>
+                    <div class="autorenew-toggle flex items-center gap-2 mt-10">
+                      <label style="font-weight: 500;">Auto-renew</label>
+                      <ElSwitch
+                        modelValue={state.autoRenew}
+                        onUpdate:modelValue={(val: boolean) => (state.autoRenew = val)}
+                        activeText="On"
+                        inactiveText="Off"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Group Section */}
-              <div class="form-section">
-                <h3>Group</h3>
-                <p>
-                  Select a group to associate with this subscription. If you dont have a group, please{' '}
-                  <span onClick={() => openCreateGroupModal()} class="link text-blue-500 cursor-pointer underline">
-                    create one first
-                  </span>
-                  .
-                </p>
-                <div class="form-group">
-                  <label>
-                    Group<span class="required">*</span>
-                  </label>
-                  <ElSelect
-                    modelValue={state.form.groupId}
-                    onUpdate:modelValue={(val: string) => {
-                      if (val === 'custom') {
-                        openCreateGroupModal()
-                      } else {
-                        state.form.groupId = val
-                        validateGroupId(val)
-                        state.formErrors.groupId = !state.validation.groupId.isValid
-                      }
-                    }}
-                    loading={state.isUpdatingGroups}
-                    placeholder={state.isUpdatingGroups ? 'Updating groups...' : 'Select a group'}
-                    class={!state.validation.groupId.isValid && state.form.groupId ? 'error-border' : ''}
-                  >
-                    {groups.value?.map((group) => <ElOption label={group.name} value={group.id} />)}
-                  </ElSelect>
-                  <div
-                    class={`field-error ${
-                      !state.validation.groupId.isValid && state.validation.groupId.message ? 'visible' : 'invisible'
-                    }`}
-                  >
-                    {state.validation.groupId.message}
+              {/* Group Section - a top-up is bound to the group it was
+                  started from, so there is nothing to pick. */}
+              {checkoutMode.value === 'topup' ? (
+                <div class="form-section">
+                  <h3>Group</h3>
+                  <p>These credits will be added to this group&apos;s active subscription.</p>
+                  <div class="form-group">
+                    <label>Group</label>
+                    <ElInput modelValue={topupGroupName.value || topupGroupId.value} disabled data-test="topup-group" />
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div class="form-section">
+                  <h3>Group</h3>
+                  <p>
+                    Select a group to associate with this subscription. If you dont have a group, please{' '}
+                    <span onClick={() => openCreateGroupModal()} class="link text-blue-500 cursor-pointer underline">
+                      create one first
+                    </span>
+                    .
+                  </p>
+                  <div class="form-group">
+                    <label>
+                      Group<span class="required">*</span>
+                    </label>
+                    <ElSelect
+                      modelValue={state.form.groupId}
+                      onUpdate:modelValue={(val: string) => {
+                        if (val === 'custom') {
+                          openCreateGroupModal()
+                        } else {
+                          state.form.groupId = val
+                          validateGroupId(val)
+                          state.formErrors.groupId = !state.validation.groupId.isValid
+                        }
+                      }}
+                      loading={state.isUpdatingGroups}
+                      placeholder={state.isUpdatingGroups ? 'Updating groups...' : 'Select a group'}
+                      class={!state.validation.groupId.isValid && state.form.groupId ? 'error-border' : ''}
+                    >
+                      {groups.value?.map((group) => <ElOption label={group.name} value={group.id} />)}
+                    </ElSelect>
+                    <div
+                      class={`field-error ${
+                        !state.validation.groupId.isValid && state.validation.groupId.message ? 'visible' : 'invisible'
+                      }`}
+                    >
+                      {state.validation.groupId.message}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Customer Information Section */}
               <div class="form-section">
@@ -1412,114 +1750,180 @@ export default defineComponent({
               >
                 Pay ${formatPrice(finalPrice.value)}
               </ElButton>
+              {state.fulfillmentPending && (
+                <p class="text-sm mt-2" data-test="fulfillment-pending-note">
+                  Payment received — activating your purchase…
+                </p>
+              )}
             </div>
 
             <div class="order-summary">
               <h2>Order Summary</h2>
-              {plan.value && (
-                <Fragment>
-                  <div class="summary-item">
-                    <span class="item-name">{plan.value.name} Plan</span>
-                    <span class="item-price">
-                      <span class="currency">$</span>
-                      <span class="amount">{formatPrice(getBasePrice(state.selectedPeriod))}</span>
-                      <span class="period">/{state.selectedPeriod?.displayName.toLowerCase()}</span>
-                    </span>
-                  </div>
-
-                  {/* VAT/Tax breakdown */}
-                  {hasAnyVatCalculation(state.selectedPeriod) && getVatAmount(state.selectedPeriod) > 0 && (
-                    <div class="summary-item vat-item">
-                      <span class="item-name">Indicative tax (VAT)</span>
+              {checkoutMode.value === 'topup' ? (
+                selectedTopup.value ? (
+                  <Fragment>
+                    <div class="summary-item">
+                      <span class="item-name">Top-up · {selectedTopup.value.displayName}</span>
                       <span class="item-price">
                         <span class="currency">$</span>
-                        <span class="amount">{formatPrice(getVatAmount(state.selectedPeriod))}</span>
+                        <span class="amount">{formatPrice(getBasePrice(state.selectedPeriod))}</span>
                       </span>
                     </div>
-                  )}
 
-                  <div class="summary-details">
-                    {plan.value.description && (
-                      <Fragment>
-                        <div class="plan-description" v-html={plan.value.description} />
-                      </Fragment>
-                    )}
-                  </div>
-
-                  {/* Coupon Section */}
-                  <div class="coupon-section">
-                    {!state.coupon.applied ? (
-                      <div class="coupon-input">
-                        <ElInput
-                          modelValue={state.coupon.code}
-                          onUpdate:modelValue={(val: string) => {
-                            state.coupon.code = val
-                            state.coupon.error = null
-                          }}
-                          placeholder="Enter coupon code"
-                          size="default"
-                          class="coupon-field"
-                        />
-                        <ElButton
-                          type="primary"
-                          size="default"
-                          onClick={applyCoupon}
-                          class="apply-coupon-btn"
-                          loading={state.coupon.isValidating}
-                          disabled={state.coupon.isValidating}
-                        >
-                          {state.coupon.isValidating ? 'Validating...' : 'Apply'}
-                        </ElButton>
-                      </div>
-                    ) : (
-                      <div class="coupon-applied">
-                        <span class="coupon-code">{state.coupon.code}</span>
-                        <span class="discount">
-                          {state.coupon.validationResult?.discountPercentage
-                            ? `-${state.coupon.validationResult.discountPercentage}%`
-                            : 'Applied'}
+                    {hasAnyVatCalculation(state.selectedPeriod) && getVatAmount(state.selectedPeriod) > 0 && (
+                      <div class="summary-item vat-item">
+                        <span class="item-name">Indicative tax (VAT)</span>
+                        <span class="item-price">
+                          <span class="currency">$</span>
+                          <span class="amount">{formatPrice(getVatAmount(state.selectedPeriod))}</span>
                         </span>
-                        <ElButton type="text" size="small" onClick={removeCoupon} class="remove-coupon">
-                          Remove
-                        </ElButton>
                       </div>
                     )}
-                    {state.coupon.error && <div class="coupon-error">{state.coupon.error}</div>}
-                  </div>
 
-                  {state.coupon.applied && state.coupon.validationResult?.isValid && (
-                    <div class="summary-item discount">
-                      <span class="item-name">
-                        {state.coupon.validationResult.couponName ||
-                          `Discount${
-                            state.coupon.validationResult.discountPercentage
-                              ? ` (${state.coupon.validationResult.discountPercentage}%)`
-                              : ''
-                          }`}
-                      </span>
-                      <span class="item-price discount-amount">
-                        -$
-                        <span class="amount">{formatPrice(getTotalDiscountAmount())}</span>
+                    <div class="summary-details">
+                      {/* The bundle comes from the API - one purchase raises
+                          several usage dimensions at fixed ratios. */}
+                      <ul class="pl-4 my-2" data-test="topup-grants">
+                        {selectedTopup.value.grants.map((grant) => (
+                          <li key={grant.actionType}>
+                            +{grant.amount} {getActionTypeText(grant.actionType)}
+                          </li>
+                        ))}
+                      </ul>
+                      <p class="text-xs text-gray-500">
+                        Credits are added to your group&apos;s current subscription, are used automatically once plan
+                        limits are reached, and expire when the subscription expires. Nothing renews.
+                      </p>
+                    </div>
+
+                    <div class="summary-total">
+                      <span>Total</span>
+                      <span>
+                        <span class="currency">$</span>
+                        <span class="amount">{formatPrice(finalPrice.value)}</span>
                       </span>
                     </div>
-                  )}
-
-                  <div class="summary-total">
-                    <span>Total</span>
-                    <span>
-                      <span class="currency">$</span>
-                      <span class="amount">{formatPrice(finalPrice.value)}</span>
-                      <span class="period">/{state.selectedPeriod?.displayName.toLowerCase()}</span>
-                    </span>
-                  </div>
-                  <p class="vat-notice">
-                    {hasAnyVatCalculation(state.selectedPeriod) && getVatAmount(state.selectedPeriod) > 0
-                      ? getFallbackVatCalculation(state.selectedPeriod)
-                        ? '*VAT included (estimated - tax collection currently disabled)'
-                        : '*VAT included'
-                      : '*VAT included where applicable'}
+                    <p class="vat-notice">*VAT included where applicable</p>
+                  </Fragment>
+                ) : (
+                  <p data-test="topup-unavailable">
+                    {topupOptionsLoading.value
+                      ? 'Loading your top-up...'
+                      : 'This top-up option is no longer available. Please return to your group Subscription tab.'}
                   </p>
-                </Fragment>
+                )
+              ) : (
+                plan.value && (
+                  <Fragment>
+                    <div class="summary-item">
+                      <span class="item-name">{plan.value.name} Plan</span>
+                      <span class="item-price">
+                        <span class="currency">$</span>
+                        <span class="amount">{formatPrice(getBasePrice(state.selectedPeriod))}</span>
+                        <span class="period">/{state.selectedPeriod?.displayName.toLowerCase()}</span>
+                      </span>
+                    </div>
+
+                    {/* VAT/Tax breakdown */}
+                    {hasAnyVatCalculation(state.selectedPeriod) && getVatAmount(state.selectedPeriod) > 0 && (
+                      <div class="summary-item vat-item">
+                        <span class="item-name">Indicative tax (VAT)</span>
+                        <span class="item-price">
+                          <span class="currency">$</span>
+                          <span class="amount">{formatPrice(getVatAmount(state.selectedPeriod))}</span>
+                        </span>
+                      </div>
+                    )}
+
+                    <div class="summary-details">
+                      {plan.value.description && (
+                        <Fragment>
+                          <div class="plan-description" v-html={plan.value.description} />
+                        </Fragment>
+                      )}
+                      {checkoutMode.value === 'pack' && (
+                        <p class="text-xs text-gray-500" data-test="pack-summary-note">
+                          One-off payment for {state.selectedPeriod?.displayName?.toLowerCase() || '6 months'} of access
+                          — nothing renews, and the pack expires at the end of the period.
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Coupon Section */}
+                    <div class="coupon-section">
+                      {!state.coupon.applied ? (
+                        <div class="coupon-input">
+                          <ElInput
+                            modelValue={state.coupon.code}
+                            onUpdate:modelValue={(val: string) => {
+                              state.coupon.code = val
+                              state.coupon.error = null
+                            }}
+                            placeholder="Enter coupon code"
+                            size="default"
+                            class="coupon-field"
+                          />
+                          <ElButton
+                            type="primary"
+                            size="default"
+                            onClick={applyCoupon}
+                            class="apply-coupon-btn"
+                            loading={state.coupon.isValidating}
+                            disabled={state.coupon.isValidating}
+                          >
+                            {state.coupon.isValidating ? 'Validating...' : 'Apply'}
+                          </ElButton>
+                        </div>
+                      ) : (
+                        <div class="coupon-applied">
+                          <span class="coupon-code">{state.coupon.code}</span>
+                          <span class="discount">
+                            {state.coupon.validationResult?.discountPercentage
+                              ? `-${state.coupon.validationResult.discountPercentage}%`
+                              : 'Applied'}
+                          </span>
+                          <ElButton type="text" size="small" onClick={removeCoupon} class="remove-coupon">
+                            Remove
+                          </ElButton>
+                        </div>
+                      )}
+                      {state.coupon.error && <div class="coupon-error">{state.coupon.error}</div>}
+                    </div>
+
+                    {state.coupon.applied && state.coupon.validationResult?.isValid && (
+                      <div class="summary-item discount">
+                        <span class="item-name">
+                          {state.coupon.validationResult.couponName ||
+                            `Discount${
+                              state.coupon.validationResult.discountPercentage
+                                ? ` (${state.coupon.validationResult.discountPercentage}%)`
+                                : ''
+                            }`}
+                        </span>
+                        <span class="item-price discount-amount">
+                          -$
+                          <span class="amount">{formatPrice(getTotalDiscountAmount())}</span>
+                        </span>
+                      </div>
+                    )}
+
+                    <div class="summary-total">
+                      <span>Total</span>
+                      <span>
+                        <span class="currency">$</span>
+                        <span class="amount">{formatPrice(finalPrice.value)}</span>
+                        <span class="period">/{state.selectedPeriod?.displayName.toLowerCase()}</span>
+                      </span>
+                    </div>
+                    <p class="vat-notice">
+                      {hasAnyVatCalculation(state.selectedPeriod) && getVatAmount(state.selectedPeriod) > 0
+                        ? getFallbackVatCalculation(state.selectedPeriod)
+                          ? '*VAT included (estimated - tax collection currently disabled)'
+                          : '*VAT included'
+                        : '*VAT included where applicable'}
+                    </p>
+                  </Fragment>
+                )
               )}
             </div>
           </div>

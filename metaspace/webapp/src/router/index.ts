@@ -7,6 +7,7 @@ import { DialogPage, ResetPasswordPage } from '../modules/Account'
 import { redirectAfterSignIn } from '../modules/Account/signInReturnUrl'
 import { updateDBParam } from '../modules/Filters/url'
 import NotFound from '../modules/App/NotFoundPage.vue'
+import { prefersReducedMotion } from '../modules/Plans/charts/drawing'
 
 const asyncPagesFreelyTyped = {
   AnnotationsPage: () =>
@@ -100,8 +101,7 @@ const asyncPagesFreelyTyped = {
 
   // Pages that connect with pro
 
-  PlansPage: () =>
-    import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/Plans/PlansPage'),
+  ProPage: () => import(/* webpackPrefetch: true, webpackChunkName: "ProPage" */ '../modules/Plans/ProPage'),
   PaymentPage: () =>
     import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/Plans/PaymentPage'),
   SuccessPage: () =>
@@ -249,7 +249,9 @@ export const routes: any = [
 
   { path: '/news', name: 'news', component: asyncPages.NewsPage },
 
-  { path: '/plans', name: 'plans', component: asyncPages.PlansPage },
+  { path: '/pro', name: 'pro', component: asyncPages.ProPage, meta: { footer: true } },
+  // Kept so every existing link, email and bookmark still lands on pricing.
+  { path: '/plans', name: 'plans', redirect: { name: 'pro', hash: '#plans' } },
   { path: '/payment', name: 'payment', component: asyncPages.PaymentPage },
   { path: '/success', name: 'success', component: asyncPages.SuccessPage },
   { path: '/feature-requests', name: 'feature-requests', component: asyncPages.FeatureRequestPage },
@@ -257,17 +259,56 @@ export const routes: any = [
   { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFound, meta: { footer: true, flex: true } },
 ]
 
+// Exported separately so it can be unit-tested without driving a full navigation.
+export const scrollBehavior: Parameters<typeof createRouter>[0]['scrollBehavior'] = (to, from, savedPosition) => {
+  // return desired position
+  if (savedPosition) {
+    return savedPosition
+  }
+  // /plans redirects to /pro#plans - without this the redirect would land at
+  // the top of a long marketing page instead of at the pricing block. Only
+  // target the hash if its element actually exists on the destination page -
+  // otherwise vue-router silently fails to scroll at all instead of falling
+  // back to the top. Only scroll when the hash (or page) actually changed:
+  // a same-path replace that keeps the hash (e.g. a filter rewriting the
+  // query string) must not re-scroll a user who has since moved elsewhere
+  // on the page.
+  if (
+    to.hash &&
+    (to.path !== from.path || to.hash !== from.hash) &&
+    typeof document !== 'undefined' &&
+    document.querySelector(to.hash)
+  ) {
+    return { el: to.hash, top: 80, behavior: prefersReducedMotion() ? 'auto' : 'smooth' }
+  }
+
+  // keep the current position instead.
+  if (to.path === from.path) {
+    return false
+  }
+
+  // scroll to top
+  return { top: 0 }
+}
+
 const router = createRouter({
   // @ts-ignore
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
-  scrollBehavior(to, from, savedPosition) {
-    // return desired position
-    if (savedPosition) {
-      return savedPosition
-    }
-    return { top: 0 }
-  },
+  scrollBehavior,
+})
+
+// Leaving a very long page (e.g. /pro, ~10k px tall) for a shorter one: the
+// keyed <router-view> swaps the content on the next tick, the document height
+// collapses, and the browser clamps the stale scroll offset to the new bottom
+// - which paints the footer alone over an empty page until scrollBehavior
+// runs. afterEach fires before that DOM swap paints, so resetting here
+// removes the footer-only flash; scrollBehavior still applies the saved or
+// hash position afterwards.
+router.afterEach((to, from, failure) => {
+  if (!failure && to.path !== from.path) {
+    window.scrollTo(0, 0)
+  }
 })
 
 const pageLoadedAt = Date.now()

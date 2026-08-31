@@ -409,4 +409,206 @@ describe('modules/subscription/controller (mutations)', () => {
       )
     })
   })
+
+  describe('Mutation.createPackSubscription', () => {
+    const createPackSubscriptionMutation = `mutation ($input: CreatePackSubscriptionInput!) {
+      createPackSubscription(input: $input) {
+        invoiceId
+        clientSecret
+        amountDue
+        currency
+      }
+    }`
+
+    const packCheckout = {
+      invoiceId: 'in_1234567890',
+      clientSecret: 'pi_1234_secret_5678',
+      amountDue: 35000,
+      currency: 'usd',
+    }
+
+    it('should start a pack checkout and return the payment details', async() => {
+      const input = {
+        userId: userContext.getUserIdOrFail(),
+        planId: '550e8400-e29b-41d4-a716-446655440010',
+        pricingId: 'price_pack_6m',
+        email: 'user@example.com',
+        name: 'John Doe',
+        groupId: testGroupId,
+        paymentMethodId: 'pm_1234567890',
+        couponCode: 'SAVE20',
+        address: { country: 'DE', postalCode: '10115', line1: 'Invalidenstr. 1' },
+      }
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(packCheckout),
+      })
+
+      const result = await doQuery(createPackSubscriptionMutation, { input })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://test-api.metaspace.example/api/subscriptions/pack',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+          }),
+          body: expect.any(String),
+        })
+      )
+
+      const actualBody = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(actualBody).toEqual({
+        userId: input.userId,
+        planId: input.planId,
+        pricingId: input.pricingId,
+        email: input.email,
+        name: input.name,
+        groupId: testGroupId,
+        customerAddress: input.address,
+        paymentMethodId: input.paymentMethodId,
+        couponCode: input.couponCode,
+      })
+
+      expect(result).toEqual(packCheckout)
+    })
+
+    it('should report an active subscription conflict so the caller can offer a top-up', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 409,
+        statusText: 'Conflict',
+        text: () => Promise.resolve(JSON.stringify({ message: 'Group already has an active subscription' })),
+      })
+
+      await expect(
+        doQuery(createPackSubscriptionMutation, {
+          input: {
+            userId: userContext.getUserIdOrFail(),
+            planId: '550e8400-e29b-41d4-a716-446655440010',
+            email: 'user@example.com',
+            name: 'John Doe',
+            groupId: testGroupId,
+          },
+        })
+      ).rejects.toThrow(/already_subscribed/)
+    })
+
+    it('should surface manager validation errors', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        statusText: 'Bad Request',
+        text: () => Promise.resolve(JSON.stringify({ message: 'Plan is not an active pack' })),
+      })
+
+      await expect(
+        doQuery(createPackSubscriptionMutation, {
+          input: {
+            userId: userContext.getUserIdOrFail(),
+            planId: '550e8400-e29b-41d4-a716-446655440010',
+            email: 'user@example.com',
+            name: 'John Doe',
+            groupId: testGroupId,
+          },
+        })
+      ).rejects.toThrow(/Plan is not an active pack/)
+    })
+  })
+
+  describe('Mutation.purchaseTopup', () => {
+    const purchaseTopupMutation = `mutation ($input: PurchaseTopupInput!) {
+      purchaseTopup(input: $input) {
+        invoiceId
+        clientSecret
+        amountDue
+        currency
+      }
+    }`
+
+    const topupCheckout = {
+      invoiceId: 'in_topup_1234567890',
+      clientSecret: 'pi_topup_secret_5678',
+      amountDue: 33300,
+      currency: 'usd',
+    }
+
+    it('should start a top-up checkout for a group and return the payment details', async() => {
+      const input = {
+        groupId: testGroupId,
+        email: 'user@example.com',
+        topupOptionId: 'topup-option-x10',
+        paymentMethodId: 'pm_1234567890',
+        address: { country: 'DE', postalCode: '10115' },
+      }
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(topupCheckout),
+      })
+
+      const result = await doQuery(purchaseTopupMutation, { input })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://test-api.metaspace.example/api/usage-credits/purchase',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+          }),
+          body: expect.any(String),
+        })
+      )
+
+      const actualBody = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(actualBody).toEqual({
+        groupId: testGroupId,
+        email: input.email,
+        topupOptionId: input.topupOptionId,
+        paymentMethodId: input.paymentMethodId,
+        customerAddress: input.address,
+      })
+
+      expect(result).toEqual(topupCheckout)
+    })
+
+    it('should report a missing subscription so the caller can offer a pack', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+        text: () => Promise.resolve(JSON.stringify({ message: 'No active subscription' })),
+      })
+
+      await expect(
+        doQuery(purchaseTopupMutation, {
+          input: {
+            groupId: testGroupId,
+            email: 'user@example.com',
+            topupOptionId: 'topup-option-x10',
+          },
+        })
+      ).rejects.toThrow(/no_active_subscription/)
+    })
+
+    it('should surface manager validation errors', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        statusText: 'Bad Request',
+        text: () => Promise.resolve(JSON.stringify({ message: 'Top-up option is not available for this plan' })),
+      })
+
+      await expect(
+        doQuery(purchaseTopupMutation, {
+          input: {
+            groupId: testGroupId,
+            email: 'user@example.com',
+            topupOptionId: 'topup-option-x10',
+          },
+        })
+      ).rejects.toThrow(/Top-up option is not available for this plan/)
+    })
+  })
 })

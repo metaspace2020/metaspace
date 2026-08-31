@@ -78,14 +78,11 @@ const setupQueries = (overrides?: {
   experimentLoading?: boolean
   datasets?: any
   // Permission inputs for the "Create experiment" gate. Default to an authorized
-  // caller (project manager with an active Pro subscription) so create-flow tests
-  // are unaffected by the gate.
+  // caller (project manager) so create-flow tests are unaffected by the gate.
   projectRole?: string | null
-  isPro?: boolean
   userRole?: string
 }) => {
   const projectRole = overrides?.projectRole === undefined ? 'MANAGER' : overrides.projectRole
-  const isPro = overrides?.isPro === undefined ? true : overrides.isPro
   const userRole = overrides?.userRole ?? 'user'
   ;(useQuery as any).mockImplementation((doc: any) => {
     const docName = doc?.definitions?.[0]?.name?.value ?? ''
@@ -119,9 +116,8 @@ const setupQueries = (overrides?: {
         onResult: vi.fn(),
       }
     }
-    // Anonymous subscription query (getActiveUserSubscriptionQuery).
     return {
-      result: ref({ activeUserSubscription: { isActive: isPro } }),
+      result: ref(null),
       loading: ref(false),
       onResult: vi.fn(),
     }
@@ -491,9 +487,9 @@ describe('ExperimentEditPage', () => {
     expect(routerPush).toHaveBeenCalledWith({ path: '/project/p1', query: { tab: 'experiments' } })
   })
 
-  it('blocks create when the user is not Pro and not admin, even as project manager', async () => {
+  it('blocks create when the user has no project role and is not admin', async () => {
     mockRoute = { params: { projectId: 'p1' } }
-    setupQueries({ projectRole: 'MANAGER', isPro: false, userRole: 'user' })
+    setupQueries({ projectRole: null, userRole: 'user' })
     const createMutate = vi.fn().mockResolvedValue({ data: { createExperiment: { id: 'new-id' } } })
     mockClient.mutate = vi.fn(({ mutation, variables }: any) => {
       const name = mutation?.definitions?.[0]?.name?.value ?? ''
@@ -539,7 +535,7 @@ describe('ExperimentEditPage', () => {
 
     const notifySpy = vi.spyOn(ElNotification, 'warning').mockImplementation(() => ({}) as any)
 
-    // The Save button stays enabled; the Pro gate is enforced on click.
+    // The Save button stays enabled; the access gate is enforced on click.
     const saveBtn = wrapper.find('[data-test-key="experiment-save"]')
     expect(saveBtn.attributes('disabled')).toBeUndefined()
 
@@ -549,14 +545,14 @@ describe('ExperimentEditPage', () => {
     expect(createMutate).not.toHaveBeenCalled()
     expect(notifySpy).toHaveBeenCalledTimes(1)
     const notifyArg = notifySpy.mock.calls[0][0] as any
-    expect(notifyArg.message).toContain('/plans')
+    expect(notifyArg.message).toContain('member or manager')
 
     notifySpy.mockRestore()
   })
 
-  it('allows create for an admin even without a Pro subscription', async () => {
+  it('allows create for an admin without a project role', async () => {
     mockRoute = { params: { projectId: 'p1' } }
-    setupQueries({ projectRole: null, isPro: false, userRole: 'admin' })
+    setupQueries({ projectRole: null, userRole: 'admin' })
     const createMutate = vi.fn().mockResolvedValue({ data: { createExperiment: { id: 'new-id' } } })
     mockClient.mutate = vi.fn(({ mutation, variables }: any) => {
       const name = mutation?.definitions?.[0]?.name?.value ?? ''
@@ -611,9 +607,9 @@ describe('ExperimentEditPage', () => {
     notifySpy.mockRestore()
   })
 
-  it('allows create for a project member with an active Pro subscription', async () => {
+  it('allows create for a project member without a Pro subscription', async () => {
     mockRoute = { params: { projectId: 'p1' } }
-    setupQueries({ projectRole: 'MEMBER', isPro: true, userRole: 'user' })
+    setupQueries({ projectRole: 'MEMBER', userRole: 'user' })
     const createMutate = vi.fn().mockResolvedValue({ data: { createExperiment: { id: 'new-id' } } })
     mockClient.mutate = vi.fn(({ mutation, variables }: any) => {
       const name = mutation?.definitions?.[0]?.name?.value ?? ''
