@@ -193,12 +193,65 @@ describe('Plan Controller Queries', () => {
 
     mockFetch.mockResolvedValueOnce({
       ok: false,
+      status: 429,
       json: () => Promise.resolve({ message: 'Rate limit exceeded' }),
     })
 
     const result = await canPerformAction(context, { actionType: 'download', type: 'dataset' })
     expect(result.allowed).toBe(false)
     expect(result.message).toBe('Rate limit exceeded')
+  })
+
+  it('should allow when TLS certificate of the manager API has expired', async() => {
+    const context = userContext
+    const error: any = new Error(
+      'request to https://test-api.metaspace.example/api/api-usages/is-allowed failed, reason: certificate has expired'
+    )
+    error.type = 'system'
+    error.errno = 'CERT_HAS_EXPIRED'
+    error.code = 'CERT_HAS_EXPIRED'
+
+    mockFetch.mockRejectedValueOnce(error)
+
+    const result = await canPerformAction(context, { actionType: 'download', type: 'dataset' })
+    expect(result.allowed).toBe(true)
+  })
+
+  it('should allow on connection errors with codes not in any allowlist', async() => {
+    const context = userContext
+    const error: any = new Error('socket hang up')
+    error.code = 'ECONNRESET'
+
+    mockFetch.mockRejectedValueOnce(error)
+
+    const result = await canPerformAction(context, { actionType: 'download', type: 'dataset' })
+    expect(result.allowed).toBe(true)
+  })
+
+  it('should allow when the manager API returns a non-JSON error page', async() => {
+    const context = userContext
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      json: () => Promise.reject(new SyntaxError('Unexpected token < in JSON at position 0')),
+    })
+
+    const result = await canPerformAction(context, { actionType: 'download', type: 'dataset' })
+    expect(result.allowed).toBe(true)
+  })
+
+  it('should allow when the manager API responds with a server error', async() => {
+    const context = userContext
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ message: 'Internal server error' }),
+    })
+
+    const result = await canPerformAction(context, { actionType: 'download', type: 'dataset' })
+    expect(result.allowed).toBe(true)
   })
 
   it('should handle missing API URL', async() => {
@@ -290,10 +343,45 @@ describe('Plan Utility Functions - performAction', () => {
 
     mockFetch.mockResolvedValueOnce({
       ok: false,
+      status: 400,
       statusText: 'Bad Request',
     })
 
     await expect(performAction(context, action)).rejects.toThrow('Failed to perform action: Bad Request')
+  })
+
+  it('should proceed when TLS certificate of the manager API has expired', async() => {
+    const { performAction } = await import('./canPerformAction')
+    const context = userContext
+    const action = { actionType: 'download', type: 'dataset' }
+
+    const error: any = new Error(
+      'request to https://test-api.metaspace.example/api/api-usages/ failed, reason: certificate has expired'
+    )
+    error.type = 'system'
+    error.errno = 'CERT_HAS_EXPIRED'
+    error.code = 'CERT_HAS_EXPIRED'
+    mockFetch.mockRejectedValueOnce(error)
+
+    const result = await performAction(context, action)
+
+    expect(result).toEqual({})
+  })
+
+  it('should proceed when the manager API responds with a server error', async() => {
+    const { performAction } = await import('./canPerformAction')
+    const context = userContext
+    const action = { actionType: 'download', type: 'dataset' }
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      statusText: 'Bad Gateway',
+    })
+
+    const result = await performAction(context, action)
+
+    expect(result).toEqual({})
   })
 
   it('should handle connection errors gracefully', async() => {
