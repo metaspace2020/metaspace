@@ -72,9 +72,6 @@ exports[`ViewProjectPage > datasets tab > should match snapshot (non-member) 1`]
               <div class=\\"el-tabs__item is-top is-active\\" id=\\"tab-datasets\\" aria-controls=\\"pane-datasets\\" role=\\"tab\\" aria-selected=\\"true\\" tabindex=\\"0\\">Datasets (4)
                 <!---->
               </div>
-              <div class=\\"el-tabs__item is-top\\" id=\\"tab-experiments\\" aria-controls=\\"pane-experiments\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Experiments
-                <!---->
-              </div>
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-members\\" aria-controls=\\"pane-members\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\"><span data-v-4e241df4=\\"\\">Members (2) <!--v-if--></span>
                 <!---->
               </div>
@@ -193,9 +190,6 @@ exports[`ViewProjectPage > members tab > should match snapshot (invited) 1`] = `
             <div class=\\"el-tabs__nav is-top\\" style=\\"transform: translateX(-0px);\\" role=\\"tablist\\">
               <div class=\\"el-tabs__active-bar is-top\\" style=\\"transform: translateX(NaNpx);\\"></div>
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-datasets\\" aria-controls=\\"pane-datasets\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Datasets (4)
-                <!---->
-              </div>
-              <div class=\\"el-tabs__item is-top\\" id=\\"tab-experiments\\" aria-controls=\\"pane-experiments\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Experiments
                 <!---->
               </div>
               <div class=\\"el-tabs__item is-top is-active\\" id=\\"tab-members\\" aria-controls=\\"pane-members\\" role=\\"tab\\" aria-selected=\\"true\\" tabindex=\\"0\\"><span data-v-4e241df4=\\"\\">Members (2) <!--v-if--></span>
@@ -534,9 +528,6 @@ exports[`ViewProjectPage > members tab > should match snapshot (non-member) 1`] 
             <div class=\\"el-tabs__nav is-top\\" style=\\"transform: translateX(-0px);\\" role=\\"tablist\\">
               <div class=\\"el-tabs__active-bar is-top\\" style=\\"transform: translateX(NaNpx);\\"></div>
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-datasets\\" aria-controls=\\"pane-datasets\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Datasets (4)
-                <!---->
-              </div>
-              <div class=\\"el-tabs__item is-top\\" id=\\"tab-experiments\\" aria-controls=\\"pane-experiments\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Experiments
                 <!---->
               </div>
               <div class=\\"el-tabs__item is-top is-active\\" id=\\"tab-members\\" aria-controls=\\"pane-members\\" role=\\"tab\\" aria-selected=\\"true\\" tabindex=\\"0\\"><span data-v-4e241df4=\\"\\">Members (2) <!--v-if--></span>

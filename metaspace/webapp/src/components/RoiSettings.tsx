@@ -554,6 +554,11 @@ export default defineComponent({
     }
 
     const handleDiffAnalysis = async () => {
+      if (!currentUser.value?.id) {
+        ElNotification.warning('You need to be logged in to run the differential analysis.')
+        return
+      }
+
       state.isLoadingDA = true
 
       try {
@@ -696,14 +701,18 @@ export default defineComponent({
           <div class="roi-options">
             <ElTooltip
               popperClass="roi-save-tooltip"
-              content={'Click to perform differential analysis among the ROIs.'}
+              content={
+                currentUser.value?.id
+                  ? 'Click to perform differential analysis among the ROIs.'
+                  : 'Please log in to perform differential analysis among the ROIs.'
+              }
               placement="top"
             >
               {!state.isLoadingDA && (
                 <ElButton
                   class="button-reset roi-diff-icon"
                   onClick={handleDiffAnalysis}
-                  disabled={roiInfo.length === 0}
+                  disabled={roiInfo.length === 0 || !currentUser.value?.id}
                 >
                   <ElIcon size={25}>
                     <DataLine />

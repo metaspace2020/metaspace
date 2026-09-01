@@ -161,11 +161,7 @@ describe('ViewProjectPage', () => {
       expect(wrapper.html()).toMatchSnapshot()
 
       expect(wrapper.findAll('button').map((w) => w.text())).toEqual(expect.arrayContaining(['Request access']))
-      expect(wrapper.findAll('[role="tab"]').map((w) => w.text())).toEqual([
-        'Datasets (4)',
-        'Experiments',
-        'Members (2)',
-      ])
+      expect(wrapper.findAll('[role="tab"]').map((w) => w.text())).toEqual(['Datasets (4)', 'Members (2)'])
       expect(wrapper.findAll('.dataset-list > *')).toHaveLength(maxVisibleDatasets.value)
     })
   })
@@ -287,6 +283,52 @@ describe('ViewProjectPage', () => {
       await nextTick()
 
       expect(wrapper.html()).toMatchSnapshot()
+    })
+  })
+
+  describe('experiments tab', () => {
+    beforeEach(async () => {
+      await router.replace({ query: { tab: 'datasets' } })
+    })
+
+    const getTabLabels = async (currentUserRole: string | null) => {
+      const customValue = { ...mockProject, currentUserRole }
+      await mockGraphql({
+        ...defaultParams,
+        project: () => customValue,
+        projectByUrlSlug: () => customValue,
+      })
+
+      const wrapper = mount(ViewProjectPage, {
+        props: { showLoading: false },
+        global: {
+          directives: {
+            loading: vLoadingStub,
+          },
+          plugins: [store, router],
+          provide: {
+            [DefaultApolloClient]: graphqlMocks,
+          },
+          stubs,
+        },
+      })
+
+      await flushPromises()
+      await nextTick()
+
+      return wrapper.findAll('[role="tab"]').map((w) => w.text())
+    }
+
+    it('should hide the experiments tab from non-members', async () => {
+      expect(await getTabLabels(null)).not.toContain('Experiments')
+    })
+
+    it('should show the experiments tab to project members', async () => {
+      expect(await getTabLabels('MEMBER')).toContain('Experiments')
+    })
+
+    it('should show the experiments tab to project managers', async () => {
+      expect(await getTabLabels('MANAGER')).toContain('Experiments')
     })
   })
 
