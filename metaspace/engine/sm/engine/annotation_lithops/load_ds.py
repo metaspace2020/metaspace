@@ -13,6 +13,7 @@ from lithops.storage.utils import CloudObject
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation_lithops.executor import Executor, MEM_LIMITS
 from sm.engine.annotation_lithops.io import CObj, load_cobj, save_cobj, multipart_upload_cobj
+from sm.engine.annotation_lithops.parallel_sort import sort_peaks
 from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import SubtaskProfiler
 
@@ -44,7 +45,12 @@ def _load_spectra(storage, imzml_reader):
     return np.concatenate(mz_arrays), np.concatenate(int_arrays), sp_lens
 
 
-def _sort_spectra(imzml_reader, perf, mzs, ints, sp_lens):
+def _sort_spectra(imzml_reader, perf, mzs, ints, sp_lens, parallel: bool = True):
+    if parallel:
+        # Parallel sample sort - byte-for-byte identical output, but spread over all
+        # available cores instead of the single-threaded argsort below.
+        return sort_peaks(mzs, ints, sp_lens, imzml_reader.pixel_indexes, perf=perf)
+
     # Mergesort is used for 2 reasons:
     # * It's much faster than the default quicksort, because m/z data is already partially sorted
     #   and the underlying "Timsort" implementation is optimized for partially-sorted data.
