@@ -1888,6 +1888,11 @@
   resolved "https://registry.npmjs.org/@tiptap/core/-/core-2.1.13.tgz"
   integrity sha512-cMC8bgTN63dj1Mv82iDeeLl6sa9kY0Pug8LSalxVEptRmyFVsVxGgu2/6Y3T+9aCYScxfS06EkA8SdzFMAwYTQ==
 
+"@tiptap/core@^3.30.4":
+  version "3.30.4"
+  resolved "https://registry.yarnpkg.com/@tiptap/core/-/core-3.30.4.tgz#9e0847c5f4dd53750ae3accc6b83223e37f693b3"
+  integrity sha512-V9yKuUfV8qC9WBrnVxkFWmYLBomc3d1CwXoFSjED5DRu5q2oyxv07F+jOJSRogJAY+feHjuxvjhixwxeHm2DXQ==
+
 "@tiptap/extension-blockquote@^2.1.13":
   version "2.1.13"
   resolved "https://registry.npmjs.org/@tiptap/extension-blockquote/-/extension-blockquote-2.1.13.tgz"
