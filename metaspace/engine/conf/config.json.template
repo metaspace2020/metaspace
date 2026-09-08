@@ -98,9 +98,9 @@ e.g. "imzml": ["my-bucket","files/go/here"] means ImzML files will be stored und
 The Prefix is necessary and should not have a leading or trailing slash
 #}
       "imzml": ["{{ sm_lithops_s3_bucket_imzml }}", "imzml"],
-      "moldb": ["{{ sm_lithops_s3_bucket_centroids }}", "moldb"],
-      "centroids": ["{{ sm_lithops_s3_bucket_centroids }}", "centroids"],
-      "pipeline_cache": ["{{ sm_lithops_s3_bucket_temp }}", "pipeline_cache"]
+      "moldb": ["{{ sm_lithops_s3_bucket_centroids }}", "{{ sm_lithops_s3_key_prefix | default('') }}moldb"],
+      "centroids": ["{{ sm_lithops_s3_bucket_centroids }}", "{{ sm_lithops_s3_key_prefix | default('') }}centroids"],
+      "pipeline_cache": ["{{ sm_lithops_s3_bucket_temp }}", "{{ sm_lithops_s3_key_prefix | default('') }}pipeline_cache"]
     }
   },
   "aws": {
