@@ -30,6 +30,15 @@
     - conda
     - activate
 
+- name: Accept Anaconda default-channel Terms of Service (conda >= 24.x refuses to run otherwise; no-op on older conda)
+  command: '"{{ miniconda_prefix }}/bin/conda" tos accept --override-channels --channel {{ item }}'
+  loop:
+    - https://repo.anaconda.com/pkgs/main
+    - https://repo.anaconda.com/pkgs/r
+  register: conda_tos
+  changed_when: false
+  failed_when: conda_tos.rc != 0 and 'invalid choice' not in (conda_tos.stderr | default(''))
+
 - name: miniconda is up-to-date
   command: '"{{ miniconda_prefix }}/bin/conda" update conda -y -q'
   register: miniconda_update
