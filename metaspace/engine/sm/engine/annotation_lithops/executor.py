@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import copy
+import importlib.util
 import inspect
 import logging
 import resource
+import sys
 import time
 from contextlib import ExitStack
 from datetime import datetime
 from itertools import chain
+from pathlib import Path
 from threading import Thread, current_thread
 from traceback import format_tb
 from typing import List, Callable, TypeVar, Iterable, Sequence, Dict, Optional
@@ -18,6 +21,7 @@ import pandas as pd
 from lithops.future import ResponseFuture
 from lithops.storage import Storage
 from lithops.executors import StandaloneExecutor
+from lithops.libs import imp as lithops_imp
 
 from sm.engine.utils.perf_profile import SubtaskProfiler, Profiler, NullProfiler
 
@@ -36,6 +40,42 @@ MEM_LIMITS = {
 
 class LithopsStalledException(Exception):
     pass
+
+
+def ensure_include_modules_findable_by_lithops(module_names: Iterable[str]) -> None:
+    """Make the packages listed in Lithops' `include_modules` discoverable by its serializer.
+
+    Lithops resolves `include_modules` with a legacy `imp.find_module`-style scan of `sys.path`
+    (see `lithops.job.serialize.SerializeIndependent`). A package installed in editable mode by
+    modern pip/setuptools (PEP 660, e.g. `pip install -e .` of this engine) is importable only
+    through an import hook and has no `sys.path` entry, so Lithops logs "Could not find module"
+    at DEBUG level, ships nothing, and the workers fail with `ModuleNotFoundError: No module
+    named 'sm'`. Adding the package's parent directory to `sys.path` makes the scan succeed.
+    """
+    for module_name in module_names:
+        root_name = module_name.split('.')[0]
+        try:
+            lithops_imp.find_module(root_name)
+            continue  # Lithops can already find it
+        except ImportError:
+            pass
+
+        spec = importlib.util.find_spec(root_name)
+        if spec is None:
+            continue  # Not importable at all; leave it to Lithops to report
+        if spec.submodule_search_locations:
+            location = next(iter(spec.submodule_search_locations))
+        elif spec.has_location and spec.origin:
+            location = spec.origin
+        else:
+            continue
+
+        parent_dir = str(Path(location).resolve().parent)
+        if parent_dir not in sys.path:
+            logger.info(
+                f'Adding {parent_dir} to sys.path so that Lithops can ship module "{root_name}"'
+            )
+            sys.path.append(parent_dir)
 
 
 def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
@@ -200,6 +240,7 @@ class Executor:
 
         self.storage = Storage(lithops_config)
         self._include_modules = lithops_config['lithops'].get('include_modules', [])
+        ensure_include_modules_findable_by_lithops(self._include_modules)
         self._execution_timeout = lithops_config['lithops'].get('execution_timeout', 7200) + 60
         self._perf = perf or NullProfiler()
 
@@ -225,6 +266,7 @@ class Executor:
         runtime_memory = int(2 ** np.ceil(np.log2(runtime_memory)))
 
         if include_modules is not None:
+            ensure_include_modules_findable_by_lithops(include_modules)
             lithops_kwargs['include_modules'] = [*self._include_modules, *include_modules]
 
         wrapper_func = _build_wrapper_func(func)

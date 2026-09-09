@@ -29,6 +29,13 @@ PERF_PROFILE_ENTRY = (
 
 logger = logging.getLogger('engine')
 
+# Lambda logs usually reach CloudWatch within seconds to a few minutes, regardless of dataset size
+CLOUDWATCH_WAIT_TIMEOUT_SEC = 15 * 60
+CLOUDWATCH_POLL_INTERVAL_SEC = 30
+# Consecutive polls matching none of the runs means the log groups are misconfigured
+# (e.g. a Lambda function logging to its default group), so waiting longer cannot help
+CLOUDWATCH_MAX_EMPTY_POLLS = 3
+
 
 def get_perf_profile_start_finish_datetime(
     db: DB, profile_id: int
@@ -105,25 +112,49 @@ def get_cloudwatch_logs(
     finish_dt: datetime,
     aws_lambda_request_ids: Set[str],
     verbose: bool = False,
+    timeout_sec: float = CLOUDWATCH_WAIT_TIMEOUT_SEC,
+    max_empty_polls: int = CLOUDWATCH_MAX_EMPTY_POLLS,
 ) -> List[List[Dict[str, str]]]:
-    """Return back Cloudwatch Logs during job execution"""
+    """Return back Cloudwatch Logs during job execution.
+
+    AWS Lambda logs are typically available in Cloudwatch Logs with a delay of several minutes,
+    so requests are repeated until all request_ids present in the perf_profile_entries table are
+    also available in Cloudwatch Logs. The wait is bounded: it stops after `timeout_sec`, or
+    earlier after `max_empty_polls` consecutive polls that matched none of the runs at all.
+    Runs still missing at that point are reported and later costed as 0.
+    """
 
     logger.info(f'Number of runs: {len(aws_lambda_request_ids)}')
-    response = get_raw_cloudwatch_logs(cw_client, log_groups, start_dt, finish_dt)
-    cloudwatch_request_ids = set(extract_data_from_cloudwatch_logs(response).keys())
-    # AWS Lambda logs are typically available in Cloudwatch Logs with a delay of several minutes
-    # we repeat requests to Cloudwatch until all request_ids that are present
-    # in the perf_profile_entries table are also available in Cloudwatch Logs
-    while len(aws_lambda_request_ids - cloudwatch_request_ids) > 0:
+    deadline = time.monotonic() + timeout_sec
+    empty_polls = 0
+
+    while True:
+        response = get_raw_cloudwatch_logs(cw_client, log_groups, start_dt, finish_dt)
+        cloudwatch_request_ids = set(extract_data_from_cloudwatch_logs(response).keys())
         waiting_request_ids = aws_lambda_request_ids - cloudwatch_request_ids
+        if not waiting_request_ids:
+            return response
+
+        empty_polls = empty_polls + 1 if waiting_request_ids == aws_lambda_request_ids else 0
+        if empty_polls >= max_empty_polls:
+            logger.warning(
+                f'No CloudWatch records found for any of the {len(aws_lambda_request_ids)} runs '
+                f'in log groups {log_groups} after {empty_polls} attempts. Check that the Lambda '
+                f'functions log to these groups. Missing runs will be costed as 0.'
+            )
+            return response
+        if time.monotonic() >= deadline:
+            logger.warning(
+                f'Timed out after {timeout_sec}s waiting for CloudWatch records; '
+                f'{len(waiting_request_ids)} of {len(aws_lambda_request_ids)} runs are missing '
+                f'and will be costed as 0: {sorted(waiting_request_ids)}'
+            )
+            return response
+
         logger.info(f'Waiting {len(waiting_request_ids):>3} CloudWatch records')
         if verbose:
             logger.info(waiting_request_ids)
-        time.sleep(30)
-        response = get_raw_cloudwatch_logs(cw_client, log_groups, start_dt, finish_dt)
-        cloudwatch_request_ids = set(extract_data_from_cloudwatch_logs(response).keys())
-
-    return response
+        time.sleep(CLOUDWATCH_POLL_INTERVAL_SEC)
 
 
 def extract_value(message: str) -> Dict[str, Union[float, int]]:
@@ -189,8 +220,16 @@ def calc_costs(perf_profile_entries, request_ids_stat) -> Dict[int, float]:
             total_time = (entry['finish'] - entry['start']).total_seconds()
             total_cost = _calc_ec2_cost(runtime_memory, total_time)
         else:
+            missing_request_ids = [
+                r_id for r_id in extra_data['request_ids'] if r_id not in request_ids_stat
+            ]
+            if missing_request_ids:
+                logger.warning(
+                    f'{entry["id"]}: {entry["name"]} - no CloudWatch record for '
+                    f'{len(missing_request_ids)} run(s), costed as 0: {missing_request_ids}'
+                )
             time_total_aws = [
-                request_ids_stat[r_id].get('duration_billed', 0.0)
+                request_ids_stat.get(r_id, {}).get('duration_billed', 0.0)
                 for r_id in extra_data['request_ids']
             ]
             total_gb_sec = np.sum(np.array(time_total_aws) * runtime_memory / 1024)
