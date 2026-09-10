@@ -289,6 +289,7 @@ def fetch_formulas(moldb_id: int) -> List[str]:
     """Fetch all unique database formulas."""
 
     data = DB().select(
-        'SELECT DISTINCT formula FROM molecule m WHERE m.moldb_id = %s', params=(moldb_id,)
+        'SELECT DISTINCT formula FROM molecule m WHERE m.moldb_id = %s ORDER BY formula',
+        params=(moldb_id,),
     )
     return [row[0] for row in data]

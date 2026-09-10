@@ -161,6 +161,8 @@ class FDR:
 
     def _decoy_adduct_gen(self, target_formulas):
         np.random.seed(self.random_seed)
+        # Sort so each formula's seeded decoy draw doesn't depend on the DB's row order
+        target_formulas = sorted(target_formulas)
         target_modifiers = list(self.target_modifiers_df.decoy_modifier_prefix.items())
         if self.analysis_version < 3:
             # NOTE: These are later selected by index % decoy_sample_size. Generation order matters.
