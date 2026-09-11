@@ -64,7 +64,7 @@ export default defineComponent({
         if (fromPayment.value && subscription.value && latestTransaction.value) {
           trackPurchaseComplete({
             transactionId: latestTransaction?.value?.id,
-            value: latestTransaction?.value?.amount || 0,
+            valueCents: latestTransaction?.value?.amount || 0,
             planId: subscription?.value?.plan?.id || 'unknown',
             planName: subscription?.value?.plan?.name || 'unknown',
             subscriptionId: subscription?.value?.id,

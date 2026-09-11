@@ -91,7 +91,8 @@ const FAQS: FaqEntry[] = [
 
 export default defineComponent({
   name: 'ProFaq',
-  setup() {
+  emits: ['faqOpen'],
+  setup(_, { emit }) {
     const state = reactive({ open: 0 })
 
     return () => (
@@ -113,6 +114,9 @@ export default defineComponent({
                       aria-expanded={isOpen ? 'true' : 'false'}
                       onClick={() => {
                         state.open = isOpen ? -1 : index
+                        if (!isOpen) {
+                          emit('faqOpen', entry.question)
+                        }
                       }}
                     >
                       <span>{entry.question}</span>
@@ -134,7 +138,7 @@ export default defineComponent({
           </div>
         </section>
 
-        <section class="pro-section">
+        <section class="pro-section" data-cta-section="cta">
           <div class="pro-shell">
             <div class="pro-cta">
               <h2 class="pro-h2">Try it on your own data today</h2>
@@ -143,10 +147,22 @@ export default defineComponent({
                 own data before you decide anything.
               </p>
               <div class="pro-cta__actions">
-                <a href="/upload" target="_blank" rel="noopener noreferrer" class="pro-btn pro-btn--accent">
+                <a
+                  href="/upload"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="pro-btn pro-btn--accent"
+                  data-cta="cta-upload"
+                >
                   Submit a private dataset
                 </a>
-                <a href="/contact" target="_blank" rel="noopener noreferrer" class="pro-btn pro-btn--ghost">
+                <a
+                  href="/contact"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="pro-btn pro-btn--ghost"
+                  data-cta="cta-request-quote"
+                >
                   Request a quote for your group
                 </a>
               </div>

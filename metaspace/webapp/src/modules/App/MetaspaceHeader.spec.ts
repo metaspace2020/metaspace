@@ -3,7 +3,18 @@ import router from '../../router'
 import store from '../../store'
 import { mount } from '@vue/test-utils'
 import MetaspaceHeader from './MetaspaceHeader'
-import { expect } from 'vitest'
+import { expect, vi, beforeEach } from 'vitest'
+import { clearUserId, setUserId } from '../../lib/gtag'
+
+vi.mock('../../lib/gtag', () => ({
+  setUserId: vi.fn(),
+  clearUserId: vi.fn(),
+}))
+
+beforeEach(() => {
+  vi.mocked(setUserId).mockClear()
+  vi.mocked(clearUserId).mockClear()
+})
 
 const currentUserMockResponses = [
   {
@@ -74,5 +85,23 @@ describe('MetaspaceHeader', () => {
 
     await nextTick()
     expect(wrapper.html()).toMatchSnapshot()
+  })
+})
+
+describe('MetaspaceHeader analytics identity', () => {
+  it('attaches the signed-in user id to analytics once the profile loads', async () => {
+    mockIndex = 0
+    mount(MetaspaceHeader, { global: { plugins: [router, store] } })
+    await nextTick()
+    expect(setUserId).toHaveBeenCalledWith('123')
+    expect(clearUserId).not.toHaveBeenCalled()
+  })
+
+  it('clears the analytics user id when there is no signed-in user', async () => {
+    mockIndex = 1
+    mount(MetaspaceHeader, { global: { plugins: [router, store] } })
+    await nextTick()
+    expect(clearUserId).toHaveBeenCalled()
+    expect(setUserId).not.toHaveBeenCalled()
   })
 })

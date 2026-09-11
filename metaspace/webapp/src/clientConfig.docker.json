@@ -3,6 +3,7 @@
   "wsGraphqlUrl": null,
   "google_client_id": "clientid",
   "recaptcha_site_key": "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI",
+  "ga_measurement_id": "",
   "ravenDsn": null,
   "metadataTypes": ["ims", "lcms"],
   "features": {

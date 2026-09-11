@@ -16,7 +16,7 @@ export default defineComponent({
   },
   setup(props) {
     return () => (
-      <header class="pro-hero">
+      <header class="pro-hero" data-cta-section="hero">
         <div class="pro-shell pro-hero__row" style={{ paddingTop: 'clamp(56px, 7vw, 96px)' }}>
           <div class="pro-hero__copy">
             <p class="pro-eyebrow pro-eyebrow--accent">METASPACE Pro · ALL IN ONE · end-to-end</p>
@@ -28,6 +28,7 @@ export default defineComponent({
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', margin: '34px 0 16px' }}>
               <a
                 href="#plans"
+                data-cta="hero-submit"
                 class="pro-btn pro-btn--accent min-w-[200px]"
                 onClick={(e: MouseEvent) => scrollToHashSection(e, '#plans')}
               >
@@ -35,6 +36,7 @@ export default defineComponent({
               </a>
               <a
                 href="#analysis"
+                data-cta="hero-explore"
                 class="pro-btn pro-btn--ghost min-w-[200px]"
                 onClick={(e: MouseEvent) => scrollToHashSection(e, '#analysis')}
               >

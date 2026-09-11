@@ -52,8 +52,15 @@ export default defineComponent({
           </p>
 
           <div class="pro-docs-cards">
-            {DOC_CARDS.map((card) => (
-              <a class="pro-card" target="_blank" rel="noopener noreferrer" href={card.href} key={card.title}>
+            {DOC_CARDS.map((card, index) => (
+              <a
+                class="pro-card"
+                target="_blank"
+                rel="noopener noreferrer"
+                href={card.href}
+                key={card.title}
+                data-cta={`docs-card-${index}`}
+              >
                 <p class="pro-eyebrow" style={{ marginBottom: '10px' }}>
                   {card.kicker}
                 </p>
@@ -68,7 +75,7 @@ export default defineComponent({
           </div>
 
           <p style={{ margin: '28px 0 0' }}>
-            <a href="/docs" style={{ fontWeight: 500 }}>
+            <a href="/docs" data-cta="docs-browse-all" style={{ fontWeight: 500 }}>
               Browse the full documentation →
             </a>
           </p>

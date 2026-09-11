@@ -10,7 +10,14 @@ import { getActiveUserSubscriptionQuery } from '../../api/subscription'
 import { countUsersQuery, currentUserIdQuery } from '../../api/user'
 import { countDatasetsQuery } from '../../api/dataset'
 import { countPublicationsQuery } from '../../api/group'
-import { trackBeginCheckout, trackPlansPageView } from '../../lib/gtag'
+import {
+  trackBeginCheckout,
+  trackPlansPageView,
+  trackProCta,
+  trackProFaqOpen,
+  trackProPeriodChange,
+} from '../../lib/gtag'
+import ProPlans from './sections/ProPlans'
 
 vi.mock('@vue/apollo-composable', () => ({
   useQuery: vi.fn(),
@@ -21,6 +28,9 @@ vi.mock('@vue/apollo-composable', () => ({
 vi.mock('../../lib/gtag', () => ({
   trackPlansPageView: vi.fn(),
   trackBeginCheckout: vi.fn(),
+  trackProCta: vi.fn(),
+  trackProPeriodChange: vi.fn(),
+  trackProFaqOpen: vi.fn(),
 }))
 
 const plans = [
@@ -210,28 +220,35 @@ describe('ProPage default billing period', () => {
 })
 
 describe('ProPage analytics', () => {
-  const mountPage = () =>
-    mount(ProPage, {
+  const mountPage = () => {
+    const wrapper = mount(ProPage, {
       global: {
         plugins: [store, router],
         stubs: { ElRadioGroup: true, ElRadioButton: true, ElSkeleton: true, ElSkeletonItem: true },
       },
     })
+    // jsdom cannot follow real links; stop the default navigation of any
+    // clicked anchor while letting the click bubble to the page's delegated
+    // CTA handler (which is what these tests observe).
+    wrapper.element.addEventListener('click', (e) => e.preventDefault())
+    return wrapper
+  }
 
-  it('tracks the plans page view on mount when a user is signed in', async () => {
+  it('tracks the plans page view on mount as signed in when a user is present', async () => {
     mountPage()
     await nextTick()
-    expect(trackPlansPageView).toHaveBeenCalledWith('u1')
+    expect(trackPlansPageView).toHaveBeenCalledWith(true)
   })
 
-  it('does not track the plans page view when there is no current user', async () => {
+  // Anonymous visitors are the top of the funnel; they must be tracked too.
+  it('tracks the plans page view on mount as anonymous when there is no current user', async () => {
     currentUser = null
     mountPage()
     await nextTick()
-    expect(trackPlansPageView).not.toHaveBeenCalled()
+    expect(trackPlansPageView).toHaveBeenCalledWith(false)
   })
 
-  it('tracks begin_checkout with the plan and billing details before routing to payment', async () => {
+  it('tracks begin_checkout with the plan, price in cents and login state before routing to payment', async () => {
     const wrapper = mountPage()
     await nextTick()
     const pushSpy = vi.spyOn(router, 'push').mockResolvedValue(undefined as any)
@@ -239,11 +256,80 @@ describe('ProPage analytics', () => {
     expect(trackBeginCheckout).toHaveBeenCalledWith({
       planId: 'p2',
       planName: 'Medium',
-      price: 299900,
+      priceCents: 299900,
       billingPeriod: '1 year',
+      loggedIn: true,
     })
     expect(pushSpy).toHaveBeenCalledWith('/payment?planId=p2')
     pushSpy.mockRestore()
+  })
+
+  it('tracks begin_checkout for anonymous visitors with logged_in false', async () => {
+    currentUser = null
+    const wrapper = mountPage()
+    await nextTick()
+    const pushSpy = vi.spyOn(router, 'push').mockResolvedValue(undefined as any)
+    await wrapper.find('[data-test="subscribe-advanced"]').trigger('click')
+    expect(trackBeginCheckout).toHaveBeenCalledWith(expect.objectContaining({ planId: 'p2', loggedIn: false }))
+    pushSpy.mockRestore()
+  })
+
+  // CTAs are tracked by one delegated click handler on the page root, keyed on
+  // data-cta, so a new button only needs the attribute to be measured.
+  it('tracks a hero CTA click with its id, section, destination and login state', async () => {
+    const wrapper = mountPage()
+    await nextTick()
+    await wrapper.find('[data-cta="hero-submit"]').trigger('click')
+    expect(trackProCta).toHaveBeenCalledWith({
+      ctaId: 'hero-submit',
+      section: 'hero',
+      destination: '#plans',
+      loggedIn: true,
+    })
+  })
+
+  it('derives the section of a CTA from the enclosing section id', async () => {
+    const wrapper = mountPage()
+    await nextTick()
+    await wrapper.find('[data-cta="docs-card-0"]').trigger('click')
+    expect(trackProCta).toHaveBeenCalledWith(
+      expect.objectContaining({ ctaId: 'docs-card-0', section: 'docs', destination: expect.stringContaining('/docs/') })
+    )
+  })
+
+  it('tracks a CTA click as anonymous when there is no current user', async () => {
+    currentUser = null
+    const wrapper = mountPage()
+    await nextTick()
+    await wrapper.find('[data-cta="hero-submit"]').trigger('click')
+    expect(trackProCta).toHaveBeenCalledWith(expect.objectContaining({ ctaId: 'hero-submit', loggedIn: false }))
+  })
+
+  it('does not track clicks on elements without a data-cta attribute', async () => {
+    const wrapper = mountPage()
+    await nextTick()
+    await wrapper.find('.pro-hero__copy').trigger('click')
+    expect(trackProCta).not.toHaveBeenCalled()
+  })
+
+  it('tracks a billing period change', async () => {
+    const wrapper = mountPage()
+    await nextTick()
+    wrapper.findComponent(ProPlans).vm.$emit('period', '1 year')
+    await nextTick()
+    expect(trackProPeriodChange).toHaveBeenCalledWith({ billingPeriod: '1 year', loggedIn: true })
+  })
+
+  it('tracks an FAQ entry being expanded, but not collapsed', async () => {
+    const wrapper = mountPage()
+    await nextTick()
+    // The first entry starts open, so expand the second one.
+    const trigger = wrapper.findAll('.pro-faq__trigger')[1]
+    const question = trigger.find('span').text()
+    await trigger.trigger('click')
+    expect(trackProFaqOpen).toHaveBeenCalledWith({ question, loggedIn: true })
+    await trigger.trigger('click')
+    expect(trackProFaqOpen).toHaveBeenCalledTimes(1)
   })
 })
 

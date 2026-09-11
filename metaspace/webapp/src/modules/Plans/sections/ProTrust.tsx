@@ -56,10 +56,10 @@ export default defineComponent({
               ))}
             </ul>
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '32px' }}>
-              <a href="/contact" class="pro-btn pro-btn--accent">
+              <a href="/contact" class="pro-btn pro-btn--accent" data-cta="procurement-request-quote">
                 Request a quote
               </a>
-              <a href="/contact" class="pro-btn pro-btn--ghost">
+              <a href="/contact" class="pro-btn pro-btn--ghost" data-cta="procurement-contact">
                 Contact the team
               </a>
             </div>

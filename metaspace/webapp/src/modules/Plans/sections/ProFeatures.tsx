@@ -87,7 +87,7 @@ export default defineComponent({
   setup() {
     return () => (
       <>
-        <section class="pro-section pro-section--tight pro-section--tint">
+        <section class="pro-section pro-section--tight pro-section--tint" data-cta-section="intro">
           <div class="pro-shell">
             <div class="pro-callout pro-callout--blue">
               <div class="pro-callout__body">
@@ -98,7 +98,12 @@ export default defineComponent({
                   annotation.
                 </p>
               </div>
-              <a href="/split" target="_blank" style={{ alignSelf: 'center', fontWeight: 500, whiteSpace: 'nowrap' }}>
+              <a
+                href="/split"
+                target="_blank"
+                data-cta="intro-why-split"
+                style={{ alignSelf: 'center', fontWeight: 500, whiteSpace: 'nowrap' }}
+              >
                 Why we split →
               </a>
             </div>

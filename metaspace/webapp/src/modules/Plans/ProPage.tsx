@@ -8,7 +8,13 @@ import { countUsersQuery, currentUserIdQuery } from '../../api/user'
 import { countDatasetsQuery } from '../../api/dataset'
 import { countPublicationsQuery } from '../../api/group'
 import { getAvailablePeriods, getPriceForPeriod } from '../../lib/pricing'
-import { trackBeginCheckout, trackPlansPageView } from '../../lib/gtag'
+import {
+  trackBeginCheckout,
+  trackPlansPageView,
+  trackProCta,
+  trackProFaqOpen,
+  trackProPeriodChange,
+} from '../../lib/gtag'
 import ProHero from './sections/ProHero'
 import ProSectionNav from './sections/ProSectionNav'
 import ProFeatures from './sections/ProFeatures'
@@ -38,8 +44,11 @@ export default defineComponent({
     )
     const activeSubscription = computed(() => subscriptionsResult.value?.activeUserSubscription)
 
-    const { result: currentUserResult } = useQuery<any>(currentUserIdQuery, null, { fetchPolicy: 'cache-first' })
+    const { result: currentUserResult, loading: currentUserLoading } = useQuery<any>(currentUserIdQuery, null, {
+      fetchPolicy: 'cache-first',
+    })
     const currentUserId = computed(() => currentUserResult.value?.currentUser?.id)
+    const loggedIn = computed(() => !!currentUserId.value)
 
     const { result: userCountResult } = useQuery<any>(countUsersQuery)
     const { result: datasetCountResult } = useQuery<any>(countDatasetsQuery, () => ({
@@ -71,10 +80,40 @@ export default defineComponent({
 
     onMounted(() => {
       store.commit('setThemeVariant', 'pro')
-      if (currentUserId.value) {
-        trackPlansPageView(currentUserId.value)
-      }
     })
+
+    let plansViewTracked = false
+    watch(
+      () => currentUserLoading.value,
+      (loading) => {
+        if (!loading && !plansViewTracked) {
+          plansViewTracked = true
+          trackPlansPageView(loggedIn.value)
+        }
+      },
+      { immediate: true }
+    )
+
+    // One delegated handler measures every CTA on the page. A CTA opts in with
+    // `data-cta="<id>"`; its section comes from the nearest `data-cta-section`
+    // or `section[id]`, and its destination from `href` or `data-cta-destination`.
+    const onCtaClick = (e: MouseEvent) => {
+      const target = (e.target as Element | null)?.closest?.('[data-cta]') as HTMLElement | null
+      if (!target) {
+        return
+      }
+      const sectionEl = target.closest('[data-cta-section], section[id]') as HTMLElement | null
+      trackProCta({
+        ctaId: target.dataset.cta || 'unknown',
+        section: sectionEl?.dataset.ctaSection || sectionEl?.id || 'unknown',
+        destination: target.getAttribute('href') || target.dataset.ctaDestination || '',
+        loggedIn: loggedIn.value,
+      })
+    }
+
+    const onFaqOpen = (question: string) => {
+      trackProFaqOpen({ question, loggedIn: loggedIn.value })
+    }
 
     onBeforeUnmount(() => {
       store.commit('setThemeVariant', activeSubscription.value ? 'pro' : 'default')
@@ -86,36 +125,35 @@ export default defineComponent({
       if (period) {
         state.selectedPeriod = period
       }
+      trackProPeriodChange({ billingPeriod: displayName, loggedIn: loggedIn.value })
     }
 
     const onSubscribe = (planId: string) => {
-      if (currentUserId.value) {
-        const plan = plans.value.find((p) => p.id === planId)
-        trackBeginCheckout({
-          planId,
-          planName: plan?.name || 'unknown',
-          price: plan && state.selectedPeriod ? getPriceForPeriod(plan, state.selectedPeriod) : 0,
-          billingPeriod: state.selectedPeriod?.displayName || 'unknown',
-        })
-      }
+      const plan = plans.value.find((p) => p.id === planId)
+      trackBeginCheckout({
+        planId,
+        planName: plan?.name || 'unknown',
+        priceCents: plan && state.selectedPeriod ? getPriceForPeriod(plan, state.selectedPeriod) : 0,
+        billingPeriod: state.selectedPeriod?.displayName || 'unknown',
+        loggedIn: loggedIn.value,
+      })
       router.push(`/payment?planId=${planId}`)
     }
 
     const onBuyPack = (planId: string) => {
       const pricing = packPlan.value?.pricingOptions?.find((po) => po.isActive)
-      if (currentUserId.value) {
-        trackBeginCheckout({
-          planId,
-          planName: packPlan.value?.name || 'Dataset pack',
-          price: pricing?.priceCents || 0,
-          billingPeriod: pricing?.displayName || 'one-time',
-        })
-      }
+      trackBeginCheckout({
+        planId,
+        planName: packPlan.value?.name || 'Dataset pack',
+        priceCents: pricing?.priceCents || 0,
+        billingPeriod: pricing?.displayName || 'one-time',
+        loggedIn: loggedIn.value,
+      })
       router.push(`/payment?planId=${planId}`)
     }
 
     return () => (
-      <div class="pro-page">
+      <div class="pro-page" onClick={onCtaClick}>
         <ProSectionNav />
 
         <ProHero
@@ -138,7 +176,7 @@ export default defineComponent({
           onPeriod={onPeriod}
         />
         <ProTrust />
-        <ProFaq />
+        <ProFaq onFaqOpen={onFaqOpen} />
       </div>
     )
   },

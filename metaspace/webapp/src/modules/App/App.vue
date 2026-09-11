@@ -43,6 +43,7 @@ import MetaspaceFooter from './MetaspaceFooter.vue'
 import { DialogController } from '../Account'
 import { useSeoMeta } from '../../lib/useSeo'
 import { useQuery } from '@vue/apollo-composable'
+import { setSubscriptionUserProperties } from '../../lib/gtag'
 import { getActiveUserSubscriptionQuery } from '../../api/subscription'
 import { NewsDialog } from '../News/NewsDialog'
 import { useNewsDialog } from '../News/useNewsDialog'
@@ -119,6 +120,9 @@ export default {
     onActiveGroupSubscriptionResult(({ data }) => {
       if (data && data.activeUserSubscription) {
         store.commit('setThemeVariant', 'pro')
+      }
+      if (data) {
+        setSubscriptionUserProperties(data.activeUserSubscription)
       }
     })
 

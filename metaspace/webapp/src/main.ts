@@ -82,11 +82,12 @@ router.afterEach((to: Route) => {
   store.commit('updateFilterOnNavigate', to)
 })
 
+const gaMeasurementId = config.ga_measurement_id || ''
 app.use(
   VueGtag as any,
   {
-    config: { id: 'UA-73509518-1' },
-    enabled: isProd, // disabled in dev because it impairs "break on uncaught exception"
+    config: { id: gaMeasurementId },
+    enabled: isProd && gaMeasurementId !== '',
   },
   router
 )
