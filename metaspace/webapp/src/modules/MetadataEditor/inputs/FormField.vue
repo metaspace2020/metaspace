@@ -171,6 +171,16 @@
       @input="onInput"
     />
 
+    <ontology-term-input
+      v-else-if="type === 'ontologyTerm'"
+      :value="value"
+      :required="required"
+      :placeholder="placeholder"
+      :fetch-suggestions="fetchSuggestions"
+      v-bind="$attrs"
+      @input="onInput"
+    />
+
     <el-switch
       v-else-if="type === 'switch'"
       :model-value="value"
@@ -191,6 +201,7 @@ import PersonInput from './PersonInput.vue'
 import DetectorResolvingPowerInput from './DetectorResolvingPowerInput.vue'
 import PixelSizeInput from './PixelSizeInput.vue'
 import CustomNumberInput from './CustomNumberInput.vue'
+import OntologyTermInput from './OntologyTermInput.vue'
 import { difference, intersection, uniq } from 'lodash-es'
 import { QuestionFilled } from '@element-plus/icons-vue'
 import {
@@ -214,6 +225,7 @@ export default defineComponent({
     DetectorResolvingPowerInput,
     PixelSizeInput,
     CustomNumberInput,
+    OntologyTermInput,
     QuestionFilled,
     ElIcon,
     ElAutocomplete,
