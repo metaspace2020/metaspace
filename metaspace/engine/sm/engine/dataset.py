@@ -66,21 +66,22 @@ class Dataset:
 
     DS_SEL = (
         'SELECT id, name, input_path, upload_dt, metadata, config, status, '
-        '   status_update_dt, is_public, size_hash '
+        '   status_update_dt, is_public, size_hash, metadata_v2 '
         'FROM dataset WHERE id = %s'
     )
     DS_UPD = (
         'UPDATE dataset set name=%(name)s, input_path=%(input_path)s, upload_dt=%(upload_dt)s, '
         '   metadata=%(metadata)s, config=%(config)s, status=%(status)s, '
-        '   status_update_dt=%(status_update_dt)s, is_public=%(is_public)s '
+        '   status_update_dt=%(status_update_dt)s, is_public=%(is_public)s, '
+        '   metadata_v2=%(metadata_v2)s '
         'where id=%(id)s'
     )
     DS_INSERT = (
         'INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, '
-        '   status_update_dt, is_public, size_hash) '
+        '   status_update_dt, is_public, size_hash, metadata_v2) '
         'VALUES (%(id)s, %(name)s, %(input_path)s, %(upload_dt)s, '
         '   %(metadata)s, %(config)s, %(status)s, %(status_update_dt)s, '
-        '   %(is_public)s, %(size_hash)s)'
+        '   %(is_public)s, %(size_hash)s, %(metadata_v2)s)'
     )
 
     ACQ_GEOMETRY_SEL = 'SELECT acq_geometry FROM dataset WHERE id = %s'
@@ -99,6 +100,7 @@ class Dataset:
         status: str = DatasetStatus.QUEUED,
         status_update_dt: datetime = None,
         is_public: bool = True,
+        metadata_v2: Dict = None,
     ):
         self.id = id
         self.name = name
@@ -111,6 +113,7 @@ class Dataset:
         self.metadata = metadata
         self.size_hash = size_hash
         self.config = config
+        self.metadata_v2 = metadata_v2
         self._sm_config = SMConfig.get_conf()
 
     def __str__(self):
@@ -148,6 +151,7 @@ class Dataset:
             'status': self.status,
             'status_update_dt': self.status_update_dt,
             'is_public': self.is_public,
+            'metadata_v2': json.dumps(self.metadata_v2) if self.metadata_v2 else None,
         }
         if not self.is_stored(db):
             if allow_insert:
