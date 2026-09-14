@@ -33,6 +33,18 @@ type ScoringModel {
   isArchived: Boolean
 }
 
+# Row of the ontology_term table (metadata schema v2 term store - see
+# metaspace_metadata's docs/integration_metaspace.md SS6). One term may appear under more than one
+# `subtree` without ambiguity (needed by instrument_model, which spans two PSI-MS roots).
+type OntologyTerm {
+  curie: String!
+  label: String!
+  synonyms: [String!]!
+  ontology: String!
+  subtree: String!
+  obsolete: Boolean!
+}
+
 type Query {
   metadataSuggestions(field: String!, query: String!, limit: Int = 10): [String!]!
 
@@ -47,6 +59,12 @@ type Query {
   colocalizationAlgos: [ColocalizationAlgo!]!
 
   scoringModels: [ScoringModel!]!
+
+  # Autocomplete against the ontology term store, scoped to the slot's bound subtree(s)
+  # (metadata schema v2 - see docs/integration_metaspace.md SS6-7). Trigram-ranked, label then
+  # synonyms. `slot` is the LinkML slot name (e.g. "disease", "organism"), not a raw subtree CURIE -
+  # the mapping between the two is intentionally not exposed to the client.
+  ontologyTermSuggestions(slot: String!, query: String!, limit: Int = 10): [OntologyTerm!]!
 }
 
 schema {

@@ -236,6 +236,7 @@ CREATE TABLE "public"."dataset" (
   "ion_thumbnail" text, 
   "ion_thumbnail_url" text, 
   "size_hash" json, 
+  "metadata_v2" json, 
   CONSTRAINT "PK_1368c0f3639e45c45be6288a232" PRIMARY KEY ("id")
 );
 
@@ -601,6 +602,21 @@ CREATE TABLE "public"."experiment_result" (
   "detection_rate_b" real, 
   CONSTRAINT "PK_07ce415c4b2ba31fe9389ffabcf" PRIMARY KEY ("id")
 );
+
+CREATE TABLE "public"."ontology_term" (
+  "curie" text NOT NULL, 
+  "subtree" text NOT NULL, 
+  "label" text NOT NULL, 
+  "synonyms" text array NOT NULL DEFAULT '{}'::text[], 
+  "ontology" text NOT NULL, 
+  "obsolete" boolean NOT NULL DEFAULT false, 
+  CONSTRAINT "PK_0b7180641535673df751a19f104" PRIMARY KEY ("curie", 
+  "subtree")
+);
+
+CREATE INDEX "ontology_term_subtree_index" ON "public"."ontology_term" (
+  "subtree"
+) ;
 
 ALTER TABLE "public"."molecular_db" ADD CONSTRAINT "FK_a18f5f7d6cc662006d9c849ea1f" FOREIGN KEY (
   "group_id") REFERENCES "graphql"."group"("id"
