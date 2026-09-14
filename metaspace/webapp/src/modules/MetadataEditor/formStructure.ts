@@ -7,6 +7,24 @@ export type DetectorResolvingPower = { mz: number; Resolving_Power: number }
 export type PixelSize = { Xaxis: number; Yaxis: number }
 export type Person = { First_Name: string; Last_Name: string; Email: string }
 
+// metadata schema v2 - mirrors OntologyTermValue in the LinkML schema (and graphql's
+// projection.ts). The structural free-text escape hatch: every ontology-bound slot ranges over
+// this shape rather than a plain string, so an unresolved value is recorded, never rejected.
+export type CurationState = 'controlled' | 'pending_curation' | 'free_text_accepted'
+export type OntologyTermValue = {
+  value_ontology_id?: string | null
+  value_label?: string | null
+  value_free_text?: string | null
+  curation_state: CurationState
+}
+
+// Progressive-disclosure tier (metadata schema v2 - mirrors the LinkML schema's per-slot `tier`
+// annotation): core blocks submission, recommended is nudged but non-blocking, extension is
+// niche/facility and collapsed by default. Orthogonal to JSON Schema's native `required`. Absent on
+// the legacy ims.json/lcms.json schemas (defaulted to 'core' in deriveSection below), so every
+// existing field keeps behaving exactly as it does today until the new schema actually sets this.
+export type MetadataTier = 'core' | 'recommended' | 'extension'
+
 export interface JsonSchemaProperty {
   type?: 'string' | 'boolean' | 'array' | 'object'
   enum?: any[]
@@ -18,6 +36,7 @@ export interface JsonSchemaProperty {
   smEditorType?: FormFieldEditorType
   smEditorColWidth?: number
   help?: string
+  tier?: MetadataTier
 }
 
 export type FormFieldEditorType =
@@ -31,12 +50,18 @@ export type FormFieldEditorType =
   | 'detectorResolvingPower'
   | 'text'
   | 'pixelSize'
+  // metadata schema v2 - see OntologyTermInput.vue. Ranges over an OntologyTermValue object
+  // ({value_ontology_id, value_label, value_free_text, curation_state}), not a plain string -
+  // declared explicitly via `smEditorType` in the schema (same precedent as `pixelSize`), never
+  // inferred by getFieldType().
+  | 'ontologyTerm'
 
 export interface FormFieldProperty extends JsonSchemaProperty {
   title: string
   smEditorType: FormFieldEditorType
   smEditorColWidth: number
   smEditorHelp?: Component
+  tier: MetadataTier
 }
 
 export interface FormSectionProperty extends JsonSchemaProperty {
@@ -148,6 +173,7 @@ function deriveSection(section: JsonSchemaProperty, sectionKey: string): FormSec
         smEditorType: field.smEditorType || getFieldType(field, fieldKey),
         smEditorColWidth: field.smEditorColWidth || getWidth(fieldKey),
         title: field.title || prettify(fieldKey),
+        tier: field.tier || 'core',
       })),
       help: section.help,
     } as FormSectionProperty

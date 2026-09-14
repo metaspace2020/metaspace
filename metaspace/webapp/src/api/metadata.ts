@@ -92,6 +92,19 @@ export const fetchAutocompleteSuggestionsQuery = gql`
   }
 `
 
+// Metadata schema v2 - autocomplete for OntologyTermValue-shaped fields (see formStructure.ts's
+// 'ontologyTerm' FormFieldEditorType). `slot` is the LinkML slot name (e.g. "disease"), not a raw
+// ontology subtree CURIE.
+export const fetchOntologyTermSuggestionsQuery = gql`
+  query ontologyTermSuggestions($slot: String!, $query: String!) {
+    ontologyTermSuggestions(slot: $slot, query: $query, limit: 5) {
+      curie
+      label
+      synonyms
+    }
+  }
+`
+
 export const updateDatasetQuery = gql`
   mutation (
     $id: String!

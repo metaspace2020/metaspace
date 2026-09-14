@@ -128,6 +128,7 @@ import { deriveFullSchema } from './formStructure'
 import {
   newDatasetQuery,
   fetchAutocompleteSuggestionsQuery,
+  fetchOntologyTermSuggestionsQuery,
   editDatasetQuery,
   metadataOptionsQuery,
   datasetSubmitterQuery,
@@ -141,10 +142,24 @@ import config from '../../lib/config'
 import { DocumentCopy } from '@element-plus/icons-vue'
 import { nestEnrichmentDbs } from '../../lib/util'
 
+// metadata schema v2 - an OntologyTermValue-shaped property (identified structurally, by having a
+// `curation_state` sub-property, since JSON Schema type alone can't distinguish it from any other
+// object) seeds as `{curation_state: 'pending_curation'}`, matching the LinkML schema's
+// `ifabsent: string(pending_curation)` default - not the generic recursive-empty-string default,
+// which would produce `curation_state: ''`, an invalid enum value.
+const isOntologyTermValueSchema = (schema) => !!schema.properties && 'curation_state' in schema.properties
+// Same structural check, applied to an actual metadata *value* rather than a JSON Schema node -
+// used by importMetadata's up-projection below, kept distinct from isOntologyTermValueSchema so the
+// schema-vs-value distinction stays visible at each call site.
+const isOntologyTermValue = (v) => isPlainObject(v) && 'curation_state' in v
+
 const factories = {
   string: (schema) => schema.default || '',
   number: (schema) => schema.default || 0,
-  object: (schema) => mapValues(schema.properties, (prop) => factories[prop.type](prop)),
+  object: (schema) =>
+    isOntologyTermValueSchema(schema)
+      ? { curation_state: 'pending_curation' }
+      : mapValues(schema.properties, (prop) => factories[prop.type](prop)),
   array: (schema) => schema.default || [],
   boolean: (schema) => schema.default || false,
 }
@@ -249,8 +264,20 @@ export default defineComponent({
           if (isPlainObject(metadata[sectionKey])) {
             forEach(loadedSection, (loadedField, fieldKey) => {
               if (fieldKey in metadata[sectionKey]) {
-                if (typeof loadedField === typeof metadata[sectionKey][fieldKey]) {
+                const target = metadata[sectionKey][fieldKey]
+                if (typeof loadedField === typeof target) {
                   metadata[sectionKey][fieldKey] = cloneDeep(loadedField)
+                } else if (typeof loadedField === 'string' && isOntologyTermValue(target)) {
+                  // metadata schema v2: templating from a legacy-shaped dataset (loadedField is a
+                  // plain string) into a new-schema OntologyTermValue-shaped field. Up-project as
+                  // pending_curation free text rather than silently dropping it - honest, since
+                  // nothing in the legacy corpus is a resolved term (mirrors graphql's
+                  // projection.ts::upProjectToV2, scoped to one field - webapp can't import across
+                  // package boundaries into graphql/).
+                  metadata[sectionKey][fieldKey] = {
+                    value_free_text: loadedField || undefined,
+                    curation_state: 'pending_curation',
+                  }
                 }
               }
             })
@@ -415,14 +442,48 @@ export default defineComponent({
       state.localErrors = errors
     }
 
+    const getMetadataSuggestions = async (path, query) => {
+      const resp = await apolloClient.query({
+        query: fetchAutocompleteSuggestionsQuery,
+        variables: { field: path, query: query || '' },
+      })
+      return resp.data.metadataSuggestions.map((val) => ({ value: val }))
+    }
+
+    // metadata schema v2 - ontology matches, tagged with `curie`/`label` so OntologyTermInput's
+    // @select can tell them apart from free text (see there for how each is handled).
+    //
+    // The integration spec also calls for merging in past-submitter free-text history
+    // (metadataSuggestions) below the ontology matches, "so the field is no worse than today for
+    // someone who does not care about ontologies". Deliberately NOT done here: metadataSuggestions
+    // queries ES by the *legacy* dotted path (e.g. "Sample_Information.Organism"), and there is no
+    // established mapping from a v2 slot name (e.g. "organism") back to that legacy path in the
+    // webapp - building a third hand-maintained lookup table just for this, on top of graphql's
+    // SLOT_SUBTREES and engine's SLOT_ONTOLOGY_ROOTS (both already flagged as interim stopgaps
+    // pending the vendored schema), isn't worth it for a nice-to-have. Free text is still fully
+    // supported (OntologyTermInput's free-typing path), just without suggesting past submitters'
+    // exact prior wording. Revisit once the schema is vendored and a real slot->legacy-path table
+    // exists to derive this from.
+    const getOntologyTermSuggestions = async (slot, query) => {
+      const resp = await apolloClient.query({
+        query: fetchOntologyTermSuggestionsQuery,
+        variables: { slot, query: query || '' },
+      })
+      return resp.data.ontologyTermSuggestions.map((term) => ({
+        value: `${term.label} (${term.curie})`,
+        curie: term.curie,
+        label: term.label,
+      }))
+    }
+
     const getSuggestionsForField = async (query, callback, ...args) => {
-      const path = args.join('.')
-      await apolloClient
-        .query({
-          query: fetchAutocompleteSuggestionsQuery,
-          variables: { field: path, query: query || '' },
-        })
-        .then((resp) => callback(resp.data.metadataSuggestions.map((val) => ({ value: val }))))
+      const [sectionKey, fieldKey] = args
+      const fieldSchema = state.schema?.properties?.[sectionKey]?.properties?.[fieldKey]
+      const results =
+        fieldSchema?.smEditorType === 'ontologyTerm'
+          ? await getOntologyTermSuggestions(fieldKey, query)
+          : await getMetadataSuggestions(args.join('.'), query)
+      callback(results)
     }
 
     const sectionBinds = (sectionKey) => {
