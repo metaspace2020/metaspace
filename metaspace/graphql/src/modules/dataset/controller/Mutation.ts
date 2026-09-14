@@ -1,6 +1,5 @@
 import * as jsondiffpatch from 'jsondiffpatch'
 import logger from '../../../utils/logger'
-import * as Ajv from 'ajv'
 import { UserError } from 'graphql-errors'
 import { EntityManager } from 'typeorm'
 import * as moment from 'moment'
@@ -44,6 +43,14 @@ import { hasBetaFeature } from '../../plan/util/betaTesterApi'
 import { cleanEmptyStrings } from '../../../utils/regexSanitizer'
 import canEditEsDataset from '../operation/canEditEsDataset'
 
+// Plain `require`, not `import`, deliberately: ajv-draft-04's bundled .d.ts transitively pulls in
+// ajv's own type declarations, which use template literal types (TS 4.1+ syntax) this project's
+// TypeScript 3.9.2 cannot parse - an `import` here fails with a raw syntax error inside ajv's
+// json-schema.d.ts, not a type error in our code. Bumping the project's TypeScript version to fix
+// that is out of scope for this change; `require` sidesteps type resolution for this module entirely.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Ajv04 = require('ajv-draft-04')
+
 type MetadataSchema = any;
 type MetadataRoot = any;
 type MetadataNode = any;
@@ -84,14 +91,33 @@ function trimEmptyFields(schema: MetadataSchema, value: MetadataNode) {
   return obj
 }
 
-function validateMetadata(metadata: MetadataNode) {
-  const ajv = new Ajv({ allErrors: true })
+// Ajv >= 7 renamed error objects' `dataPath` to `instancePath` (JSON-Pointer, e.g. '/MS_Analysis/Analyzer')
+// and dropped the old dot-path format entirely. The webapp still reads `err.dataPath` as a dot-path
+// (MetadataEditor.vue: `err.dataPath.split('.').slice(1)`), so every error returned from an Ajv 7+
+// validator (including ajv-draft-04, which only restores the draft-04 *schema dialect*, not the old
+// error shape) must be translated at this boundary before it reaches the client.
+function translateAjvError(err: { instancePath?: string, dataPath?: string, [key: string]: any }) {
+  if (err.dataPath != null) {
+    // Already in the legacy shape (e.g. the hand-constructed errors below) - leave as-is.
+    return err
+  }
+  const { instancePath, ...rest } = err
+  return { ...rest, dataPath: (instancePath || '').replace(/\//g, '.') }
+}
+
+// Exported for direct unit testing (see Mutation.validateMetadata.spec.ts), same pattern as
+// `processingSettingsChanged` below - both are pure functions with no DB/context dependency.
+export function validateMetadata(metadata: MetadataNode) {
+  // strict: false - ims.json/lcms.json carry custom UI-hint keywords (`help`, `smEditorType`,
+  // `smEditorColWidth`, ...) that Ajv v4 silently ignored. Ajv v7+ rejects unknown keywords by
+  // default ("strict mode"); this restores the old permissive behavior rather than changing it.
+  const ajv = new Ajv04({ allErrors: true, strict: false })
   const mdSchema = metadataSchemas[metadata.Data_Type]
   const validator = ajv.compile(mdSchema)
   const cleanValue = trimEmptyFields(mdSchema, metadata)
   /* eslint-disable-next-line @typescript-eslint/no-floating-promises */ // ajv is only async when the schema has $async nodes
   validator(cleanValue)
-  const validationErrors = validator.errors || []
+  const validationErrors = (validator.errors || []).map(translateAjvError)
 
   // Validate MS_Analysis.Analyzer (if present) is a recognized analyzer type
   // eslint-disable-next-line camelcase
