@@ -198,7 +198,7 @@ services:
     #  - "graphql:172.17.0.1"
 
   storage:
-    image: minio/minio:RELEASE.2024-06-29T01-20-47Z
+    image: quay.io/minio/minio:RELEASE.2024-06-29T01-20-47Z
     entrypoint: sh
     command: -c 'mkdir -p /data/sm-centroids-dev && mkdir -p /data/sm-engine-dev && mkdir -p /data/sm-image-storage-dev && mkdir -p /data/sm-imzml-browser-dev && mkdir -p /data/sm-lithops-temp-dev && /usr/bin/minio server /data --console-address ":9001"'
     volumes:

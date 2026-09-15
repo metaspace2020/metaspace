@@ -94,9 +94,6 @@ export default defineComponent({
       { immediate: true }
     )
 
-    // One delegated handler measures every CTA on the page. A CTA opts in with
-    // `data-cta="<id>"`; its section comes from the nearest `data-cta-section`
-    // or `section[id]`, and its destination from `href` or `data-cta-destination`.
     const onCtaClick = (e: MouseEvent) => {
       const target = (e.target as Element | null)?.closest?.('[data-cta]') as HTMLElement | null
       if (!target) {

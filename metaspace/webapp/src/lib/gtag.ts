@@ -3,21 +3,6 @@ import type { RouteLocationNormalized } from 'vue-router'
 import { currentUserIdQuery } from '../api/user'
 import { getSeoMetaForRoute } from './useSeo'
 
-/**
- * Thin, fail-safe wrappers around vue-gtag.
- *
- * Conventions:
- * - Page views are NOT sent from here. vue-gtag is installed with the router
- *   (see main.ts) and already sends a `page_view` on every navigation. Sending
- *   another one from a page component double-counts it.
- * - Monetary values arrive in cents (that is what the API returns) and are
- *   converted to currency units, which is what GA4 expects in `value`.
- * - Every funnel event carries `logged_in` so anonymous and signed-in traffic
- *   can be compared in GA4 without a User-ID dependency.
- *
- * See ANALYTICS.md for the event catalogue and the GA4 setup steps.
- */
-
 type GtagParams = Record<string, string | number | boolean | null | undefined | Array<Record<string, unknown>>>
 
 const safely = (fn: () => void) => {
@@ -29,10 +14,6 @@ const safely = (fn: () => void) => {
 }
 
 const centsToUnits = (cents: number | null | undefined) => Math.round(cents || 0) / 100
-
-// ---------------------------------------------------------------------------
-// Identity
-// ---------------------------------------------------------------------------
 
 export const setUserId = (userId: string) =>
   safely(() => {
@@ -62,12 +43,6 @@ export const setSubscriptionUserProperties = (
 
 type ApolloLikeClient = { query: (options: { query: any; fetchPolicy?: any }) => Promise<{ data?: any }> }
 
-/**
- * Look up the signed-in user's id before analytics starts, so the first
- * page_view of the session already carries `user_id`. Never rejects: a
- * failed or slow query just means an anonymous start (the header sets the
- * id later once the profile loads).
- */
 export const resolveInitialUserId = (client: ApolloLikeClient, timeoutMs = 3000): Promise<string | null> => {
   const lookup = client
     .query({ query: currentUserIdQuery, fetchPolicy: 'cache-first' })
@@ -96,15 +71,7 @@ export const buildGtagOptions = (env: { measurementId: string; production: boole
   pageTrackerTemplate,
 })
 
-// ---------------------------------------------------------------------------
-// Generic
-// ---------------------------------------------------------------------------
-
 export const trackEvent = (eventName: string, params?: GtagParams) => safely(() => gtagEvent(eventName, params))
-
-// ---------------------------------------------------------------------------
-// Pro / plans funnel
-// ---------------------------------------------------------------------------
 
 export const trackPlansPageView = (loggedIn: boolean) =>
   trackEvent('view_plans_page', { section: 'plans', logged_in: loggedIn })
