@@ -58,6 +58,8 @@
   args:
     chdir: "{{ sm_webapp_home }}/docs"
     executable: /bin/bash
+  environment:
+    DOCS_HOSTNAME: "https://{{ sm_webapp_hostname }}/docs/"
 
 - name: Copy build output
   become: true

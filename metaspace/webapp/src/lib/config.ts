@@ -51,6 +51,7 @@ interface ClientConfig {
 
   google_client_id: string
   recaptcha_site_key: string
+  ga_measurement_id?: string | null
   stripe_pub: string
   order_service_url: string
 
@@ -74,6 +75,7 @@ const defaultConfig: ClientConfig = {
   companionUrl: null,
   google_client_id: '',
   recaptcha_site_key: '',
+  ga_measurement_id: '',
   stripe_pub: '',
   order_service_url: 'http://localhost:3003/',
   sentry: null,

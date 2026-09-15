@@ -1,4 +1,37 @@
-import { defineConfig } from 'vitepress'
+import { defineConfig, type HeadConfig } from 'vitepress'
+import { readFileSync } from 'node:fs'
+
+// The docs are built and served as part of the webapp deploy, so they share
+// its clientConfig.json (templated by ansible). The GA4 measurement id lives
+// there; an empty id leaves the docs untracked (dev, or an env without GA).
+const loadClientConfig = (): Record<string, any> => {
+  try {
+    return JSON.parse(readFileSync(new URL('../../src/clientConfig.json', import.meta.url), 'utf8'))
+  } catch {
+    return {}
+  }
+}
+const gaMeasurementId: string = process.env.GA_MEASUREMENT_ID || loadClientConfig().ga_measurement_id || ''
+
+// Absolute base of the docs site, for the generated sitemap (sitemap URLs are
+// relative to the docs root, so the hostname has to include the base path).
+const docsHostname = process.env.DOCS_HOSTNAME || 'https://metaspace2020.org/docs/'
+
+const analyticsHead: HeadConfig[] = gaMeasurementId
+  ? [
+      ['script', { async: '', src: `https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}` }],
+      [
+        'script',
+        {},
+        // The initial page_view is sent by this config call; SPA navigations
+        // inside the docs are sent from .vitepress/theme/index.ts.
+        `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${gaMeasurementId}');`,
+      ],
+    ]
+  : []
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -7,6 +40,28 @@ export default defineConfig({
   outDir: '../dist-docs',
   title: 'METASPACE docs',
   description: 'METASPACE documentation',
+  lang: 'en-US',
+  lastUpdated: true,
+  sitemap: { hostname: docsHostname },
+  head: [
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:site_name', content: 'METASPACE' }],
+    ['meta', { name: 'twitter:card', content: 'summary' }],
+    ...analyticsHead,
+  ],
+  transformPageData(pageData) {
+    const path = pageData.relativePath.replace(/(^|\/)index\.md$/, '$1').replace(/\.md$/, '.html')
+    const canonical = new URL(path, docsHostname).href
+    const title = pageData.frontmatter.title || pageData.title || 'METASPACE docs'
+    const description = pageData.frontmatter.description || pageData.description || ''
+    pageData.frontmatter.head ??= []
+    pageData.frontmatter.head.push(
+      ['link', { rel: 'canonical', href: canonical }],
+      ['meta', { property: 'og:url', content: canonical }],
+      ['meta', { property: 'og:title', content: title }],
+      ['meta', { property: 'og:description', content: description }]
+    )
+  },
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [

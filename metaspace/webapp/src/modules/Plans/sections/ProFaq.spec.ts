@@ -194,3 +194,19 @@ describe('ProFaq', () => {
     expect(hrefs).toContain('/contact')
   })
 })
+
+describe('ProFaq events', () => {
+  it('emits faqOpen with the question when a collapsed entry is expanded', async () => {
+    const wrapper = mount(ProFaq)
+    const second = wrapper.findAll('.pro-faq__trigger')[1]
+    await second.trigger('click')
+    expect(wrapper.emitted('faqOpen')?.[0]).toEqual([second.find('span').text()])
+  })
+
+  it('does not emit faqOpen when an open entry is collapsed', async () => {
+    const wrapper = mount(ProFaq)
+    // The first entry starts open.
+    await wrapper.findAll('.pro-faq__trigger')[0].trigger('click')
+    expect(wrapper.emitted('faqOpen')).toBeUndefined()
+  })
+})

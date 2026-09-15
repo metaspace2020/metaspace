@@ -5,27 +5,37 @@ import type { RouteLocationNormalizedLoaded } from 'vue-router'
 const disabledDomains = ['staging.metaspace2020.org', 'staging.metaspace2020.eu']
 const currentHost = window?.location?.hostname
 
-function getSeoMetaForRoute(route: any | null) {
+// Canonical URLs always point at the production host so alternate hostnames
+export const PRODUCTION_ORIGIN = 'https://metaspace2020.org'
+
+function buildHead(title: string, description: string, robots: string, path: string | null) {
+  const ogImage = `${PRODUCTION_ORIGIN}/assets/logo.png`
+  const canonical = path ? `${PRODUCTION_ORIGIN}${path}` : null
+  return {
+    title,
+    meta: [
+      { name: 'description', content: description },
+      { name: 'robots', content: robots },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:site_name', content: 'METASPACE' },
+      { property: 'og:title', content: title },
+      { property: 'og:description', content: description },
+      { property: 'og:image', content: ogImage },
+      ...(canonical ? [{ property: 'og:url', content: canonical }] : []),
+      { name: 'twitter:card', content: 'summary' },
+    ],
+    link: canonical ? [{ rel: 'canonical', href: canonical }] : [],
+  }
+}
+
+export function getSeoMetaForRoute(route: any | null) {
   let title = 'METASPACE - Spatial metabolomics'
   let description = 'The platform for metabolite annotation of imaging mass spectrometry data. '
-  const ogImage = 'https://metaspace2020.org/assets/logo.png'
   let robots = 'noindex, nofollow'
 
   // Handle case when route is not yet available
   if (!route || !route.name) {
-    if (disabledDomains.includes(currentHost)) {
-      robots = 'noindex, nofollow'
-    }
-
-    return {
-      title,
-      meta: [
-        { name: 'description', content: description },
-        { property: 'og:title', content: title },
-        { property: 'og:image', content: ogImage },
-        { name: 'robots', content: robots },
-      ],
-    }
+    return buildHead(title, description, robots, null)
   }
 
   if (route.name === 'home' || route.name === 'about') {
@@ -62,21 +72,27 @@ function getSeoMetaForRoute(route: any | null) {
     title = 'METASPACE - Groups'
     robots = 'index, follow'
     description = `Upload, share and manage data from your group in a simple, effective and safe way.`
+  } else if (route.name === 'pro') {
+    title = 'METASPACE Pro - Private datasets and downstream analysis'
+    robots = 'index, follow'
+    description =
+      'Submit private datasets and run differential analysis, spatial segmentation and cross-dataset ' +
+      'statistics on the METASPACE annotation engine. Compare plans, or start with three free private datasets.'
+  } else if (route.name === 'faq') {
+    title = 'METASPACE - FAQ'
+    robots = 'index, follow'
+    description = 'Answers to common questions about METASPACE, private datasets, plans and data privacy.'
+  } else if (route.name === 'contact') {
+    title = 'METASPACE - Contact'
+    robots = 'index, follow'
+    description = 'Get in touch with the METASPACE team for quotes, group plans, support and collaborations.'
   }
 
   if (disabledDomains.includes(currentHost)) {
     robots = 'noindex, nofollow'
   }
 
-  return {
-    title,
-    meta: [
-      { name: 'description', content: description },
-      { property: 'og:title', content: title },
-      { property: 'og:image', content: ogImage },
-      { name: 'robots', content: robots },
-    ],
-  }
+  return buildHead(title, description, robots, route.path || null)
 }
 
 export function useSeoMeta(route: Ref<RouteLocationNormalizedLoaded>) {

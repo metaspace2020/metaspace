@@ -1,2 +1,5 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://metaspace2020.org/sitemap.xml
+Sitemap: https://metaspace2020.org/docs/sitemap.xml

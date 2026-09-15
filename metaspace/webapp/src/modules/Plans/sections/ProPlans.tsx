@@ -248,6 +248,8 @@ export default defineComponent({
         <button
           type="button"
           data-test={testId}
+          data-cta={`plans-subscribe-${tier}`}
+          data-cta-destination="/payment"
           class={`pro-btn${width} ${highlight ? 'pro-btn--accent' : 'pro-btn--ghost'}`}
           onClick={() => emit('subscribe', plan.id)}
         >
@@ -289,10 +291,6 @@ export default defineComponent({
         )
       })
 
-    // Max is a full-width strip, not a fourth card: at its volume the decision
-    // is a conversation, not a side-by-side comparison. It is still a normal
-    // purchasable plan though - same price source, same CTA gating as the
-    // cards - so it only renders when the backend actually returns a Max plan.
     const renderMaxStrip = () => {
       if (!byTier.value.max) {
         return null
@@ -320,6 +318,7 @@ export default defineComponent({
               href="/contact"
               class="pro-strip__link"
               data-test="request-quote"
+              data-cta="plans-request-quote"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -419,7 +418,13 @@ export default defineComponent({
                 ))}
               </p>
             </div>
-            <a href="/upload" target="_blank" rel="noopener noreferrer" class="pro-btn pro-btn--ghost">
+            <a
+              href="/upload"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="pro-btn pro-btn--ghost"
+              data-cta="plans-upload-free"
+            >
               Submit your first private dataset
             </a>
           </div>
@@ -437,8 +442,11 @@ export default defineComponent({
               <div class="pro-strip__body">
                 <h3 class="pro-h3">Plans are temporarily unavailable</h3>
                 <p class="pro-strip__copy">
-                  We could not load pricing just now. Please refresh, or <a href="/contact">get in touch</a> and
-                  we&apos;ll send you a quote directly.
+                  We could not load pricing just now. Please refresh, or{' '}
+                  <a href="/contact" data-cta="plans-error-contact">
+                    get in touch
+                  </a>{' '}
+                  and we&apos;ll send you a quote directly.
                 </p>
               </div>
             </div>
@@ -468,6 +476,8 @@ export default defineComponent({
                   type="button"
                   class="pro-btn pro-btn--ghost pro-btn--sm"
                   data-test="buy-dataset-pack"
+                  data-cta="plans-buy-pack"
+                  data-cta-destination="/payment"
                   onClick={() => emit('buyPack', props.packPlan!.id)}
                 >
                   Buy a pack
@@ -477,6 +487,7 @@ export default defineComponent({
                   href="#procurement"
                   class="pro-btn pro-btn--ghost pro-btn--sm"
                   data-test="buy-dataset-pack"
+                  data-cta="plans-buy-pack"
                   onClick={(e: MouseEvent) => scrollToHashSection(e, '#procurement')}
                 >
                   Buy a pack
