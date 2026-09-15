@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { event, pageview, set, purchase } from 'vue-gtag'
 import {
+  buildGtagOptions,
   clearUserId,
+  pageTrackerTemplate,
+  resolveInitialUserId,
   setUserId,
   setSubscriptionUserProperties,
   setUserProperties,
@@ -32,9 +35,17 @@ describe('user identity', () => {
     expect(set).toHaveBeenCalledWith({ user_id: 'abc-123' })
   })
 
-  it('clears the GA user_id on sign-out', () => {
+  // user_id is not usable as a dimension in GA4 explorations; a user property
+  // with the same value is, so it is sent alongside.
+  it('also exposes the id as the metaspace_user_id user property', () => {
+    setUserId('abc-123')
+    expect(set).toHaveBeenCalledWith({ user_properties: { metaspace_user_id: 'abc-123' } })
+  })
+
+  it('clears the GA user_id and the user property on sign-out', () => {
     clearUserId()
     expect(set).toHaveBeenCalledWith({ user_id: null })
+    expect(set).toHaveBeenCalledWith({ user_properties: { metaspace_user_id: null } })
   })
 
   it('sets user properties as a GA user_properties bundle', () => {
@@ -145,5 +156,58 @@ describe('subscription user properties', () => {
   it('reports free-tier users without an active subscription', () => {
     setSubscriptionUserProperties(null)
     expect(set).toHaveBeenCalledWith({ user_properties: { plan_id: 'free', billing_interval: null } })
+  })
+})
+
+describe('buildGtagOptions', () => {
+  it('configures the measurement id with the user id known at startup', () => {
+    const options = buildGtagOptions({ measurementId: 'G-ABC', production: true, userId: 'u1' })
+    expect(options.config).toEqual({ id: 'G-ABC', params: { user_id: 'u1' } })
+    expect(options.enabled).toBe(true)
+    expect(options.pageTrackerTemplate).toBe(pageTrackerTemplate)
+  })
+
+  it('sends an anonymous config when nobody is signed in', () => {
+    const options = buildGtagOptions({ measurementId: 'G-ABC', production: true, userId: null })
+    expect(options.config).toEqual({ id: 'G-ABC', params: { user_id: null } })
+  })
+
+  it('stays disabled outside production builds', () => {
+    expect(buildGtagOptions({ measurementId: 'G-ABC', production: false, userId: null }).enabled).toBe(false)
+  })
+
+  it('stays disabled when no measurement id is configured', () => {
+    expect(buildGtagOptions({ measurementId: '', production: true, userId: null }).enabled).toBe(false)
+  })
+})
+
+describe('pageTrackerTemplate', () => {
+  it('sends the SEO title of the route instead of its internal name', () => {
+    const view = pageTrackerTemplate({ name: 'pro', path: '/pro', fullPath: '/pro#plans' } as any)
+    expect(view.page_title).toBe('METASPACE Pro - Private datasets and downstream analysis')
+    expect(view.page_path).toBe('/pro')
+    expect(view.page_location).toBe(window.location.href)
+  })
+})
+
+describe('resolveInitialUserId', () => {
+  const clientReturning = (data: any) => ({ query: vi.fn().mockResolvedValue({ data }) })
+
+  it('returns the current user id when signed in', async () => {
+    await expect(resolveInitialUserId(clientReturning({ currentUser: { id: 'u1' } }) as any)).resolves.toBe('u1')
+  })
+
+  it('returns null when nobody is signed in', async () => {
+    await expect(resolveInitialUserId(clientReturning({ currentUser: null }) as any)).resolves.toBeNull()
+  })
+
+  it('returns null when the query fails', async () => {
+    const client = { query: vi.fn().mockRejectedValue(new Error('offline')) }
+    await expect(resolveInitialUserId(client as any)).resolves.toBeNull()
+  })
+
+  it('gives up and returns null when the query takes longer than the timeout', async () => {
+    const client = { query: vi.fn(() => new Promise(() => {})) }
+    await expect(resolveInitialUserId(client as any, 10)).resolves.toBeNull()
   })
 })
