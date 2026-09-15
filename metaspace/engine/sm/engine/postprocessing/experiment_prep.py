@@ -39,13 +39,19 @@ logger = logging.getLogger('engine')
 
 
 def _default_load_iso_image(ds_id: str, image_id: str) -> np.ndarray:
-    """Fetch a principal ion-image (PNG) and return its first channel as float32."""
+    """Fetch a principal ion-image (PNG) and return its first channel as float32.
+
+    PIL decodes the stored grey+alpha PNG as a multi-channel image. Slice the
+    channel out *before* the float32 conversion and copy it, so the returned
+    array owns exactly H*W*4 bytes instead of being a view that pins the whole
+    multi-channel decode in memory.
+    """
     img_bytes = _image_storage.get_image(_image_storage.ISO, ds_id, image_id)
     img = PIL.Image.open(BytesIO(img_bytes))
-    arr = np.asarray(img, dtype=np.float32)
+    arr = np.asarray(img)
     if arr.ndim == 3:
         arr = arr[:, :, 0]
-    return arr
+    return np.ascontiguousarray(arr, dtype=np.float32)
 
 
 def _default_load_label_map(ds_id: str, segmentation_id: str) -> Optional[Tuple[np.ndarray, int]]:
@@ -229,7 +235,6 @@ def build_prep_block(
         # a re-annotation is in progress). Find the first surviving row whose
         # principal image actually loads, so we can determine mask dimensions;
         # rows with missing images are dropped.
-        image_cache: Dict[str, np.ndarray] = {}
         first_image: Optional[np.ndarray] = None
         first_idx = 0
         for idx, surv_row in enumerate(surviving):
@@ -241,7 +246,6 @@ def build_prep_block(
                     f'experiment_prep: missing iso image {principal} for ds {ds_id}: {exc}'
                 )
                 continue
-            image_cache[principal] = first_image
             first_idx = idx
             break
 
@@ -252,6 +256,12 @@ def build_prep_block(
         surviving = surviving[first_idx:]
         height, width = first_image.shape
 
+        # Rasterise every region mask up front, then release the probe image.
+        # The annotation loop below loads each ion image exactly once and
+        # reduces it against *all* masks before dropping it, so peak memory is
+        # O(regions * ions) floats rather than O(ions * pixels) — a dataset with
+        # ~15k annotations previously pinned several GB of decoded images.
+        region_masks: List[Tuple[str, Dict[str, Any], Tuple[np.ndarray, np.ndarray]]] = []
         for region in ds.get('regions') or []:
             if region.get('labelGroupName') is None:
                 continue
@@ -278,41 +288,45 @@ def build_prep_block(
                 logger.warning(f'empty mask for {region_key} in ds {ds_id}')
                 continue
 
-            rows_idx, cols_idx = np.where(mask > 0)
-            tic = 0.0
-            region_ints = intensities.setdefault(region_key, {})
-            for surv_row in surviving:
-                ion_id = surv_row[1]
-                iso = surv_row[5]
-                principal = iso[0]
-                arr = image_cache.get(principal)
-                if arr is None:
-                    try:
-                        arr = load_iso_image(ds_id, principal)
-                    except ClientError as exc:
-                        logger.warning(
-                            f'experiment_prep: missing iso image {principal} '
-                            f'for ds {ds_id}: {exc}'
-                        )
-                        continue
-                    image_cache[principal] = arr
+            region_masks.append((region_key, region, np.where(mask > 0)))
+            intensities.setdefault(region_key, {})
+        del first_image
+
+        if not region_masks:
+            continue
+
+        tics: Dict[str, float] = {region_key: 0.0 for region_key, _, _ in region_masks}
+        for surv_row in surviving:
+            ion_id = surv_row[1]
+            principal = surv_row[5][0]
+            try:
+                arr = load_iso_image(ds_id, principal)
+            except ClientError as exc:
+                logger.warning(
+                    f'experiment_prep: missing iso image {principal} for ds {ds_id}: {exc}'
+                )
+                continue
+            for region_key, _, (rows_idx, cols_idx) in region_masks:
                 vals = arr[rows_idx, cols_idx].astype(np.float64)
                 mean_val = float(vals.mean()) if vals.size else 0.0
-                region_ints[ion_id] = mean_val
-                tic += mean_val
-                ion_ids_seen.add(ion_id)
+                intensities[region_key][ion_id] = mean_val
+                tics[region_key] += mean_val
+            ion_ids_seen.add(ion_id)
+            del arr
 
+        for region_key, region, _ in region_masks:
+            md_dict = region.get('metadata') or {}
             samples.append(
                 {
                     'regionKey': region_key,
-                    'sampleId': sample_id,
+                    'sampleId': (md_dict.get('sampleId') or '').strip() or ds_id,
                     'datasetId': ds_id,
                     'labelGroupName': region.get('labelGroupName'),
                     'condition': md_dict.get('condition'),
                     'biologicalReplicateId': md_dict.get('biologicalReplicateId'),
                     'technicalReplicateId': md_dict.get('technicalReplicateId'),
                     'batchId': md_dict.get('batchId'),
-                    'tic': tic,
+                    'tic': tics[region_key],
                 }
             )
 

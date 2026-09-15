@@ -116,3 +116,46 @@ def test_submit_experiment_prep_job_uses_defaults_when_services_missing(
     assert body['datasets'] == []
     assert 'email' not in body
     assert 'prep' in body
+
+
+@patch('sm.engine.postprocessing.experiment_wrapper.requests.post')
+@patch('sm.engine.postprocessing.experiment_wrapper.SMConfig.get_conf')
+def test_submit_experiment_prep_job_runs_one_prep_at_a_time(mock_conf, mock_post):
+    """The update daemon runs N consumer threads in one process. Prep is the
+    memory-heavy step, so two experiments submitted together must not build
+    their payloads concurrently."""
+    import threading
+    import time
+
+    mock_conf.return_value = {}
+    mock_post.return_value = MagicMock(status_code=200)
+
+    active = {'now': 0, 'max': 0}
+    guard = threading.Lock()
+
+    def slow_prep(db, datasets, filters):  # pylint: disable=unused-argument
+        with guard:
+            active['now'] += 1
+            active['max'] = max(active['max'], active['now'])
+        time.sleep(0.3)
+        with guard:
+            active['now'] -= 1
+        return {'samples': [], 'intensities': {}, 'ions_total': 0, 'filterChain': []}
+
+    db = _FakeDB(exp_row=([], [], {}), ds_rows=[])
+    with patch(
+        'sm.engine.postprocessing.experiment_wrapper.build_prep_block', side_effect=slow_prep
+    ):
+        threads = [
+            threading.Thread(
+                target=submit_experiment_prep_job, args=(f'exp-{i}', 1), kwargs={'db': db}
+            )
+            for i in range(2)
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+    assert active['max'] == 1, f'{active["max"]} preps ran concurrently'
+    assert mock_post.call_count == 2

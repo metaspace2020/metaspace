@@ -2,6 +2,7 @@
 ``stats_analysis`` service.
 """
 import logging
+import threading
 from typing import Any, Dict, List, Optional
 
 import requests
@@ -11,6 +12,12 @@ from sm.engine.db import DB
 from sm.engine.postprocessing.experiment_prep import build_prep_block
 
 logger = logging.getLogger('engine')
+
+# The update daemon runs ``update_daemon_threads`` consumer threads in a single
+# process, so several EXPERIMENT_PREP messages can be picked up at once. Prep
+# is the memory-heavy step (it streams every ion image of every dataset), so
+# serialise it process-wide: one prep at a time, the others wait their turn.
+_PREP_LOCK = threading.Lock()
 
 
 def _load_experiment_payload(
@@ -92,15 +99,16 @@ def submit_experiment_prep_job(
     if db is None:
         db = DB()
 
-    payload = _load_experiment_payload(db, experiment_id, run_generation, callback_url)
-    if email:
-        payload['email'] = email
+    with _PREP_LOCK:
+        payload = _load_experiment_payload(db, experiment_id, run_generation, callback_url)
+        if email:
+            payload['email'] = email
 
-    logger.info(
-        f'Submitting experiment {experiment_id} run_generation={run_generation} '
-        f'to {stats_run_url}'
-    )
-    response = requests.post(stats_run_url, json=payload, timeout=30)
+        logger.info(
+            f'Submitting experiment {experiment_id} run_generation={run_generation} '
+            f'to {stats_run_url}'
+        )
+        response = requests.post(stats_run_url, json=payload, timeout=30)
     response.raise_for_status()
 
 
