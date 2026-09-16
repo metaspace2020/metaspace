@@ -488,8 +488,8 @@ export default defineComponent({
               properties: {
                 name: roi.name,
                 coordinates: roi.coordinates.map((coord: any) => ({
-                  x: coord.x || coord[0],
-                  y: coord.y || coord[1],
+                  x: coord.x ?? coord[0],
+                  y: coord.y ?? coord[1],
                 })),
                 channel: roi.channel,
                 rgb: roi.rgb,
@@ -505,7 +505,7 @@ export default defineComponent({
               },
               geometry: {
                 type: 'Polygon',
-                coordinates: [roi.coordinates.map((coord: any) => [coord.x || coord[0], coord.y || coord[1]])],
+                coordinates: [roi.coordinates.map((coord: any) => [coord.x ?? coord[0], coord.y ?? coord[1]])],
               },
             }
 

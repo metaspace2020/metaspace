@@ -78,3 +78,36 @@ def test_rasterise_whole_mask_uses_foreground():
     tic = np.array([[0.0, 1.5], [2.0, 0.0]], dtype=np.float32)
     mask = rasterise_whole_mask(tic)
     assert mask.tolist() == [[0, 1], [1, 0]]
+
+
+def test_rasterise_roi_mask_treats_missing_axis_as_zero():
+    """The webapp ROI editor serialised vertices with ``coord.y || coord[1]``, so a
+    vertex on the image edge (y == 0) was persisted as ``{"x": N}`` with the key
+    dropped, and ``[N, null]`` in geometry. Recover it as 0 instead of raising."""
+    geojson = {
+        'type': 'Feature',
+        'properties': {
+            'coordinates': [
+                {'x': 0, 'y': 0},
+                {'x': 2},
+                {'x': 2, 'y': 2},
+                {'y': 2},
+            ],
+        },
+        'geometry': {'type': 'Polygon', 'coordinates': [[[0, 0], [2, None], [2, 2], [None, 2]]]},
+    }
+    mask = rasterise_roi_mask(geojson, roi_id=43, width=4, height=4)
+    assert mask is not None
+    assert mask[0, 0] == 1 and mask[0, 2] == 1 and mask[2, 0] == 1 and mask[2, 2] == 1
+    assert mask[3, 3] == 0
+
+
+def test_rasterise_roi_mask_geometry_fallback_treats_null_axis_as_zero():
+    geojson = {
+        'type': 'Feature',
+        'properties': {},
+        'geometry': {'type': 'Polygon', 'coordinates': [[[0, 0], [2, None], [2, 2], [None, 2]]]},
+    }
+    mask = rasterise_roi_mask(geojson, roi_id=1, width=4, height=4)
+    assert mask is not None
+    assert mask[0, 2] == 1 and mask[2, 0] == 1

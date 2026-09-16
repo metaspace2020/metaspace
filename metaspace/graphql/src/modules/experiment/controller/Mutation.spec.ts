@@ -246,6 +246,25 @@ describe('runExperimentPrep', () => {
     expect(second.run.generation).toBe(2)
   })
 
+  it('clears the saved Stage 2 filter on re-run so the analysis restarts from scratch', async() => {
+    // A full re-run regenerates the prep, the intensity blob and the ion
+    // snapshot. Carrying the previous run's filter over would make the new
+    // run's result table depend on a selection the user has not made yet.
+    const exp = await seed()
+    await testEntityManager.update(Experiment, exp.id, {
+      runStatus: 'FINISHED',
+      runStage: 'DONE',
+      runGeneration: 1,
+      runFilters: { fdrMax: 0.2, databases: [34], adducts: ['+H'] },
+    } as any)
+    await doQuery<any>(runMutation, { id: exp.id })
+    const row = await testEntityManager.findOneOrFail(Experiment, exp.id)
+    expect(row.runFilters).toBeNull()
+    expect(row.runGeneration).toBe(2)
+    expect(mockSm.smApiDatasetRequest).toHaveBeenCalledWith(
+      '/v1/experiment/run_prep', expect.objectContaining({ experiment_id: exp.id, run_generation: 2 }))
+  })
+
   it('updateExperimentExcludedSamples persists without triggering a run', async() => {
     // Exclusion is a per-sample read-time filter — the existing PREP/QC blob
     // is reusable; we deliberately do NOT re-run the experiment on every

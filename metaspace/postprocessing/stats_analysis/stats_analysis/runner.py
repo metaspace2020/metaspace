@@ -41,6 +41,81 @@ def _matrix(
     return m
 
 
+def _fmt_pct(v: float) -> str:
+    return f'{v * 100:.0f}%'
+
+
+def _apply_ion_filters(  # pylint: disable=too-many-locals,too-many-branches
+    ions: List[int],
+    all_ions: List[Dict[str, Any]],
+    filters: Dict[str, Any],
+    intensities: Dict[str, Dict[int, float]],
+    region_keys: List[str],
+    chain: List[Dict[str, Any]],
+) -> List[int]:
+    """Restrict ``ions`` to those passing the Stage 2 (resolver-shape) filter.
+
+    Mirrors the client-side chain in the webapp's ExploreStage so the ions that
+    get tested (and BH-corrected) are exactly the ones the user counted:
+
+    * ``fdrMax``            -> annotation FDR <= fdrMax
+    * ``databases``         -> moldb_id in list
+    * ``adducts``           -> adduct in list
+    * ``minDetectionRate``  -> fraction of regions with intensity > 0 >= value
+      (``min_detection`` is accepted as a legacy alias)
+
+    Per-ion metadata comes from the ``all_ions`` snapshot. When it is absent
+    (legacy runs) the metadata filters are skipped; detection rate still applies.
+    Each applied step appends a ``{name, count, droppedFromPrev}`` entry to
+    ``chain``.
+    """
+    current = list(ions)
+
+    def _step(name: str, keep: set) -> None:
+        nonlocal current
+        before = len(current)
+        current = [i for i in current if i in keep]
+        chain.append(
+            {'name': name, 'count': len(current), 'droppedFromPrev': before - len(current)}
+        )
+
+    meta = {int(e['ion_id']): e for e in all_ions if e.get('ion_id') is not None}
+
+    fdr_max = filters.get('fdrMax')
+    if fdr_max is not None and meta:
+        keep = {
+            i for i, e in meta.items() if e.get('fdr') is not None and float(e['fdr']) <= fdr_max
+        }
+        _step(f'+FDR <= {_fmt_pct(float(fdr_max))}', keep)
+
+    databases = filters.get('databases') or []
+    if databases and meta:
+        allow = {int(d) for d in databases}
+        keep = {i for i, e in meta.items() if e.get('moldb_id') in allow}
+        _step(f'+database in {{{", ".join(str(d) for d in databases)}}}', keep)
+
+    adducts = filters.get('adducts') or []
+    if adducts and meta:
+        allow = set(adducts)
+        keep = {i for i, e in meta.items() if e.get('adduct') in allow}
+        _step(f'+adduct in {{{", ".join(adducts)}}}', keep)
+
+    min_detect = filters.get('minDetectionRate')
+    if min_detect is None:
+        min_detect = filters.get('min_detection')
+    if min_detect is not None and region_keys:
+        n_regions = max(1, len(region_keys))
+        keep = {
+            i
+            for i in current
+            if sum(1 for rk in region_keys if intensities.get(rk, {}).get(i, 0.0) > 0) / n_regions
+            >= min_detect
+        }
+        _step(f'+detection >= {min_detect}', keep)
+
+    return current
+
+
 def _regions_per_label_group(samples_meta: List[Dict], label_group_name: str) -> List[Dict]:
     return [s for s in samples_meta if s.get('labelGroupName') == label_group_name]
 
@@ -408,6 +483,11 @@ def _per_label_group_results_limma(  # pylint: disable=too-many-locals
     cond_order = list(groups.keys())
     K = len(cond_order)
 
+    # A Stage 2 filter can legitimately keep no ion; limma cannot run on an
+    # empty feature set (numpy raises IndexError from np.percentile).
+    if not surviving_ids:
+        return []
+
     try:
         Y, X, block_ids, contrasts, pair_labels = _build_limma_inputs(
             groups, intensities, surviving_ids
@@ -476,7 +556,13 @@ def run_experiment_prep(  # pylint: disable=too-many-locals,too-many-branches,to
 ) -> Dict[str, Any]:
     """Execute the real stats pipeline against an engine-built prep block."""
     prep = payload.get('prep') or {}
-    intensities: Dict[str, Dict[int, float]] = prep.get('intensities') or {}
+    # The engine posts the prep block as JSON, so ion ids arrive as *string*
+    # dict keys. Everything downstream (all_ions metadata, the Stage 2 filter,
+    # detection rates, result rows) keys ions by int — normalise once here.
+    intensities: Dict[str, Dict[int, float]] = {
+        rk: {int(ion_id): float(v) for ion_id, v in (ion_map or {}).items()}
+        for rk, ion_map in (prep.get('intensities') or {}).items()
+    }
     samples_meta: List[Dict] = prep.get('samples') or []
     label_groups: List[Dict] = payload.get('label_groups') or []
     filters: Dict = payload.get('filters') or {}
@@ -490,27 +576,13 @@ def run_experiment_prep(  # pylint: disable=too-many-locals,too-many-branches,to
             {'name': 'All annotated ions', 'count': len(ions), 'droppedFromPrev': 0},
         ]
     )
-    min_detect = filters.get('min_detection')
-    if min_detect is not None and region_keys:
-        before = len(ions)
-        surviving_ids = [
-            ion_id
-            for ion_id in ions
-            if (
-                sum(1 for rk in region_keys if intensities.get(rk, {}).get(ion_id, 0.0) > 0)
-                / max(1, len(region_keys))
-            )
-            >= min_detect
-        ]
-        chain.append(
-            {
-                'name': f'+detection >= {min_detect}',
-                'count': len(surviving_ids),
-                'droppedFromPrev': before - len(surviving_ids),
-            }
-        )
-    else:
-        surviving_ids = ions
+    # Stage 2 filter: restricts the tested ion set. Applied here, server-side,
+    # so the statistical test and BH correction run over exactly the ions the
+    # user selected — the results resolver only post-filters what we return.
+    all_ions_meta: List[Dict[str, Any]] = prep.get('all_ions') or []
+    surviving_ids = _apply_ion_filters(
+        ions, all_ions_meta, filters, intensities, region_keys, chain
+    )
 
     matrix = _matrix(intensities, region_keys, surviving_ids)
 
@@ -544,8 +616,10 @@ def run_experiment_prep(  # pylint: disable=too-many-locals,too-many-branches,to
         for rk in region_keys
     }
 
+    # The persisted blob is the source for stats-only re-runs, which may loosen
+    # the filter later, so it must carry EVERY ion — not just the tested ones.
     intensity_rows: List[Dict[str, Any]] = []
-    for ion_id in surviving_ids:
+    for ion_id in ions:
         for rk in region_keys:
             val = float(intensities.get(rk, {}).get(ion_id, 0.0))
             if val == 0.0:
@@ -710,10 +784,13 @@ def _reconstruct_prep_from_blob(
     blob_rows: List[Dict[str, Any]],
     datasets: List[Dict[str, Any]],
     excluded_samples: List[str],
+    all_ions: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """Rebuild the minimum 'prep' block run_experiment_prep expects.
 
-    Drops rows whose region's sampleId is in excluded_samples.
+    Drops rows whose region's sampleId is in excluded_samples. ``all_ions`` is
+    the per-ion metadata snapshot the engine ships from ``run_qc.allIons``
+    (the blob itself has none); it lets the Stage 2 filter apply to re-runs.
     """
     excluded = set(excluded_samples or [])
     samples: List[Dict[str, Any]] = []
@@ -758,7 +835,7 @@ def _reconstruct_prep_from_blob(
         'intensities': intensities,
         'ions_total': ions_total,
         'filterChain': [],
-        'all_ions': [],
+        'all_ions': list(all_ions or []),
     }
 
 
@@ -777,6 +854,7 @@ def run_experiment_stats(
         blob_rows,
         payload.get('datasets') or [],
         payload.get('excluded_samples') or [],
+        all_ions=payload.get('all_ions') or [],
     )
     inner = {
         'prep': prep,

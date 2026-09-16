@@ -122,7 +122,7 @@ def fixture_experiment(test_db, metadata, ds_config):
     return {'ds_id': ds_id, 'moldb_id': moldb.id}
 
 
-def test_build_prep_block_filters_and_resolves_intensities_against_real_db(fixture_experiment):
+def test_build_prep_block_resolves_every_annotation_against_real_db(fixture_experiment):
     db = DB()
     iso = {
         'img-a': np.array([[10, 20], [10, 20]], dtype=np.float32),
@@ -152,21 +152,19 @@ def test_build_prep_block_filters_and_resolves_intensities_against_real_db(fixtu
             ],
         }
     ]
-    filters = {'fdr': 0.10, 'moldb_ids': [fixture_experiment['moldb_id']], 'adducts': ['+H']}
-
     out = build_prep_block(
         db,
         datasets,
-        filters,
         load_iso_image=lambda ds_id, iid: iso[iid],
         load_label_map=lambda ds_id, sid: pytest.fail(
             'label_map should not be loaded for ROI regions'
         ),
     )
 
-    assert out['ions_total'] == 1
-    assert out['intensities'] == {'r0': {901: 10.0}, 'r1': {901: 20.0}}
+    # The prep never filters (that is the stats service's job): both
+    # annotations, including the 20%-FDR one, reach the blob and snapshot.
+    assert out['ions_total'] == 2
+    assert out['intensities'] == {'r0': {901: 10.0, 902: 0.0}, 'r1': {901: 20.0, 902: 4.0}}
     assert [s['sampleId'] for s in out['samples']] == ['s0', 's1']
-    assert out['filterChain'][0]['count'] == 2
-    # FDR filter dropped one ion.
-    assert out['filterChain'][1]['count'] == 1
+    assert out['filterChain'] == [{'name': 'All annotated ions', 'count': 2, 'droppedFromPrev': 0}]
+    assert {e['ion_id'] for e in out['all_ions']} == {901, 902}

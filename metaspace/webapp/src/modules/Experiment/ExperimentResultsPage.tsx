@@ -233,22 +233,36 @@ export default defineComponent({
     })
 
     /** One-shot: when the run is FINISHED, at least one result row already
-     *  exists, AND the user has previously reached Stage 3 for this experiment
-     *  (persisted in localStorage), jump the user straight to Stage 3 on first
-     *  mount. First-ever visits always start at Stage 1, even when results are
-     *  ready, so the user has a chance to review Stage 1 and Stage 2 first.
-     *  Subsequent in-session navigation is user-driven. */
+     *  exists, AND the user has previously reached Stage 3 for the CURRENT run
+     *  generation of this experiment (persisted in localStorage), jump the user
+     *  straight to Stage 3 on first mount. First-ever visits always start at
+     *  Stage 1, even when results are ready, so the user has a chance to review
+     *  Stage 1 and Stage 2 first. Subsequent in-session navigation is user-driven.
+     *
+     *  The flag is scoped to `run.generation` rather than being a boolean: a
+     *  full re-run ("Save and run") increments the generation and restarts the
+     *  analysis, so the user must review Stage 1 and Stage 2 again before
+     *  landing on Stage 3. Any stored value that does not match the current
+     *  generation (including the legacy `'1'` boolean) counts as "not visited". */
     const visitedStage3Key = `metaspace:experiment:${id}:visitedStage3`
+    const currentGeneration = (): string | null => {
+      const g = exp.value?.run?.generation
+      return g == null ? null : String(g)
+    }
     const readVisitedStage3 = (): boolean => {
       try {
-        return typeof localStorage !== 'undefined' && localStorage.getItem(visitedStage3Key) === '1'
+        const gen = currentGeneration()
+        if (gen == null || typeof localStorage === 'undefined') return false
+        return localStorage.getItem(visitedStage3Key) === gen
       } catch {
         return false
       }
     }
     const markVisitedStage3 = (): void => {
       try {
-        if (typeof localStorage !== 'undefined') localStorage.setItem(visitedStage3Key, '1')
+        const gen = currentGeneration()
+        if (gen == null || typeof localStorage === 'undefined') return
+        localStorage.setItem(visitedStage3Key, gen)
       } catch {
         /* ignore SSR / sandboxed contexts */
       }
@@ -281,6 +295,23 @@ export default defineComponent({
       stage.value = s
     }
 
+    const awaitingRunSince = ref<string | null | undefined>(undefined)
+    const awaitingFreshResults = computed<boolean>(() => {
+      if (awaitingRunSince.value === undefined) return false
+      const r = exp.value?.run
+      if (!r) return true
+      if (r.status === 'FAILED') return false
+      return !(r.finishedAt != null && r.finishedAt !== awaitingRunSince.value)
+    })
+    watch(awaitingFreshResults, (waiting) => {
+      if (!waiting) awaitingRunSince.value = undefined
+    })
+    // Make sure status polling is live while we wait; `watch(runStatus)` above
+    // may have stopped it when the previous run reached FINISHED.
+    watch(awaitingRunSince, (since) => {
+      if (since !== undefined && typeof startPolling === 'function') startPolling(3000)
+    })
+
     /** When the user clicks Next from Stage 2 while the run is still in
      *  progress, hold the advance until the run finishes. The button shows a
      *  loading spinner in the meantime; the watch below flips the stage as
@@ -309,6 +340,7 @@ export default defineComponent({
         if (isResultsDirty.value) {
           if (currentFilters.value == null) return
           pendingAdvanceToResults.value = true
+          awaitingRunSince.value = exp.value?.run?.finishedAt ?? null
           try {
             await runExperimentStats({
               id,
@@ -319,6 +351,7 @@ export default defineComponent({
             const gqlErrors = (err as { graphQLErrors?: unknown[] })?.graphQLErrors
             if (Array.isArray(gqlErrors) && gqlErrors.length > 0) {
               pendingAdvanceToResults.value = false
+              awaitingRunSince.value = undefined
               throw err
             }
             // eslint-disable-next-line no-console
@@ -363,6 +396,9 @@ export default defineComponent({
       set pendingAdvanceToResults(v: boolean) {
         pendingAdvanceToResults.value = v
       },
+      get awaitingFreshResults() {
+        return awaitingFreshResults.value
+      },
       handleFilterChange: (f: Record<string, unknown>) => {
         currentFilters.value = f
       },
@@ -403,6 +439,7 @@ export default defineComponent({
       }
       const run = e.run
       const inProgress = isInProgress(run?.status)
+      const showPreparing = inProgress || awaitingFreshResults.value
       const sm = summary.value
       return (
         <div class="experiment-results-page p-4" data-test-key="experiment-results-page">
@@ -519,7 +556,7 @@ export default defineComponent({
               }}
             />
           )}
-          {stage.value === 2 && run && inProgress && (
+          {stage.value === 2 && run && showPreparing && (
             <ElAlert type="info" closable={false} data-test-key="results-preparing">
               {{
                 title: () => (
@@ -534,7 +571,7 @@ export default defineComponent({
               }}
             </ElAlert>
           )}
-          {stage.value === 2 && run && !inProgress && (
+          {stage.value === 2 && run && !showPreparing && (
             <ResultsStage
               experimentId={e.id}
               filter={currentFilters.value}

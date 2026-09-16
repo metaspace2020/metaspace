@@ -645,3 +645,57 @@ def test_null_fallback_k3_emits_all_pairs_and_omnibus():
     assert len(pairs) == 3 * n_ions, f'expected {3 * n_ions} pair rows, got {len(pairs)}'
     assert all(r['p_value'] is None for r in out['results'])
     assert all(r['cond_a'] < r['cond_b'] for r in pairs)
+
+
+def test_run_experiment_applies_stage2_ion_filters_before_testing():
+    """Stage 2 sends the resolver-shape filter (fdrMax / databases / adducts).
+    Those are annotation-level filters and must restrict the ion set that is
+    tested (and BH-corrected), not just be hidden in the results query."""
+    payload = make_payload()
+    payload['filters'] = {'fdrMax': 0.1, 'databases': [9], 'adducts': ['+H']}
+    out = run_experiment_prep('exp-1', 1, payload)
+
+    # Ion 2 is +Na, ion 3 has fdr 0.20 -> only ion 1 survives.
+    assert {r['ion_id'] for r in out['results']} == {1}
+    # The runner appends its steps after whatever chain the engine prep sent.
+    chain = out['run_qc']['filterChain']
+    assert [s['name'] for s in chain[-3:]] == ['+FDR <= 10%', '+database in {9}', '+adduct in {+H}']
+    # Ions with intensities are {1, 2, 3}: FDR keeps {1, 2}, DB 9 keeps both, +H keeps {1}.
+    assert [s['count'] for s in chain[-3:]] == [2, 2, 1]
+    assert [s['droppedFromPrev'] for s in chain[-3:]] == [1, 0, 1]
+    # The persisted blob must keep every ion so a later stats-only re-run can
+    # loosen the filter without a new prep.
+    assert {r['ion_id'] for r in out['intensity_rows']} == {1, 2, 3}
+
+
+def test_run_experiment_accepts_resolver_min_detection_key():
+    payload = make_payload()
+    for rk in ('r-ctrl-1', 'r-ctrl-2', 'r-tum-1'):
+        payload['prep']['intensities'][rk][3] = 0.0  # ion 3 detected in 1/4 regions
+    payload['filters'] = {'minDetectionRate': 0.5}
+    out = run_experiment_prep('exp-1', 1, payload)
+    assert {r['ion_id'] for r in out['results']} == {1, 2}
+
+
+def test_run_experiment_handles_json_round_tripped_payload():
+    """The engine posts the prep block as JSON, so intensity ion ids arrive as
+    strings while all_ions ids are ints. Filtering and detection-rate must
+    still match them up."""
+    import json
+
+    payload = json.loads(json.dumps(make_payload()))
+    payload['filters'] = {'fdrMax': 0.2, 'databases': [9], 'adducts': ['+H']}
+    out = run_experiment_prep('exp-1', 1, payload)
+
+    assert {int(r['ion_id']) for r in out['results']} == {1, 3}
+    by_id = {int(e['ion_id']): e for e in out['run_qc']['allIons']}
+    assert by_id[1]['detection_rate'] == 1.0
+    assert by_id[3]['detection_rate'] == 1.0
+
+
+def test_run_experiment_returns_empty_results_when_filter_keeps_no_ion():
+    payload = make_payload()
+    payload['filters'] = {'fdrMax': 0.001}
+    out = run_experiment_prep('exp-1', 1, payload)
+    assert out['results'] == []
+    assert out['run_qc']['filterChain'][-1]['count'] == 0
