@@ -55,7 +55,7 @@ def _load_experiment_payload(
         for ds_id, region_source, regions in ds_rows
     ]
 
-    prep = build_prep_block(db, datasets, filters or {})
+    prep = build_prep_block(db, datasets)
 
     return {
         'experiment_id': experiment_id,
@@ -136,12 +136,15 @@ def submit_experiment_stats_job(
         db = DB()
 
     row = db.select_one(
-        'SELECT label_groups FROM experiment WHERE id=%s',
+        'SELECT label_groups, run_qc FROM experiment WHERE id=%s',
         params=(experiment_id,),
     )
     if not row:
         raise Exception(f'experiment {experiment_id} not found')
-    (label_groups,) = row
+    label_groups, run_qc = row
+    # The blob has no per-ion FDR/adduct/database; ship the snapshot persisted
+    # by the full run so the service can apply the Stage 2 filter to re-runs.
+    all_ions = (run_qc or {}).get('allIons') or []
 
     ds_rows = db.select(
         'SELECT dataset_id, region_source, regions FROM experiment_dataset '
@@ -161,6 +164,7 @@ def submit_experiment_stats_job(
         'excluded_samples': excluded_samples,
         'label_groups': label_groups or [],
         'datasets': datasets,
+        'all_ions': all_ions,
         'callback_url': callback_url,
     }
     logger.info(

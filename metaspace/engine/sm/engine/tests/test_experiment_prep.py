@@ -37,7 +37,7 @@ def _img(values):
     return np.array(values, dtype=np.float32)
 
 
-def test_build_prep_block_emits_per_sample_intensities_and_filter_chain():
+def test_build_prep_block_emits_per_sample_intensities_for_every_annotation():
     annotations = [
         # (annotation_id, ion_id, fdr, adduct, moldb_id, iso_image_ids list)
         (1, 11, 0.05, '+H', 9, ['img-a']),
@@ -106,35 +106,27 @@ def test_build_prep_block_emits_per_sample_intensities_and_filter_chain():
             ],
         }
     ]
-    filters = {'fdr': 0.10, 'moldb_ids': [9], 'adducts': ['+H']}
-
     prep = build_prep_block(
         db,
         datasets,
-        filters,
         load_iso_image=load_iso,
         load_label_map=load_label_map_fail,
     )
 
-    assert prep['ions_total'] == 1
+    # The prep never filters: every annotation feeds the intensity blob and
+    # the ion snapshot so later stats-only re-runs can pick any filter.
+    assert prep['ions_total'] == 2
     # The ROIs are 2-vertex degenerate polygons — PIL fills them as a thin
-    # line. Intensities now keyed by regionKey, not sampleId.
-    assert prep['intensities'] == {'r-s0': {11: 10.0}, 'r-s1': {11: 20.0}}
+    # line. Intensities keyed by regionKey, not sampleId.
+    assert prep['intensities'] == {'r-s0': {11: 10.0, 12: 0.0}, 'r-s1': {11: 20.0, 12: 4.0}}
     assert len(prep['samples']) == 2
     assert prep['samples'][0]['regionKey'] == 'r-s0'
     assert prep['samples'][0]['sampleId'] == 's0'
     assert prep['samples'][0]['tic'] == 10.0
     assert prep['samples'][1]['regionKey'] == 'r-s1'
-    assert prep['samples'][1]['tic'] == 20.0
-    chain = prep['filterChain']
-    assert [step['name'] for step in chain] == [
-        'All annotated ions',
-        '+FDR <= 0.1',
-        '+DB allow-list',
-        '+adduct allow-list',
-    ]
-    assert [step['count'] for step in chain] == [2, 1, 1, 1]
-    assert chain[1]['droppedFromPrev'] == 1
+    assert prep['samples'][1]['tic'] == 24.0
+    assert prep['filterChain'] == [{'name': 'All annotated ions', 'count': 2, 'droppedFromPrev': 0}]
+    assert {e['ion_id'] for e in prep['all_ions']} == {11, 12}
 
 
 def test_build_prep_block_handles_segmentation_cluster_regions():
@@ -166,7 +158,6 @@ def test_build_prep_block_handles_segmentation_cluster_regions():
     prep = build_prep_block(
         db,
         datasets,
-        {},
         load_iso_image=lambda ds_id, iid: iso_images[iid],
         load_label_map=lambda ds_id, sid: label_maps[(ds_id, sid)],
     )
@@ -234,7 +225,6 @@ def test_build_prep_block_skips_regions_without_label_group():
     prep = build_prep_block(
         db,
         datasets,
-        {},
         load_iso_image=lambda ds_id, iid: images[iid],
         load_label_map=lambda ds_id, sid: None,
     )
@@ -308,7 +298,6 @@ def test_build_prep_block_keeps_at_most_one_iso_image_alive():
     prep = build_prep_block(
         _roi_db(annotations, 2),
         datasets,
-        {},
         load_iso_image=load_iso,
         load_label_map=lambda ds_id, sid: None,
     )

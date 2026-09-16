@@ -21,6 +21,7 @@ vi.mock('echarts/components', () => ({
 }))
 
 import ExperimentResultsPage from './ExperimentResultsPage'
+import ResultsStage from './stages/ResultsStage'
 
 vi.mock('@vue/apollo-composable', () => ({
   useQuery: vi.fn(),
@@ -39,7 +40,7 @@ vi.mock('vue-router', async () => {
 
 const buildExperiment = (
   status = 'RUNNING',
-  overrides: { filters?: any; excludedSamples?: string[]; generation?: number } = {}
+  overrides: { filters?: any; excludedSamples?: string[]; generation?: number; finishedAt?: string | null } = {}
 ) => ({
   experiment: {
     id: 'e1',
@@ -54,7 +55,7 @@ const buildExperiment = (
       filters: overrides.filters ?? null,
       excludedSamples: overrides.excludedSamples ?? [],
       startedAt: null,
-      finishedAt: null,
+      finishedAt: overrides.finishedAt ?? null,
     },
   },
 })
@@ -208,6 +209,29 @@ describe('ExperimentResultsPage', () => {
       expect(localStorage.getItem(visitedKey)).toBe('1')
     })
 
+    it('lands on Stage 1 after a full re-run even though Stage 3 was visited for the previous generation', async () => {
+      // Visited Stage 3 at generation 1; a full re-run bumped the run to generation 2.
+      localStorage.setItem(visitedKey, '1')
+      resultRef.value = buildExperiment('FINISHED', { filters: {}, excludedSamples: [], generation: 2 })
+      resultsRef.value = { experimentResults: [{ ion: { id: 1 } }] }
+      const wrapper = mountPage()
+      await flushPromises()
+      await nextTick()
+      expect((wrapper.vm as any).currentStage).toBe(0)
+    })
+
+    it('persists the run generation, not a boolean, when the user reaches Stage 3', async () => {
+      resultRef.value = buildExperiment('FINISHED', { filters: { fdrMax: 0.1 }, excludedSamples: [], generation: 3 })
+      resultsRef.value = { experimentResults: [{ ion: { id: 1 } }] }
+      const wrapper = mountPage()
+      await flushPromises()
+      await nextTick()
+      expect(localStorage.getItem(visitedKey)).toBeNull()
+      ;(wrapper.vm as any).currentStage = 2
+      await nextTick()
+      expect(localStorage.getItem(visitedKey)).toBe('3')
+    })
+
     it('lands on Stage 1 (idx=0) when runStatus=FINISHED but results count is 0', async () => {
       resultRef.value = buildExperiment('FINISHED', { filters: {}, excludedSamples: [], generation: 1 })
       resultsRef.value = { experimentResults: [] }
@@ -310,6 +334,102 @@ describe('ExperimentResultsPage', () => {
       expect(runExperimentStatsMock).toHaveBeenCalled()
       expect((wrapper.vm as any).currentStage).toBe(2)
       expect((wrapper.vm as any).pendingAdvanceToResults).toBe(false)
+    })
+
+    it('keeps Stage 3 in the preparing state after a stats re-run until run.finishedAt changes', async () => {
+      // A stats-only re-run can finish inside the 3s poll interval, and a poll
+      // that was already in flight when the mutation resolved can write the OLD
+      // FINISHED run (same finishedAt) back into the cache. Neither path ever
+      // shows RUNNING_STATS, so the page must key off finishedAt instead.
+      const saved = { filters: { fdrMax: 0.1 }, excludedSamples: [], generation: 1 }
+      resultRef.value = buildExperiment('FINISHED', { ...saved, finishedAt: 'T1' })
+      resultsRef.value = { experimentResults: [{ ion: { id: 1 } }] }
+      runExperimentStatsMock.mockImplementation(async () => {
+        // Simulate the stale in-flight poll overwriting the cache with the old run.
+        resultRef.value = buildExperiment('FINISHED', { ...saved, finishedAt: 'T1' })
+        return {
+          data: {
+            runExperimentStats: {
+              id: 'e1',
+              run: {
+                status: 'FINISHED',
+                filters: { fdrMax: 0.05 },
+                excludedSamples: [],
+                generation: 1,
+                finishedAt: 'T1',
+              },
+            },
+          },
+        }
+      })
+      const wrapper = mountPage()
+      await flushPromises()
+      await nextTick()
+      ;(wrapper.vm as any).currentStage = 1
+      await nextTick()
+      ;(wrapper.vm as any).handleFilterChange({ fdrMax: 0.05 })
+      await (wrapper.vm as any).onClickNext()
+      await nextTick()
+      expect((wrapper.vm as any).currentStage).toBe(2)
+      expect(wrapper.find('[data-test-key="results-preparing"]').exists()).toBe(true)
+      expect(wrapper.findComponent(ResultsStage).exists()).toBe(false)
+
+      // The engine callback lands: new finishedAt => fresh results are safe to load.
+      resultRef.value = buildExperiment('FINISHED', {
+        filters: { fdrMax: 0.05 },
+        excludedSamples: [],
+        generation: 1,
+        finishedAt: 'T2',
+      })
+      await nextTick()
+      await flushPromises()
+      expect(wrapper.find('[data-test-key="results-preparing"]').exists()).toBe(false)
+      expect(wrapper.findComponent(ResultsStage).exists()).toBe(true)
+    })
+
+    it('shows results immediately when the mutation already returns a new run.finishedAt', async () => {
+      resultRef.value = buildExperiment('FINISHED', {
+        filters: { fdrMax: 0.1 },
+        excludedSamples: [],
+        generation: 1,
+        finishedAt: 'T1',
+      })
+      resultsRef.value = { experimentResults: [{ ion: { id: 1 } }] }
+      runExperimentStatsMock.mockImplementation(async () => {
+        // The run completed before the mutation resolved and the cache already holds the new run.
+        resultRef.value = buildExperiment('FINISHED', {
+          filters: { fdrMax: 0.05 },
+          excludedSamples: [],
+          generation: 1,
+          finishedAt: 'T2',
+        })
+        return {
+          data: {
+            runExperimentStats: {
+              id: 'e1',
+              run: {
+                status: 'FINISHED',
+                filters: { fdrMax: 0.05 },
+                excludedSamples: [],
+                generation: 1,
+                finishedAt: 'T2',
+              },
+            },
+          },
+        }
+      })
+      const wrapper = mountPage()
+      await flushPromises()
+      await nextTick()
+      ;(wrapper.vm as any).currentStage = 1
+      await nextTick()
+      ;(wrapper.vm as any).handleFilterChange({ fdrMax: 0.05 })
+      await (wrapper.vm as any).onClickNext()
+      await nextTick()
+      await flushPromises()
+      expect((wrapper.vm as any).currentStage).toBe(2)
+      expect(wrapper.find('[data-test-key="results-preparing"]').exists()).toBe(false)
+      expect(wrapper.findComponent(ResultsStage).exists()).toBe(true)
     })
 
     it('advances to Stage 3 in a single click even when the mutation resolves still RUNNING_STATS', async () => {

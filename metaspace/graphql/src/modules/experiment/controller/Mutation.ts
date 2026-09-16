@@ -28,7 +28,8 @@ async function submitExperimentPrep(ctx: Context, exp: Experiment) {
     runStartedAt: new Date(),
     runFinishedAt: null,
     runGeneration: nextGeneration,
-  })
+    runFilters: null,
+  } as any)
   try {
     await smApiDatasetRequest('/v1/experiment/run_prep', {
       experiment_id: exp.id,

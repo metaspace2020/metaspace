@@ -2,15 +2,15 @@
 
 Per dataset:
 1. Find the most recent FINISHED annotation job.
-2. Load all its annotations + iso_image_ids + moldb/adduct/fdr.
-3. Apply the experiment filter chain (fdr -> moldb -> adduct), recording
-   per-step counts in ``filterChain``.
-4. For each region, rasterise the mask per ``sourceKind``:
+2. Load all its annotations + iso_image_ids + moldb/adduct/fdr. No filtering
+   happens here (see ``build_prep_block``); ``filterChain`` carries only the
+   total count.
+3. For each region, rasterise the mask per ``sourceKind``:
    - 'roi'                  -> public.roi.geojson polygon-fill
    - 'segmentation_cluster' -> dataset's SEGMENTATION/LABEL_MAP diagnostic
    - 'whole'                -> first iso-image foreground (>0)
-5. Load each surviving annotation's principal iso-image (PNG-decoded into a 2D
-   float32 array) and compute the mean intensity over the region mask.
+4. Load each annotation's principal iso-image (PNG-decoded into a 2D float32
+   array) once and compute its mean intensity over every region mask.
 """
 from __future__ import annotations
 
@@ -84,15 +84,6 @@ def _default_load_label_map(ds_id: str, segmentation_id: str) -> Optional[Tuple[
     return label_map, int(segment_index)
 
 
-def _latest_finished_job_id(db, dataset_id: str) -> Optional[int]:
-    row = db.select_one(
-        "SELECT id FROM job WHERE ds_id=%s AND status='FINISHED' "
-        "ORDER BY finish DESC NULLS LAST, id DESC LIMIT 1",
-        params=(dataset_id,),
-    )
-    return row[0] if row else None
-
-
 def _latest_finished_job_ids_per_moldb(db, dataset_id: str) -> List[int]:
     """Latest FINISHED job per (dataset, moldb). A dataset annotated against
     multiple molecular databases has one FINISHED job per moldb, so loading
@@ -119,45 +110,14 @@ def _load_annotations(db, job_id: int):
     )
 
 
-def _apply_filter_chain(rows, filters: Dict[str, Any]):
-    # Row tuple layout (from _load_annotations):
-    #   [0] annotation.id
-    #   [1] ion_id
-    #   [2] fdr
-    #   [3] adduct
-    #   [4] moldb_id
-    #   [5] iso_image_ids   (list[str]; [0] is the principal ion-image id)
-    #   [6] moldb_name      (optional trailing field)
-    #
-    # `current` is the running list of surviving rows (same tuple shape as input).
-    # `chain` is a list of step dicts describing the filter funnel:
-    #   {'name': str, 'count': int, 'droppedFromPrev': int}
-    # The first entry is the pre-filter total; each _step appends one entry.
-    chain = [{'name': 'All annotated ions', 'count': len(rows), 'droppedFromPrev': 0}]
-    current = list(rows)
+def _usable_rows(rows):
+    """Keep annotation rows that can be rasterised: an ion id and at least one iso image.
 
-    def _step(name: str, predicate: Callable):
-        nonlocal current
-        before = len(current)
-        current = [r for r in current if predicate(r)]
-        chain.append(
-            {'name': name, 'count': len(current), 'droppedFromPrev': before - len(current)}
-        )
-
-    fdr_max = filters.get('fdr')
-    if fdr_max is not None:
-        _step(f'+FDR <= {fdr_max}', lambda r: r[2] is not None and r[2] <= fdr_max)
-    moldb_allow = filters.get('moldb_ids')
-    if moldb_allow:
-        allow = set(moldb_allow)
-        _step('+DB allow-list', lambda r: r[4] in allow)
-    adduct_allow = filters.get('adducts')
-    if adduct_allow:
-        allow = set(adduct_allow)
-        _step('+adduct allow-list', lambda r: r[3] in allow)
-    # iso_image_ids is at index 5; rows may also carry a trailing moldb_name (index 6).
-    current = [r for r in current if r[1] is not None and r[5]]
-    return current, chain
+    Row tuple layout (from _load_annotations):
+      [0] annotation.id  [1] ion_id  [2] fdr  [3] adduct  [4] moldb_id
+      [5] iso_image_ids (list[str]; [0] is the principal ion-image id)  [6] moldb_name
+    """
+    return [r for r in rows if r[1] is not None and r[5]]
 
 
 def _load_roi_geojson(db, roi_id: int) -> Optional[Dict[str, Any]]:
@@ -165,29 +125,21 @@ def _load_roi_geojson(db, roi_id: int) -> Optional[Dict[str, Any]]:
     return row[0] if row else None
 
 
-def _merge_chain(acc, new):
-    if not acc:
-        return [dict(step) for step in new]
-    by_name = {step['name']: step for step in acc}
-    for step in new:
-        if step['name'] in by_name:
-            by_name[step['name']]['count'] += step['count']
-            by_name[step['name']]['droppedFromPrev'] += step['droppedFromPrev']
-        else:
-            acc.append(dict(step))
-    return acc
-
-
 # pylint: disable=too-many-locals too-many-statements too-many-branches
 def build_prep_block(
     db,
     datasets: List[Dict[str, Any]],
-    filters: Dict[str, Any],
     *,
     load_iso_image: Optional[Callable[[str, str], np.ndarray]] = None,
     load_label_map: Optional[Callable[[str, str], Optional[Tuple[np.ndarray, int]]]] = None,
 ) -> Dict[str, Any]:
-    """Assemble the engine-side PREP block for an experiment run."""
+    """Assemble the engine-side PREP block for an experiment run.
+
+    The prep never filters annotations: every ion's per-region intensity goes
+    into the block (and from there into the persisted intensity blob and the
+    ``all_ions`` snapshot) so later stats-only re-runs can apply any Stage 2
+    filter. Filtering the *tested* set is the stats service's job.
+    """
     if load_iso_image is None:
         load_iso_image = _default_load_iso_image
     if load_label_map is None:
@@ -196,7 +148,7 @@ def build_prep_block(
     samples: List[Dict[str, Any]] = []
     intensities: Dict[str, Dict[int, float]] = {}
     ion_ids_seen: set = set()
-    aggregate_chain: List[Dict[str, Any]] = []
+    annotations_total = 0
     all_ions_by_ion_id: Dict[int, Dict[str, Any]] = {}
 
     for ds in datasets:
@@ -225,8 +177,8 @@ def build_prep_block(
                 'moldb_id': row[4],
                 'moldb_name': moldb_name,
             }
-        surviving, ds_chain = _apply_filter_chain(all_rows, filters)
-        aggregate_chain = _merge_chain(aggregate_chain, ds_chain)
+        annotations_total += len(all_rows)
+        surviving = _usable_rows(all_rows)
 
         if not surviving:
             continue
@@ -334,6 +286,8 @@ def build_prep_block(
         'samples': samples,
         'intensities': intensities,
         'ions_total': len(ion_ids_seen),
-        'filterChain': aggregate_chain,
+        'filterChain': [
+            {'name': 'All annotated ions', 'count': annotations_total, 'droppedFromPrev': 0}
+        ],
         'all_ions': list(all_ions_by_ion_id.values()),
     }

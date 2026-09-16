@@ -280,7 +280,7 @@ export default defineComponent({
       // `annotation` is a best-effort per-row field; a failure on one row must
       // not blank the whole table. errorPolicy 'all' keeps the returned rows
       // (with that row's annotation null) instead of discarding all data.
-      { errorPolicy: 'all' }
+      { errorPolicy: 'all', fetchPolicy: 'network-only' }
     )
 
     // Live rows from Apollo for the *current* query. May briefly resolve to
@@ -302,16 +302,17 @@ export default defineComponent({
     // Separate, unbounded query for the volcano plot so it always shows the
     // full population — independent of the table's pagination + sort.
     const VOLCANO_LIMIT = 10000
-    const { result: volcanoResult }: any = useQuery(experimentResultsPlotQuery, () => ({
-      experimentId: props.experimentId,
-      filter: serverFilter.value,
-      // Mirror the table's sort so `volcanoRows.findIndex(...)` yields the
-      // row's absolute position under the current ordering — needed to jump
-      // the table to the correct page when a volcano dot is clicked.
-      orderBy: orderBy.value,
-      limit: VOLCANO_LIMIT,
-      offset: 0,
-    }))
+    const { result: volcanoResult }: any = useQuery(
+      experimentResultsPlotQuery,
+      () => ({
+        experimentId: props.experimentId,
+        filter: serverFilter.value,
+        orderBy: orderBy.value,
+        limit: VOLCANO_LIMIT,
+        offset: 0,
+      }),
+      { fetchPolicy: 'network-only' }
+    )
     const volcanoRows = computed<ResultRow[]>(() => volcanoResult.value?.experimentResults ?? [])
 
     const showLabelGroupSelector = computed(() => props.labelGroups.length >= 2)
