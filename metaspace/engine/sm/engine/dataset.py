@@ -1,13 +1,14 @@
 import json
 import logging
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 
 from sm.engine.config import SMConfig
 from sm.engine.ds_config import DSConfig
 from sm.engine.errors import UnknownDSID
 
 from sm.engine.annotation.scoring_model import find_by_id
+from sm.engine.metadata_v2 import get_instrument_model_curie
 
 logger = logging.getLogger('engine')
 
@@ -182,28 +183,56 @@ class Dataset:
         return msg
 
 
-def _normalize_instrument(instrument):
-    instrument = (instrument or '').lower()
-    if any(phrase in instrument for phrase in ['orbitrap', 'exactive', 'exploris', 'hf-x', 'uhmr']):
+def _classify_instrument_label(label: Optional[str]) -> Optional[str]:
+    """Keyword classification shared by both the legacy free-text path and the CURIE path below -
+    unlike _normalize_instrument, returns None rather than defaulting to Orbitrap, so callers can
+    distinguish "recognized but unclassifiable" from "fall through to the next source"."""
+    label = (label or '').lower()
+    if any(phrase in label for phrase in ['orbitrap', 'exactive', 'exploris', 'hf-x', 'uhmr']):
         return 'Orbitrap'
-    if any(phrase in instrument for phrase in ['fticr', 'ft-icr', 'ftms', 'ft-ms']):
+    if any(phrase in label for phrase in ['fticr', 'ft-icr', 'ftms', 'ft-ms']):
         return 'FTICR'
-    if any(phrase in instrument for phrase in ['tof', 'mrt', 'exploris', 'synapt', 'xevo']):
+    if any(phrase in label for phrase in ['tof', 'mrt', 'exploris', 'synapt', 'xevo']):
         return 'TOF'
+    return None
+
+
+def _normalize_instrument(instrument, instrument_curie: str = None, db=None) -> str:
+    # CURIE path first: no ontological link exists between PSI-MS instrument-model terms
+    # (MS:1000031) and mass-analyzer-type terms (MS:1000443) - confirmed by inspecting ms.obo, the
+    # only relationship types used anywhere in that ontology are `part_of` and schema `has_*`
+    # relations, none of which bridge those two subtrees. So the map can't be derived by a graph
+    # walk; instead, classify the term's own canonical ontology label with the same keyword
+    # heuristic used for free text below.
+    if instrument_curie and db is not None:
+        row = db.select_one(
+            "SELECT label FROM ontology_term WHERE curie = %s "
+            "AND subtree IN ('MS:1000031', 'MS:1000443')",
+            params=(instrument_curie,),
+        )
+        if row:
+            classified = _classify_instrument_label(row[0])
+            if classified:
+                return classified
+
+    classified = _classify_instrument_label(instrument)
+    if classified:
+        return classified
 
     # Fall back to Orbitrap, because its resolving power as a function of mass lies between
     # the other analyzer types.
     return 'Orbitrap'
 
 
-def _get_isotope_generation_from_metadata(metadata):
+def _get_isotope_generation_from_metadata(metadata, metadata_v2: dict = None, db=None):
     assert 'MS_Analysis' in metadata
 
     sm_config = SMConfig.get_conf()
 
     polarity = metadata['MS_Analysis']['Polarity']
     polarity_sign = {'Positive': '+', 'Negative': '-'}[polarity]
-    instrument = _normalize_instrument(metadata['MS_Analysis']['Analyzer'])
+    instrument_curie = get_instrument_model_curie(metadata_v2)
+    instrument = _normalize_instrument(metadata['MS_Analysis']['Analyzer'], instrument_curie, db)
     resolving_power = metadata['MS_Analysis']['Detector_Resolving_Power']
     rp_mz = float(resolving_power['mz'])
     rp_resolution = float(resolving_power['Resolving_Power'])
@@ -239,9 +268,10 @@ def _get_isotope_generation_from_metadata(metadata):
     return default_adducts, charge, isocalc_sigma, instrument
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-locals
 def generate_ds_config(
     metadata,
+    metadata_v2: dict = None,
     moldb_ids=None,
     ontology_db_ids=None,
     adducts=None,
@@ -253,6 +283,7 @@ def generate_ds_config(
     chem_mods=None,
     compute_unused_metrics=None,
     scoring_model_id=None,
+    db=None,
 ) -> DSConfig:
     # The kwarg names should match FLAT_DS_CONFIG_KEYS
 
@@ -261,7 +292,7 @@ def generate_ds_config(
         scoring_model = find_by_id(scoring_model_id)
         model_type = scoring_model.type
 
-    iso_params = _get_isotope_generation_from_metadata(metadata)
+    iso_params = _get_isotope_generation_from_metadata(metadata, metadata_v2, db)
     default_adducts, charge, isocalc_sigma, instrument = iso_params
 
     return {
@@ -290,7 +321,7 @@ def generate_ds_config(
     }
 
 
-def update_ds_config(old_config, metadata, **kwargs):
+def update_ds_config(old_config, metadata, metadata_v2: dict = None, db=None, **kwargs):
     """Updates dataset config.
 
     Extracts parameters from an existing ds_config, and uses them
@@ -320,4 +351,4 @@ def update_ds_config(old_config, metadata, **kwargs):
         if v is not None:
             kwargs.setdefault(k, v)
 
-    return generate_ds_config(metadata, **kwargs)
+    return generate_ds_config(metadata, metadata_v2=metadata_v2, db=db, **kwargs)
