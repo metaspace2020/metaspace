@@ -12,7 +12,6 @@ import { Loading } from '@element-plus/icons-vue'
 use([SVGRenderer, BarChart, LineChart, GridComponent, TooltipComponent, ToolboxComponent, DataZoomComponent])
 
 interface DatasetBrowserMeanSpectrumState {
-  scaleIntensity: boolean
   chartOptions: any
 }
 
@@ -44,7 +43,6 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
   setup(props, { emit }) {
     const meanSpectrumChart = ref(null)
     const state = reactive<DatasetBrowserMeanSpectrumState>({
-      scaleIntensity: false,
       chartOptions: {
         grid: {
           top: 40,
@@ -115,7 +113,6 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
         yAxis: {
           name: 'Mean intensity',
           splitLine: { show: false },
-          triggerEvent: true,
           nameLocation: 'center',
           nameGap: 60,
           nameTextStyle: {
@@ -124,7 +121,7 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
           },
           type: 'value',
           axisLabel: {
-            formatter: (value: any) => (state.scaleIntensity ? value : value.toExponential(2)),
+            formatter: (value: any) => value.toExponential(2),
           },
           boundaryGap: [0, '30%'],
         },
@@ -151,18 +148,15 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
       },
     })
 
-    const maxIntensity = computed(() => (props.data.length ? Math.max(...props.data.map((d: any) => d[1])) : 0))
-
     const statLabel = computed(() => (props.stat === 'SUM' ? 'Summed intensity' : 'Mean intensity'))
 
     const chartOptions = computed(() => {
       const auxOptions = state.chartOptions
-      const scale = state.scaleIntensity && maxIntensity.value > 0 ? 100 / maxIntensity.value : 1
 
       auxOptions.series[0].data = props.data.map((d: any) => {
         const [mz, intensity, support] = d
         return {
-          value: [mz, intensity * scale],
+          value: [mz, intensity],
           mz,
           tooltip:
             `m/z: ${mz.toFixed(4)}<br>` +
@@ -171,8 +165,7 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
         }
       })
 
-      auxOptions.yAxis.name = state.scaleIntensity ? `Relative ${statLabel.value.toLowerCase()}` : statLabel.value
-      auxOptions.yAxis.max = state.scaleIntensity ? 100 : undefined
+      auxOptions.yAxis.name = statLabel.value
       return auxOptions
     })
 
@@ -203,13 +196,9 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
     }
 
     const handleItemSelect = (item: any) => {
-      if (item.targetType === 'axisName') {
-        // state.scaleIntensity = !state.scaleIntensity
-      } else {
-        // The intensity-weighted centroid, not the most intense raw peak. Goes into the
-        // existing manual m/z entry path, so the ion image uses the user's own ppm.
-        emit('itemSelected', item.data.mz)
-      }
+      // The intensity-weighted centroid, not the most intense raw peak. Goes into the
+      // existing manual m/z entry path, so the ion image uses the user's own ppm.
+      emit('itemSelected', item.data.mz)
     }
 
     const renderSpectrum = () => {
