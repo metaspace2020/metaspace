@@ -48,6 +48,7 @@ interface UpdateDatasetArgs {
   inputPath?: string;
   uploadDT?: string;
   metadata?: unknown;
+  metadataV2?: unknown;
   config?: unknown;
   isPublic?: boolean;
   submitterId?: string;
