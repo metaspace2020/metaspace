@@ -26,7 +26,7 @@ function getValidationErrors(metadata: any): any[] {
   try {
     validateMetadata(metadata)
     return []
-  } catch (err: any) {
+  } catch (err) {
     return JSON.parse(err.message).validation_errors
   }
 }
