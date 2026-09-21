@@ -1,0 +1,815 @@
+{
+    "$defs": {
+        "AcquisitionInfo": {
+            "additionalProperties": false,
+            "description": "Instrument / acquisition metadata in scope for this pass. Kept separate from both Sample and from DSConfig. Numeric acquisition parameters that feed DSConfig (resolving power -> isocalc_sigma) or acq_geometry (pixel size) are intentionally NOT duplicated here.",
+            "properties": {
+                "instrument_model": {
+                    "$ref": "#/$defs/InstrumentModelValue",
+                    "description": "Instrument model. Maps from MS_Analysis.Analyzer (free text today, substring-checked in app code). PSI-MS bound, ReconciledValue-wrapped."
+                },
+                "ionization_source": {
+                    "$ref": "#/$defs/IonizationSourceValue",
+                    "description": "Ionization source. Maps from MS_Analysis.Ionisation_Source (free text today). PSI-MS bound, ReconciledValue-wrapped."
+                },
+                "maldi_matrix": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OntologyTermValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "MALDI matrix compound. Maps from Sample_Preparation.MALDI_Matrix (defaults to \"none\" today). ChEBI bound; frequent free-text fallback expected."
+                },
+                "maldi_matrix_application": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OntologyTermValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "How the matrix was applied (e.g. sublimation, spray coating). Maps from Sample_Preparation.MALDI_Matrix_Application. This is a process/method, not a compound: ChEBI does not fit and OBI has no matrix-application branch, so it is free text pending a suitable method vocabulary (see README)."
+                },
+                "polarity": {
+                    "$ref": "#/$defs/PolarityValue",
+                    "description": "Ion mode. Already a validated enum today (Positive/Negative); kept as an enum with PSI-MS meaning mappings, wrapped in a ReconciledValue so it can be cross-checked against the imzML file in Phase 2."
+                },
+                "solvent": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OntologyTermValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Matrix solvent. Maps from Sample_Preparation.Solvent (defaults to \"none\"). Minor field; ChEBI bound but low priority."
+                }
+            },
+            "required": [
+                "polarity",
+                "ionization_source",
+                "instrument_model"
+            ],
+            "title": "AcquisitionInfo",
+            "type": "object"
+        },
+        "AnatomyPlantEnum": {
+            "description": "Any Plant Ontology plant anatomical entity (for PlantSample; not wired to a slot this pass).",
+            "title": "AnatomyPlantEnum",
+            "type": "string"
+        },
+        "AnatomyUberonEnum": {
+            "description": "Any Uberon anatomical entity.",
+            "title": "AnatomyUberonEnum",
+            "type": "string"
+        },
+        "CellCultureSample": {
+            "additionalProperties": false,
+            "description": "A cultured-cell sample. No equivalent in the current Imaging MS schema.",
+            "properties": {
+                "cell_line_id": {
+                    "$ref": "#/$defs/OntologyTermValue",
+                    "description": "Cell line identity. No current equivalent (Imaging MS has no cell-culture branch today). Bound to EFO's cell line branch, which cross-references Cellosaurus/CLO. See README EFO-vs-Cellosaurus note."
+                },
+                "disease": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OntologyTermValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Disease state, if any. Part of the current free-text Condition field. Bound to MONDO: EFO's disease branch is imported MONDO terms, so MONDO is the real source (see README EFO-vs-MONDO note)."
+                },
+                "genetic_background": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OntologyTermValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Strain / genotype / cultivar. Part of the current free-text Condition field. No single OLS ontology covers strain nomenclature well (MGI and Cellosaurus are external registries), so free text is expected here."
+                },
+                "health_status": {
+                    "$ref": "#/$defs/HealthStatusEnum",
+                    "description": "Case/control/experimental health state. Part of the current free-text Condition field (see README migration proposal). EFO was checked first; its matching terms are study-DESIGN classes rather than per-sample state values, so a small static enum is used, mapping `control` to EFO where it fits. `other` is the escape value."
+                },
+                "organism": {
+                    "$ref": "#/$defs/OntologyTermValue",
+                    "description": "Source organism. Maps from Sample_Information.Organism."
+                },
+                "passage_number": {
+                    "description": "Passage number of the cultured cells, if known.",
+                    "minimum": 0,
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "protocol_description": {
+                    "description": "Always free text, never ontology-bound. Absorbs the current Additional_Information.Supplementary and Sample_Information .Sample_Growth_Conditions (treatment/intervention prose); deeper treatment modeling belongs to xstats, not here.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "sample_class": {
+                    "description": "Names the concrete Sample subclass (TissueSample / CellCultureSample / PlantSample / EnvironmentalSample). Redundant with sample_type but required so polymorphic instances round-trip and validate against the right subclass.",
+                    "enum": [
+                        "CellCultureSample"
+                    ],
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "sample_type": {
+                    "$ref": "#/$defs/SampleType",
+                    "description": "Biological sample kind; discriminator selecting the Sample subclass. Genuinely internal/structural, so a static enum is correct here."
+                }
+            },
+            "required": [
+                "cell_line_id",
+                "organism",
+                "sample_type"
+            ],
+            "title": "CellCultureSample",
+            "type": "object"
+        },
+        "CellLineEnum": {
+            "description": "Any EFO cell line (cross-references Cellosaurus/CLO).",
+            "title": "CellLineEnum",
+            "type": "string"
+        },
+        "ChebiCompoundEnum": {
+            "description": "Any ChEBI chemical entity (for matrix and solvent compounds).",
+            "title": "ChebiCompoundEnum",
+            "type": "string"
+        },
+        "CurationState": {
+            "description": "Resolution state of an OntologyTermValue.",
+            "enum": [
+                "controlled",
+                "pending_curation",
+                "free_text_accepted"
+            ],
+            "title": "CurationState",
+            "type": "string"
+        },
+        "DataTypeEnum": {
+            "description": "Acquisition modality. Only Imaging MS is modeled this pass; LC-MS is a later overlay.",
+            "enum": [
+                "Imaging MS"
+            ],
+            "title": "DataTypeEnum",
+            "type": "string"
+        },
+        "Dataset": {
+            "additionalProperties": false,
+            "description": "A single METASPACE submission: one biological Sample plus the AcquisitionInfo describing how it was measured. schema_version is stamped once at submission and never changed, so legacy free-text datasets can be harmonized later without special-casing.",
+            "properties": {
+                "acquisition": {
+                    "$ref": "#/$defs/AcquisitionInfo",
+                    "description": "How the sample was measured."
+                },
+                "data_type": {
+                    "$ref": "#/$defs/DataTypeEnum",
+                    "description": "Acquisition/analysis modality. This pass models Imaging MS only. Distinct from sample_type (which selects the biological Sample subclass)."
+                },
+                "dataset_name": {
+                    "description": "Human-readable dataset name.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "sample": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/TissueSample"
+                        },
+                        {
+                            "$ref": "#/$defs/CellCultureSample"
+                        },
+                        {
+                            "$ref": "#/$defs/PlantSample"
+                        },
+                        {
+                            "$ref": "#/$defs/EnvironmentalSample"
+                        }
+                    ],
+                    "description": "The biological sample that was measured."
+                },
+                "schema_version": {
+                    "description": "Schema version, stamped once at submission and never changed.",
+                    "pattern": "^\\d+\\.\\d+\\.\\d+$",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "schema_version",
+                "data_type",
+                "sample",
+                "acquisition"
+            ],
+            "title": "Dataset",
+            "type": "object"
+        },
+        "DevelopmentalStageEnum": {
+            "description": "Any EFO developmental stage.",
+            "title": "DevelopmentalStageEnum",
+            "type": "string"
+        },
+        "DiseaseEnum": {
+            "description": "Any MONDO disease.",
+            "title": "DiseaseEnum",
+            "type": "string"
+        },
+        "EnvironmentalSample": {
+            "additionalProperties": false,
+            "description": "Stub for environmental samples; fleshed out in a later pass.",
+            "properties": {
+                "disease": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OntologyTermValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Disease state, if any. Part of the current free-text Condition field. Bound to MONDO: EFO's disease branch is imported MONDO terms, so MONDO is the real source (see README EFO-vs-MONDO note)."
+                },
+                "genetic_background": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OntologyTermValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Strain / genotype / cultivar. Part of the current free-text Condition field. No single OLS ontology covers strain nomenclature well (MGI and Cellosaurus are external registries), so free text is expected here."
+                },
+                "health_status": {
+                    "$ref": "#/$defs/HealthStatusEnum",
+                    "description": "Case/control/experimental health state. Part of the current free-text Condition field (see README migration proposal). EFO was checked first; its matching terms are study-DESIGN classes rather than per-sample state values, so a small static enum is used, mapping `control` to EFO where it fits. `other` is the escape value."
+                },
+                "organism": {
+                    "$ref": "#/$defs/OntologyTermValue",
+                    "description": "Source organism. Maps from Sample_Information.Organism."
+                },
+                "protocol_description": {
+                    "description": "Always free text, never ontology-bound. Absorbs the current Additional_Information.Supplementary and Sample_Information .Sample_Growth_Conditions (treatment/intervention prose); deeper treatment modeling belongs to xstats, not here.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "sample_class": {
+                    "description": "Names the concrete Sample subclass (TissueSample / CellCultureSample / PlantSample / EnvironmentalSample). Redundant with sample_type but required so polymorphic instances round-trip and validate against the right subclass.",
+                    "enum": [
+                        "EnvironmentalSample"
+                    ],
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "sample_type": {
+                    "$ref": "#/$defs/SampleType",
+                    "description": "Biological sample kind; discriminator selecting the Sample subclass. Genuinely internal/structural, so a static enum is correct here."
+                }
+            },
+            "required": [
+                "organism",
+                "sample_type"
+            ],
+            "title": "EnvironmentalSample",
+            "type": "object"
+        },
+        "HealthStatusEnum": {
+            "description": "Case/control health state. EFO checked first; its terms are study-design classes, so a static enum is used with an EFO meaning on `control` only.",
+            "enum": [
+                "control",
+                "disease",
+                "disease_model",
+                "treated",
+                "other"
+            ],
+            "title": "HealthStatusEnum",
+            "type": "string"
+        },
+        "InstrumentModelEnum": {
+            "description": "Any PSI-MS instrument model. Note bare analyzer types (Orbitrap/TOF/FT-ICR) are under PSI-MS mass analyzer type (MS:1000443), not here - see README.",
+            "title": "InstrumentModelEnum",
+            "type": "string"
+        },
+        "InstrumentModelValue": {
+            "additionalProperties": false,
+            "description": "Reconciled instrument model (e.g. \"Q Exactive Plus\", \"timsTOF fleX\"). Maps from the current free-text MS_Analysis.Analyzer, whose only present validation is a substring allowlist in application code.",
+            "properties": {
+                "file_observed_value": {
+                    "description": "The raw value pyimzml/ImzMLReader read from the imzML file's own cvParam metadata, if any. Populated in Phase 2; never overwrites user_value.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "reconciliation_state": {
+                    "$ref": "#/$defs/ReconciliationState",
+                    "description": "Result of cross-checking user_value against file_observed_value."
+                },
+                "user_value": {
+                    "$ref": "#/$defs/OntologyTermValue",
+                    "description": "The value the submitter provided, as an OntologyTermValue."
+                }
+            },
+            "required": [
+                "user_value",
+                "reconciliation_state"
+            ],
+            "title": "InstrumentModelValue",
+            "type": "object"
+        },
+        "IonizationSourceEnum": {
+            "description": "Any PSI-MS ionization type.",
+            "title": "IonizationSourceEnum",
+            "type": "string"
+        },
+        "IonizationSourceValue": {
+            "additionalProperties": false,
+            "description": "Reconciled ionization source (e.g. MALDI, ESI, DESI).",
+            "properties": {
+                "file_observed_value": {
+                    "description": "The raw value pyimzml/ImzMLReader read from the imzML file's own cvParam metadata, if any. Populated in Phase 2; never overwrites user_value.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "reconciliation_state": {
+                    "$ref": "#/$defs/ReconciliationState",
+                    "description": "Result of cross-checking user_value against file_observed_value."
+                },
+                "user_value": {
+                    "$ref": "#/$defs/OntologyTermValue",
+                    "description": "The value the submitter provided, as an OntologyTermValue."
+                }
+            },
+            "required": [
+                "user_value",
+                "reconciliation_state"
+            ],
+            "title": "IonizationSourceValue",
+            "type": "object"
+        },
+        "OntologyTermValue": {
+            "additionalProperties": false,
+            "description": "A value that is either resolved to a controlled ontology term or recorded as free text pending curator review. This is the reusable escape-hatch pattern: ontology-bound slots range over this class rather than a plain string, so the free-text fallback is structural, not bolted on. Which ontology `value_ontology_id` should be drawn from is attached per slot via LinkML `bindings` at RECOMMENDED obligation (so free text never blocks).",
+            "if": {
+                "properties": {
+                    "curation_state": {
+                        "const": "controlled"
+                    }
+                },
+                "required": [
+                    "curation_state"
+                ]
+            },
+            "properties": {
+                "curation_state": {
+                    "$ref": "#/$defs/CurationState",
+                    "description": "Whether this value is controlled, awaiting curation, or accepted as free text."
+                },
+                "value_free_text": {
+                    "description": "The submitter's original free text, retained whenever the value is not (or not yet) resolved to a controlled term.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "value_label": {
+                    "description": "Human-readable label of the resolved term, or the term as displayed.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "value_ontology_id": {
+                    "description": "CURIE of the resolved controlled-vocabulary term, if any.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "curation_state"
+            ],
+            "then": {
+                "properties": {
+                    "value_ontology_id": {}
+                },
+                "required": [
+                    "value_ontology_id"
+                ]
+            },
+            "title": "OntologyTermValue",
+            "type": "object"
+        },
+        "OrganismEnum": {
+            "description": "Any NCBITaxon organism (cellular organisms subtree).",
+            "title": "OrganismEnum",
+            "type": "string"
+        },
+        "PlantSample": {
+            "additionalProperties": false,
+            "description": "Stub for plant samples. Anatomy for plant samples is Plant Ontology (PO) rather than Uberon; fleshed out in a later pass.",
+            "properties": {
+                "disease": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OntologyTermValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Disease state, if any. Part of the current free-text Condition field. Bound to MONDO: EFO's disease branch is imported MONDO terms, so MONDO is the real source (see README EFO-vs-MONDO note)."
+                },
+                "genetic_background": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OntologyTermValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Strain / genotype / cultivar. Part of the current free-text Condition field. No single OLS ontology covers strain nomenclature well (MGI and Cellosaurus are external registries), so free text is expected here."
+                },
+                "health_status": {
+                    "$ref": "#/$defs/HealthStatusEnum",
+                    "description": "Case/control/experimental health state. Part of the current free-text Condition field (see README migration proposal). EFO was checked first; its matching terms are study-DESIGN classes rather than per-sample state values, so a small static enum is used, mapping `control` to EFO where it fits. `other` is the escape value."
+                },
+                "organism": {
+                    "$ref": "#/$defs/OntologyTermValue",
+                    "description": "Source organism. Maps from Sample_Information.Organism."
+                },
+                "protocol_description": {
+                    "description": "Always free text, never ontology-bound. Absorbs the current Additional_Information.Supplementary and Sample_Information .Sample_Growth_Conditions (treatment/intervention prose); deeper treatment modeling belongs to xstats, not here.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "sample_class": {
+                    "description": "Names the concrete Sample subclass (TissueSample / CellCultureSample / PlantSample / EnvironmentalSample). Redundant with sample_type but required so polymorphic instances round-trip and validate against the right subclass.",
+                    "enum": [
+                        "PlantSample"
+                    ],
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "sample_type": {
+                    "$ref": "#/$defs/SampleType",
+                    "description": "Biological sample kind; discriminator selecting the Sample subclass. Genuinely internal/structural, so a static enum is correct here."
+                }
+            },
+            "required": [
+                "organism",
+                "sample_type"
+            ],
+            "title": "PlantSample",
+            "type": "object"
+        },
+        "PolarityEnum": {
+            "description": "Ion mode, with PSI-MS scan-polarity meaning mappings.",
+            "enum": [
+                "Positive",
+                "Negative"
+            ],
+            "title": "PolarityEnum",
+            "type": "string"
+        },
+        "PolarityValue": {
+            "additionalProperties": false,
+            "description": "Reconciled acquisition polarity (Positive / Negative).",
+            "properties": {
+                "file_observed_value": {
+                    "description": "The raw value pyimzml/ImzMLReader read from the imzML file's own cvParam metadata, if any. Populated in Phase 2; never overwrites user_value.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "reconciliation_state": {
+                    "$ref": "#/$defs/ReconciliationState",
+                    "description": "Result of cross-checking user_value against file_observed_value."
+                },
+                "user_value": {
+                    "$ref": "#/$defs/OntologyTermValue",
+                    "description": "The value the submitter provided, as an OntologyTermValue."
+                }
+            },
+            "required": [
+                "user_value",
+                "reconciliation_state"
+            ],
+            "title": "PolarityValue",
+            "type": "object"
+        },
+        "ReconciledValue": {
+            "additionalProperties": false,
+            "description": "A user-submitted value that may optionally be cross-checked against the same fact as read from the imzML file itself. The file value NEVER overwrites the user's value; a mismatch is recorded for the user to resolve, not auto-applied. Distinct from OntologyTermValue, which is about resolving free text to a term, not cross-checking two independent sources. Concrete subclasses attach the recommended controlled vocabulary to the user value. Populating file_observed_value is Phase 2 integration work.",
+            "properties": {
+                "file_observed_value": {
+                    "description": "The raw value pyimzml/ImzMLReader read from the imzML file's own cvParam metadata, if any. Populated in Phase 2; never overwrites user_value.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "reconciliation_state": {
+                    "$ref": "#/$defs/ReconciliationState",
+                    "description": "Result of cross-checking user_value against file_observed_value."
+                },
+                "user_value": {
+                    "$ref": "#/$defs/OntologyTermValue",
+                    "description": "The value the submitter provided, as an OntologyTermValue."
+                }
+            },
+            "required": [
+                "user_value",
+                "reconciliation_state"
+            ],
+            "title": "ReconciledValue",
+            "type": "object"
+        },
+        "ReconciliationState": {
+            "description": "Result of cross-checking a user value against the imzML file value.",
+            "enum": [
+                "not_checked",
+                "matched",
+                "mismatched",
+                "file_value_absent"
+            ],
+            "title": "ReconciliationState",
+            "type": "string"
+        },
+        "Sample": {
+            "additionalProperties": false,
+            "description": "Abstract base for a biological sample. sample_type is the discriminator selecting the concrete subclass. health_status / genetic_background / disease are the proposed decomposition of the current single free-text Sample_Information.Condition field (see README migration proposal).",
+            "properties": {
+                "disease": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OntologyTermValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Disease state, if any. Part of the current free-text Condition field. Bound to MONDO: EFO's disease branch is imported MONDO terms, so MONDO is the real source (see README EFO-vs-MONDO note)."
+                },
+                "genetic_background": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OntologyTermValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Strain / genotype / cultivar. Part of the current free-text Condition field. No single OLS ontology covers strain nomenclature well (MGI and Cellosaurus are external registries), so free text is expected here."
+                },
+                "health_status": {
+                    "$ref": "#/$defs/HealthStatusEnum",
+                    "description": "Case/control/experimental health state. Part of the current free-text Condition field (see README migration proposal). EFO was checked first; its matching terms are study-DESIGN classes rather than per-sample state values, so a small static enum is used, mapping `control` to EFO where it fits. `other` is the escape value."
+                },
+                "organism": {
+                    "$ref": "#/$defs/OntologyTermValue",
+                    "description": "Source organism. Maps from Sample_Information.Organism."
+                },
+                "protocol_description": {
+                    "description": "Always free text, never ontology-bound. Absorbs the current Additional_Information.Supplementary and Sample_Information .Sample_Growth_Conditions (treatment/intervention prose); deeper treatment modeling belongs to xstats, not here.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "sample_class": {
+                    "description": "Names the concrete Sample subclass (TissueSample / CellCultureSample / PlantSample / EnvironmentalSample). Redundant with sample_type but required so polymorphic instances round-trip and validate against the right subclass.",
+                    "enum": [
+                        "Sample"
+                    ],
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "sample_type": {
+                    "$ref": "#/$defs/SampleType",
+                    "description": "Biological sample kind; discriminator selecting the Sample subclass. Genuinely internal/structural, so a static enum is correct here."
+                }
+            },
+            "required": [
+                "organism",
+                "sample_type"
+            ],
+            "title": "Sample",
+            "type": "object"
+        },
+        "SampleType": {
+            "description": "Biological sample kind; selects the Sample subclass.",
+            "enum": [
+                "tissue",
+                "cell_culture",
+                "plant",
+                "environmental"
+            ],
+            "title": "SampleType",
+            "type": "string"
+        },
+        "SexEnum": {
+            "description": "Biological sex, with PATO meanings where applicable.",
+            "enum": [
+                "female",
+                "male",
+                "mixed",
+                "unknown"
+            ],
+            "title": "SexEnum",
+            "type": "string"
+        },
+        "TissueSample": {
+            "additionalProperties": false,
+            "description": "A tissue sample. Imaging MS submissions today are implicitly tissue-oriented; this is the default concrete Sample.",
+            "properties": {
+                "anatomical_site_coarse": {
+                    "$ref": "#/$defs/OntologyTermValue",
+                    "description": "Coarse organism part. Maps from Sample_Information.Organism_Part. Bound to Uberon for animal tissue; Plant Ontology is the source for PlantSample (see README)."
+                },
+                "anatomical_site_fine": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OntologyTermValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Fine-grained anatomical location. No current equivalent. No general organism-agnostic atlas ontology fits, so free text is expected pending curation."
+                },
+                "developmental_stage": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OntologyTermValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Developmental / life stage. No current equivalent. Bound to EFO developmental stage (EFO:0000399, confirmed live), which has organism-specific subclasses."
+                },
+                "disease": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OntologyTermValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Disease state, if any. Part of the current free-text Condition field. Bound to MONDO: EFO's disease branch is imported MONDO terms, so MONDO is the real source (see README EFO-vs-MONDO note)."
+                },
+                "genetic_background": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OntologyTermValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Strain / genotype / cultivar. Part of the current free-text Condition field. No single OLS ontology covers strain nomenclature well (MGI and Cellosaurus are external registries), so free text is expected here."
+                },
+                "health_status": {
+                    "$ref": "#/$defs/HealthStatusEnum",
+                    "description": "Case/control/experimental health state. Part of the current free-text Condition field (see README migration proposal). EFO was checked first; its matching terms are study-DESIGN classes rather than per-sample state values, so a small static enum is used, mapping `control` to EFO where it fits. `other` is the escape value."
+                },
+                "organism": {
+                    "$ref": "#/$defs/OntologyTermValue",
+                    "description": "Source organism. Maps from Sample_Information.Organism."
+                },
+                "protocol_description": {
+                    "description": "Always free text, never ontology-bound. Absorbs the current Additional_Information.Supplementary and Sample_Information .Sample_Growth_Conditions (treatment/intervention prose); deeper treatment modeling belongs to xstats, not here.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "sample_class": {
+                    "description": "Names the concrete Sample subclass (TissueSample / CellCultureSample / PlantSample / EnvironmentalSample). Redundant with sample_type but required so polymorphic instances round-trip and validate against the right subclass.",
+                    "enum": [
+                        "TissueSample"
+                    ],
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "sample_stabilisation": {
+                    "$ref": "#/$defs/OntologyTermValue",
+                    "description": "Preservation/stabilisation method (maps from Sample_Preparation.Sample_Stabilisation; required today). OBI was checked; it has fixation-function and FFPE terms but no clean value branch covering fresh-frozen / cryopreserved / dried, so this is free-text-first with OBI ids where they exist. See README for the recommended value list."
+                },
+                "sample_type": {
+                    "$ref": "#/$defs/SampleType",
+                    "description": "Biological sample kind; discriminator selecting the Sample subclass. Genuinely internal/structural, so a static enum is correct here."
+                },
+                "sex": {
+                    "$ref": "#/$defs/SexEnum",
+                    "description": "Biological sex. No current equivalent. Static enum with PATO meanings (EFO reuses PATO:0000047 for the parent quality); `unknown`/`mixed` are the escape values."
+                },
+                "tissue_modification": {
+                    "$ref": "#/$defs/OntologyTermValue",
+                    "description": "Specimen modification (maps from Sample_Preparation.Tissue_Modification; required today). Modeled separately from sample_stabilisation, not collapsed. OBI coverage for this is also thin; free-text-first."
+                }
+            },
+            "required": [
+                "anatomical_site_coarse",
+                "sample_stabilisation",
+                "tissue_modification",
+                "organism",
+                "sample_type"
+            ],
+            "title": "TissueSample",
+            "type": "object"
+        }
+    },
+    "$id": "https://metaspace2020.org/schema/metaspace_submission",
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "additionalProperties": true,
+    "description": "A single METASPACE submission: one biological Sample plus the AcquisitionInfo describing how it was measured. schema_version is stamped once at submission and never changed, so legacy free-text datasets can be harmonized later without special-casing.",
+    "metamodel_version": "1.11.0",
+    "properties": {
+        "acquisition": {
+            "$ref": "#/$defs/AcquisitionInfo",
+            "description": "How the sample was measured."
+        },
+        "data_type": {
+            "$ref": "#/$defs/DataTypeEnum",
+            "description": "Acquisition/analysis modality. This pass models Imaging MS only. Distinct from sample_type (which selects the biological Sample subclass)."
+        },
+        "dataset_name": {
+            "description": "Human-readable dataset name.",
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "sample": {
+            "anyOf": [
+                {
+                    "$ref": "#/$defs/TissueSample"
+                },
+                {
+                    "$ref": "#/$defs/CellCultureSample"
+                },
+                {
+                    "$ref": "#/$defs/PlantSample"
+                },
+                {
+                    "$ref": "#/$defs/EnvironmentalSample"
+                }
+            ],
+            "description": "The biological sample that was measured."
+        },
+        "schema_version": {
+            "description": "Schema version, stamped once at submission and never changed.",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$",
+            "type": "string"
+        }
+    },
+    "required": [
+        "schema_version",
+        "data_type",
+        "sample",
+        "acquisition"
+    ],
+    "title": "metaspace_submission",
+    "type": "object",
+    "version": "0.2.0"
+}
+

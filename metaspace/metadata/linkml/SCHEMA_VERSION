@@ -1,0 +1,4 @@
+schema_version: 0.2.0
+source: https://github.com/metaspace2020/metadata_v2
+tag: v0.2.0
+commit: 6c3eb50fb3fa123932c7dd61200f8aa1f852f2bd
