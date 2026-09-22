@@ -1,6 +1,5 @@
 import { event as gtagEvent, set as gtagSet, purchase as gtagPurchase } from 'vue-gtag'
 import type { RouteLocationNormalized } from 'vue-router'
-import { currentUserIdQuery } from '../api/user'
 import { getSeoMetaForRoute } from './useSeo'
 
 type GtagParams = Record<string, string | number | boolean | null | undefined | Array<Record<string, unknown>>>
@@ -15,19 +14,6 @@ const safely = (fn: () => void) => {
 
 const centsToUnits = (cents: number | null | undefined) => Math.round(cents || 0) / 100
 
-export const setUserId = (userId: string) =>
-  safely(() => {
-    gtagSet({ user_id: userId })
-    gtagSet({ user_properties: { metaspace_user_id: userId } })
-  })
-
-/** Detach the user id, e.g. after sign-out, so later hits are anonymous. */
-export const clearUserId = () =>
-  safely(() => {
-    gtagSet({ user_id: null })
-    gtagSet({ user_properties: { metaspace_user_id: null } })
-  })
-
 /** Set GA4 user properties (must be registered as custom dimensions in GA4 admin). */
 export const setUserProperties = (properties: Record<string, string | number | boolean | null>) =>
   safely(() => gtagSet({ user_properties: properties }))
@@ -41,17 +27,6 @@ export const setSubscriptionUserProperties = (
     billing_interval: subscription?.billingInterval || null,
   })
 
-type ApolloLikeClient = { query: (options: { query: any; fetchPolicy?: any }) => Promise<{ data?: any }> }
-
-export const resolveInitialUserId = (client: ApolloLikeClient, timeoutMs = 3000): Promise<string | null> => {
-  const lookup = client
-    .query({ query: currentUserIdQuery, fetchPolicy: 'cache-first' })
-    .then((result) => result?.data?.currentUser?.id ?? null)
-    .catch(() => null)
-  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs))
-  return Promise.race([lookup, timeout])
-}
-
 /**
  * Page view payload for vue-gtag's router tracker: the same title the page
  * puts in <title> (see useSeo.ts) instead of the route's internal name.
@@ -63,8 +38,8 @@ export const pageTrackerTemplate = (to: RouteLocationNormalized) => ({
 })
 
 /** vue-gtag plugin options for this environment. */
-export const buildGtagOptions = (env: { measurementId: string; production: boolean; userId: string | null }) => ({
-  config: { id: env.measurementId, params: { user_id: env.userId } },
+export const buildGtagOptions = (env: { measurementId: string; production: boolean }) => ({
+  config: { id: env.measurementId },
   // disabled in dev because it impairs "break on uncaught exception", and
   // whenever no measurement id is configured for the environment
   enabled: env.production && env.measurementId !== '',
@@ -76,19 +51,11 @@ export const trackEvent = (eventName: string, params?: GtagParams) => safely(() 
 export const trackPlansPageView = (loggedIn: boolean) =>
   trackEvent('view_plans_page', { section: 'plans', logged_in: loggedIn })
 
-export const trackPaymentPageView = (userId: string | null | undefined, planId?: string) => {
-  if (userId) {
-    setUserId(userId)
-  }
-  trackEvent('view_payment_page', { section: 'plans', plan_id: planId || 'unknown', logged_in: !!userId })
-}
+export const trackPaymentPageView = (loggedIn: boolean, planId?: string) =>
+  trackEvent('view_payment_page', { section: 'plans', plan_id: planId || 'unknown', logged_in: loggedIn })
 
-export const trackSuccessPageView = (userId: string | null | undefined, fromPayment: boolean) => {
-  if (userId) {
-    setUserId(userId)
-  }
-  trackEvent('view_success_page', { section: 'plans', from_payment: fromPayment, logged_in: !!userId })
-}
+export const trackSuccessPageView = (loggedIn: boolean, fromPayment: boolean) =>
+  trackEvent('view_success_page', { section: 'plans', from_payment: fromPayment, logged_in: loggedIn })
 
 export const trackBeginCheckout = (planData: {
   planId: string

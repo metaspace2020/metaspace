@@ -167,7 +167,7 @@ export default defineComponent({
 
       if (currentUser.value?.id) {
         const planId = route?.query?.planId as string
-        trackPaymentPageView(currentUser?.value?.id, planId)
+        trackPaymentPageView(true, planId)
       }
     })
 

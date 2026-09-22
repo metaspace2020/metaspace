@@ -202,8 +202,8 @@ const AboutPage = defineComponent({
                 <div class="flex flex-col p-0 m-0">
                   <h4 class="text-center p-0 m-0 font-normal">Join the community</h4>
                   <div class="flex flex-wrap">
-                    <h3 class="text-center py-2 m-0 w-1/2">{(groupCount.value || 86).toLocaleString()}</h3>
-                    <h3 class="text-center py-2 m-0 w-1/2">{(userCount.value || 1771).toLocaleString()}</h3>
+                    <h3 class="text-center py-2 m-0 w-1/2">{(groupCount.value || 283).toLocaleString()}</h3>
+                    <h3 class="text-center py-2 m-0 w-1/2">{(userCount.value || 6277).toLocaleString()}</h3>
                     <h4 class="text-center p-0 m-0 w-1/2 font-normal">Groups</h4>
                     <h4 class="text-center p-0 m-0 w-1/2 font-normal">Users</h4>
                   </div>
@@ -211,14 +211,14 @@ const AboutPage = defineComponent({
                 <div class="flex flex-col p-0 m-0">
                   <h4 class="text-center p-0 m-0 font-normal">Pushing the science</h4>
                   <div class="flex flex-wrap">
-                    <h3 class="text-center py-2 m-0 w-full">{(publicationCount.value || 133).toLocaleString()}</h3>
+                    <h3 class="text-center py-2 m-0 w-full">{(publicationCount.value || 426).toLocaleString()}</h3>
                     <h4 class="text-center p-0 m-0 w-full font-normal">Publications</h4>
                   </div>
                 </div>
                 <div class="flex flex-col p-0 m-0">
                   <h4 class="text-center p-0 m-0 font-normal">Explore</h4>
                   <div class="flex flex-wrap">
-                    <h3 class="text-center py-2 m-0 w-full">{(datasetCount.value || 7786).toLocaleString()}</h3>
+                    <h3 class="text-center py-2 m-0 w-full">{(datasetCount.value || 20495).toLocaleString()}</h3>
                     <h4 class="text-center p-0 m-0 w-full font-normal">Datasets</h4>
                   </div>
                 </div>

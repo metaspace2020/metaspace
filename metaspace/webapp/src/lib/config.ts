@@ -45,6 +45,7 @@ interface Features {
 interface ClientConfig {
   graphqlUrl: string | null
   wsGraphqlUrl: string | null
+  siteHostname?: string | null
   companionUrl: string | null
   imageStorage?: string | null
   appointment_url?: string | null

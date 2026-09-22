@@ -58,7 +58,7 @@ export default defineComponent({
     onMounted(() => {
       if (currentUser.value?.id) {
         // Track success page view
-        trackSuccessPageView(currentUser.value?.id, fromPayment.value)
+        trackSuccessPageView(true, fromPayment.value)
 
         // Track purchase completion if coming from payment
         if (fromPayment.value && subscription.value && latestTransaction.value) {

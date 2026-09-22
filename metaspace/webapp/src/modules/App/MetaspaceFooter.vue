@@ -12,7 +12,7 @@
         <router-link to="/contact">Contact</router-link>
       </p>
       <p class="m-0 mt-8">
-        &copy; 2014&ndash;2025
+        &copy; 2014&ndash;2026
         <a v-if="themeVariant === 'pro'" target="_blank" href="https://metacloud.bio">Metacloud Inc.</a>
         <a v-else target="_blank" href="https://ateam.bio/">Alexandrov Team</a>
       </p>

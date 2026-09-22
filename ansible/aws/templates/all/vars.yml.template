@@ -370,8 +370,13 @@ nginx_servers:
       - path: /
         params:
           - root {{ sm_webapp_www }};
-          # Paths with no extension should fall back to index.html for vue-router to handle
-          - try_files $uri /index.html;
+          - index index.html;
+          # The build prerenders the public pages to static HTML - "/pro" is served by
+          # pro.html, "/" by index.html - so that crawlers and link unfurlers that never
+          # run JavaScript get the real page. Everything else (dataset pages, anything
+          # behind a login) falls back to _shell.html, which carries the same noindex
+          # those routes set at runtime. See metaspace/webapp/src/lib/seoRoutes.ts.
+          - try_files $uri $uri.html $uri/ /_shell.html;
           - expires 10m;
           # Unfortunately nginx has awkward priority rules with regex locations, so the following rules must be nested
           # to avoid interfering with routing to API endpoints

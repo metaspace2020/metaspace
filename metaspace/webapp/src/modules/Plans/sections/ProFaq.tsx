@@ -4,6 +4,7 @@ import type { VNode } from 'vue'
 interface FaqEntry {
   question: string
   answer: (string | (() => VNode))[]
+  seoAnswer?: string
 }
 
 const FAQS: FaqEntry[] = [
@@ -25,6 +26,10 @@ const FAQS: FaqEntry[] = [
         </>
       ),
     ],
+    seoAnswer:
+      'Yes, and it stays that way. Public submissions, the annotation engine and the community knowledgebase ' +
+      'remain free and open source, developed by the Alexandrov team at UCSD. Pro is a separate subscription ' +
+      'service from Metacloud Inc. for private work.',
   },
   {
     question: 'Do I have to pay to try the analysis tools?',
@@ -64,6 +69,10 @@ const FAQS: FaqEntry[] = [
         </>
       ),
     ],
+    seoAnswer:
+      'Yes. The statistical methods, corrections and assumptions are documented in full, and the underlying ' +
+      'annotation engine is published in Nature Methods (Palmer et al., 2017). Citation guidance is on the ' +
+      'methods page.',
   },
   {
     question: 'What happens to the private datasets I submitted before the split?',
@@ -88,6 +97,16 @@ const FAQS: FaqEntry[] = [
     ],
   },
 ]
+
+export function faqSeoEntries(): { question: string; answer: string }[] {
+  return FAQS.map((entry) => {
+    const answer = entry.seoAnswer ?? entry.answer.filter((p): p is string => typeof p === 'string').join(' ')
+    if (!answer) {
+      throw new Error(`FAQ entry "${entry.question}" has no plain-text answer; add a seoAnswer.`)
+    }
+    return { question: entry.question, answer }
+  })
+}
 
 export default defineComponent({
   name: 'ProFaq',
