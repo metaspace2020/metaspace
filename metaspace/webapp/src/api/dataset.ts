@@ -382,6 +382,36 @@ export const deleteRoiMutation = gql`
   }
 `
 
+export const validateRoiGeoJsonQuery = gql`
+  query ($datasetId: String!, $geojson: String!) {
+    validateRoiGeoJson(datasetId: $datasetId, geojson: $geojson) {
+      valid
+      roiCount
+      errors {
+        featureIndex
+        message
+      }
+      warnings {
+        featureIndex
+        message
+      }
+    }
+  }
+`
+
+export const importRoisMutation = gql`
+  mutation ($datasetId: String!, $geojson: String!) {
+    importRois(datasetId: $datasetId, geojson: $geojson) {
+      id
+      datasetId
+      userId
+      name
+      isDefault
+      geojson
+    }
+  }
+`
+
 // Keep the old addRoi mutation for backward compatibility during transition
 export const addRoiMutation = gql`
   mutation ($datasetId: String!, $geoJson: GeoJson!) {

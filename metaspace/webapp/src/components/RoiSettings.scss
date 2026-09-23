@@ -24,7 +24,8 @@ $pro-color: #ffab3f;
     scale: 0.8;
   }
 
-  .roi-download-icon {
+  .roi-download-icon,
+  .roi-upload-icon {
     @apply flex justify-center items-center h-8 w-6;
   }
 

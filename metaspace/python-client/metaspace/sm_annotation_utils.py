@@ -7,6 +7,7 @@ import urllib.parse
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
+from datetime import datetime, timezone
 from getpass import getpass
 from io import BytesIO
 from pathlib import Path
@@ -80,6 +81,24 @@ class InvalidResponseException(MetaspaceException):
         super().__init__('Invalid response from server')
         self.json = json
         self.http_response = http_response
+
+
+def _geojson_to_str(geojson: Union[dict, str, Path]) -> str:
+    """Accepts a GeoJSON dict, a JSON string, or a path to a .geojson/.json file, and
+    returns the JSON string to send to the server."""
+    if isinstance(geojson, dict):
+        return json.dumps(geojson)
+    if isinstance(geojson, Path):
+        return geojson.read_text()
+    if isinstance(geojson, str):
+        stripped = geojson.strip()
+        if stripped.startswith('{') or stripped.startswith('['):
+            return geojson
+        path = Path(geojson)
+        if path.exists():
+            return path.read_text()
+        return geojson  # not a path either - let the server report the parse error
+    raise TypeError(f'Unsupported geojson input type: {type(geojson)}')
 
 
 def _extract_data(res):
@@ -254,14 +273,14 @@ def multipart_upload(
         part = 0
         with open(local_path, 'rb') as f:
             f.seek(0, 2)
-            file_len_mb = f.tell() / 1024 ** 2
+            file_len_mb = f.tell() / 1024**2
             f.seek(0)
             # S3 supports max 10000 parts per file. Increase part size if needed
             part_size_mb = max(5, int(math.ceil(file_len_mb / 10000)))
             n_parts = int(math.ceil(file_len_mb / part_size_mb))
             while True:
                 semaphore.acquire()
-                file_data = f.read(part_size_mb * 1024 ** 2)
+                file_data = f.read(part_size_mb * 1024**2)
                 if not file_data:
                     break
 
@@ -920,6 +939,49 @@ class GraphQLClient(object):
         )
 
         return results['dataset'].get('diagnostics')
+
+    def get_rois(self, ds_id):
+        query = """
+            query ($datasetId: String!) {
+              rois(datasetId: $datasetId) {
+                id
+                datasetId
+                userId
+                name
+                isDefault
+                geojson
+              }
+            }
+        """
+        return self.query(query, {'datasetId': ds_id})['rois']
+
+    def validate_roi_geojson(self, ds_id, geojson: str) -> dict:
+        query = """
+            query ($datasetId: String!, $geojson: String!) {
+              validateRoiGeoJson(datasetId: $datasetId, geojson: $geojson) {
+                valid
+                roiCount
+                errors { featureIndex message }
+                warnings { featureIndex message }
+              }
+            }
+        """
+        return self.query(query, {'datasetId': ds_id, 'geojson': geojson})['validateRoiGeoJson']
+
+    def import_rois(self, ds_id, geojson: str) -> list:
+        query = """
+            mutation ($datasetId: String!, $geojson: String!) {
+              importRois(datasetId: $datasetId, geojson: $geojson) {
+                id
+                datasetId
+                userId
+                name
+                isDefault
+                geojson
+              }
+            }
+        """
+        return self.query(query, {'datasetId': ds_id, 'geojson': geojson})['importRois']
 
 
 class IsotopeImages(object):
@@ -2149,6 +2211,81 @@ class SMInstance(object):
 
     def delete_database(self, id: int) -> bool:
         return self._gqclient.delete_database(id)
+
+    def get_rois(self, ds_id: str) -> List[dict]:
+        """Returns the ROIs saved on a dataset (your own if you've drawn/imported any,
+        otherwise the dataset's default ROIs), each as a dict with 'id', 'name', 'isDefault'
+        and 'geojson' (a JSON string) fields."""
+        return self._gqclient.get_rois(ds_id)
+
+    def validate_roi_geojson(self, ds_id: str, geojson: Union[dict, str, Path]) -> dict:
+        """Checks whether a GeoJSON payload can be imported onto a dataset without actually
+        importing it, e.g. before calling `import_rois` on a large batch of datasets.
+
+        :param ds_id: ID of the dataset to validate against. Every polygon vertex must fit
+            within this dataset's ion-image pixel grid.
+        :param geojson: A GeoJSON dict, a JSON string, or a path to a .geojson/.json file.
+        :return: A dict with 'valid' (bool), 'roiCount' (int), 'errors' and 'warnings'
+            (lists of {'featureIndex', 'message'}). 'valid' is False if 'errors' is non-empty.
+        """
+        return self._gqclient.validate_roi_geojson(ds_id, _geojson_to_str(geojson))
+
+    def import_rois(self, ds_id: str, geojson: Union[dict, str, Path]) -> List[dict]:
+        """Imports ROIs from a GeoJSON FeatureCollection (or a single Feature/Polygon/
+        MultiPolygon) onto a dataset. This always appends new ROIs -- it never replaces or
+        removes ROIs that already exist on the dataset.
+
+        Raises a GraphQLException listing the reason(s) if any ROI in the file doesn't fit
+        the dataset's ion-image pixel grid, or if the file's declared image size doesn't
+        match it. Call `validate_roi_geojson` first if you'd rather check without raising.
+
+        :param ds_id: ID of the dataset to import the ROIs onto.
+        :param geojson: A GeoJSON dict, a JSON string, or a path to a .geojson/.json file.
+        :return: The list of newly created ROIs (dicts with 'id', 'name', 'isDefault', 'geojson').
+        """
+        return self._gqclient.import_rois(ds_id, _geojson_to_str(geojson))
+
+    def export_rois(self, ds_id: str, path: Union[str, Path] = None) -> dict:
+        """Fetches a dataset's ROIs and assembles them into a GeoJSON FeatureCollection,
+        the same format produced by the METASPACE webapp's ROI export.
+
+        :param ds_id: ID of the dataset to export ROIs from.
+        :param path: If given, the FeatureCollection is also written to this path as
+            formatted JSON.
+        :return: The FeatureCollection as a dict.
+        """
+        rois = self._gqclient.get_rois(ds_id)
+        dataset_info = (
+            self._gqclient.query(
+                """query ($id: String!) { dataset(id: $id) { name acquisitionGeometry } }""",
+                {'id': ds_id},
+            )['dataset']
+            or {}
+        )
+
+        acq_geometry_raw = dataset_info.get('acquisitionGeometry')
+        grid = (
+            json.loads(acq_geometry_raw).get('acquisition_grid', {})
+            if acq_geometry_raw not in (None, 'null')
+            else {}
+        )
+
+        feature_collection = {
+            'type': 'FeatureCollection',
+            'metadata': {
+                'datasetId': ds_id,
+                'datasetName': dataset_info.get('name'),
+                'imageWidth': grid.get('count_x'),
+                'imageHeight': grid.get('count_y'),
+                'exportedAt': datetime.now(timezone.utc).isoformat(),
+            },
+            'features': [json.loads(roi['geojson']) for roi in rois],
+        }
+
+        if path is not None:
+            Path(path).write_text(json.dumps(feature_collection, indent=2))
+
+        return feature_collection
 
     def current_user_id(self):
         result = self._gqclient.query("""query { currentUser { id } }""")
