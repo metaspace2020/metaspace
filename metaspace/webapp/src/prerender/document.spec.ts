@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildDocument, buildHeadHtml, buildNavHtml, buildShellDocument, buildSitemapXml } from './document'
-import { SEO_ROUTES } from '../lib/seoRoutes'
+import { SEO_ROUTES, SITEMAP_EXTRA_ENTRIES } from '../lib/seoRoutes'
 
 const TEMPLATE = `<!DOCTYPE html>
 <html lang="en">
@@ -91,11 +91,17 @@ describe('buildShellDocument', () => {
 describe('buildSitemapXml', () => {
   const xml = buildSitemapXml('https://metaspace2020.org', '2026-01-01T00:00:00.000Z')
 
-  it('lists every canonical route exactly once', () => {
+  it('lists every canonical route exactly once, then the extra entries', () => {
     const locs = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1])
-    const expected = SEO_ROUTES.filter((r) => r.canonicalPath == null).map((r) => `https://metaspace2020.org${r.path}`)
+    const expected = [...SEO_ROUTES.filter((r) => r.canonicalPath == null), ...SITEMAP_EXTRA_ENTRIES].map(
+      (r) => `https://metaspace2020.org${r.path}`
+    )
     expect(locs).toEqual(expected)
     expect(new Set(locs).size).toBe(locs.length)
+  })
+
+  it('links the docs site, which is a separate build with its own sitemap', () => {
+    expect(xml).toContain('<loc>https://metaspace2020.org/docs/</loc>')
   })
 
   it('omits routes that canonicalise elsewhere', () => {

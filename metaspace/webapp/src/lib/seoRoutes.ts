@@ -31,7 +31,10 @@ export const SEO_ROUTES: SeoRoute[] = [
   { path: '/contact', name: 'contact', file: 'contact.html', changefreq: 'monthly', priority: 0.6 },
 ]
 
-/** Paths for `vite-plugin-sitemap`. */
+export const SITEMAP_EXTRA_ENTRIES: Pick<SeoRoute, 'path' | 'changefreq' | 'priority'>[] = [
+  { path: '/docs/', changefreq: 'weekly', priority: 0.8 },
+]
+
 export const SEO_ROUTE_PATHS: string[] = SEO_ROUTES.filter((route) => route.canonicalPath == null).map(
   (route) => route.path
 )

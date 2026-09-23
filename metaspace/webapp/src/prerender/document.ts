@@ -4,7 +4,7 @@
 // the rest of the app: these are pure string functions the unit tests can
 // exercise without booting anything.
 
-import { SEO_NAV_LINKS, SEO_ROUTES } from '../lib/seoRoutes'
+import { SEO_NAV_LINKS, SEO_ROUTES, SITEMAP_EXTRA_ENTRIES } from '../lib/seoRoutes'
 import { getSeoMetaForRoute } from '../lib/useSeo'
 import { getStructuredDataForRoute } from '../lib/structuredData'
 
@@ -95,7 +95,8 @@ export function buildShellDocument(template: string): string {
  * URL, alongside duplicates of every dynamic route.
  */
 export function buildSitemapXml(origin: string, lastmod: string): string {
-  const urls = SEO_ROUTES.filter((route) => route.canonicalPath == null)
+  const entries = [...SEO_ROUTES.filter((route) => route.canonicalPath == null), ...SITEMAP_EXTRA_ENTRIES]
+  const urls = entries
     .map((route) =>
       [
         '  <url>',
