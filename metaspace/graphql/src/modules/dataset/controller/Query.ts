@@ -23,6 +23,7 @@ import {
 } from '../../enrichmentdb/model'
 import canEditEsDataset from '../operation/canEditEsDataset'
 import normalizeLegacyRoiFeature from '../operation/normalizeLegacyRoiFeature'
+import parseRoiGeoJson, { getDatasetImageBounds } from '../operation/roiGeoJson'
 import { smApiJsonPost, smApiJsonGet } from '../../../utils/smApi/smApiCall'
 import { smApiDatasetRequest } from '../../../utils'
 import { uniq } from 'lodash'
@@ -527,6 +528,35 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     }
     return null
   },
+
+  async validateRoiGeoJson(source: any, { datasetId, geojson }: any, ctx: Context) {
+    const esDataset = await esDatasetByID(datasetId, ctx.user)
+    if (!esDataset) {
+      throw new UserError('Dataset not found or access denied')
+    }
+
+    const bounds = getDatasetImageBounds(esDataset)
+    if (!bounds) {
+      return {
+        valid: false,
+        roiCount: 0,
+        errors: [{
+          featureIndex: null,
+          message: 'Dataset image size is not available yet; cannot validate ROI coordinates',
+        }],
+        warnings: [],
+      }
+    }
+
+    const { features, errors, warnings } = parseRoiGeoJson(geojson, bounds)
+    return {
+      valid: errors.length === 0,
+      roiCount: features.length,
+      errors,
+      warnings,
+    }
+  },
+
   async segmentationJobs(source: any, { datasetId }: any, ctx: Context) {
     if (!await esDatasetByID(datasetId, ctx.user)) {
       return []
