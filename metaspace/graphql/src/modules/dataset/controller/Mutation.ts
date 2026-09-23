@@ -1,6 +1,6 @@
 import * as jsondiffpatch from 'jsondiffpatch'
 import logger from '../../../utils/logger'
-import { Ajv } from 'ajv'
+import * as Ajv from 'ajv'
 import { UserError } from 'graphql-errors'
 import { EntityManager } from 'typeorm'
 import * as moment from 'moment'

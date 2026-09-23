@@ -58,7 +58,7 @@ def test_validate_roi_geojson_rejects_an_out_of_bounds_vertex(sm: SMInstance, ro
     out_of_bounds = {
         'type': 'Feature',
         'properties': {'name': 'out of bounds'},
-        'geometry': {'type': 'Polygon', 'coordinates': [[[0, 0], [0, 10 ** 9], [10 ** 9, 10 ** 9]]]},
+        'geometry': {'type': 'Polygon', 'coordinates': [[[0, 0], [0, 10**9], [10**9, 10**9]]]},
     }
 
     result = sm.validate_roi_geojson(roi_ds_id, out_of_bounds)

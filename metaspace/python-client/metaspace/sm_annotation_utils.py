@@ -273,14 +273,14 @@ def multipart_upload(
         part = 0
         with open(local_path, 'rb') as f:
             f.seek(0, 2)
-            file_len_mb = f.tell() / 1024 ** 2
+            file_len_mb = f.tell() / 1024**2
             f.seek(0)
             # S3 supports max 10000 parts per file. Increase part size if needed
             part_size_mb = max(5, int(math.ceil(file_len_mb / 10000)))
             n_parts = int(math.ceil(file_len_mb / part_size_mb))
             while True:
                 semaphore.acquire()
-                file_data = f.read(part_size_mb * 1024 ** 2)
+                file_data = f.read(part_size_mb * 1024**2)
                 if not file_data:
                     break
 
@@ -2255,13 +2255,20 @@ class SMInstance(object):
         :return: The FeatureCollection as a dict.
         """
         rois = self._gqclient.get_rois(ds_id)
-        dataset_info = self._gqclient.query(
-            """query ($id: String!) { dataset(id: $id) { name acquisitionGeometry } }""",
-            {'id': ds_id},
-        )['dataset'] or {}
+        dataset_info = (
+            self._gqclient.query(
+                """query ($id: String!) { dataset(id: $id) { name acquisitionGeometry } }""",
+                {'id': ds_id},
+            )['dataset']
+            or {}
+        )
 
         acq_geometry_raw = dataset_info.get('acquisitionGeometry')
-        grid = json.loads(acq_geometry_raw).get('acquisition_grid', {}) if acq_geometry_raw not in (None, 'null') else {}
+        grid = (
+            json.loads(acq_geometry_raw).get('acquisition_grid', {})
+            if acq_geometry_raw not in (None, 'null')
+            else {}
+        )
 
         feature_collection = {
             'type': 'FeatureCollection',
