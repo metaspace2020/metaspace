@@ -20,7 +20,7 @@ import router from './router'
 
 import VueGtag from 'vue-gtag'
 import { setErrorNotifier } from './lib/reportError'
-import { buildGtagOptions, resolveInitialUserId } from './lib/gtag'
+import { buildGtagOptions } from './lib/gtag'
 import { migrateLocalStorage } from './lib/localStorage'
 
 import { install } from 'vue3-recaptcha-v2'
@@ -85,9 +85,7 @@ router.afterEach((to: Route) => {
 
 const gaMeasurementId = config.ga_measurement_id || ''
 if (isProd && gaMeasurementId !== '') {
-  resolveInitialUserId(apolloClient).then((userId) => {
-    app.use(VueGtag as any, buildGtagOptions({ measurementId: gaMeasurementId, production: isProd, userId }), router)
-  })
+  app.use(VueGtag as any, buildGtagOptions({ measurementId: gaMeasurementId, production: isProd }), router)
 }
 
 app.use(install, {

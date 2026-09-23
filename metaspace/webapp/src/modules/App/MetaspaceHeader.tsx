@@ -1,14 +1,4 @@
-import {
-  computed,
-  defineAsyncComponent,
-  defineComponent,
-  onBeforeUnmount,
-  onMounted,
-  reactive,
-  Transition,
-  watch,
-} from 'vue'
-import { clearUserId, setUserId } from '../../lib/gtag'
+import { computed, defineAsyncComponent, defineComponent, onBeforeUnmount, onMounted, reactive, Transition } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
@@ -73,22 +63,6 @@ export default defineComponent({
     })
     const currentUser: any = computed(() =>
       currentUserResult.value != null ? currentUserResult.value.currentUser : null
-    )
-
-    // Attach the (opaque) id to analytics for the whole session; detach on sign-out.
-    watch(
-      () => (loadingUser.value ? undefined : currentUser.value?.id ?? null),
-      (userId) => {
-        if (userId === undefined) {
-          return
-        }
-        if (userId) {
-          setUserId(userId)
-        } else {
-          clearUserId()
-        }
-      },
-      { immediate: true }
     )
 
     // Query for unread news count

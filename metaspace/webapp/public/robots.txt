@@ -1,5 +1,43 @@
+# Policy: AI search and assistants may read and cite the site; AI model
+# training may not. Search engines are unaffected.
+#
+# Crawlers pick the most specific User-agent group and ignore the rest, so the
+# search/assistant crawlers (Googlebot, Bingbot, OAI-SearchBot, ChatGPT-User,
+# Claude-SearchBot, Claude-User, PerplexityBot, Perplexity-User, Applebot,
+# DuckAssistBot, meta-externalfetcher) deliberately have no group of their own:
+# they fall through to "*" below and are allowed.
+#
+# robots.txt is voluntary. A crawler that ignores it has to be blocked by
+# User-agent in nginx, reactively, from the access log.
+
 User-agent: *
 Allow: /
+Disallow: /fs/
+Disallow: /db/
+Disallow: /mol-images/
+
+# ---- model-training crawlers: nothing ---------------------------------------
+# OpenAI training (search is OAI-SearchBot, on-demand is ChatGPT-User)
+User-agent: GPTBot
+# Anthropic training (search is Claude-SearchBot, on-demand is Claude-User)
+User-agent: ClaudeBot
+User-agent: anthropic-ai
+# Google Gemini / Vertex training. Does not affect Google Search or AI Overviews.
+User-agent: Google-Extended
+# Apple Intelligence training (Applebot itself is search and stays allowed)
+User-agent: Applebot-Extended
+# Meta training (meta-externalfetcher, the on-demand fetcher, stays allowed)
+User-agent: meta-externalagent
+User-agent: Meta-ExternalAgent
+# Common Crawl: the corpus most open models are trained on
+User-agent: CCBot
+# Other training-only crawlers
+User-agent: Bytespider
+User-agent: cohere-ai
+User-agent: Diffbot
+User-agent: omgili
+User-agent: omgilibot
+Disallow: /
 
 Sitemap: https://metaspace2020.org/sitemap.xml
 Sitemap: https://metaspace2020.org/docs/sitemap.xml

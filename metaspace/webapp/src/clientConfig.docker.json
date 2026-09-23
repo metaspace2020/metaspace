@@ -1,11 +1,15 @@
 {
   "graphqlUrl": null,
+  "siteHostname": "localhost",
   "wsGraphqlUrl": null,
   "google_client_id": "clientid",
   "recaptcha_site_key": "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI",
   "ga_measurement_id": "",
   "ravenDsn": null,
-  "metadataTypes": ["ims", "lcms"],
+  "metadataTypes": [
+    "ims",
+    "lcms"
+  ],
   "features": {
     "coloc": true,
     "ion_thumbs": true,

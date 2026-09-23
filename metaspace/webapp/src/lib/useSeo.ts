@@ -1,25 +1,39 @@
 import { computed, type Ref } from 'vue'
 import { useHead } from '@unhead/vue'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
+import { SEO_ROUTES } from './seoRoutes'
+import config from './config'
 
 const disabledDomains = ['staging.metaspace2020.org', 'staging.metaspace2020.eu']
-const currentHost = window?.location?.hostname
 
-// Canonical URLs always point at the production host so alternate hostnames
+function getCurrentHost(): string | null {
+  if (typeof window !== 'undefined') {
+    return window?.location?.hostname ?? null
+  }
+  return config.siteHostname ?? null
+}
+
 export const PRODUCTION_ORIGIN = 'https://metaspace2020.org'
+
+// Several descriptions below are written as multi-line template literals, which
+// would otherwise reach the meta tag with their newlines and source indentation.
+const squish = (text: string): string => text.replace(/\s+/g, ' ').trim()
 
 function buildHead(title: string, description: string, robots: string, path: string | null) {
   const ogImage = `${PRODUCTION_ORIGIN}/assets/logo.png`
-  const canonical = path ? `${PRODUCTION_ORIGIN}${path}` : null
+  // `/about` renders the same component as `/`, so it points its canonical at
+  // `/` instead of competing with it. See `seoRoutes.ts`.
+  const canonicalPath = path ? SEO_ROUTES.find((route) => route.path === path)?.canonicalPath ?? path : null
+  const canonical = canonicalPath ? `${PRODUCTION_ORIGIN}${canonicalPath}` : null
   return {
     title,
     meta: [
-      { name: 'description', content: description },
+      { name: 'description', content: squish(description) },
       { name: 'robots', content: robots },
       { property: 'og:type', content: 'website' },
       { property: 'og:site_name', content: 'METASPACE' },
       { property: 'og:title', content: title },
-      { property: 'og:description', content: description },
+      { property: 'og:description', content: squish(description) },
       { property: 'og:image', content: ogImage },
       ...(canonical ? [{ property: 'og:url', content: canonical }] : []),
       { name: 'twitter:card', content: 'summary' },
@@ -40,7 +54,7 @@ export function getSeoMetaForRoute(route: any | null) {
 
   if (route.name === 'home' || route.name === 'about') {
     description =
-      'The platform for metabolite annotation of imaging mass spectrometry data.' +
+      'The platform for metabolite annotation of imaging mass spectrometry data. ' +
       'The METASPACE platform hosts an engine for metabolite annotation of imaging mass spectrometry ' +
       'data as well as a spatial metabolite knowledgebase of the metabolites from thousands of public ' +
       'datasets provided by the community.'
@@ -50,7 +64,7 @@ export function getSeoMetaForRoute(route: any | null) {
     robots = 'index, follow'
     description = `Browse annotations from all public datasets using our interactive interface. 
     Search and compare your annotations with those from the community.`
-  } else if (route.name === 'datasets') {
+  } else if (route.name === 'dataset-list') {
     title = 'METASPACE - Datasets'
     robots = 'index, follow'
     description = `Explore all public datasets using our interactive interface. Upload yours and 
@@ -88,7 +102,8 @@ export function getSeoMetaForRoute(route: any | null) {
     description = 'Get in touch with the METASPACE team for quotes, group plans, support and collaborations.'
   }
 
-  if (disabledDomains.includes(currentHost)) {
+  const currentHost = getCurrentHost()
+  if (currentHost != null && disabledDomains.includes(currentHost)) {
     robots = 'noindex, nofollow'
   }
 

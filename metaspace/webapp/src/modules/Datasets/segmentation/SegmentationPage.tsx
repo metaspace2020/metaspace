@@ -264,7 +264,7 @@ export default defineComponent({
                       onClick={handleToggleOpticalImage}
                     >
                       <img
-                        src="/src/assets/microscope-icon.png"
+                        src="/assets/microscope-icon.png"
                         class="w-6 h-6 pointer-events-none"
                         style={{
                           filter: state.showOpticalImage ? '' : 'opacity(60%)',

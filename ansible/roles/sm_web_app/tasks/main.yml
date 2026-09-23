@@ -41,6 +41,12 @@
     path: "{{ sm_webapp_home }}/dist-docs"
     state: absent
 
+- name: Remove stale dist-ssr from previous deploy
+  become: true
+  file:
+    path: "{{ sm_webapp_home }}/dist-ssr"
+    state: absent
+
 - name: Run build app
   shell: "{{ sm_activate_nvm }} && nice yarn run build"
   args:

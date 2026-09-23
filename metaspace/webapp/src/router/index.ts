@@ -1,5 +1,6 @@
 /* eslint-disable vue/max-len */
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
+import { PRODUCTION_ORIGIN } from '../lib/useSeo'
 import { Component } from 'vue'
 import AboutPage from '../modules/App/AboutPage'
 import DatasetsPage from '../modules/Datasets/DatasetsPage.vue'
@@ -123,6 +124,9 @@ const asyncPagesFreelyTyped = {
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, Component>
 
 const convertLegacyUrls = () => {
+  if (typeof window === 'undefined') {
+    return
+  }
   const { pathname, hash, search } = window.location
   if (pathname === '/' && hash && hash.startsWith('#/')) {
     history.replaceState(undefined, undefined as any, hash.slice(1))
@@ -293,7 +297,7 @@ export const scrollBehavior: Parameters<typeof createRouter>[0]['scrollBehavior'
 
 const router = createRouter({
   // @ts-ignore
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: typeof window === 'undefined' ? createMemoryHistory() : createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior,
 })
@@ -326,6 +330,7 @@ router.beforeEach((to, from, next) => {
 })
 
 const { href } = router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined)
-export const PROJECT_URL_PREFIX = location.origin + href.replace('REMOVE', '')
+export const PROJECT_URL_PREFIX =
+  (typeof location === 'undefined' ? PRODUCTION_ORIGIN : location.origin) + href.replace('REMOVE', '')
 
 export default router

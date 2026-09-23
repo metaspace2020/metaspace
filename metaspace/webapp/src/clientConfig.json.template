@@ -1,5 +1,6 @@
 {
   "graphqlUrl": null,
+  "siteHostname": "{{ sm_webapp_hostname }}",
   "wsGraphqlUrl": null,
   "companionUrl": null,
   "stripe_pub": "{{ stripe_pub_key }}",
