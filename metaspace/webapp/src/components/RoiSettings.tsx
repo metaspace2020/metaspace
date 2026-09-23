@@ -1,28 +1,27 @@
 import { defineComponent, ref, reactive, computed, onMounted, onUnmounted, watch, inject } from 'vue'
 import { useStore } from 'vuex'
 import { useMutation, useQuery, DefaultApolloClient } from '@vue/apollo-composable'
-import { ElButton, ElIcon, ElInput, ElNotification, ElPopover, ElTooltip } from '../lib/element-plus'
+import { ElButton, ElIcon, ElInput, ElMessageBox, ElNotification, ElPopover, ElTooltip } from '../lib/element-plus'
 import * as FileSaver from 'file-saver'
 import ChannelSelector from '../modules/ImageViewer/ChannelSelector.vue'
 import './RoiSettings.scss'
-import { annotationListQuery } from '../api/annotation'
 import {
   getRoisQuery,
   createRoiMutation,
   updateRoiMutation,
   deleteRoiMutation,
   compareROIsMutation,
+  validateRoiGeoJsonQuery,
+  importRoisMutation,
   getDatasetDiagnosticsQuery,
+  msAcqGeometryQuery,
 } from '../api/dataset'
-import config from '../lib/config'
-import { loadPngFromUrl, processIonImage } from '../lib/ionImageRendering'
-import isInsidePolygon from '../lib/isInsidePolygon'
+import safeJsonParse from '../lib/safeJsonParse'
+import { roiToFeature, roisToFeatureCollection } from '../lib/roiGeoJson'
 import StatefulIcon from '../components/StatefulIcon.vue'
 import reportError from '../lib/reportError'
 import { defineAsyncComponent } from 'vue'
 import { Loading, DataLine } from '@element-plus/icons-vue'
-import { formatCsvTextArray } from '../lib/formatCsvRow'
-import { normalizationFileSuffix } from '../lib/normalization'
 import { useRouter } from 'vue-router'
 import { UserProfileQuery, userProfileQuery } from '@/api/user'
 import { isPlanLimitError, notifyPlanLimitReached } from '../lib/planLimits'
@@ -35,6 +34,10 @@ const RoiIcon = defineAsyncComponent(() => import('../assets/inline/roi-icon.svg
 
 const SaveIcon = defineAsyncComponent(() => import('../assets/inline/save-icon.svg'))
 
+const ExportIcon = defineAsyncComponent(() => import('../assets/inline/refactoring-ui/icon-cloud-download.svg'))
+
+const ImportIcon = defineAsyncComponent(() => import('../assets/inline/refactoring-ui/icon-cloud-upload.svg'))
+
 interface RoiSettingsProps {
   annotation: any
 }
@@ -42,11 +45,9 @@ interface RoiSettingsProps {
 interface RoiSettingsState {
   updatingPopper: boolean
   isUpdatingRoi: boolean
-  isDownloading: boolean
+  isExporting: boolean
+  isImporting: boolean
   isLoadingDA: boolean
-  offset: number
-  rows: any[]
-  cols: any[]
   rois: any[]
   isLoadingRois: boolean
   originalRoiIds: Set<string>
@@ -64,8 +65,6 @@ const channels: any = {
   white: 'rgb(255, 255, 255)',
 }
 
-const CHUNK_SIZE = 1000
-
 export default defineComponent({
   name: 'RoiSettings',
   props: {
@@ -79,15 +78,15 @@ export default defineComponent({
     const { mutate: updateRoi } = useMutation(updateRoiMutation)
     const { mutate: deleteRoi } = useMutation(deleteRoiMutation)
     const { mutate: compareROIs } = useMutation(compareROIsMutation)
+    const { mutate: importRois } = useMutation(importRoisMutation)
 
     const popover = ref<any>(null)
+    const fileInput = ref<HTMLInputElement | null>(null)
     const state = reactive<RoiSettingsState>({
-      offset: 0,
-      rows: [],
-      cols: [],
       updatingPopper: false,
       isUpdatingRoi: false,
-      isDownloading: false,
+      isExporting: false,
+      isImporting: false,
       isLoadingDA: false,
       rois: [],
       isLoadingRois: false,
@@ -96,41 +95,14 @@ export default defineComponent({
 
     const canEdit = computed(() => props.annotation?.dataset?.canEdit)
 
-    const queryVariables = () => {
-      const filter = store.getters.gqlAnnotationFilter
-      const dFilter = store.getters.gqlDatasetFilter
-      const colocalizationCoeffFilter = store.getters.gqlColocalizationFilter
-      const query = store.getters.ftsQuery
-
-      return {
-        filter,
-        dFilter,
-        query,
-        colocalizationCoeffFilter,
-        countIsomerCompounds: config.features.isomers,
-      }
-    }
-
     const { result: currentUserResult } = useQuery<UserProfileQuery | any>(userProfileQuery, null, {
       fetchPolicy: 'cache-first',
     })
     const currentUser = computed(() => (currentUserResult.value != null ? currentUserResult.value.currentUser : null))
 
-    const isNormalized = computed(() => store.getters.settings?.annotationView?.normalization)
-
     const isRoiVisible = computed(() => {
       return store.state.roiInfo?.visible || false
     })
-
-    const queryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
-    const queryVars = computed(() => ({
-      ...queryVariables(),
-      dFilter: { ...queryVariables().dFilter, ids: props.annotation.dataset.id },
-      limit: CHUNK_SIZE,
-      offset: state.offset,
-    }))
-
-    const { onResult: onAnnotationsResult } = useQuery<any>(annotationListQuery, queryVars, queryOptions as any)
 
     // ROI loading
     const roiQueryVars = computed(() => ({
@@ -147,31 +119,16 @@ export default defineComponent({
       roiQueryOptions as any
     )
 
-    onAnnotationsResult(async (result) => {
-      if (result && result.data) {
-        for (let i = 0; i < result.data.allAnnotations.length; i++) {
-          const annotation = result.data.allAnnotations[i]
-          await formatRow(annotation, isNormalized.value ? store.state.normalization : undefined)
-        }
-
-        if (state.offset < result.data.countAnnotations) {
-          state.offset += CHUNK_SIZE
-        } else {
-          queryOptions.enabled = false
-          const csv = state.rows.map((e: any) => e.join(',')).join('\n')
-          const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
-          FileSaver.saveAs(
-            blob,
-            `${props.annotation.dataset.name.replace(/\s/g, '_')}_ROI${
-              isNormalized.value ? normalizationFileSuffix(isNormalized.value) : ''
-            }.csv`
-          )
-          state.isDownloading = false
-          state.offset = 0
-          state.rows = []
-          state.cols = []
-        }
-      }
+    // Ion-image pixel grid size, used to describe the export and to pre-flight-check an
+    // import client-side before it's sent for authoritative server-side validation.
+    const { result: acqGeometryResult } = useQuery<any>(
+      msAcqGeometryQuery,
+      computed(() => ({ datasetId: props.annotation?.dataset?.id })),
+      { enabled: computed(() => !!props.annotation?.dataset?.id), fetchPolicy: 'cache-first' }
+    )
+    const imageBounds = computed(() => {
+      const grid = safeJsonParse(acqGeometryResult.value?.dataset?.acquisitionGeometry)?.acquisition_grid
+      return grid ? { width: grid.count_x, height: grid.count_y } : null
     })
 
     onRoisResult((result) => {
@@ -309,69 +266,6 @@ export default defineComponent({
       { immediate: true }
     )
 
-    const ionImage = (
-      ionImagePng: any,
-      isotopeImage: any,
-      scaleType: any = 'linear',
-      userScaling: any = [0, 1],
-      normalizedData: any = null
-    ) => {
-      if (!isotopeImage || !ionImagePng) {
-        return null
-      }
-      const { minIntensity, maxIntensity } = isotopeImage
-      return processIonImage(ionImagePng, minIntensity, maxIntensity, scaleType, userScaling, undefined, normalizedData)
-    }
-
-    const formatRow = async (annotation: any, normalizationData: any) => {
-      const [isotopeImage] = annotation.isotopeImages
-      const ionImagePng = await loadPngFromUrl(isotopeImage.url)
-      const molFormula: any = annotation.ionFormula
-      const molName: any = formatCsvTextArray(annotation.possibleCompounds.map((m: any) => m.name))
-      const molIds: any = formatCsvTextArray(annotation.possibleCompounds.map((m: any) => m.information[0].databaseId))
-      const adduct: any = annotation.adduct
-      const mz: any = annotation.mz
-      const finalImage: any = ionImage(
-        ionImagePng,
-        annotation.isotopeImages[0],
-        undefined,
-        undefined,
-        normalizationData
-      )
-      const row: any = [molFormula, adduct, mz, `"${molName}"`, `"${molIds}"`]
-      const roiInfo = getRoi()
-      const { width, height, intensityValues } = finalImage
-      const cols: any[] = ['mol_formula', 'adduct', 'mz', 'moleculeNames', 'moleculeIds']
-      const rows: any = state.rows
-
-      roiInfo
-        .filter((roi: any) => !roi.removed)
-        .forEach((roi: any) => {
-          const roiCoordinates = roi.coordinates.map((coordinate: any) => {
-            return [coordinate.x, coordinate.y]
-          })
-
-          for (let x = 0; x < width; x++) {
-            for (let y = 0; y < height; y++) {
-              if (isInsidePolygon([x, y], roiCoordinates)) {
-                if (state.offset === 0 && state.rows.length === 0) {
-                  cols.push(`${roi.name}_x${x}_y${y}`)
-                }
-                const idx = y * width + x
-                row.push(intensityValues[idx])
-              }
-            }
-          }
-        })
-
-      if (state.offset === 0 && state.rows.length === 0) {
-        rows.push(cols)
-      }
-
-      rows.push(row)
-      state.rows = rows
-    }
-
     const getRoi = () => {
       return state.rois || []
     }
@@ -482,37 +376,10 @@ export default defineComponent({
         }
         for (const roi of roiInfo) {
           if (roi && !roi.isDrawing && !roi.removed && roi.coordinates.length > 0) {
-            // Follow legacy format: store coordinates as {x, y} objects in properties
-            const geoJson = {
-              type: 'Feature',
-              properties: {
-                name: roi.name,
-                coordinates: roi.coordinates.map((coord: any) => ({
-                  x: coord.x ?? coord[0],
-                  y: coord.y ?? coord[1],
-                })),
-                channel: roi.channel,
-                rgb: roi.rgb,
-                color: roi.color,
-                strokeColor: roi.strokeColor,
-                visible: roi.visible,
-                allVisible: roi.allVisible,
-                stroke: roi.rgb,
-                'stroke-width': 1,
-                'stroke-opacity': 0,
-                fill: roi.rgb,
-                'fill-opacity': 0.4,
-              },
-              geometry: {
-                type: 'Polygon',
-                coordinates: [roi.coordinates.map((coord: any) => [coord.x ?? coord[0], coord.y ?? coord[1]])],
-              },
-            }
-
             const roiInput = {
               name: roi.name,
               isDefault: roi.isDefault || false,
-              geojson: JSON.stringify(geoJson),
+              geojson: JSON.stringify(roiToFeature(roi)),
             }
 
             if (roi.id && !roi.isLegacy && roi.canUpdate) {
@@ -548,9 +415,86 @@ export default defineComponent({
       }
     }
 
-    const triggerDownload = () => {
-      queryOptions.enabled = true
-      state.isDownloading = true
+    const handleExportGeoJson = () => {
+      const roiInfo = getRoi().filter((roi: any) => !roi.removed)
+      if (roiInfo.length === 0) {
+        return
+      }
+
+      state.isExporting = true
+      try {
+        const featureCollection = roisToFeatureCollection(roiInfo, {
+          datasetId: props.annotation?.dataset?.id,
+          datasetName: props.annotation?.dataset?.name,
+          imageWidth: imageBounds.value?.width,
+          imageHeight: imageBounds.value?.height,
+        })
+        const blob = new Blob([JSON.stringify(featureCollection, null, 2)], { type: 'application/geo+json' })
+        FileSaver.saveAs(blob, `${(props.annotation?.dataset?.name || 'dataset').replace(/\s/g, '_')}_ROI.geojson`)
+      } finally {
+        state.isExporting = false
+      }
+    }
+
+    const triggerImport = () => {
+      fileInput.value?.click()
+    }
+
+    const handleImportGeoJson = async (e: Event) => {
+      const input = e.target as HTMLInputElement
+      const file = input.files?.[0]
+      input.value = '' // allow re-selecting the same file
+      if (!file) {
+        return
+      }
+
+      state.isImporting = true
+      try {
+        const text = await file.text()
+        const { data } = await apolloClient.query({
+          query: validateRoiGeoJsonQuery,
+          variables: { datasetId: props.annotation?.dataset?.id, geojson: text },
+          fetchPolicy: 'no-cache',
+        })
+        const validation = data?.validateRoiGeoJson
+
+        if (!validation?.valid) {
+          const messages = (validation?.errors || []).map((issue: any) => issue.message)
+          ElNotification.error({
+            title: 'This GeoJSON file cannot be imported',
+            message: messages.join('\n') || 'The file is not a valid ROI GeoJSON export.',
+            dangerouslyUseHTMLString: false,
+            duration: 0,
+          })
+          return
+        }
+
+        const warningMessages = (validation.warnings || []).map((issue: any) => issue.message)
+        const confirmMessage = [
+          `${validation.roiCount} ROI${validation.roiCount === 1 ? '' : 's'} found in this file. ` +
+            'They will be added alongside the existing ROIs on this dataset.',
+          ...(warningMessages.length > 0 ? ['', 'Warnings:', ...warningMessages] : []),
+        ].join('\n')
+
+        try {
+          await ElMessageBox.confirm(confirmMessage, 'Import ROIs from GeoJSON', {
+            confirmButtonText: 'Import',
+            cancelButtonText: 'Cancel',
+            lockScroll: false,
+          })
+        } catch (cancel) {
+          return
+        }
+
+        await importRois({ datasetId: props.annotation?.dataset?.id, geojson: text })
+        await refetchRois()
+        ElNotification.success(`Imported ${validation.roiCount} ROI${validation.roiCount === 1 ? '' : 's'}.`)
+      } catch (err) {
+        ElNotification.error('There was a problem importing the ROI GeoJSON file.')
+        reportError(new Error(`Error importing ROI GeoJSON: ${JSON.stringify(err)}`), null)
+      } finally {
+        state.isImporting = false
+      }
     }
 
     const handleDiffAnalysis = async () => {
@@ -672,7 +616,7 @@ export default defineComponent({
     }
 
     const renderRoiIconContent = () => {
-      return <div class="max-w-xs">Create and save ROIs, export ROI pixels intensities.</div>
+      return <div class="max-w-xs">Create and save ROIs, or export/import them as GeoJSON.</div>
     }
 
     const renderMainPopoverReference = () => {
@@ -729,10 +673,35 @@ export default defineComponent({
             </ElTooltip>
 
             <div class="flex flex-row flex-wrap justify-end items-center">
-              {roiInfo.length > 0 && !state.isDownloading && (
-                <ElButton class="button-reset roi-download-icon" icon="Download" onClick={triggerDownload} />
+              <input
+                ref={fileInput}
+                type="file"
+                accept=".geojson,application/geo+json,.json,application/json"
+                class="hidden"
+                onChange={handleImportGeoJson}
+              />
+              <ElTooltip popperClass="roi-save-tooltip" content="Import ROIs from a GeoJSON file." placement="top">
+                {!state.isImporting && (
+                  <ElButton class="button-reset roi-upload-icon" onClick={triggerImport}>
+                    <ImportIcon class="fill-current w-5 h-5" />
+                  </ElButton>
+                )}
+                {state.isImporting && (
+                  <div class="button-reset roi-upload-icon">
+                    <ElIcon class="is-loading">
+                      <Loading />
+                    </ElIcon>
+                  </div>
+                )}
+              </ElTooltip>
+              {roiInfo.length > 0 && !state.isExporting && (
+                <ElTooltip popperClass="roi-save-tooltip" content="Export ROIs as a GeoJSON file." placement="top">
+                  <ElButton class="button-reset roi-download-icon" onClick={handleExportGeoJson}>
+                    <ExportIcon class="fill-current w-5 h-5" />
+                  </ElButton>
+                </ElTooltip>
               )}
-              {roiInfo.length > 0 && state.isDownloading && (
+              {roiInfo.length > 0 && state.isExporting && (
                 <div class="button-reset roi-download-icon">
                   <ElIcon class="is-loading">
                     <Loading />
