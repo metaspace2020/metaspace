@@ -10,6 +10,33 @@ import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
+// The application shell reads localStorage while it is being set up (news
+// dialog, feature popups). Give the render an empty in-memory store rather
+// than a ReferenceError. `window` and `document` are deliberately NOT shimmed:
+// libraries use their absence to tell they are not in a browser.
+class MemoryStorage {
+  #items = new Map()
+  get length() {
+    return this.#items.size
+  }
+  key(index) {
+    return [...this.#items.keys()][index] ?? null
+  }
+  getItem(key) {
+    return this.#items.has(key) ? this.#items.get(key) : null
+  }
+  setItem(key, value) {
+    this.#items.set(key, String(value))
+  }
+  removeItem(key) {
+    this.#items.delete(key)
+  }
+  clear() {
+    this.#items.clear()
+  }
+}
+globalThis.localStorage = new MemoryStorage()
+
 const here = dirname(fileURLToPath(import.meta.url))
 const distDir = resolve(here, '../dist')
 const ssrEntry = resolve(here, '../dist-ssr/entry-server.mjs')
@@ -55,7 +82,23 @@ async function main() {
     throw new Error(`${templatePath} has already been prerendered. Run "yarn build-ci" to rebuild it first.`)
   }
 
-  const { SEO_ROUTES, renderRoute, buildDocument, buildShellDocument, buildSitemapXml } = await import(ssrEntry)
+  const {
+    SEO_ROUTES,
+    renderRoute,
+    buildDocument,
+    buildShellDocument,
+    buildSitemapXml,
+    collectRouteCss,
+    pageSourceFor,
+  } = await import(ssrEntry)
+
+  // Which CSS chunks each route's page pulls in, so the static HTML links them
+  // and a lazily loaded page is styled before its JavaScript arrives.
+  const manifestPath = resolve(distDir, '.vite/manifest.json')
+  if (!existsSync(manifestPath)) {
+    throw new Error(`${manifestPath} not found - the browser build must run with build.manifest enabled.`)
+  }
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'))
 
   await writeFile(resolve(distDir, '_shell.html'), buildShellDocument(template), 'utf8')
   console.log('prerender: _shell.html (fallback, noindex)')
@@ -83,10 +126,14 @@ async function main() {
       markup = ''
     }
 
-    const html = buildDocument(template, route.name, route.path, markup)
+    const cssFiles = collectRouteCss(manifest, pageSourceFor(route.name))
+    const html = buildDocument(template, route.name, route.path, markup, cssFiles)
     await writeFile(resolve(distDir, route.file), html, 'utf8')
     const size = markup.length
-    console.log(`prerender: ${route.file.padEnd(22)} ${route.path.padEnd(16)} ${size ? `${size} chars` : 'META ONLY'}`)
+    const cssNote = cssFiles.length ? ` + ${cssFiles.length} css` : ''
+    console.log(
+      `prerender: ${route.file.padEnd(22)} ${route.path.padEnd(16)} ${size ? `${size} chars` : 'META ONLY'}${cssNote}`
+    )
   }
 
   if (failures.length > 0) {

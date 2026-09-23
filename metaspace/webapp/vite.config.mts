@@ -14,6 +14,7 @@ import Markdown from 'unplugin-vue-markdown/vite'
 export default defineConfig(({ isSsrBuild }) => ({
   build: {
     sourcemap: true,
+    manifest: true,
     assetsInlineLimit: 0,
     assetsDir: 'assets',
     rollupOptions: {
@@ -96,6 +97,13 @@ export default defineConfig(({ isSsrBuild }) => ({
               // @ts-ignore
               replacement: fileURLToPath(new URL('./src/prerender/graphqlClient.stub.ts', import.meta.url)),
             },
+            // Reads `document.cookie` while App.vue is being created.
+            {
+              find: 'vue3-cookies',
+              // @ts-ignore
+              replacement: fileURLToPath(new URL('./src/prerender/cookies.stub.ts', import.meta.url)),
+            },
+            // Prebuilt UMD bundle that reads `window` at import time.
             {
               find: 'vue3-resize-directive',
               // @ts-ignore

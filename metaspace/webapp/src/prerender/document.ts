@@ -4,7 +4,7 @@
 // the rest of the app: these are pure string functions the unit tests can
 // exercise without booting anything.
 
-import { SEO_NAV_LINKS, SEO_ROUTES, SITEMAP_EXTRA_ENTRIES } from '../lib/seoRoutes'
+import { SEO_ROUTES, SITEMAP_EXTRA_ENTRIES } from '../lib/seoRoutes'
 import { getSeoMetaForRoute } from '../lib/useSeo'
 import { getStructuredDataForRoute } from '../lib/structuredData'
 
@@ -36,14 +36,6 @@ export function buildHeadHtml(routeName: string, routePath: string): string {
   return lines.map((line) => `    ${line}`).join('\n')
 }
 
-/** A plain-HTML nav so a crawler that never runs JS can still find the site. */
-export function buildNavHtml(): string {
-  const links = SEO_NAV_LINKS.map(
-    (link) => `<li><a href="${escapeHtml(link.path)}">${escapeHtml(link.label)}</a></li>`
-  ).join('')
-  return `<nav aria-label="Site"><ul>${links}</ul></nav>`
-}
-
 /**
  * Strips the template's own title and description so the route-specific ones
  * are not competing with a generic pair left over from `index.html`.
@@ -65,13 +57,76 @@ function injectBody(template: string, bodyHtml: string): string {
   return template.replace(/(<body id="app">)/i, `$1\n<div id="prerendered-content">${bodyHtml}</div>`)
 }
 
+/** The subset of Vite's build manifest this needs. */
+export interface ManifestChunk {
+  file: string
+  css?: string[]
+  imports?: string[]
+}
+export type Manifest = Record<string, ManifestChunk>
+
+/**
+ * CSS files a route's page chunk brings with it, in load order: the chunk's
+ * own stylesheets after those of everything it statically imports. A key
+ * that is not in the manifest yields nothing - that is the eager-import case,
+ * whose CSS is already in index.css.
+ */
+export function collectRouteCss(manifest: Manifest, sourceKey: string | null): string[] {
+  const seen = new Set<string>()
+  const css: string[] = []
+  const visit = (key: string) => {
+    if (seen.has(key)) {
+      return
+    }
+    seen.add(key)
+    const chunk = manifest[key]
+    if (!chunk) {
+      return
+    }
+    for (const dep of chunk.imports ?? []) {
+      visit(dep)
+    }
+    for (const file of chunk.css ?? []) {
+      if (!css.includes(file)) {
+        css.push(file)
+      }
+    }
+  }
+  if (sourceKey) {
+    visit(sourceKey)
+  }
+  return css
+}
+
+function injectStylesheets(template: string, cssFiles: string[]): string {
+  // A page chunk imports the entry chunk, so the manifest hands back index.css
+  // too; anything the template already links is skipped.
+  cssFiles = cssFiles.filter((file) => !template.includes(`href="/${file}"`))
+  if (cssFiles.length === 0) {
+    return template
+  }
+  // After index.css, so the cascade matches what the running app produces
+  // when it appends the chunk's stylesheet later.
+  const links = cssFiles.map((file) => `  <link rel="stylesheet" crossorigin href="/${escapeHtml(file)}">`).join('\n')
+  const marker = /(<link rel="stylesheet"[^>]*href="\/assets\/index\.css"[^>]*>)/i
+  return marker.test(template)
+    ? template.replace(marker, `$1\n${links}`)
+    : template.replace(/<\/head>/i, `${links}\n</head>`)
+}
+
 /** The full HTML document for one prerendered route. */
-export function buildDocument(template: string, routeName: string, routePath: string, markup: string): string {
-  // Nav last: this markup is visible for the moment before the bundle mounts,
-  // and a bare list of links above the page reads as a broken header. A
-  // crawler does not care where in the document it finds them.
-  const body = `<main>${markup}</main>\n${buildNavHtml()}`
-  return injectBody(injectHead(template, buildHeadHtml(routeName, routePath)), body)
+export function buildDocument(
+  template: string,
+  routeName: string,
+  routePath: string,
+  markup: string,
+  cssFiles: string[] = []
+): string {
+  // The page is rendered inside the real application shell, so the header and
+  // footer - and their links - are already part of `markup`.
+  const body = `<main>${markup}</main>`
+  const withCss = injectStylesheets(template, cssFiles)
+  return injectBody(injectHead(withCss, buildHeadHtml(routeName, routePath)), body)
 }
 
 /**

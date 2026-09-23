@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildDocument, buildHeadHtml, buildNavHtml, buildShellDocument, buildSitemapXml } from './document'
+import { buildDocument, buildHeadHtml, buildShellDocument, buildSitemapXml, collectRouteCss } from './document'
 import { SEO_ROUTES, SITEMAP_EXTRA_ENTRIES } from '../lib/seoRoutes'
 
 const TEMPLATE = `<!DOCTYPE html>
@@ -8,6 +8,7 @@ const TEMPLATE = `<!DOCTYPE html>
     <meta charset="utf-8">
     <meta name="Description" content="Generic placeholder">
     <title>METASPACE annotation platform</title>
+  <link rel="stylesheet" crossorigin href="/assets/index.css">
 </head>
 <body id="app">
 <script type="module" src="/assets/index.js"></script>
@@ -67,9 +68,8 @@ describe('buildDocument', () => {
     expect(doc).toContain('/assets/index.js')
   })
 
-  it('includes a plain-HTML nav so a crawler can walk the site without JavaScript', () => {
-    expect(buildNavHtml()).toContain('<a href="/pro">METASPACE Pro</a>')
-    expect(doc).toContain('<a href="/annotations">Annotations</a>')
+  it('adds no nav of its own - the rendered shell already carries the header and footer links', () => {
+    expect(doc).not.toContain('aria-label="Site"')
   })
 })
 
@@ -116,5 +116,51 @@ describe('buildSitemapXml', () => {
 
   it('carries the changefreq and priority declared on each route', () => {
     expect(xml).toContain('<changefreq>weekly</changefreq><priority>1.0</priority>')
+  })
+})
+
+describe('collectRouteCss', () => {
+  // Shaped like dist/.vite/manifest.json: a lazily loaded page chunk, the
+  // shared chunk it imports, and the css each brings.
+  const manifest = {
+    'src/modules/Plans/ProPage.tsx': { file: 'assets/ProPage.js', css: ['assets/ProPage.css'], imports: ['_shared'] },
+    _shared: { file: 'assets/shared.js', css: ['assets/shared.css', 'assets/ProPage.css'] },
+    'src/modules/Faq/Faq.tsx': { file: 'assets/Faq.js', css: ['assets/Faq.css'], imports: ['_shared'] },
+  }
+
+  it("lists the page chunk's css after the css of what it imports, without duplicates", () => {
+    expect(collectRouteCss(manifest, 'src/modules/Plans/ProPage.tsx')).toEqual([
+      'assets/shared.css',
+      'assets/ProPage.css',
+    ])
+  })
+
+  it('yields nothing for an eagerly imported page, whose css is already in index.css', () => {
+    expect(collectRouteCss(manifest, 'src/modules/App/AboutPage.tsx')).toEqual([])
+    expect(collectRouteCss(manifest, null)).toEqual([])
+  })
+})
+
+describe('buildDocument stylesheets', () => {
+  it("links a route's css chunks right after index.css, so a lazy page is styled before its JavaScript runs", () => {
+    const doc = buildDocument(TEMPLATE, 'pro', '/pro', '<h1>x</h1>', ['assets/shared.css', 'assets/ProPage.css'])
+    const index = doc.indexOf('/assets/index.css')
+    const shared = doc.indexOf('href="/assets/shared.css"')
+    const pro = doc.indexOf('href="/assets/ProPage.css"')
+    expect(index).toBeGreaterThan(-1)
+    expect(shared).toBeGreaterThan(index)
+    expect(pro).toBeGreaterThan(shared)
+    expect(pro).toBeLessThan(doc.indexOf('</head>'))
+  })
+
+  it('does not link index.css a second time when the manifest lists it among the chunk css', () => {
+    const doc = buildDocument(TEMPLATE, 'pro', '/pro', '<h1>x</h1>', ['assets/index.css', 'assets/ProPage.css'])
+    expect(doc.match(/href="\/assets\/index\.css"/g)).toHaveLength(1)
+    expect(doc.match(/href="\/assets\/ProPage\.css"/g)).toHaveLength(1)
+  })
+
+  it('adds no stylesheet links when the route has no chunk css', () => {
+    const doc = buildDocument(TEMPLATE, 'home', '/', '<h1>x</h1>', [])
+    expect(doc.match(/<link rel="stylesheet"/g)).toHaveLength(1)
   })
 })

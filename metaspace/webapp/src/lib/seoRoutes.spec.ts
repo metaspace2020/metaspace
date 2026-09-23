@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { SEO_ROUTES, SEO_ROUTE_PATHS, SEO_NAV_LINKS } from './seoRoutes'
+import { SEO_ROUTES, SEO_ROUTE_PATHS } from './seoRoutes'
 import { getSeoMetaForRoute } from './useSeo'
 import { routes } from '../router'
 
@@ -40,14 +40,5 @@ describe('SEO_ROUTES', () => {
 
     const head = getSeoMetaForRoute({ name: 'about', path: '/about' })
     expect(head.link).toContainEqual({ rel: 'canonical', href: 'https://metaspace2020.org/' })
-  })
-
-  it('links every sitemap path from the static nav', () => {
-    for (const path of SEO_ROUTE_PATHS) {
-      expect(
-        SEO_NAV_LINKS.some((link) => link.path === path),
-        `${path} is in the sitemap but not reachable from the prerendered nav`
-      ).toBe(true)
-    }
   })
 })

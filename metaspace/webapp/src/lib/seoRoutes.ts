@@ -38,21 +38,3 @@ export const SITEMAP_EXTRA_ENTRIES: Pick<SeoRoute, 'path' | 'changefreq' | 'prio
 export const SEO_ROUTE_PATHS: string[] = SEO_ROUTES.filter((route) => route.canonicalPath == null).map(
   (route) => route.path
 )
-
-/**
- * Links rendered into the static header of every prerendered page, so a
- * crawler that never runs JavaScript can still walk the site.
- */
-export const SEO_NAV_LINKS: { path: string; label: string }[] = [
-  { path: '/', label: 'Home' },
-  { path: '/annotations', label: 'Annotations' },
-  { path: '/datasets', label: 'Datasets' },
-  { path: '/projects', label: 'Projects' },
-  { path: '/groups', label: 'Groups' },
-  { path: '/publications', label: 'Publications' },
-  { path: '/pro', label: 'METASPACE Pro' },
-  { path: '/detectability', label: 'Detectability' },
-  { path: '/docs/', label: 'Documentation' },
-  { path: '/faq', label: 'FAQ' },
-  { path: '/contact', label: 'Contact' },
-]
