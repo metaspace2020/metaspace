@@ -320,7 +320,7 @@ jobs:
           RABBITMQ_DEFAULT_USER: sm
           RABBITMQ_DEFAULT_PASS: password
 
-      - image: minio/minio:RELEASE.2024-06-29T01-20-47Z
+      - image: quay.io/minio/minio:RELEASE.2024-06-29T01-20-47Z
         entrypoint: sh
         command: -c 'mkdir -p /data/sm-engine-upload && mkdir -p /data/sm-imzml-browser-test && mkdir -p /data/sm-lithops-test && /usr/bin/minio server /data --console-address ":9001"'
 
@@ -387,7 +387,7 @@ jobs:
           RABBITMQ_DEFAULT_USER: sm
           RABBITMQ_DEFAULT_PASS: password
 
-      - image: minio/minio:RELEASE.2024-06-29T01-20-47Z
+      - image: quay.io/minio/minio:RELEASE.2024-06-29T01-20-47Z
         entrypoint: sh
         command: -c 'mkdir -p /data/sm-image-storage-sci-test && /usr/bin/minio server /data --console-address ":9001"'
 
