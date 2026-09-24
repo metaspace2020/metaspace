@@ -434,6 +434,10 @@ export class ImageSegmentationJob {
   @Column({ name: 'submitter_email', type: 'text', nullable: true })
   submitterEmail: string | null;
 
+  // Job request parameters (database ids, fdr, adducts, algorithm params), as submitted.
+  @Column({ type: 'jsonb', nullable: true })
+  parameters: any | null;
+
   @Column({
     name: 'created_at',
     type: 'timestamp without time zone',

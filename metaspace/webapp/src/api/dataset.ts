@@ -254,6 +254,18 @@ export const meanSpectrumAvailabilityQuery = gql`
       available
       wholeDatasetAvailable
       reason
+      whole {
+        roiId
+        peaks
+        available
+        reason
+      }
+      regions {
+        roiId
+        peaks
+        available
+        reason
+      }
     }
   }
 `

@@ -20,27 +20,32 @@ import logging
 import threading
 import time
 from collections import OrderedDict
-from typing import Optional, Tuple
+from typing import NamedTuple, Optional, Tuple
 
 import numpy as np
 
 from sm.engine.annotation.isocalc_wrapper import mass_accuracy_half_width
+from sm.engine.annotation_lithops.io import deserialize
 from sm.engine.config import SMConfig
 from sm.engine.db import DB
 from sm.engine.image_storage import ImageStorage
 from sm.engine.postprocessing.experiment_masks import rasterise_roi_mask
 from sm.engine.storage import get_s3_client
-from sm.engine.utils.dataset_image_data import get_imzml_browser_arrays, get_ppm, get_tic_image
+from sm.engine.utils.browser_arrays import STREAM_CHUNK_BYTES, BrowserArrays
+from sm.engine.utils.dataset_image_data import get_ppm, get_tic_image
+from sm.engine.utils.pixel_spectra import (
+    pixel_indexes_from_reader,
+    read_pixel_spectra,
+    region_peak_count,
+    sort_like_browser,
+)
 
 logger = logging.getLogger('api')
 
-# NOTE: The peak-count caps below are provisional. They are deliberately expressed in
-# peaks rather than pixels because the browser arrays are globally m/z-sorted, so every
-# request -- ROI or whole-dataset -- pays the same full download and membership scan.
-# Total peak count, not pixel count, is the cost driver. Re-tune these against real data,
-# including a densely-scattered processed-mode dataset (e.g. Waters MRT/Xevo), before
-# treating them as final.
-MEAN_SPECTRUM_MAX_PEAKS = 30_000_000
+# Peak-count caps. The region cap applies to the selected ROI's own peaks (read straight from
+# the .ibd, so cost scales with the region); the whole-dataset cap applies to the streaming
+# pass over the browser arrays.
+MEAN_SPECTRUM_MAX_REGION_PEAKS = 30_000_000
 MEAN_SPECTRUM_WHOLE_DS_MAX_PEAKS = 10_000_000
 
 # Cap on points returned to the client. A whole-dataset axis can hold 10^5-10^6 clusters,
@@ -99,7 +104,26 @@ def _format_peak_count(n: int) -> str:
     return label if n == millions * 1_000_000 else f'over {label}'
 
 
-def _cluster_bounds_strict(mzs, pix, instrument, ppm) -> np.ndarray:
+def _previous_same_pixel(pix) -> np.ndarray:
+    """For each position, the previous position holding the same pixel, or -1.
+
+    A slice ``[start, end)`` contains a repeated pixel exactly when some member's previous
+    occurrence is also inside it, i.e. ``prev[start:end].max() >= start``. Computed once,
+    it replaces a sort per candidate cluster.
+    """
+    pix = np.asarray(pix)
+    n = len(pix)
+    order = np.lexsort((np.arange(n), pix))
+    sorted_pix = pix[order]
+    prev = np.full(n, -1, dtype=np.int64)
+    same_as_before = sorted_pix[1:] == sorted_pix[:-1]
+    prev[order[1:][same_as_before]] = order[:-1][same_as_before]
+    return prev
+
+
+def _cluster_bounds_strict(  # pylint: disable=too-many-locals
+    mzs, pix, instrument, ppm
+) -> np.ndarray:
     """Return cluster start offsets for m/z-sorted ``mzs`` under MALDIquant's strict rule.
 
     A cluster is accepted when its m/z span fits inside the instrument's mass-accuracy
@@ -135,6 +159,7 @@ def _cluster_bounds_strict(mzs, pix, instrument, ppm) -> np.ndarray:
     block_starts = np.concatenate(([0], forced))
     block_ends = np.concatenate((forced, [n]))
 
+    prev_same = _previous_same_pixel(pix)
     starts = []
     stack = list(zip(block_starts.tolist(), block_ends.tolist()))
     while stack:
@@ -144,10 +169,12 @@ def _cluster_bounds_strict(mzs, pix, instrument, ppm) -> np.ndarray:
             continue
 
         sub_mzs = mzs[start:end]
-        tol = mass_accuracy_half_width(float(sub_mzs.mean()), instrument, ppm)
+        # same arithmetic as sub_mzs.mean(): pairwise sum, one division
+        mean = np.add.reduce(sub_mzs) / (end - start)
+        tol = mass_accuracy_half_width(float(mean), instrument, ppm)
         within_tol = (sub_mzs[-1] - sub_mzs[0]) <= tol
         # "strict": a single pixel must not contribute two peaks to one cluster
-        no_dup_pixels = len(np.unique(pix[start:end])) == (end - start)
+        no_dup_pixels = prev_same[start:end].max() < start
 
         if within_tol and no_dup_pixels:
             starts.append(start)
@@ -223,21 +250,76 @@ def select_top_peaks(ref_mzs, summed_ints, support, max_points: int = MEAN_SPECT
     return ref_mzs[top_idx], summed_ints[top_idx], support[top_idx]
 
 
+_files_cache: 'OrderedDict[str, DatasetPeakFiles]' = OrderedDict()
+FILES_CACHE_MAX_ENTRIES = 16
+
+
+class DatasetPeakFiles(NamedTuple):
+    """Where a dataset's peaks live: browser files by uuid, raw .ibd and its spectrum reader."""
+
+    uuid: str
+    upload_bucket: str
+    ibd_key: str
+    reader: object
+    input_path: str  # a re-upload changes it, which invalidates the cache entry
+
+
 class MeanSpectrumManager:
-    """Loads region peaks for a dataset, builds the reference axis, caches the result."""
+    """Loads region peaks for a dataset, builds the reference axis, caches the result.
 
-    def __init__(self, db: Optional[DB] = None):
+    One instance serves one request; per-dataset lookups are memoised on the instance.
+    """
+
+    def __init__(self, db: Optional[DB] = None, s3_client=None, image_storage=None, sm_config=None):
         self._db = db or DB()
-        self._sm_config = SMConfig.get_conf()
-        self._s3_client = get_s3_client(sm_config=self._sm_config)
-        self._image_storage = ImageStorage()
+        self._sm_config = sm_config or SMConfig.get_conf()
+        self._s3_client = s3_client or get_s3_client(sm_config=self._sm_config)
+        self._image_storage = image_storage or ImageStorage()
         self._browser_bucket = self._sm_config['imzml_browser_storage']['bucket']
+        self._input_paths = {}
 
-    def _dataset_uuid(self, ds_id: str) -> str:
-        res = self._db.select_one('SELECT input_path FROM dataset WHERE id = %s', params=(ds_id,))
-        if not res:
-            raise ValueError(f'Dataset {ds_id} does not exist')
-        return res[0].split('/')[-1]
+    def _input_path(self, ds_id: str) -> str:
+        if ds_id not in self._input_paths:
+            res = self._db.select_one(
+                'SELECT input_path FROM dataset WHERE id = %s', params=(ds_id,)
+            )
+            if not res:
+                raise ValueError(f'Dataset {ds_id} does not exist')
+            self._input_paths[ds_id] = res[0]
+        return self._input_paths[ds_id]
+
+    def _dataset_files(self, ds_id: str) -> DatasetPeakFiles:
+        """Locate the .ibd and load the spectrum reader pickle; cached across requests and
+        re-validated against ``input_path`` so a re-uploaded dataset is never served stale."""
+        input_path = self._input_path(ds_id)
+        with _cache_lock:
+            cached = _files_cache.get(ds_id)
+            if cached is not None and cached.input_path == input_path:
+                _files_cache.move_to_end(ds_id)
+                return cached
+
+        uuid, upload_bucket = input_path.split('/')[-1], input_path.split('/')[-2]
+        listing = self._s3_client.list_objects_v2(Bucket=upload_bucket, Prefix=uuid)
+        ibd_keys = [
+            o['Key'] for o in listing.get('Contents', []) if o['Key'].lower().endswith('.ibd')
+        ]
+        if not ibd_keys:
+            raise ValueError(f'No .ibd file found for dataset {ds_id}')
+        body = self._s3_client.get_object(
+            Bucket=self._browser_bucket, Key=f'{uuid}/portable_spectrum_reader.pickle'
+        )['Body'].read()
+        files = DatasetPeakFiles(uuid, upload_bucket, ibd_keys[-1], deserialize(body), input_path)
+
+        with _cache_lock:
+            _files_cache[ds_id] = files
+            _files_cache.move_to_end(ds_id)
+            while len(_files_cache) > FILES_CACHE_MAX_ENTRIES:
+                _files_cache.popitem(last=False)
+        return files
+
+    def _browser_arrays(self, ds_id: str) -> BrowserArrays:
+        uuid = self._input_path(ds_id).split('/')[-1]
+        return BrowserArrays(self._s3_client, self._browser_bucket, uuid)
 
     def _instrument(self, ds_id: str) -> str:
         res = self._db.select_one(
@@ -246,20 +328,41 @@ class MeanSpectrumManager:
         )
         if not res:
             raise ValueError(f'Dataset {ds_id} does not exist')
-        # Datasets processed before the instrument config field existed have no value;
-        # default to TOF, matching IsocalcWrapper's convention.
+        # datasets processed before the instrument field existed default to TOF (IsocalcWrapper)
         return res[0] or 'TOF'
 
     def peak_count(self, ds_id: str) -> int:
         """Total peaks in the dataset, from the size of mzs.npy. No download."""
-        uuid = self._dataset_uuid(ds_id)
-        head = self._s3_client.head_object(Bucket=self._browser_bucket, Key=f'{uuid}/mzs.npy')
-        return int(head['ContentLength']) // np.dtype('f').itemsize
+        return self._browser_arrays(ds_id).peak_count()
+
+    def _roi_ids(self, ds_id: str):
+        rows = self._db.select(
+            'SELECT id, name FROM public.roi WHERE dataset_id = %s ORDER BY id', params=(ds_id,)
+        )
+        return [(int(roi_id), name) for roi_id, name in rows]
+
+    @staticmethod
+    def _region_availability(roi_id, peaks: int, cap: int, label: str) -> dict:
+        available = peaks <= cap
+        return {
+            'roi_id': roi_id,
+            'peaks': int(peaks),
+            'available': available,
+            'reason': (
+                None
+                if available
+                else (
+                    f'{label} has {_format_peak_count(peaks)} peaks, above the '
+                    f'{_format_peak_count(cap)} peak limit for mean spectra'
+                )
+            ),
+        }
 
     def availability(self, ds_id: str) -> dict:
-        """Whether the tab, and the whole-dataset option within it, can be offered."""
+        """Whether the tab can be offered, and which regions (each ROI, whole dataset) can."""
         try:
             total_peaks = self.peak_count(ds_id)
+            files = self._dataset_files(ds_id)
         except Exception as e:  # pylint: disable=broad-except
             logger.warning(f'Mean spectrum unavailable for {ds_id}: {e}')
             return {
@@ -267,33 +370,32 @@ class MeanSpectrumManager:
                 'whole_dataset_available': False,
                 'reason': 'imzML browser files are not available for this dataset',
                 'total_peaks': 0,
+                'whole': {'roi_id': None, 'peaks': 0, 'available': False, 'reason': None},
+                'regions': [],
             }
 
-        if total_peaks > MEAN_SPECTRUM_MAX_PEAKS:
-            return {
-                'available': False,
-                'whole_dataset_available': False,
-                'reason': (
-                    f'Dataset has {_format_peak_count(total_peaks)} peaks, above the '
-                    f'{_format_peak_count(MEAN_SPECTRUM_MAX_PEAKS)} peak limit for mean spectra'
-                ),
-                'total_peaks': total_peaks,
-            }
-
-        whole_ok = total_peaks <= MEAN_SPECTRUM_WHOLE_DS_MAX_PEAKS
+        whole = self._region_availability(
+            None, total_peaks, MEAN_SPECTRUM_WHOLE_DS_MAX_PEAKS, 'The whole dataset'
+        )
+        regions = []
+        acquired_image = self._acquired_image(ds_id)
+        for roi_id, _ in self._roi_ids(ds_id):
+            try:
+                mask = self.region_mask(ds_id, roi_id, acquired_image)
+                peaks = region_peak_count(files.reader, mask)
+            except ValueError as e:
+                regions.append({'roi_id': roi_id, 'peaks': 0, 'available': False, 'reason': str(e)})
+                continue
+            regions.append(
+                self._region_availability(roi_id, peaks, MEAN_SPECTRUM_MAX_REGION_PEAKS, 'Region')
+            )
         return {
             'available': True,
-            'whole_dataset_available': whole_ok,
-            'reason': (
-                None
-                if whole_ok
-                else (
-                    f'Whole-dataset spectra are unavailable above '
-                    f'{_format_peak_count(MEAN_SPECTRUM_WHOLE_DS_MAX_PEAKS)} peaks '
-                    f'(this dataset has {_format_peak_count(total_peaks)})'
-                )
-            ),
+            'whole_dataset_available': whole['available'],
+            'reason': whole['reason'],
             'total_peaks': total_peaks,
+            'whole': whole,
+            'regions': regions,
         }
 
     def _roi_geojson(self, ds_id: str, roi_id) -> dict:
@@ -306,56 +408,107 @@ class MeanSpectrumManager:
         geojson = res[0]
         return json.loads(geojson) if isinstance(geojson, str) else geojson
 
-    def region_mask(self, ds_id: str, roi_id) -> np.ndarray:
-        """Flat boolean mask over pixel indices, indexed the same way as ``sp_idxs``.
+    def _acquired_image(self, ds_id: str) -> np.ndarray:
+        """2-D boolean image of acquired pixels (TIC > 0)."""
+        return get_tic_image(self._db, self._image_storage, ds_id) > 0
 
-        Only acquired pixels count: the ROI polygon is intersected with the TIC>0
-        footprint so that a loosely-drawn polygon, or a non-rectangular acquisition,
-        does not deflate the mean with pixels that never held a spectrum.
-        """
-        tic_image = get_tic_image(self._db, self._image_storage, ds_id)
-        height, width = tic_image.shape
-        acquired = (tic_image > 0).ravel()
-
+    def region_mask(
+        self,
+        ds_id: str,
+        roi_id,
+        acquired_image: Optional[np.ndarray] = None,
+        geojson: Optional[dict] = None,
+    ) -> np.ndarray:
+        """Flat boolean mask over pixel indices (``y * w + x``): the ROI polygon intersected
+        with the acquired (TIC > 0) footprint, so unacquired pixels never deflate the mean."""
+        if acquired_image is None:
+            acquired_image = self._acquired_image(ds_id)
+        height, width = acquired_image.shape
+        acquired = acquired_image.ravel()
         if roi_id is None:
             return acquired
 
-        geojson = self._roi_geojson(ds_id, roi_id)
+        if geojson is None:
+            geojson = self._roi_geojson(ds_id, roi_id)
         roi_mask = rasterise_roi_mask(geojson, int(roi_id), width, height)
         if roi_mask is None:
             raise ValueError(f'ROI {roi_id} has no usable polygon')
         return acquired & roi_mask.astype(bool).ravel()
 
-    def _cache_key(self, ds_id: str, roi_id, instrument: str, ppm: float) -> str:
+    @staticmethod
+    def _cache_key(ds_id: str, roi_id, geojson, instrument: str, ppm: float) -> str:
         if roi_id is None:
             region_hash = WHOLE_DATASET
         else:
-            # ROIs are edited in place (updateRoi rewrites roi.geojson) and carry no
-            # version column, so the key has to hash the polygon itself.
-            geojson = self._roi_geojson(ds_id, roi_id)
+            # ROIs are edited in place and carry no version column: hash the polygon itself
             canonical = json.dumps(geojson, sort_keys=True, separators=(',', ':'))
             region_hash = f'{roi_id}:{hashlib.sha256(canonical.encode()).hexdigest()[:16]}'
         return f'mean_spectrum:v{ALGO_VERSION}:{ds_id}:{region_hash}:{instrument}:{ppm}'
 
-    def _compute_uncached(self, ds_id: str, roi_id, instrument: str, ppm: float) -> dict:
-        mask = self.region_mask(ds_id, roi_id)
+    def _region_peaks(self, ds_id: str, roi_id, mask: np.ndarray):
+        """The ROI's peaks read from the .ibd, ordered like the browser arrays."""
+        files = self._dataset_files(ds_id)
+        pixel_indexes = pixel_indexes_from_reader(files.reader)
+        in_grid = pixel_indexes < len(mask)
+        in_region = np.zeros(len(pixel_indexes), dtype=bool)
+        in_region[in_grid] = mask[pixel_indexes[in_grid]]
+
+        peaks = region_peak_count(files.reader, mask)
+        cap = MEAN_SPECTRUM_MAX_REGION_PEAKS
+        if peaks > cap:
+            raise ValueError(self._region_availability(roi_id, peaks, cap, 'Region')['reason'])
+
+        mzs, ints, pix = read_pixel_spectra(
+            self._s3_client,
+            files.upload_bucket,
+            files.ibd_key,
+            files.reader,
+            np.where(in_region)[0],
+        )
+        return sort_like_browser(mzs, ints, pix)
+
+    def _whole_dataset_peaks(self, ds_id: str, acquired: np.ndarray):
+        """Stream the browser arrays once, keeping peaks that fall on acquired pixels."""
+        arrays = self._browser_arrays(ds_id)
+        total_peaks = arrays.peak_count()
+        cap = MEAN_SPECTRUM_WHOLE_DS_MAX_PEAKS
+        if total_peaks > cap:
+            raise ValueError(
+                self._region_availability(None, total_peaks, cap, 'The whole dataset')['reason']
+            )
+
+        mz_parts, int_parts, pix_parts = [], [], []
+        for mzs, ints, sp_idxs in arrays.iter_chunks(STREAM_CHUNK_BYTES):
+            pix = sp_idxs.astype(np.int32)
+            keep = (pix >= 0) & (pix < len(acquired))
+            keep[keep] = acquired[pix[keep]]
+            mz_parts.append(mzs[keep])
+            int_parts.append(ints[keep])
+            pix_parts.append(pix[keep])
+        mzs = np.concatenate(mz_parts) if mz_parts else np.empty(0, 'f')
+        ints = np.concatenate(int_parts) if int_parts else np.empty(0, 'f')
+        pix = np.concatenate(pix_parts) if pix_parts else np.empty(0, np.int32)
+        return mzs, ints, pix
+
+    def _compute_uncached(self, ds_id: str, roi_id, geojson, instrument: str, ppm: float) -> dict:
+        mask = self.region_mask(ds_id, roi_id, geojson=geojson)
         n_pixels = int(mask.sum())
         if n_pixels == 0:
             raise ValueError('The selected region contains no acquired pixels')
 
-        mzs, ints, sp_idxs = get_imzml_browser_arrays(
-            self._db, self._s3_client, self._sm_config, ds_id
-        )
-        pix = sp_idxs.astype(np.int64)
-        # sp_idx is a flattened pixel index; guard against indices outside the TIC grid
-        in_region = (pix >= 0) & (pix < len(mask)) & mask[np.clip(pix, 0, len(mask) - 1)]
+        if roi_id is None:
+            mzs, ints, pix = self._whole_dataset_peaks(ds_id, mask)
+        else:
+            mzs, ints, pix = self._region_peaks(ds_id, roi_id, mask)
 
         ref_mzs, summed_ints, support = build_reference_axis_strict(
-            mzs[in_region], ints[in_region], pix[in_region], instrument, ppm, n_pixels
+            mzs, ints, pix, instrument, ppm, n_pixels
         )
         total_peaks = len(ref_mzs)
         ref_mzs, summed_ints, support = select_top_peaks(ref_mzs, summed_ints, support)
-
+        logger.info(
+            f'Mean spectrum for {ds_id} roi={roi_id}: {len(mzs)} peaks -> {total_peaks} clusters'
+        )
         return {
             'mzs': ref_mzs,
             'summed_ints': summed_ints,
@@ -368,28 +521,21 @@ class MeanSpectrumManager:
         }
 
     def compute(self, ds_id: str, roi_id=None) -> dict:
-        """Reference axis and summed intensities for the region. Cached in-process.
+        """Reference axis and summed intensities for the region, cached in-process.
 
-        The result is stat-independent -- mean and sum differ only by ``n_pixels`` -- so
-        the aggregation stat is deliberately not part of the cache key. The cache is
-        consulted before the availability check: an entry can only exist because it was
-        computed under the peak limits, so a hit skips the S3 head request entirely.
+        Mean and sum differ only by ``n_pixels``, so the aggregation stat is not part of the
+        key. The peak caps apply only on a miss.
         """
         instrument = self._instrument(ds_id)
         ppm = get_ppm(self._db, ds_id)
-        cache_key = self._cache_key(ds_id, roi_id, instrument, ppm)
+        geojson = None if roi_id is None else self._roi_geojson(ds_id, roi_id)
+        cache_key = self._cache_key(ds_id, roi_id, geojson, instrument, ppm)
 
         cached = _cache_get(cache_key)
         if cached is not None:
             logger.info(f'Mean spectrum cache hit for {cache_key}')
             return cached
 
-        availability = self.availability(ds_id)
-        if not availability['available']:
-            raise ValueError(availability['reason'])
-        if roi_id is None and not availability['whole_dataset_available']:
-            raise ValueError(availability['reason'])
-
-        result = self._compute_uncached(ds_id, roi_id, instrument, ppm)
+        result = self._compute_uncached(ds_id, roi_id, geojson, instrument, ppm)
         _cache_put(cache_key, result)
         return result

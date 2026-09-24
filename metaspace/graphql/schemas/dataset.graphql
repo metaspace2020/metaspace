@@ -453,10 +453,19 @@ type MeanSpectrum {
   instrument: String!
 }
 
+type MeanSpectrumRegionAvailability {
+  roiId: ID
+  peaks: Int!
+  available: Boolean!
+  reason: String
+}
+
 type MeanSpectrumAvailability {
   available: Boolean!
   wholeDatasetAvailable: Boolean!
   reason: String
+  whole: MeanSpectrumRegionAvailability!
+  regions: [MeanSpectrumRegionAvailability!]!
 }
 
 type DiffRoiResult {

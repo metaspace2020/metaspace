@@ -323,15 +323,34 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     if (!await esDatasetByID(datasetId, ctx.user)) {
       return null
     }
+    // Engine payload: `{available, whole_dataset_available, reason, whole: {peaks, available, reason},
+    // regions: [{roi_id, peaks, available, reason}]}`. `whole`/`regions` carry the per-region peak counts
+    // the webapp uses to disable ROIs over the cap.
+    const toRegionAvailability = (roiId: string | null, region: any) => ({
+      roiId,
+      peaks: region?.peaks ?? 0,
+      available: region?.available ?? false,
+      reason: region?.reason ?? null,
+    })
     try {
       const resp = await smApiJsonGet(`/v1/browser/mean_spectrum_availability/${datasetId}`)
+      const whole = toRegionAvailability(null, resp.whole)
       return {
-        available: resp.available,
-        wholeDatasetAvailable: resp.whole_dataset_available,
+        available: resp.available ?? false,
+        wholeDatasetAvailable: resp.whole_dataset_available ?? whole.available,
         reason: resp.reason ?? null,
+        whole,
+        regions: (resp.regions ?? []).map((region: any) => toRegionAvailability(String(region.roi_id), region)),
       }
     } catch (e) {
-      return { available: false, wholeDatasetAvailable: false, reason: 'Mean spectrum is unavailable' }
+      const reason = 'Mean spectrum is unavailable'
+      return {
+        available: false,
+        wholeDatasetAvailable: false,
+        reason,
+        whole: toRegionAvailability(null, { reason }),
+        regions: [],
+      }
     }
   },
   async meanSpectrum(source, { datasetId, roiId }, ctx: Context) {

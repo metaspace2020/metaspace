@@ -12,11 +12,9 @@ from sm.engine.db import DB
 from sm.engine.formula_parser import format_ion_formula
 from sm.engine.image_storage import ImageStorage
 from sm.engine.storage import get_s3_client, get_s3_resource
-from sm.engine.utils.dataset_image_data import (
-    get_imzml_browser_dataset,
-    get_ppm,
-    get_tic_image,
-)
+from sm.engine.utils.browser_arrays import STREAM_CHUNK_BYTES, browser_arrays_for_dataset
+from sm.engine.utils.dataset_image_data import get_ppm, get_tic_image
+from sm.engine.utils.ion_images import iter_ion_image_chunks, postprocess_ion_image_chunk
 
 logger = logging.getLogger('update-daemon')
 
@@ -50,6 +48,32 @@ ANNOTATIONS_SEL = '''
 # happens in float4 precision. Without the cast the stored 0.05 promotes to
 # 0.05000000074... > 0.05::float8 and boundary (FDR == threshold) rows are dropped.
 FDR_CLAUSE = '\n      AND m.fdr <= %s::real'
+
+
+def fill_intensity_matrix(  # pylint: disable=too-many-arguments
+    arrays,
+    mz_lo: np.ndarray,
+    mz_hi: np.ndarray,
+    chunk_bytes: int,
+    n_pixels: int,
+    rows: int,
+    tic_flat: np.ndarray,
+    hotspot_percentile: int = 99,
+) -> np.ndarray:
+    """``(n_foreground_pixels, n_annotations)`` TIC-normalised intensities, built once.
+
+    Streams ``rows`` ion images at a time and writes only the foreground pixels into the
+    output, so no full-grid matrix and no second copy ever exist.
+    """
+    tic_nonzero = tic_flat > 0
+    matrix = np.empty((int(tic_nonzero.sum()), len(mz_lo)), dtype=np.float32)
+    chunks = iter_ion_image_chunks(arrays, mz_lo, mz_hi, chunk_bytes, n_pixels, rows)
+    for start, end, chunk in chunks:
+        postprocess_ion_image_chunk(
+            chunk, tic_flat, tic_nonzero, hotspot_percentile, True, log_transform_tic=False
+        )
+        matrix[:, start:end] = chunk[:, tic_nonzero].T
+    return matrix
 
 
 # ---------------------------------------------------------------------------
@@ -155,64 +179,10 @@ class SegmentationDataLoader:
         return 1
 
     # ------------------------------------------------------------------
-    # Ion image construction (mirrors DiffROIManager.build_ion_images_chunk
-    # without log transform)
-    # ------------------------------------------------------------------
-
-    @staticmethod
-    def build_ion_images_chunk(  # pylint: disable=too-many-arguments
-        lefts: np.ndarray,
-        rights: np.ndarray,
-        ints: np.ndarray,
-        sp_idxs: np.ndarray,
-        n_pixels: int,
-        chunk_start: int,
-        chunk_end: int,
-        tic_flat: Optional[np.ndarray] = None,
-        tic_nonzero: Optional[np.ndarray] = None,
-        hotspot_percentile: int = 99,
-        tic_normalize: bool = True,
-    ) -> np.ndarray:
-        """Build a chunk of ion images from raw spectral data and TIC-normalise.
-
-        Matches DiffROIManager.build_ion_images_chunk without the log transform,
-        which is not appropriate for segmentation inputs.
-
-        Returns
-        -------
-        np.ndarray, shape (chunk_end - chunk_start, n_pixels), float32
-        """
-        size = chunk_end - chunk_start
-        chunk = np.zeros((size, n_pixels), dtype=np.float32)
-
-        for i in range(size):
-            low = lefts[chunk_start + i]
-            high = rights[chunk_start + i]
-            if low < high:
-                chunk[i] = np.bincount(
-                    sp_idxs[low:high], weights=ints[low:high], minlength=n_pixels
-                )
-
-        # Hotspot clipping
-        k = int(n_pixels * hotspot_percentile / 100)
-        partitioned = np.partition(chunk, k, axis=1)
-        thresholds = partitioned[:, k : k + 1]
-        del partitioned
-        thresholds = np.where(thresholds > 0, thresholds, chunk.max(axis=1)[:, np.newaxis])
-        np.minimum(chunk, thresholds, out=chunk)
-
-        # TIC normalisation (no log transform)
-        if tic_normalize and tic_flat is not None and tic_nonzero is not None:
-            chunk[:, tic_nonzero] /= tic_flat[tic_nonzero]
-            chunk[:, ~tic_nonzero] = 0  # pylint: disable=invalid-unary-operand-type
-
-        return chunk
-
-    # ------------------------------------------------------------------
     # Main entry point
     # ------------------------------------------------------------------
 
-    def prepare_segmentation_input(  # pylint: disable=too-many-locals
+    def prepare_segmentation_input(  # pylint: disable=too-many-locals, too-many-arguments
         self,
         database_ids: List[int],
         fdr: float = 0.1,
@@ -266,50 +236,33 @@ class SegmentationDataLoader:
                 f'{database_ids} at fdr={fdr}'
             )
 
-        # 2. Shared dataset image data (ppm, peak arrays, TIC image)
-        peak_array = get_imzml_browser_dataset(
-            self._db, self._s3_client, self._sm_config, self.ds_id
-        )
+        # 2. Dataset image data (ppm, TIC image); peaks are streamed, never loaded whole
         ppm = get_ppm(self._db, self.ds_id)
         tic_image = get_tic_image(self._db, self._image_storage, self.ds_id)
-
-        mzs = peak_array[:, 0]
-        ints = peak_array[:, 1]
-        sp_idxs = peak_array[:, 2].astype(np.int32)
 
         height, width = tic_image.shape
         n_pixels = height * width
         tic_flat = tic_image.ravel()
-        tic_nonzero = tic_flat > 0
+        foreground_mask = tic_flat > 0
 
-        # 3. Per-annotation mz search bounds (mirrors precompute_mz_bounds in DiffROIData)
+        # 3. Per-annotation m/z windows
         theo_mzs = np.array([r['theo_mz'] for r in annotations], dtype=np.float64)
         factor = theo_mzs * ppm * 1e-6
-        lefts = np.searchsorted(mzs, theo_mzs - factor, side='left')
-        rights = np.searchsorted(mzs, theo_mzs + factor, side='right')
-
         n_ann = len(annotations)
 
-        # 4. Build full intensity matrix (n_ann, n_pixels) in chunks
-        intensity_full = np.empty((n_ann, n_pixels), dtype=np.float32)
-        for chunk_start in range(0, n_ann, chunk_size):
-            chunk_end = min(chunk_start + chunk_size, n_ann)
-            intensity_full[chunk_start:chunk_end] = self.build_ion_images_chunk(
-                lefts,
-                rights,
-                ints,
-                sp_idxs,
-                n_pixels,
-                chunk_start,
-                chunk_end,
-                tic_flat=tic_flat,
-                tic_nonzero=tic_nonzero,
-            )
+        # 4. Stream ion images `chunk_size` at a time straight into the foreground matrix
+        arrays = browser_arrays_for_dataset(self._db, self._s3_client, self._sm_config, self.ds_id)
+        intensity_matrix = fill_intensity_matrix(
+            arrays,
+            theo_mzs - factor,
+            theo_mzs + factor,
+            chunk_bytes=STREAM_CHUNK_BYTES,
+            n_pixels=n_pixels,
+            rows=chunk_size,
+            tic_flat=tic_flat,
+        )
 
-        # 5. Apply foreground mask → (n_foreground, n_ann)
-        foreground_mask = tic_flat > 0
-        intensity_matrix = intensity_full[:, foreground_mask].T
-
+        # 5. Pixel coordinates of the foreground
         pixel_indices = np.where(foreground_mask)[0]
         pixel_coordinates = np.column_stack([pixel_indices % width, pixel_indices // width]).astype(
             np.int32
@@ -325,12 +278,8 @@ class SegmentationDataLoader:
         )
 
         # 6. Serialise and upload to S3
-        res = self._db.select_one(
-            'SELECT input_path FROM dataset WHERE id = %s', params=(self.ds_id,)
-        )
-        uuid = res[0].split('/')[-1]
-        bucket_name = self._sm_config['imzml_browser_storage']['bucket']
-        s3_key = f'{uuid}/segmentation_input.npz'
+        bucket_name = arrays.bucket
+        s3_key = f'{arrays.uuid}/segmentation_input.npz'
 
         buf = BytesIO()
         np.savez_compressed(

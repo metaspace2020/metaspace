@@ -27,6 +27,7 @@ import {
 import { annotationListQuery } from '../../../api/annotation'
 import config from '../../../lib/config'
 import safeJsonParse from '../../../lib/safeJsonParse'
+import { meanSpectrumEmptyMessage as buildMeanSpectrumEmptyMessage } from './meanSpectrumEmptyMessage'
 import { DatasetBrowserSpectrumChart } from './DatasetBrowserSpectrumChart'
 import './DatasetBrowserPage.scss'
 import { SimpleIonImageViewer } from '../../../components/SimpleIonImageViewer/SimpleIonImageViewer'
@@ -102,6 +103,22 @@ interface DatasetBrowserState {
   // undefined until the ROI list arrives and a default is picked
   meanSpectrumRegion: string | undefined
   meanSpectrumStat: string
+}
+
+/** One entry of `meanSpectrumAvailability.regions` (or its `whole` field). */
+interface MeanSpectrumRegionAvailability {
+  roiId: string | null
+  peaks: number | null
+  available: boolean
+  reason: string | null
+}
+
+interface MeanSpectrumAvailability {
+  available: boolean
+  wholeDatasetAvailable: boolean
+  reason: string | null
+  whole?: MeanSpectrumRegionAvailability
+  regions?: MeanSpectrumRegionAvailability[]
 }
 
 const PEAK_FILTER = {
@@ -331,19 +348,39 @@ export default defineComponent({
       () => ({ datasetId: datasetId.value }),
       () => ({ enabled: meanSpectrumEnabled.value })
     )
-    const meanAvailability = computed(() => meanAvailabilityResult.value?.meanSpectrumAvailability)
+    const meanAvailability = computed<MeanSpectrumAvailability | undefined>(
+      () => meanAvailabilityResult.value?.meanSpectrumAvailability
+    )
+    // Per-ROI availability keyed by ROI id. ROIs whose peak count exceeds the engine's
+    // memory cap come back `available: false` with a human-readable reason.
+    const meanRegionAvailability = computed<Map<string, MeanSpectrumRegionAvailability>>(() => {
+      const regions = meanAvailability.value?.regions ?? []
+      return new Map(regions.map((region) => [String(region.roiId), region]))
+    })
+    const isRoiAvailable = (roiId: string): boolean => {
+      const region = meanRegionAvailability.value.get(roiId)
+      return region === undefined || region.available
+    }
 
-    // Default to the first ROI, matching the ordering `rois` returns (own ROIs first,
-    // isDefault DESC then name ASC) and the diff-analysis view's convention. Falls back
-    // to the whole dataset when there are no ROIs but the dataset is small enough.
+    // Default to the first available ROI, matching the ordering `rois` returns (own ROIs
+    // first, isDefault DESC then name ASC) and the diff-analysis view's convention. Falls
+    // back to the whole dataset when no ROI is usable but the dataset is small enough.
     const resolvedRegion = computed(() => {
       if (state.meanSpectrumRegion !== undefined) {
         return state.meanSpectrumRegion
       }
-      if (rois.value.length > 0) {
-        return String(rois.value[0].id)
+      const firstAvailableRoi = rois.value.find((roi: any) => isRoiAvailable(String(roi.id)))
+      if (firstAvailableRoi) {
+        return String(firstAvailableRoi.id)
       }
       return meanAvailability.value?.wholeDatasetAvailable ? WHOLE_DATASET_REGION : undefined
+    })
+    const selectedRegionAvailability = computed<MeanSpectrumRegionAvailability | undefined>(() => {
+      const region = resolvedRegion.value
+      if (region === undefined) {
+        return undefined
+      }
+      return region === WHOLE_DATASET_REGION ? meanAvailability.value?.whole : meanRegionAvailability.value.get(region)
     })
 
     watch(datasetId, () => {
@@ -382,17 +419,14 @@ export default defineComponent({
       ])
     })
 
-    const meanSpectrumEmptyMessage = computed(() => {
-      if (meanSpectrumError.value) {
-        return meanSpectrumError.value.message.replace(/^GraphQL error:\s*/, '')
-      }
-      if (meanAvailability.value && !meanAvailability.value.available) {
-        return meanAvailability.value.reason
-      }
-      if (rois.value.length === 0 && !meanAvailability.value?.wholeDatasetAvailable) {
-        return 'No saved regions for this dataset — define an ROI to see its mean spectrum'
-      }
-      return 'No peaks passed the minimum pixel support for this region'
+    const meanSpectrumEmptyMessage = computed<string>(() => {
+      const error = meanSpectrumError.value
+      return buildMeanSpectrumEmptyMessage({
+        errorMessage: error?.message ?? null,
+        availability: meanAvailability.value ?? null,
+        selectedRegion: selectedRegionAvailability.value ?? null,
+        hasRois: rois.value.length > 0,
+      })
     })
 
     const handleMeanSpectrumDownload = () => {
@@ -1383,6 +1417,7 @@ export default defineComponent({
       const availability = meanAvailability.value
       const wholeAvailable = availability?.wholeDatasetAvailable ?? false
       const spectrum = meanSpectrum.value
+      const regionPeaks = selectedRegionAvailability.value?.peaks
 
       return (
         <div class="dataset-browser-mean-controls p-0 m-0 flex items-center justify-start h-[48px] w-full">
@@ -1398,9 +1433,18 @@ export default defineComponent({
                 placeholder="Select a region"
                 size="small"
               >
-                {rois.value.map((roi: any) => (
-                  <ElOption key={roi.id} label={roi.name} value={String(roi.id)} />
-                ))}
+                {rois.value.map((roi: any) => {
+                  const roiId = String(roi.id)
+                  const unavailable = !isRoiAvailable(roiId)
+                  return (
+                    <ElOption
+                      key={roi.id}
+                      label={unavailable ? `${roi.name} (unavailable)` : roi.name}
+                      value={roiId}
+                      disabled={unavailable}
+                    />
+                  )
+                })}
                 <ElOption
                   label={wholeAvailable ? 'Whole dataset' : 'Whole dataset (unavailable)'}
                   value={WHOLE_DATASET_REGION}
@@ -1423,34 +1467,37 @@ export default defineComponent({
               </ElSelect>
             </div>
             {spectrum && (
-              <div class="ml-auto flex items-center gap-1 text-xs text-gray-500">
-                {/* Computation parameter, not the ion-image tolerance the user controls */}
-                <ElTooltip
-                  popperClass="max-w-md"
-                  content={
-                    'Peaks from all pixels in the region are clustered onto a reference ' +
-                    `m/z axis at ${spectrum.clusteringPpm} ppm (${spectrum.instrument} ` +
-                    'peak-width scaling). This tolerance is independent of the ion image ppm.' +
-                    (spectrum.returnedPeaks < spectrum.totalPeaks
-                      ? ` Showing the ${spectrum.returnedPeaks.toLocaleString()} most intense` +
-                        ` of ${spectrum.totalPeaks.toLocaleString()} peaks.`
-                      : '')
-                  }
-                  placement="top"
-                >
-                  <ElIcon class="text-sm cursor-pointer">
-                    <InfoFilled />
-                  </ElIcon>
-                </ElTooltip>
-                <span>
-                  {`${spectrum.clusteringPpm} ppm clustering (${spectrum.instrument}), ` +
-                    `${spectrum.nPixels.toLocaleString()} pixels` +
-                    (spectrum.returnedPeaks < spectrum.totalPeaks
-                      ? ` · top ${spectrum.returnedPeaks.toLocaleString()}` +
-                        ` of ${spectrum.totalPeaks.toLocaleString()} peaks`
-                      : '')}
-                </span>
-              </div>
+              <ElTooltip popperClass="max-w-md" placement="top">
+                {{
+                  content: () => (
+                    <div class="space-y-1">
+                      <p class="m-0">
+                        {'Peaks from all pixels in the region are clustered onto a reference m/z axis at ' +
+                          `${spectrum.clusteringPpm} ppm (${spectrum.instrument} peak-width scaling). ` +
+                          'This tolerance is independent of the ion image ppm.'}
+                      </p>
+                      <p class="m-0">{`${spectrum.nPixels.toLocaleString()} pixels in the region`}</p>
+                      {typeof regionPeaks === 'number' && (
+                        <p class="m-0">{`${regionPeaks.toLocaleString()} peaks in the region`}</p>
+                      )}
+                      <p class="m-0">
+                        {spectrum.returnedPeaks < spectrum.totalPeaks
+                          ? `Showing the ${spectrum.returnedPeaks.toLocaleString()} most intense of ` +
+                            `${spectrum.totalPeaks.toLocaleString()} clustered peaks`
+                          : `${spectrum.totalPeaks.toLocaleString()} clustered peaks`}
+                      </p>
+                    </div>
+                  ),
+                  default: () => (
+                    <div class="ml-auto flex items-center gap-1 text-xs text-gray-500 cursor-help">
+                      <ElIcon class="text-sm">
+                        <InfoFilled />
+                      </ElIcon>
+                      <span>{`${spectrum.clusteringPpm} ppm clustering (${spectrum.instrument})`}</span>
+                    </div>
+                  ),
+                }}
+              </ElTooltip>
             )}
           </div>
         </div>

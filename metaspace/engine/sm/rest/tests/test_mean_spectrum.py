@@ -6,11 +6,18 @@ MALDIquant's strict rule, and those must not change the result relative to a dir
 transcription of the algorithm.
 """
 
+# pylint: disable=protected-access
+from io import BytesIO
+from types import MethodType, SimpleNamespace
+from unittest.mock import MagicMock
+
 import numpy as np
 import pytest
 
 from sm.engine.annotation.isocalc_wrapper import mass_accuracy_half_width
+from sm.rest import mean_spectrum_manager
 from sm.rest.mean_spectrum_manager import (
+    MeanSpectrumManager,
     _format_peak_count,
     build_reference_axis_strict,
     select_top_peaks,
@@ -209,3 +216,239 @@ def test_select_top_peaks_passthrough_when_under_cap():
 
     got = select_top_peaks(ref_mzs, summed, support, max_points=10)
     np.testing.assert_array_equal(got[0], ref_mzs)
+
+
+# ---------------------------------------------------------------------------
+# MeanSpectrumManager: region-aware availability, region reads, budget
+# ---------------------------------------------------------------------------
+
+
+DS = '2020-01-01_00h00m00s'
+# two acquired pixels: spectrum 0 -> pixel 0 with 3 peaks, spectrum 1 -> pixel 1 with 4 peaks
+READER = SimpleNamespace(
+    coordinates=[(1, 1, 1), (2, 1, 1)],
+    mzOffsets=[16, 40],
+    mzLengths=[3, 4],
+    intensityOffsets=[100, 112],
+    intensityLengths=[3, 4],
+    mzPrecision='d',
+    intensityPrecision='f',
+)
+
+
+def _manager(monkeypatch, masks, total_peaks=50_000_000, caps=None):
+    monkeypatch.setattr(mean_spectrum_manager, 'MEAN_SPECTRUM_MAX_REGION_PEAKS', 5)
+    for name, value in (caps or {}).items():
+        monkeypatch.setattr(mean_spectrum_manager, name, value)
+    db = MagicMock()
+    db.select.return_value = [(1, 'ROI 1'), (2, 'ROI 2')]
+    db.select_one.return_value = ('s3://upload/x/the-uuid',)
+    manager = MeanSpectrumManager(
+        db=db,
+        s3_client=MagicMock(),
+        image_storage=MagicMock(),
+        sm_config={'imzml_browser_storage': {'bucket': 'browser'}},
+    )
+    manager.peak_count = lambda ds_id: total_peaks
+    manager._browser_arrays = lambda ds_id: SimpleNamespace(
+        peak_count=lambda: total_peaks, iter_chunks=lambda chunk_bytes: iter([])
+    )
+    manager.region_mask = lambda ds_id, roi_id, acquired_image=None, geojson=None: masks[roi_id]
+    manager._acquired_image = lambda ds_id: np.array([[True, True]])
+    manager._dataset_files = lambda ds_id: SimpleNamespace(
+        uuid='the-uuid', upload_bucket='upload', ibd_key='the-uuid/f.ibd', reader=READER
+    )
+    manager._instrument = lambda ds_id: 'TOF'
+    manager._cache_key = lambda *a: f'test:{a}'
+    manager._roi_geojson = lambda ds_id, roi_id: {}
+    monkeypatch.setattr(mean_spectrum_manager, 'get_ppm', lambda db, ds_id: 3)
+    mean_spectrum_manager._cache.clear()
+    return manager
+
+
+MASKS = {
+    None: np.array([True, True]),
+    1: np.array([True, False]),
+    2: np.array([True, True]),
+    3: np.array([False, False]),
+}
+
+
+def test_availability_reports_each_region_against_the_region_cap(monkeypatch):
+    manager = _manager(monkeypatch, MASKS)
+
+    result = manager.availability(DS)
+
+    assert result['available'] is True
+    assert result['total_peaks'] == 50_000_000
+    assert result['whole_dataset_available'] is False
+    assert result['whole']['available'] is False and result['whole']['peaks'] == 50_000_000
+    regions = {r['roi_id']: r for r in result['regions']}
+    assert regions[1] == {'roi_id': 1, 'peaks': 3, 'available': True, 'reason': None}
+    assert regions[2]['available'] is False and regions[2]['peaks'] == 7
+    assert '7' in regions[2]['reason'] and '5' in regions[2]['reason']
+
+
+def test_availability_without_browser_files(monkeypatch):
+    manager = _manager(monkeypatch, MASKS)
+
+    def boom(ds_id):
+        raise RuntimeError('no such key')
+
+    manager.peak_count = boom
+
+    result = manager.availability(DS)
+
+    assert result['available'] is False
+    assert result['regions'] == []
+    assert 'not available' in result['reason']
+
+
+def test_compute_roi_with_no_acquired_pixels_raises(monkeypatch):
+    manager = _manager(monkeypatch, MASKS)
+    with pytest.raises(ValueError, match='no acquired pixels'):
+        manager.compute(DS, 3)
+
+
+def test_compute_roi_over_region_cap_names_the_region_count(monkeypatch):
+    manager = _manager(monkeypatch, MASKS)
+    with pytest.raises(ValueError, match='Region has 7 peaks'):
+        manager.compute(DS, 2)
+
+
+def test_compute_roi_reads_only_the_region_spectra(monkeypatch):
+    manager = _manager(monkeypatch, MASKS)
+    calls = []
+
+    def fake_read(s3, bucket, key, reader, spectra, **kwargs):  # pylint: disable=unused-argument
+        calls.append((bucket, key, list(spectra)))
+        return (
+            np.array([100.0, 100.0000001, 200.0]),
+            np.array([1.0, 2.0, 3.0], dtype='f'),
+            np.array([0, 0, 0], dtype=np.int32),
+        )
+
+    monkeypatch.setattr(mean_spectrum_manager, 'read_pixel_spectra', fake_read)
+    monkeypatch.setattr(
+        mean_spectrum_manager,
+        'build_reference_axis_strict',
+        lambda *a: (np.array([100.0]), np.array([3.0]), np.array([1])),
+    )
+
+    result = manager.compute(DS, 1)
+
+    assert calls == [('upload', 'the-uuid/f.ibd', [0])]
+    assert result['n_pixels'] == 1
+    assert result['returned_peaks'] == 1
+
+
+def test_compute_whole_dataset_streams_and_keeps_acquired_pixels_only(monkeypatch):
+    manager = _manager(monkeypatch, {None: np.array([True, False, True])}, total_peaks=6)
+    chunks = [
+        (np.array([1.0, 2.0], 'f'), np.array([1.0, 1.0], 'f'), np.array([0.0, 1.0], 'f')),
+        (np.array([3.0, 4.0], 'f'), np.array([1.0, 1.0], 'f'), np.array([2.0, 7.0], 'f')),
+    ]
+    manager._browser_arrays = lambda ds_id: SimpleNamespace(
+        peak_count=lambda: 6, iter_chunks=lambda chunk_bytes: iter(chunks)
+    )
+    seen = {}
+
+    def fake_build(mzs, ints, pix, instrument, ppm, n_pixels):  # pylint: disable=unused-argument
+        seen['pix'] = pix.tolist()
+        return np.array([1.0]), np.array([1.0]), np.array([1])
+
+    monkeypatch.setattr(mean_spectrum_manager, 'build_reference_axis_strict', fake_build)
+
+    result = manager.compute(DS, None)
+
+    assert seen['pix'] == [0, 2]  # pixel 1 not acquired, pixel 7 outside the grid
+    assert result['n_pixels'] == 2
+
+
+def test_compute_whole_dataset_over_cap_raises(monkeypatch):
+    manager = _manager(monkeypatch, MASKS, total_peaks=50_000_000)
+    with pytest.raises(ValueError, match='whole dataset'):
+        manager.compute(DS, None)
+
+
+# ---------------------------------------------------------------------------
+# MeanSpectrumManager: files-cache invalidation, one TIC fetch per availability
+# ---------------------------------------------------------------------------
+
+
+def test_dataset_files_cache_refreshes_when_input_path_changes(monkeypatch):
+    db = MagicMock()
+    db.select_one.side_effect = [('s3://upload/x/uuid-a',), ('s3://upload/x/uuid-b',)]
+    s3 = MagicMock()
+    s3.list_objects_v2.side_effect = lambda Bucket, Prefix: {
+        'Contents': [{'Key': f'{Prefix}/file.ibd'}]
+    }
+    s3.get_object.side_effect = lambda Bucket, Key: {'Body': BytesIO(Key.encode())}
+    monkeypatch.setattr(mean_spectrum_manager, 'deserialize', lambda body: body.decode())
+    mean_spectrum_manager._files_cache.clear()
+    manager = MeanSpectrumManager(
+        db=db,
+        s3_client=s3,
+        image_storage=MagicMock(),
+        sm_config={'imzml_browser_storage': {'bucket': 'browser'}},
+    )
+
+    first = manager._dataset_files(DS)
+    second = manager._dataset_files(DS)
+    third = MeanSpectrumManager(  # a later request: new instance, same module cache
+        db=db,
+        s3_client=s3,
+        image_storage=MagicMock(),
+        sm_config={'imzml_browser_storage': {'bucket': 'browser'}},
+    )._dataset_files(DS)
+
+    assert first is second and first.uuid == 'uuid-a'
+    assert third is not first and third.uuid == 'uuid-b'
+    assert third.ibd_key == 'uuid-b/file.ibd'
+    assert third.reader == 'uuid-b/portable_spectrum_reader.pickle'
+
+
+def test_availability_loads_the_tic_image_once_for_all_regions(monkeypatch):
+    manager = _manager(monkeypatch, MASKS)
+    # real implementations, not the helper's stubs
+    manager.region_mask = MethodType(MeanSpectrumManager.region_mask, manager)
+    manager._acquired_image = MethodType(MeanSpectrumManager._acquired_image, manager)
+    manager._roi_geojson = lambda ds_id, roi_id: {}
+    tic_calls = []
+
+    def fake_tic(db, image_storage, ds_id):  # pylint: disable=unused-argument
+        tic_calls.append(ds_id)
+        return np.array([[1.0, 1.0]])
+
+    monkeypatch.setattr(mean_spectrum_manager, 'get_tic_image', fake_tic)
+    monkeypatch.setattr(
+        mean_spectrum_manager, 'rasterise_roi_mask', lambda *a: np.array([[1, 0]], np.uint8)
+    )
+
+    result = manager.availability(DS)
+
+    assert len(result['regions']) == 2
+    assert all(r['peaks'] == 3 for r in result['regions'])
+    assert tic_calls == [DS]
+
+
+# ---------------------------------------------------------------------------
+# duplicate-pixel check without a per-cluster sort
+# ---------------------------------------------------------------------------
+
+
+def test_previous_same_pixel_marks_earlier_occurrences():
+    pix = np.array([5, 3, 5, 5, 3, 9])
+    prev = mean_spectrum_manager._previous_same_pixel(pix)
+    np.testing.assert_array_equal(prev, [-1, -1, 0, 2, 1, -1])
+
+
+@pytest.mark.parametrize('seed', range(5))
+def test_range_max_of_previous_matches_unique_check(seed):
+    rng = np.random.default_rng(seed)
+    pix = rng.integers(0, 6, 60)
+    prev = mean_spectrum_manager._previous_same_pixel(pix)
+    for start in range(0, 60, 7):
+        for end in range(start + 1, 61, 5):
+            expected = len(np.unique(pix[start:end])) == end - start
+            assert (prev[start:end].max() < start) == expected

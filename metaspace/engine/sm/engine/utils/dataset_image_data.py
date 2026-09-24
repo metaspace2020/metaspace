@@ -1,9 +1,10 @@
-"""Shared, ROI-agnostic accessors for dataset-level imzML browser data and diagnostics.
+"""Shared, ROI-agnostic accessors for dataset-level diagnostics (ppm, TIC image).
 
-These load generic imaging data for a dataset (ppm, peak arrays, TIC image) and have
-no ROI or segmentation semantics. Both ``DiffROIData`` (sm/rest) and
-``SegmentationDataLoader`` (sm/engine/postprocessing) use them via dependency injection:
-the caller owns the ``db`` / ``s3_client`` / ``image_storage`` clients and passes them in.
+Peak data is never loaded whole any more: consumers stream the m/z-sorted browser arrays
+through ``sm.engine.utils.browser_arrays`` or read a region's spectra from the ``.ibd``
+through ``sm.engine.utils.pixel_spectra``. Both ``DiffROIData`` (sm/rest) and
+``SegmentationDataLoader`` (sm/engine/postprocessing) use these accessors via dependency
+injection: the caller owns the ``db`` / ``image_storage`` clients and passes them in.
 """
 
 from io import BytesIO
@@ -17,38 +18,6 @@ def get_ppm(db, ds_id):
         params=(ds_id,),
     )
     return int(ppm[0])
-
-
-def get_imzml_browser_arrays(db, s3_client, sm_config, ds_id):
-    """Return the browser's (mzs, ints, sp_idxs) arrays, globally sorted by m/z.
-
-    Kept separate rather than stacked so callers that only need the columns avoid the
-    transient 3x copy that stacking costs on large datasets.
-    """
-    res = db.select_one('SELECT input_path FROM dataset WHERE id = %s', params=(ds_id,))
-
-    uuid = res[0].split('/')[-1]
-    browser_bucket = sm_config['imzml_browser_storage']['bucket']
-
-    keys_path = {
-        'mzs': f'{uuid}/mzs.npy',
-        'ints': f'{uuid}/ints.npy',
-        'sp_idxs': f'{uuid}/sp_idxs.npy',
-    }
-
-    result = {}
-    for key_name, mz_index_key in keys_path.items():
-        s3_object = s3_client.get_object(Bucket=browser_bucket, Key=mz_index_key)
-        bytestream = s3_object['Body'].read()
-        result[key_name] = np.frombuffer(bytestream, dtype='f')
-
-    return result['mzs'], result['ints'], result['sp_idxs']
-
-
-def get_imzml_browser_dataset(db, s3_client, sm_config, ds_id):
-    mzs, ints, sp_idxs = get_imzml_browser_arrays(db, s3_client, sm_config, ds_id)
-    peak_array = np.stack([mzs, ints, sp_idxs]).T
-    return peak_array
 
 
 def get_tic_image(db, image_storage, ds_id):
