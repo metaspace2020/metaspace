@@ -13,6 +13,10 @@ docker-compose up -d
 echo "Waiting 10 seconds for everything to run init scripts..."
 sleep 10
 
+# create S3 buckets in the storage service
+echo "Creating storage buckets"
+docker-compose run --rm api /sm-engine/create-buckets.sh
+
 # set up ElasticSearch
 echo "Creating ElasticSearch index"
 docker-compose run --rm api /sm-engine/create-es-index.sh

@@ -44,6 +44,28 @@ Webapp and graphql are set to auto-reload if code changes, but they'll need to b
 if dependencies change. Api, update-daemon and lithops-daemon will need to be manually
 restarted for code changes to take effect.
 
+**Upgrading from the MinIO-based stack (before 2026-09-25):** the `storage` service is now RustFS,
+which reads MinIO's on-disk data directly. To keep your existing datasets:
+
+1. If you use `docker-compose.custom.yml`, copy the new `storage:` block from `docker-compose.yml` into it.
+2. `docker-compose stop storage`
+3. `<DATA_ROOT>` below is the value of `DATA_ROOT` from `docker/.env` (default `./data`, i.e. `docker/data`).
+   With the default: `cd docker && mv data/s3 data/s3.bak && cp -Rc data/s3.bak data/s3` (macOS/APFS
+   clone, instant). Adjust the paths if your `DATA_ROOT` in `.env` is not `./data`. On Linux use
+   `cp -a --reflink=auto` instead of `cp -Rc` (instant on btrfs/XFS, a full copy on ext4). MinIO ran as
+   root, so on Linux the old `s3` tree is root-owned; the `mv` works, but deleting `s3.bak` later needs
+   `sudo`.
+4. `docker-compose up -d storage && docker-compose run --rm api /sm-engine/create-buckets.sh`
+5. Restart `api`, `update-daemon` and `lithops-daemon`.
+
+`s3.bak` is your rollback copy for the old MinIO image (which is no longer downloadable, so do not
+delete it from your Docker cache). Remove `s3.bak` only once you are sure you will not go back.
+Skip step 3 if you do not care about existing data; RustFS then starts empty.
+
+Rollback: the previous MinIO `storage:` block is in `git show 046164c2:docker/docker-compose.yml`; put
+it back with the volume pointed at `<DATA_ROOT>/s3.bak:/data`. It only works while the old image is
+still in your local Docker cache.
+
 ### Recommended bash aliases
 
 Add these to your `~/.bashrc` or `~/.bash_profile`:
@@ -85,6 +107,9 @@ Development tools:
 * `localhost:5432` - Postgres server. Can be used with e.g. DataGrip.
     Username: `postgres`, Password: `postgres`, Database: `sm`
 * http://localhost:15672/ - RabbitMQ management interface
+* http://localhost:9001/rustfs/console/ - RustFS console (S3-compatible object storage). Username: `minioadmin`, Password: `minioadmin`.
+    The S3 API is on `localhost:9000`; data lives in `${DATA_ROOT}/s3` (the same directory MinIO used; the pre-RustFS original is `s3.bak`).
+* `docker-compose logs storage` is sparse by design: RustFS writes WARN-and-above to `/logs/rustfs.log` inside the container and prints only a few startup lines to stdout. Use `curl -s localhost:9000/health` to check it is up.
 
 Watching application logs:
 
@@ -93,6 +118,10 @@ Watching application logs:
 Rebuilding the Elasticsearch index:
 
 * `docker-compose run --rm api /sm-engine/rebuild-es-index.sh`
+
+Recreating the storage buckets (e.g. after wiping `${DATA_ROOT}/s3`):
+
+* `docker-compose run --rm api /sm-engine/create-buckets.sh`
 
 ### Creating an admin user
 
