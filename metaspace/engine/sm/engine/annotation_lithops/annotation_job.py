@@ -146,7 +146,8 @@ def _upload_moldbs_from_db(moldb_ids, storage, sm_storage):
         except StorageNoSuchKeyError:
             logger.info(f'Uploading {key}...')
             mols_query = DB().select(
-                'SELECT DISTINCT formula FROM molecule WHERE moldb_id = %s', (moldb_id,)
+                'SELECT DISTINCT formula FROM molecule WHERE moldb_id = %s ORDER BY formula',
+                (moldb_id,),
             )
             mols = [mol for mol, in mols_query]
             cobject = save_cobj(storage, mols, bucket=bucket, key=key)

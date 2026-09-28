@@ -197,3 +197,21 @@ def test_run_fdr_ranking():
     assert np.isclose(fdr, expected_fdr).all()
     assert np.isclose(fdr_ros, expected_fdr_ros).all()
     assert np.isclose(fdr_mono, expected_fdr_mono).all()
+
+
+@pytest.mark.parametrize('analysis_version', [1, 3])
+def test_fdr_decoy_adduct_selection_is_input_order_invariant(analysis_version):
+    formulas = ['H2O', 'C2H2', 'C8H20NO6P', 'C44H86NO8P', 'CO2']
+
+    def select_decoys(target_formulas):
+        fdr = FDR(
+            fdr_config={'decoy_sample_size': 5},
+            chem_mods=[],
+            neutral_losses=[],
+            target_adducts=['+H', '+Na', '+K'],
+            analysis_version=analysis_version,
+        )
+        fdr.decoy_adducts_selection(target_formulas=target_formulas)
+        return fdr.td_df.sort_values(by=['formula', 'tm', 'dm']).reset_index(drop=True)
+
+    assert_frame_equal(select_decoys(formulas), select_decoys(list(reversed(formulas))))
