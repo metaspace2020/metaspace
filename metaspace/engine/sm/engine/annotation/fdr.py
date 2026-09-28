@@ -230,36 +230,18 @@ class FDR:
             target_msm = formula_msm[formula_msm.modifier == tm]
             full_decoy_df = td_df.loc[tm, ['formula', 'dm']].rename(columns={'dm': 'modifier'})
 
-            if self.analysis_version >= 3:
-                # Do a single big ranking with all the decoys, numerically compensating for the
-                # imbalanced sets sizes. This is equivalent to averaging across the different random
-                # sets of decoys.
-                decoy_msm = pd.merge(formula_msm, full_decoy_df, on=['formula', 'modifier'])
-                target_df, decoy_df = scoring_model.score(
-                    target_msm, decoy_msm, self.decoy_sample_size
-                )
+            # TEST ONLY: every analysis_version uses the v3 estimator. Decoy generation, isotope
+            # envelopes and metrics still follow analysis_version.
+            # Do a single big ranking with all the decoys, numerically compensating for the
+            # imbalanced sets sizes. This is equivalent to averaging across the different random
+            # sets of decoys.
+            decoy_msm = pd.merge(formula_msm, full_decoy_df, on=['formula', 'modifier'])
+            target_df, decoy_df = scoring_model.score(target_msm, decoy_msm, self.decoy_sample_size)
 
-                fdr_vals = run_fdr_ranking(
-                    target_df.msm, decoy_df.msm, self.decoy_sample_size, True, True
-                )
-                target_fdr = target_df.assign(fdr=fdr_vals)
-            else:
-                # Do a separate ranking for each of the 20 target:decoy pairings, then take the
-                # median FDR for each target
-                fdr_vals_list = []
-                for i in range(self.decoy_sample_size):
-                    decoy_subset_df = full_decoy_df[i :: self.decoy_sample_size]
-                    decoy_msm = pd.merge(formula_msm, decoy_subset_df, on=['formula', 'modifier'])
-
-                    # Extra columns added by scoring_model are discarded for simplicity,
-                    # as it's unlikely anyone will use this codepath with a CatBoost model
-                    target_df, decoy_df = scoring_model.score(target_msm, decoy_msm, 1)
-
-                    fdr_vals = run_fdr_ranking(target_df.msm, decoy_df.msm, 1, False, False)
-                    fdr_vals_list.append(fdr_vals)
-
-                msm_to_fdr = pd.Series(pd.concat(fdr_vals_list, axis=1).median(axis=1), name='fdr')
-                target_fdr = self._digitize_fdr(target_msm.join(msm_to_fdr))
+            fdr_vals = run_fdr_ranking(
+                target_df.msm, decoy_df.msm, self.decoy_sample_size, True, True
+            )
+            target_fdr = target_df.assign(fdr=fdr_vals)
             target_fdr_df_list.append(target_fdr)
 
         return pd.concat(target_fdr_df_list)
