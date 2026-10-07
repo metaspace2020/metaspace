@@ -43,6 +43,7 @@ import { assertCanPerformAction, getDeviceInfo, hashIp, performAction } from '..
 import { hasBetaFeature } from '../../plan/util/betaTesterApi'
 import { cleanEmptyStrings } from '../../../utils/regexSanitizer'
 import canEditEsDataset from '../operation/canEditEsDataset'
+import parseRoiGeoJson, { getDatasetImageBounds } from '../operation/roiGeoJson'
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -757,6 +758,72 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     } catch (e) {
       throw new UserError('Invalid GeoJSON or other error creating ROI')
     }
+  },
+
+  importRois: async(
+    source: any,
+    { datasetId, geojson }: any,
+    ctx: Context
+  ) => {
+    if (ctx.user.id == null) {
+      throw new UserError('Not authenticated')
+    }
+
+    const dataset = await esDatasetByID(datasetId, ctx.user)
+    if (!dataset) {
+      throw new UserError('Dataset not found or access denied')
+    }
+
+    const bounds = getDatasetImageBounds(dataset)
+    if (!bounds) {
+      throw new UserError('Dataset image size is not available yet; cannot validate ROI coordinates')
+    }
+
+    const { features, errors } = parseRoiGeoJson(geojson, bounds)
+    if (errors.length > 0) {
+      throw new UserError(errors.map(e => e.message).join('; '))
+    }
+
+    const canEdit = await canEditEsDataset(dataset, ctx)
+
+    // Query.rois returns a user's own ROIs if they have any, otherwise the dataset defaults.
+    // A non-editor's ROIs are private, so their first import would otherwise *replace* the
+    // defaults they see. Mirror what saving from the ROI panel does: copy the defaults into the
+    // user's own set first, then append the imported ones.
+    const defaultCopies: Roi[] = []
+    if (!canEdit) {
+      const ownCount = await ctx.entityManager.count(Roi, { where: { datasetId, userId: ctx.user.id } })
+      if (ownCount === 0) {
+        const defaults = await ctx.entityManager.find(Roi, { where: { datasetId, isDefault: true } })
+        defaults.forEach((roi) => defaultCopies.push(ctx.entityManager.create(Roi, {
+          datasetId,
+          userId: ctx.user.id,
+          name: roi.name,
+          isDefault: false,
+          geojson: roi.geojson,
+        })))
+      }
+    }
+
+    const imported = features.map(({ name, feature }) => ctx.entityManager.create(Roi, {
+      datasetId,
+      userId: ctx.user.id,
+      name,
+      isDefault: canEdit,
+      geojson: feature,
+    }))
+
+    const saved = await ctx.entityManager.save([...defaultCopies, ...imported])
+    const savedRois = saved.slice(defaultCopies.length)
+
+    return savedRois.map((roi: any) => ({
+      id: roi.id,
+      datasetId: roi.datasetId,
+      userId: roi.userId,
+      name: roi.name,
+      isDefault: roi.isDefault,
+      geojson: JSON.stringify(roi.geojson),
+    }))
   },
 
   updateRoi: async(

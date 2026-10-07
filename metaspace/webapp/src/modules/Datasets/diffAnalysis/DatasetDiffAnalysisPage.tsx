@@ -110,7 +110,7 @@ export default defineComponent({
         filter.datasetIds = [datasetId.value]
       }
 
-      store.commit('updateFilter', filter)
+      store.commit('replaceFilter', filter)
     })
 
     handleDatasetsLoad(async (result) => {
@@ -162,7 +162,7 @@ export default defineComponent({
         if (databaseOptions && databaseOptions.findIndex((db: any) => db.id === currentDatabaseId) === -1) {
           // set first database if default not selected
           const newFilter = Object.assign({}, store.getters.filter, { database: databaseOptions?.[0]?.id })
-          store.commit('updateFilter', newFilter)
+          store.commit('replaceFilter', newFilter)
         }
 
         state.databaseOptions = databaseOptions
@@ -187,7 +187,7 @@ export default defineComponent({
         const currentFilter = store.getters.filter
         if (!currentFilter.roiId && rois.length > 0) {
           const newFilter = { ...currentFilter, roiId: [rois[0].id] }
-          store.commit('updateFilter', cloneDeep(newFilter))
+          store.commit('replaceFilter', cloneDeep(newFilter))
         }
 
         // Store ROI display data for image viewer
@@ -305,7 +305,7 @@ export default defineComponent({
           state.topNAnnotations = 5
         }
 
-        store.commit('updateFilter', cloneDeep(newFilter))
+        store.commit('replaceFilter', cloneDeep(newFilter))
       }
     }
 

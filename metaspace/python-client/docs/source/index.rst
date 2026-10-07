@@ -35,6 +35,7 @@ have a look at our `METASPACE-converter <https://metaspace2020.github.io/metaspa
    content/examples/update-dataset-databases
    content/examples/fetch-dataset-metadata
    content/examples/submit-dataset
+   content/examples/manage-rois
 
 .. toctree::
    :maxdepth: 1

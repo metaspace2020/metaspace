@@ -23,6 +23,7 @@ import {
 } from '../../enrichmentdb/model'
 import canEditEsDataset from '../operation/canEditEsDataset'
 import normalizeLegacyRoiFeature from '../operation/normalizeLegacyRoiFeature'
+import parseRoiGeoJson, { getDatasetImageBounds } from '../operation/roiGeoJson'
 import { smApiJsonPost, smApiJsonGet } from '../../../utils/smApi/smApiCall'
 import { smApiDatasetRequest } from '../../../utils'
 import { uniq } from 'lodash'
@@ -527,6 +528,61 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     }
     return null
   },
+
+  async validateRoiGeoJson(source: any, { datasetId, geojson }: any, ctx: Context) {
+    if (ctx.user.id == null) {
+      throw new UserError('Not authenticated')
+    }
+    const esDataset = await esDatasetByID(datasetId, ctx.user)
+    if (!esDataset) {
+      throw new UserError('Dataset not found or access denied')
+    }
+
+    const bounds = getDatasetImageBounds(esDataset)
+    if (!bounds) {
+      return {
+        valid: false,
+        roiCount: 0,
+        errors: [{
+          featureIndex: null,
+          message: 'Dataset image size is not available yet; cannot validate ROI coordinates',
+        }],
+        warnings: [],
+        features: [],
+      }
+    }
+
+    const { features, errors, warnings } = parseRoiGeoJson(geojson, bounds)
+    const valid = errors.length === 0
+    return {
+      valid,
+      roiCount: features.length,
+      errors,
+      warnings,
+      features: valid ? features.map(f => JSON.stringify(f.feature)) : [],
+    }
+  },
+
+  async hasDiffRoiResults(source: any, { datasetId }: any, ctx: Context) {
+    const userId = ctx.user?.id
+    if (userId == null || !await esDatasetByID(datasetId, ctx.user)) {
+      return false
+    }
+    // Same visibility rule as Query.rois / Query.diffRoiResults: the user's own ROIs if they have any,
+    // otherwise the dataset defaults.
+    const userRoisCount = await ctx.entityManager.createQueryBuilder(Roi, 'roi')
+      .where('roi.datasetId = :datasetId', { datasetId })
+      .andWhere('roi.userId = :userId', { userId })
+      .getCount()
+    let qb = ctx.entityManager.createQueryBuilder(DiffRoi, 'diffRoi')
+      .innerJoin('diffRoi.roi', 'roi')
+      .where('roi.datasetId = :datasetId', { datasetId })
+    qb = userRoisCount > 0
+      ? qb.andWhere('roi.userId = :userId', { userId })
+      : qb.andWhere('roi.isDefault = true')
+    return (await qb.getCount()) > 0
+  },
+
   async segmentationJobs(source: any, { datasetId }: any, ctx: Context) {
     if (!await esDatasetByID(datasetId, ctx.user)) {
       return []
