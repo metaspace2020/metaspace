@@ -471,6 +471,7 @@ type RoiValidationResult {
   roiCount: Int!
   errors: [RoiValidationIssue!]!
   warnings: [RoiValidationIssue!]!
+  features: [String!]!
 }
 
 
@@ -512,6 +513,8 @@ type Query {
   rois(datasetId: String!, isDefault: Boolean): [Roi!]!
   roi(id: ID!): Roi
   validateRoiGeoJson(datasetId: String!, geojson: String!): RoiValidationResult!
+
+  hasDiffRoiResults(datasetId: String!): Boolean!
 
   segmentationJobs(datasetId: String!): [ImageSegmentationJob!]!
   segmentations(datasetId: String!): [Segmentation!]!

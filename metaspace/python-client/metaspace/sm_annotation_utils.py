@@ -94,8 +94,13 @@ def _geojson_to_str(geojson: Union[dict, str, Path]) -> str:
         stripped = geojson.strip()
         if stripped.startswith('{') or stripped.startswith('['):
             return geojson
-        path = Path(geojson)
-        if path.exists():
+        try:
+            path = Path(geojson)
+            is_file = path.is_file()
+        except (OSError, ValueError):
+            # Too long or contains odd bytes to be a path (ENAMETOOLONG, embedded NUL, ...).
+            is_file = False
+        if is_file:
             return path.read_text()
         return geojson  # not a path either - let the server report the parse error
     raise TypeError(f'Unsupported geojson input type: {type(geojson)}')
@@ -273,14 +278,14 @@ def multipart_upload(
         part = 0
         with open(local_path, 'rb') as f:
             f.seek(0, 2)
-            file_len_mb = f.tell() / 1024**2
+            file_len_mb = f.tell() / 1024 ** 2
             f.seek(0)
             # S3 supports max 10000 parts per file. Increase part size if needed
             part_size_mb = max(5, int(math.ceil(file_len_mb / 10000)))
             n_parts = int(math.ceil(file_len_mb / part_size_mb))
             while True:
                 semaphore.acquire()
-                file_data = f.read(part_size_mb * 1024**2)
+                file_data = f.read(part_size_mb * 1024 ** 2)
                 if not file_data:
                     break
 

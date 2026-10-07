@@ -785,7 +785,27 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     }
 
     const canEdit = await canEditEsDataset(dataset, ctx)
-    const rois = features.map(({ name, feature }) => ctx.entityManager.create(Roi, {
+
+    // Query.rois returns a user's own ROIs if they have any, otherwise the dataset defaults.
+    // A non-editor's ROIs are private, so their first import would otherwise *replace* the
+    // defaults they see. Mirror what saving from the ROI panel does: copy the defaults into the
+    // user's own set first, then append the imported ones.
+    const defaultCopies: Roi[] = []
+    if (!canEdit) {
+      const ownCount = await ctx.entityManager.count(Roi, { where: { datasetId, userId: ctx.user.id } })
+      if (ownCount === 0) {
+        const defaults = await ctx.entityManager.find(Roi, { where: { datasetId, isDefault: true } })
+        defaults.forEach((roi) => defaultCopies.push(ctx.entityManager.create(Roi, {
+          datasetId,
+          userId: ctx.user.id,
+          name: roi.name,
+          isDefault: false,
+          geojson: roi.geojson,
+        })))
+      }
+    }
+
+    const imported = features.map(({ name, feature }) => ctx.entityManager.create(Roi, {
       datasetId,
       userId: ctx.user.id,
       name,
@@ -793,7 +813,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       geojson: feature,
     }))
 
-    const savedRois = await ctx.entityManager.save(rois)
+    const saved = await ctx.entityManager.save([...defaultCopies, ...imported])
+    const savedRois = saved.slice(defaultCopies.length)
 
     return savedRois.map((roi: any) => ({
       id: roi.id,

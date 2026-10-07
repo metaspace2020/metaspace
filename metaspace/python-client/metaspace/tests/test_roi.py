@@ -1,9 +1,34 @@
+import json
 import os
+from pathlib import Path
 
 import pytest
 
-from metaspace.sm_annotation_utils import GraphQLException, SMInstance
+from metaspace.sm_annotation_utils import GraphQLException, SMInstance, _geojson_to_str
 from metaspace.tests.utils import sm
+
+
+def test_geojson_to_str_accepts_dict_string_and_path(tmp_path):
+    payload = {'type': 'Polygon', 'coordinates': []}
+    assert json.loads(_geojson_to_str(payload)) == payload
+    assert _geojson_to_str('  {"type": "Polygon"}') == '  {"type": "Polygon"}'
+
+    path = tmp_path / 'rois.geojson'
+    path.write_text(json.dumps(payload))
+    assert json.loads(_geojson_to_str(path)) == payload
+    assert json.loads(_geojson_to_str(str(path))) == payload
+
+
+def test_geojson_to_str_passes_non_json_non_path_strings_through():
+    # The server reports the parse error; nothing here should raise.
+    assert _geojson_to_str('not json') == 'not json'
+    too_long_for_a_path = 'x' * 5000
+    assert _geojson_to_str(too_long_for_a_path) == too_long_for_a_path
+    with_nul = 'a\x00b'
+    assert _geojson_to_str(with_nul) == with_nul
+    with pytest.raises(TypeError):
+        _geojson_to_str(42)
+
 
 # A small triangle near the origin -- safely inside any real dataset's ion-image grid.
 SMALL_TRIANGLE = {
@@ -58,7 +83,10 @@ def test_validate_roi_geojson_rejects_an_out_of_bounds_vertex(sm: SMInstance, ro
     out_of_bounds = {
         'type': 'Feature',
         'properties': {'name': 'out of bounds'},
-        'geometry': {'type': 'Polygon', 'coordinates': [[[0, 0], [0, 10**9], [10**9, 10**9]]]},
+        'geometry': {
+            'type': 'Polygon',
+            'coordinates': [[[0, 0], [0, 10 ** 9], [10 ** 9, 10 ** 9]]],
+        },
     }
 
     result = sm.validate_roi_geojson(roi_ds_id, out_of_bounds)

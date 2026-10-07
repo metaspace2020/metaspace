@@ -530,6 +530,9 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
   },
 
   async validateRoiGeoJson(source: any, { datasetId, geojson }: any, ctx: Context) {
+    if (ctx.user.id == null) {
+      throw new UserError('Not authenticated')
+    }
     const esDataset = await esDatasetByID(datasetId, ctx.user)
     if (!esDataset) {
       throw new UserError('Dataset not found or access denied')
@@ -545,16 +548,39 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
           message: 'Dataset image size is not available yet; cannot validate ROI coordinates',
         }],
         warnings: [],
+        features: [],
       }
     }
 
     const { features, errors, warnings } = parseRoiGeoJson(geojson, bounds)
+    const valid = errors.length === 0
     return {
-      valid: errors.length === 0,
+      valid,
       roiCount: features.length,
       errors,
       warnings,
+      features: valid ? features.map(f => JSON.stringify(f.feature)) : [],
     }
+  },
+
+  async hasDiffRoiResults(source: any, { datasetId }: any, ctx: Context) {
+    const userId = ctx.user?.id
+    if (userId == null || !await esDatasetByID(datasetId, ctx.user)) {
+      return false
+    }
+    // Same visibility rule as Query.rois / Query.diffRoiResults: the user's own ROIs if they have any,
+    // otherwise the dataset defaults.
+    const userRoisCount = await ctx.entityManager.createQueryBuilder(Roi, 'roi')
+      .where('roi.datasetId = :datasetId', { datasetId })
+      .andWhere('roi.userId = :userId', { userId })
+      .getCount()
+    let qb = ctx.entityManager.createQueryBuilder(DiffRoi, 'diffRoi')
+      .innerJoin('diffRoi.roi', 'roi')
+      .where('roi.datasetId = :datasetId', { datasetId })
+    qb = userRoisCount > 0
+      ? qb.andWhere('roi.userId = :userId', { userId })
+      : qb.andWhere('roi.isDefault = true')
+    return (await qb.getCount()) > 0
   },
 
   async segmentationJobs(source: any, { datasetId }: any, ctx: Context) {

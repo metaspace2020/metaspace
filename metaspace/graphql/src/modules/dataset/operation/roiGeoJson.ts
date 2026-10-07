@@ -57,10 +57,35 @@ const CHANNELS: Record<string, string> = {
 }
 const CHANNEL_NAMES = Object.keys(CHANNELS)
 
+export const MAX_ROI_NAME_LENGTH = 200
+/** Upper bounds on what one import may contain; anything larger is rejected up front. */
+export const MAX_GEOJSON_BYTES = 15000000
+export const MAX_ROI_COUNT = 200
+export const MAX_RING_VERTICES = 5000
+
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHARS_RE = /[\u0000-\u001f\u007f]/
+
+// `rgb(...)`/`rgba(...)`/`hsl(...)`/`hsla(...)` or a hex colour. These values end up in CSS
+// (RoiSettings.tsx renders them as inline styles), so only plain colour literals are accepted.
+const CSS_COLOR_RE = /^(?:(?:rgb|rgba|hsl|hsla)\([\d\s.,%]{1,40}\)|#[0-9a-f]{3,8})$/i
+
+function isCssColor(value: any): value is string {
+  return typeof value === 'string' && CSS_COLOR_RE.test(value.trim())
+}
+
 export default function parseRoiGeoJson(raw: string, bounds: Bounds): RoiParseResult {
   const errors: RoiIssue[] = []
   const warnings: RoiIssue[] = []
   const features: ParsedRoiFeature[] = []
+
+  if (typeof raw !== 'string' || raw.length > MAX_GEOJSON_BYTES) {
+    errors.push({
+      featureIndex: null,
+      message: `GeoJSON is too large (limit ${Math.round(MAX_GEOJSON_BYTES / 1000000)} MB)`,
+    })
+    return { features, errors, warnings }
+  }
 
   let root: any
   try {
@@ -97,7 +122,16 @@ export default function parseRoiGeoJson(raw: string, bounds: Bounds): RoiParseRe
     const multi = rings.length > 1
 
     rings.forEach((ring, ringIdx) => {
-      const provisionalName = deriveName(feature, multi ? ringIdx : -1, outputIndex)
+      const provisionalName = deriveName(feature, multi ? ringIdx : -1, outputIndex, index, errors)
+      if (provisionalName == null) {
+        return
+      }
+      const props = feature.properties != null && typeof feature.properties === 'object' ? feature.properties : {}
+      const colorError = validateColorProps(props, index, provisionalName)
+      if (colorError) {
+        errors.push(colorError)
+        return
+      }
       const cleaned = sanitizeRing(ring, index, provisionalName, errors)
       if (cleaned == null) {
         return
@@ -115,13 +149,19 @@ export default function parseRoiGeoJson(raw: string, bounds: Bounds): RoiParseRe
       }
 
       const openCoords = closedRing.slice(0, -1).map(([x, y]) => ({ x, y }))
-      const props = feature.properties || {}
-      const channelName = props.channel && CHANNEL_NAMES.includes(props.channel)
+      const channelName = typeof props.channel === 'string' && CHANNEL_NAMES.includes(props.channel)
         ? props.channel
         : CHANNEL_NAMES[outputIndex % CHANNEL_NAMES.length]
-      const rgb = props.rgb || CHANNELS[channelName]
-      const color = props.color || rgb.replace('rgb', 'rgba').replace(')', ', 0.4)')
-      const strokeColor = props.strokeColor || rgb.replace('rgb', 'rgba').replace(')', ', 0)')
+      const rgb: string = isCssColor(props.rgb) ? props.rgb : CHANNELS[channelName]
+      // Fill/stroke are derived by rewriting `rgb(...)` into `rgba(...)`; that only works for an actual
+      // rgb() literal, so for hex/hsl/rgba values derive from the channel colour instead.
+      const derivationBase = /^rgb\(/i.test(rgb.trim()) ? rgb.trim() : CHANNELS[channelName]
+      const color: string = isCssColor(props.color)
+        ? props.color
+        : derivationBase.replace('rgb', 'rgba').replace(')', ', 0.4)')
+      const strokeColor: string = isCssColor(props.strokeColor)
+        ? props.strokeColor
+        : derivationBase.replace('rgb', 'rgba').replace(')', ', 0)')
 
       features.push({
         name: provisionalName,
@@ -152,6 +192,14 @@ export default function parseRoiGeoJson(raw: string, bounds: Bounds): RoiParseRe
     })
   })
 
+  if (features.length > MAX_ROI_COUNT) {
+    errors.push({
+      featureIndex: null,
+      message: `File contains ${features.length} ROIs; at most ${MAX_ROI_COUNT} can be imported at once`,
+    })
+    features.length = 0
+  }
+
   return { features, errors, warnings }
 }
 
@@ -160,6 +208,15 @@ function extractRawFeatures(root: any, errors: RoiIssue[]): { feature: any; inde
     const feats = Array.isArray(root.features) ? root.features : []
     if (feats.length === 0) {
       errors.push({ featureIndex: null, message: 'FeatureCollection has no features' })
+    }
+    // Cheap early exit so an oversized collection is not fully parsed before being rejected
+    // (the same limit is re-checked after MultiPolygons are split).
+    if (feats.length > MAX_ROI_COUNT) {
+      errors.push({
+        featureIndex: null,
+        message: `File contains ${feats.length} features; at most ${MAX_ROI_COUNT} ROIs can be imported at once`,
+      })
+      return []
     }
     return feats.map((feature: any, index: number) => ({ feature, index }))
   }
@@ -176,9 +233,16 @@ function extractRawFeatures(root: any, errors: RoiIssue[]): { feature: any; inde
 /** Returns one outer ring per polygon (holes/interior rings are dropped with a warning). */
 function extractPolygonRings(feature: any, index: number, errors: RoiIssue[], warnings: RoiIssue[]): any[][] {
   // Our own internal shape: properties.coordinates ({x, y} objects) is authoritative.
+  // A missing/null axis means 0: the old ROI editor serialised vertices with `coord.y || coord[1]`,
+  // so an edge vertex (y == 0) was persisted as `{x: N}`. The engine reads these the same way
+  // (experiment_masks.py `_vertex`), and the webapp export of such a legacy ROI reproduces the shape.
   const propCoords = feature?.properties?.coordinates
-  if (Array.isArray(propCoords) && propCoords.length > 0 && typeof propCoords[0]?.x === 'number') {
-    return [propCoords.map((c: any) => [c.x, c.y])]
+  if (
+    Array.isArray(propCoords)
+    && propCoords.length > 0
+    && propCoords.every((c: any) => c != null && typeof c === 'object' && !Array.isArray(c))
+  ) {
+    return [propCoords.map((c: any) => [c.x == null ? 0 : c.x, c.y == null ? 0 : c.y])]
   }
 
   const geometry = feature?.geometry
@@ -209,7 +273,11 @@ function extractPolygonRings(feature: any, index: number, errors: RoiIssue[], wa
     if (polys.length > 1) {
       warnings.push({ featureIndex: index, message: `Feature ${index}: MultiPolygon split into ${polys.length} ROIs` })
     }
-    return polys.map((rings: any[][], i: number) => {
+    return polys.map((rings: any, i: number) => {
+      if (!Array.isArray(rings) || rings.length === 0) {
+        errors.push({ featureIndex: index, message: `Feature ${index}, polygon ${i + 1}: empty or malformed polygon` })
+        return null
+      }
       if (rings.length > 1) {
         warnings.push({
           featureIndex: index,
@@ -217,7 +285,7 @@ function extractPolygonRings(feature: any, index: number, errors: RoiIssue[], wa
         })
       }
       return rings[0]
-    })
+    }).filter((ring: any) => ring != null)
   }
 
   errors.push({ featureIndex: index, message: `Feature ${index}: unsupported geometry type "${geometry.type}"` })
@@ -227,6 +295,13 @@ function extractPolygonRings(feature: any, index: number, errors: RoiIssue[], wa
 function sanitizeRing(ring: any, index: number, name: string, errors: RoiIssue[]): number[][] | null {
   if (!Array.isArray(ring)) {
     errors.push({ featureIndex: index, message: `Feature ${index} ("${name}"): polygon ring is not an array` })
+    return null
+  }
+  if (ring.length > MAX_RING_VERTICES) {
+    errors.push({
+      featureIndex: index,
+      message: `Feature ${index} ("${name}"): polygon has ${ring.length} vertices (limit ${MAX_RING_VERTICES})`,
+    })
     return null
   }
   const points = ring.map((pt: any) => (Array.isArray(pt) ? [Number(pt[0]), Number(pt[1])] : null))
@@ -259,7 +334,50 @@ function closeRing(ring: number[][]): number[][] {
   return [...ring, [fx, fy]]
 }
 
-function deriveName(feature: any, ringIdx: number, outputIndex: number): string {
-  const base = feature?.properties?.name || `Imported ROI ${outputIndex + 1}`
+/**
+ * Resolves the ROI name for one output ring. A missing/empty `properties.name` gets a default;
+ * anything that is not a reasonably short string is a fatal error, because the name is stored in a
+ * text column and rendered verbatim by the ROI panel.
+ */
+function deriveName(
+  feature: any,
+  ringIdx: number,
+  outputIndex: number,
+  index: number,
+  errors: RoiIssue[]
+): string | null {
+  const rawName = feature?.properties?.name
+  let base: string
+  if (rawName == null || rawName === '') {
+    base = `Imported ROI ${outputIndex + 1}`
+  } else if (typeof rawName !== 'string' || rawName.trim() === '') {
+    errors.push({ featureIndex: index, message: `Feature ${index}: "name" must be a non-empty string` })
+    return null
+  } else if (CONTROL_CHARS_RE.test(rawName)) {
+    errors.push({ featureIndex: index, message: `Feature ${index}: "name" contains control characters` })
+    return null
+  } else if (rawName.length > MAX_ROI_NAME_LENGTH) {
+    errors.push({
+      featureIndex: index,
+      message: `Feature ${index}: "name" is longer than ${MAX_ROI_NAME_LENGTH} characters`,
+    })
+    return null
+  } else {
+    base = rawName.trim()
+  }
   return ringIdx >= 0 ? `${base} (${ringIdx + 1})` : base
+}
+
+/** Colour properties are optional, but when present they must be CSS colour literals. */
+function validateColorProps(props: any, index: number, name: string): RoiIssue | null {
+  for (const key of ['rgb', 'color', 'strokeColor']) {
+    const value = props[key]
+    if (value != null && value !== '' && !isCssColor(value)) {
+      return {
+        featureIndex: index,
+        message: `Feature ${index} ("${name}"): "${key}" is not a valid CSS colour (e.g. "rgb(255, 0, 0)")`,
+      }
+    }
+  }
+  return null
 }

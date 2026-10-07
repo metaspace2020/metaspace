@@ -24,18 +24,65 @@ $pro-color: #ffab3f;
     scale: 0.8;
   }
 
-  .roi-download-icon,
-  .roi-upload-icon {
+  .roi-download-icon {
     @apply flex justify-center items-center h-8 w-6;
   }
 
+  .roi-footer {
+    @apply flex w-full items-center justify-between pt-1;
+
+    .roi-footer-btn {
+      @apply flex items-center justify-center h-9 px-2 rounded-lg font-bold text-gray-700 hover:bg-gray-100;
+      margin-left: 0 !important;
+
+      .el-icon {
+        @apply mr-1;
+      }
+
+      &.is-disabled {
+        @apply cursor-not-allowed;
+        opacity: 0.5;
+
+        &:hover {
+          background: transparent;
+        }
+      }
+    }
+
+    .roi-footer-divider {
+      width: 1px;
+      height: 20px;
+      background: lightgray;
+    }
+  }
+
+  // Same footprint as the save icon on the right-hand side
   .roi-diff-icon {
-    @apply flex justify-center items-center h-8 w-6;
+    @apply flex justify-center items-center h-6 w-6 relative rounded;
     margin-left: 3px !important;
     margin-right: -2px;
     &:hover {
       color: $pro-color;
     }
+    &.has-results:hover {
+      color: theme('colors.blue.600');
+      background: theme('colors.blue.100');
+    }
+  }
+
+  // "results available" dot on the diff-analysis button
+  .roi-diff-badge {
+    @apply absolute rounded-full;
+    width: 8px;
+    height: 8px;
+    top: -2px;
+    right: -3px;
+    background: #67c23a;
+  }
+
+  // Rendered inside the panel (not teleported) so it lines up under the icon
+  .roi-diff-dropdown {
+    min-width: 200px;
   }
 
   .roi-label {
@@ -56,7 +103,7 @@ $pro-color: #ffab3f;
 
 .roi-popper {
   background: $bgColor;
-  min-width: 250px !important;
+  min-width: 280px !important;
 
   .popper__arrow::after {
     border-bottom-color: $bgColor !important;

@@ -395,20 +395,14 @@ export const validateRoiGeoJsonQuery = gql`
         featureIndex
         message
       }
+      features
     }
   }
 `
 
-export const importRoisMutation = gql`
-  mutation ($datasetId: String!, $geojson: String!) {
-    importRois(datasetId: $datasetId, geojson: $geojson) {
-      id
-      datasetId
-      userId
-      name
-      isDefault
-      geojson
-    }
+export const hasDiffRoiResultsQuery = gql`
+  query ($datasetId: String!) {
+    hasDiffRoiResults(datasetId: $datasetId)
   }
 `
 
