@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 jobs:
   # TODO: Monorepo support - only run tests on projects if they have changed
   # e.g. https://discuss.circleci.com/t/does-circleci-2-0-work-with-monorepos/10378/14
@@ -440,7 +440,6 @@ jobs:
             python tests/sci_test/spheroid.py --database cm3 $PARAMS
 
 workflows:
-  version: 2
   commit:
     jobs:
       - generate-graphql-schema
