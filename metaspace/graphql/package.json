@@ -82,7 +82,7 @@
     "memory-cache": "^0.2.0",
     "merge-graphql-schemas": "^1.5.3",
     "mkdirp": "^0.5.1",
-    "moment": "^2.29.4",
+    "moment": "^2.31.0",
     "multer": "^2.4.0",
     "node-fetch": "^2.6.7",
     "passport": "^0.4.0",
