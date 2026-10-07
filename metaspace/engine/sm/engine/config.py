@@ -20,9 +20,8 @@ def init_loggers(config=None):
         SMConfig.set_path('conf/config.json')
         config = SMConfig.get_conf()['logs']
 
-    logs_dir = Path(proj_root()).joinpath('logs')
-    if not logs_dir.exists():
-        logs_dir.mkdir()
+    # exist_ok: several daemons start together on a fresh checkout and race to create it
+    Path(proj_root()).joinpath('logs').mkdir(exist_ok=True)
 
     log_level_codes = {
         'ERROR': logging.ERROR,

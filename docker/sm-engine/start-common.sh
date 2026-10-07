@@ -18,5 +18,6 @@ pip install -qr requirements.txt
 
 wait_for "nc -z postgres 5432" "Postgres"
 wait_for "nc -z rabbitmq 5672" "RabbitMQ"
+wait_for "nc -z storage 9000" "Storage"
 
 export PYTHONUNBUFFERED=1 # Fix issue with Python sometimes mysteriously buffering its output indefinitely

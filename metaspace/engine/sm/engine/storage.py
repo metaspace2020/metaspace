@@ -1,4 +1,5 @@
-from typing import Dict
+import time
+from typing import Dict, Iterable
 
 import boto3
 import botocore.exceptions
@@ -42,6 +43,40 @@ def create_bucket(bucket_name: str, s3_client=None):
             )
         else:
             raise
+
+
+def wait_for_storage(s3_client, timeout_sec: int = 60, interval_sec: float = 1.0):
+    """Block until the S3 endpoint answers ListBuckets.
+
+    RustFS (the dev/CI object store) accepts connections a few seconds after the
+    container starts; MinIO was effectively instant. Connection errors and 5xx
+    responses are retried until `timeout_sec`; 4xx responses (bad credentials,
+    wrong endpoint) are raised immediately.
+    """
+    deadline = time.monotonic() + timeout_sec
+    endpoint = s3_client.meta.endpoint_url
+    last_error = None
+    while True:
+        try:
+            s3_client.list_buckets()
+            return
+        except (botocore.exceptions.ConnectionError, botocore.exceptions.HTTPClientError) as e:
+            last_error = e
+        except botocore.exceptions.ClientError as e:
+            if e.response['ResponseMetadata']['HTTPStatusCode'] < 500:
+                raise
+            last_error = e
+        if time.monotonic() >= deadline:
+            raise TimeoutError(
+                f'S3 storage at {endpoint} not reachable after {timeout_sec}s: {last_error}'
+            )
+        time.sleep(interval_sec)
+
+
+def ensure_buckets(bucket_names: Iterable[str], s3_client):
+    """Create every bucket in `bucket_names` that does not exist yet (idempotent)."""
+    for bucket_name in bucket_names:
+        create_bucket(bucket_name, s3_client)
 
 
 def get_s3_bucket(bucket_name: str, sm_config: Dict):

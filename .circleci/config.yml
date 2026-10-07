@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 jobs:
   # TODO: Monorepo support - only run tests on projects if they have changed
   # e.g. https://discuss.circleci.com/t/does-circleci-2-0-work-with-monorepos/10378/14
@@ -320,9 +320,10 @@ jobs:
           RABBITMQ_DEFAULT_USER: sm
           RABBITMQ_DEFAULT_PASS: password
 
-      - image: quay.io/minio/minio:RELEASE.2024-06-29T01-20-47Z
-        entrypoint: sh
-        command: -c 'mkdir -p /data/sm-engine-upload && mkdir -p /data/sm-imzml-browser-test && mkdir -p /data/sm-lithops-test && /usr/bin/minio server /data --console-address ":9001"'
+      - image: rustfs/rustfs:1.0.0
+        environment:
+          RUSTFS_ACCESS_KEY: minioadmin
+          RUSTFS_SECRET_KEY: minioadmin
 
     working_directory: ~/metaspace/metaspace/engine
     steps:
@@ -341,6 +342,11 @@ jobs:
             pip install --upgrade -r requirements.txt -r requirements-dev.txt
       - attach_workspace:
           at: ~/workspace
+      - run:
+          name: Create storage buckets
+          command: |
+            python -m scripts.create_buckets --config conf/test_config.json \
+              sm-engine-upload sm-imzml-browser-test sm-lithops-test
       - run:
           name: Run unit and integration tests
           command: |
@@ -387,9 +393,10 @@ jobs:
           RABBITMQ_DEFAULT_USER: sm
           RABBITMQ_DEFAULT_PASS: password
 
-      - image: quay.io/minio/minio:RELEASE.2024-06-29T01-20-47Z
-        entrypoint: sh
-        command: -c 'mkdir -p /data/sm-image-storage-sci-test && /usr/bin/minio server /data --console-address ":9001"'
+      - image: rustfs/rustfs:1.0.0
+        environment:
+          RUSTFS_ACCESS_KEY: minioadmin
+          RUSTFS_SECRET_KEY: minioadmin
 
     working_directory: ~/metaspace/metaspace/engine
     steps:
@@ -410,6 +417,11 @@ jobs:
             pip install --upgrade -r requirements.txt -r requirements-dev.txt
             pip install -e .
       - run:
+          name: Create storage buckets
+          command: |
+            python -m scripts.create_buckets --config conf/scitest_config.json \
+              sm-image-storage-sci-test sm-imzml-browser-sci-test
+      - run:
           name: Run scientific test
           command: |
             # Select parameters based on which parallel run this is.
@@ -428,7 +440,6 @@ jobs:
             python tests/sci_test/spheroid.py --database cm3 $PARAMS
 
 workflows:
-  version: 2
   commit:
     jobs:
       - generate-graphql-schema
