@@ -79,6 +79,44 @@ describe('SampleQcStage', () => {
     expect(call.excludedSamples).toEqual(['s1'])
   })
 
+  it('labels exclude options with the sample name (falling back to sampleId), sorted alphabetically', async () => {
+    const samples = ['zeta_roi2', 'uuid-a', 'Mango_roi1', 'uuid-b'].map((sampleId, i) => ({
+      regionKey: `region-${i}`,
+      sampleId,
+      condition: 'treated',
+      tic: 0.8,
+      detectionRate: 0.9,
+      cv: 0.1,
+      pcaPC1: 0,
+      pcaPC2: 0,
+    }))
+    ;(useQuery as any).mockReturnValue({
+      result: ref({
+        experimentRunQc: { samples, pcaVariance: { pc1: 0.4, pc2: 0.2 } },
+      }),
+      loading: ref(false),
+    })
+
+    const wrapper = mount(SampleQcStage, {
+      props: {
+        experimentId: 'e1',
+        initialExcluded: [],
+        // Opaque sampleIds get a human-readable label from the parent; named
+        // samples are absent from the map and fall back to their sampleId.
+        sampleLabels: {
+          'uuid-a': 'My Dataset – Circle',
+          'uuid-b': 'Another Dataset – Square',
+        },
+      },
+      global: { provide: { [DefaultApolloClient]: mockClient } },
+    })
+    await flushPromises()
+    await nextTick()
+
+    const labels = wrapper.findAll('.mock-el-option').map((o) => o.attributes('label'))
+    expect(labels).toEqual(['Another Dataset – Square', 'Mango_roi1', 'My Dataset – Circle', 'zeta_roi2'])
+  })
+
   it('renders the QC chart grid alongside the exclude selector', async () => {
     const wrapper = mount(SampleQcStage, {
       props: { experimentId: 'e1', initialExcluded: [] },

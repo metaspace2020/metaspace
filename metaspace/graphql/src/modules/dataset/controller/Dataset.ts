@@ -29,6 +29,7 @@ import canDeleteEsDataset from '../operation/canDeleteEsDataset'
 import { DatasetEnrichment as DatasetEnrichmentModel, EnrichmentDB } from '../../enrichmentdb/model'
 import * as moment from 'moment/moment'
 import { getDeviceInfo, hashIp, performAction } from '../../plan/util/canPerformAction'
+import { consumeUsageCredit } from '../../plan/util/usageCreditsApi'
 import isRateLimited from '../../../utils/redis'
 import { resolveImageUrl } from '../../../utils/imageStorageUrl'
 
@@ -527,6 +528,12 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     }
 
     const canEdit = await canEditEsDataset(ds, ctx)
+    const canDownload = await canDownloadDataset(ds, ctx)
+
+    const wouldBlock = blockApiDownload || (ctx.user?.role !== 'admin' && rateLimited)
+    const creditConsumed = wouldBlock && ctx.user?.id && canDownload
+      ? await consumeUsageCredit(ctx.user.id, 'download', 'dataset')
+      : false
 
     const action: any = {
       actionType: 'download',
@@ -544,7 +551,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     }
 
     // check if reached download
-    if (blockApiDownload) {
+    if (blockApiDownload && !creditConsumed) {
       return JSON.stringify({
         message: 'Download disabled on API. Please use the web interface.',
         files: [{
@@ -552,7 +559,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
           link: 'https://metaspace2020.org/limit_reached',
         }],
       })
-    } else if (ctx.user?.role !== 'admin' && rateLimited) {
+    } else if (ctx.user?.role !== 'admin' && rateLimited && !creditConsumed) {
       await performAction(ctx, { ...action, actionType: 'download_attempt' })
 
       return JSON.stringify({
@@ -563,51 +570,59 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
           link: 'https://metaspace2020.org/limit_reached',
         }],
       })
-    } else if (await canDownloadDataset(ds, ctx)) {
-      const parsedPath = /s3a:\/\/([^/]+)\/(.*)/.exec(ds._source.ds_input_path)
-      let files: { filename: string, link: string }[]
-      if (parsedPath != null) {
-        const [, bucket, prefix] = parsedPath
-        const s3 = getS3Client()
-        const objects = await s3.listObjectsV2({
-          Bucket: bucket,
-          Prefix: prefix,
-        }).promise()
-        let fileKeys = (objects.Contents || [])
-          .map(obj => obj.Key!)
-          .filter(key => key && /(\.imzml|.ibd|.mzml)$/i.test(key))
+    } else if (canDownload) {
+      try {
+        const parsedPath = /s3a:\/\/([^/]+)\/(.*)/.exec(ds._source.ds_input_path)
+        let files: { filename: string, link: string }[]
+        if (parsedPath != null) {
+          const [, bucket, prefix] = parsedPath
+          const s3 = getS3Client()
+          const objects = await s3.listObjectsV2({
+            Bucket: bucket,
+            Prefix: prefix,
+          }).promise()
+          let fileKeys = (objects.Contents || [])
+            .map(obj => obj.Key!)
+            .filter(key => key && /(\.imzml|.ibd|.mzml)$/i.test(key))
 
-        // Put the .imzML/.mzml file first
-        fileKeys = _.sortBy(fileKeys, a => a.toLowerCase().endsWith('mzml') ? 0 : 1)
+          // Put the .imzML/.mzml file first
+          fileKeys = _.sortBy(fileKeys, a => a.toLowerCase().endsWith('mzml') ? 0 : 1)
 
-        files = fileKeys.map(key => ({
-          filename: key.replace(/.*\//, ''),
-          link: s3.getSignedUrl('getObject', { Bucket: bucket, Key: key, Expires: 1800 }),
-        }))
-      } else {
-        files = []
+          files = fileKeys.map(key => ({
+            filename: key.replace(/.*\//, ''),
+            link: s3.getSignedUrl('getObject', { Bucket: bucket, Key: key, Expires: 1800 }),
+          }))
+        } else {
+          files = []
+        }
+
+        await performAction(ctx, action)
+
+        return JSON.stringify({
+          contributors: [
+            { name: ds._source.ds_submitter_name, institution: ds._source.ds_group_name },
+          ],
+          license: ds._source.ds_is_public
+            ? {
+                code: 'CC BY 4.0',
+                name: 'Creative Commons Attribution 4.0 International Public License',
+                link: 'https://creativecommons.org/licenses/by/4.0/',
+              }
+            : {
+                code: 'NO-LICENSE',
+                name: 'No license was specified. No permission to download or use these files has been given. '
+                + 'Seek permission from the author before downloading these files.',
+                link: 'https://choosealicense.com/no-permission/',
+              },
+          files,
+        })
+      } catch (err) {
+        if (creditConsumed) {
+          logger.error(`Usage credit consumed but download failed for userId=${ctx.user?.id} `
+            + `datasetId=${ds._source.ds_id}; manager-side reconciliation may be required`)
+        }
+        throw err
       }
-
-      await performAction(ctx, action)
-
-      return JSON.stringify({
-        contributors: [
-          { name: ds._source.ds_submitter_name, institution: ds._source.ds_group_name },
-        ],
-        license: ds._source.ds_is_public
-          ? {
-              code: 'CC BY 4.0',
-              name: 'Creative Commons Attribution 4.0 International Public License',
-              link: 'https://creativecommons.org/licenses/by/4.0/',
-            }
-          : {
-              code: 'NO-LICENSE',
-              name: 'No license was specified. No permission to download or use these files has been given. '
-              + 'Seek permission from the author before downloading these files.',
-              link: 'https://choosealicense.com/no-permission/',
-            },
-        files,
-      })
     } else {
       return null
     }

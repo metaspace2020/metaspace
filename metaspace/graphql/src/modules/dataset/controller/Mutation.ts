@@ -40,8 +40,10 @@ import { DatasetEnrichment as DatasetEnrichmentModel } from '../../enrichmentdb/
 import { getS3Client } from '../../../utils/awsClient'
 import config from '../../../utils/config'
 import { assertCanPerformAction, getDeviceInfo, hashIp, performAction } from '../../plan/util/canPerformAction'
+import { hasBetaFeature } from '../../plan/util/betaTesterApi'
 import { cleanEmptyStrings } from '../../../utils/regexSanitizer'
 import canEditEsDataset from '../operation/canEditEsDataset'
+import parseRoiGeoJson, { getDatasetImageBounds } from '../operation/roiGeoJson'
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -628,7 +630,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       if (ctx.user.id == null) {
         throw new UserError('Not authenticated')
       }
-      await esDatasetByID(datasetId, ctx.user) // check if user has access
+      const dataset = await esDatasetByID(datasetId, ctx.user) // check if user has access
+      if (!dataset) {
+        throw new UserError('Dataset not found or access denied')
+      }
 
       // Check if there are existing diff analysis results and if ROIs match
       const userRoisCount = await ctx.entityManager.createQueryBuilder(Roi, 'roi')
@@ -679,6 +684,23 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         logger.info(`No existing diff analysis found for dataset '${datasetId}', proceeding with calculation`)
       }
 
+      const isBetaTester = await hasBetaFeature(ctx.user.id, 'diffAnalysis')
+      const action: any = {
+        actionType: 'diffAnalysis',
+        userId: ctx.user.id,
+        datasetId,
+        type: 'dataset',
+        visibility: dataset._source?.ds_is_public ? 'public' : 'private',
+        groupId: dataset._source?.ds_group_id,
+        actionDt: moment.utc(moment.utc().toDate()),
+        source: (ctx as any).getSource(),
+        deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),
+        ipHash: hashIp(ctx.req?.ip),
+      }
+      if (!isBetaTester) {
+        await assertCanPerformAction(ctx, action)
+      }
+
       await smApiDatasetRequest('/v1/diffroi/compareROIs', {
         ds_id: datasetId,
         TIC_normalize: ticNormalize,
@@ -686,6 +708,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         chunk_size: chunkSize,
         n_pixel_samples: nPixelSamples,
       })
+
+      if (!isBetaTester) {
+        await performAction(ctx, action)
+      }
 
       return true
     } catch (e) {
@@ -732,6 +758,72 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     } catch (e) {
       throw new UserError('Invalid GeoJSON or other error creating ROI')
     }
+  },
+
+  importRois: async(
+    source: any,
+    { datasetId, geojson }: any,
+    ctx: Context
+  ) => {
+    if (ctx.user.id == null) {
+      throw new UserError('Not authenticated')
+    }
+
+    const dataset = await esDatasetByID(datasetId, ctx.user)
+    if (!dataset) {
+      throw new UserError('Dataset not found or access denied')
+    }
+
+    const bounds = getDatasetImageBounds(dataset)
+    if (!bounds) {
+      throw new UserError('Dataset image size is not available yet; cannot validate ROI coordinates')
+    }
+
+    const { features, errors } = parseRoiGeoJson(geojson, bounds)
+    if (errors.length > 0) {
+      throw new UserError(errors.map(e => e.message).join('; '))
+    }
+
+    const canEdit = await canEditEsDataset(dataset, ctx)
+
+    // Query.rois returns a user's own ROIs if they have any, otherwise the dataset defaults.
+    // A non-editor's ROIs are private, so their first import would otherwise *replace* the
+    // defaults they see. Mirror what saving from the ROI panel does: copy the defaults into the
+    // user's own set first, then append the imported ones.
+    const defaultCopies: Roi[] = []
+    if (!canEdit) {
+      const ownCount = await ctx.entityManager.count(Roi, { where: { datasetId, userId: ctx.user.id } })
+      if (ownCount === 0) {
+        const defaults = await ctx.entityManager.find(Roi, { where: { datasetId, isDefault: true } })
+        defaults.forEach((roi) => defaultCopies.push(ctx.entityManager.create(Roi, {
+          datasetId,
+          userId: ctx.user.id,
+          name: roi.name,
+          isDefault: false,
+          geojson: roi.geojson,
+        })))
+      }
+    }
+
+    const imported = features.map(({ name, feature }) => ctx.entityManager.create(Roi, {
+      datasetId,
+      userId: ctx.user.id,
+      name,
+      isDefault: canEdit,
+      geojson: feature,
+    }))
+
+    const saved = await ctx.entityManager.save([...defaultCopies, ...imported])
+    const savedRois = saved.slice(defaultCopies.length)
+
+    return savedRois.map((roi: any) => ({
+      id: roi.id,
+      datasetId: roi.datasetId,
+      userId: roi.userId,
+      name: roi.name,
+      isDefault: roi.isDefault,
+      geojson: JSON.stringify(roi.geojson),
+    }))
   },
 
   updateRoi: async(
@@ -896,6 +988,23 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       throw new UserError('Dataset not found or access denied')
     }
 
+    const isBetaTester = await hasBetaFeature(ctx.user.id, 'segmentation')
+    const action: any = {
+      actionType: 'segmentation',
+      userId: ctx.user.id,
+      datasetId,
+      type: 'dataset',
+      visibility: dataset._source?.ds_is_public ? 'public' : 'private',
+      groupId: dataset._source?.ds_group_id,
+      actionDt: moment.utc(moment.utc().toDate()),
+      source: (ctx as any).getSource(),
+      deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),
+      ipHash: hashIp(ctx.req?.ip),
+    }
+    if (!isBetaTester) {
+      await assertCanPerformAction(ctx, action)
+    }
+
     const body: Record<string, any> = {
       ds_id: datasetId,
       algorithm,
@@ -927,6 +1036,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       const apiCallStart = Date.now()
       await smApiDatasetRequest('/v1/segmentation/run', body)
       const apiCallEnd = Date.now()
+      if (!isBetaTester) {
+        await performAction(ctx, action)
+      }
 
       const totalTime = Date.now() - startTime
       console.log(`[SEGMENTATION_PERF] GraphQL runSegmentation completed for dataset ${datasetId}`)

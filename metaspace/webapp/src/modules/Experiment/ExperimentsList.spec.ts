@@ -14,10 +14,8 @@ vi.mock('@vue/apollo-composable', () => ({
 }))
 
 const graphqlData = {
-  // Creating an experiment now requires an active Pro subscription (or admin) on top
-  // of canEdit. The shared mock returns this object for every useQuery call, so the
-  // permissions composable reads `activeUserSubscription` from here too.
-  activeUserSubscription: { isActive: true },
+  // Creating an experiment requires canEdit (or admin). Free-tier usage limits are
+  // enforced server-side when the experiment is created, not by this component.
   experimentsByProject: [
     {
       id: 'exp-1',
@@ -65,7 +63,7 @@ describe('ExperimentsList', () => {
     })
   })
 
-  it('renders all experiment names and a Create button when canEdit and Pro', async () => {
+  it('renders all experiment names and a Create button when canEdit', async () => {
     ;(useQuery as any).mockReturnValue({
       result: ref(graphqlData),
       loading: ref(false),
@@ -109,11 +107,10 @@ describe('ExperimentsList', () => {
     expect(wrapper.find('[data-test-key="create-experiment"]').exists()).toBe(false)
   })
 
-  it('keeps the Create button when canEdit but not Pro, and prompts to upgrade on click', async () => {
+  it('navigates to the create page on click for a project editor without a Pro subscription', async () => {
     ;(useQuery as any).mockReturnValue({
       result: ref({
         experimentsByProject: graphqlData.experimentsByProject,
-        activeUserSubscription: { isActive: false },
       }),
       loading: ref(false),
       onResult: vi.fn(),
@@ -138,20 +135,17 @@ describe('ExperimentsList', () => {
     await btn.trigger('click')
     await nextTick()
 
-    expect(notifySpy).toHaveBeenCalledTimes(1)
-    const notifyArg = notifySpy.mock.calls[0][0] as any
-    expect(notifyArg.message).toContain('/plans')
-    expect(pushSpy).not.toHaveBeenCalled()
+    expect(pushSpy).toHaveBeenCalledWith({ path: '/project/project-id-1/experiment/new', query: {} })
+    expect(notifySpy).not.toHaveBeenCalled()
 
     notifySpy.mockRestore()
     pushSpy.mockRestore()
   })
 
-  it('navigates to the create page on click for an admin even without Pro', async () => {
+  it('navigates to the create page on click for an admin', async () => {
     ;(useQuery as any).mockReturnValue({
       result: ref({
         experimentsByProject: graphqlData.experimentsByProject,
-        activeUserSubscription: { isActive: false },
         currentUser: { role: 'admin' },
       }),
       loading: ref(false),
@@ -188,7 +182,6 @@ describe('ExperimentsList', () => {
     ;(useQuery as any).mockReturnValue({
       result: ref({
         experimentsByProject: graphqlData.experimentsByProject,
-        activeUserSubscription: { isActive: true },
         currentUser: { id: 'other-user', role: 'user' },
         project: { currentUserRole: 'MEMBER' },
       }),
@@ -224,7 +217,6 @@ describe('ExperimentsList', () => {
     ;(useQuery as any).mockReturnValue({
       result: ref({
         experimentsByProject: graphqlData.experimentsByProject,
-        activeUserSubscription: { isActive: true },
         currentUser: { id: 'u1', role: 'user' }, // u1 is exp-1's createdBy
         project: { currentUserRole: 'MEMBER' },
       }),
@@ -260,7 +252,6 @@ describe('ExperimentsList', () => {
     ;(useQuery as any).mockReturnValue({
       result: ref({
         experimentsByProject: graphqlData.experimentsByProject,
-        activeUserSubscription: { isActive: true },
         currentUser: { id: 'manager-user', role: 'user' },
         project: { currentUserRole: 'MANAGER' },
       }),

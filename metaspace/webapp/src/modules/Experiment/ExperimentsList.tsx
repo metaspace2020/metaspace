@@ -4,7 +4,7 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { ElButton, ElCard, ElIcon, ElMessage, ElMessageBox, ElTag, ElTooltip } from '../../lib/element-plus'
 import { PictureFilled, EditPen, Delete } from '@element-plus/icons-vue'
 import { experimentsByProjectQuery, deleteExperimentMutation, experimentProjectRoleQuery } from './api'
-import { useExperimentPermissions, promptExperimentProUpgrade } from './composables/experimentPermissions'
+import { useExperimentPermissions, promptExperimentAccessDenied } from './composables/experimentPermissions'
 import { ProjectRoleOptions } from '../../api/project'
 import CopyButton from '../../components/CopyButton.vue'
 import ElapsedTime from '../../components/ElapsedTime'
@@ -54,9 +54,6 @@ export default defineComponent({
     const router = useRouter()
     const route = useRoute()
     const { isAdmin, currentUserId, canCreateExperiment } = useExperimentPermissions()
-    // Create is allowed for admins, or project editors with an active Pro subscription.
-    // The button stays visible for any project editor; non-Pro users are prompted to
-    // upgrade on click rather than having the button hidden.
     const canCreate = canCreateExperiment(() => props.canEdit)
 
     // Delete is more restricted than edit: only the experiment creator, a project
@@ -74,7 +71,7 @@ export default defineComponent({
       if (canCreate.value) {
         router.push({ path: `/project/${props.projectId}/experiment/new`, query: { ...route.query } })
       } else {
-        promptExperimentProUpgrade()
+        promptExperimentAccessDenied()
       }
     }
     const { result, loading, refetch } = useQuery<{ experimentsByProject: ExperimentSummary[] }>(

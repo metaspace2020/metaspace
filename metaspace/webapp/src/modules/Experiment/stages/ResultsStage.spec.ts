@@ -464,4 +464,28 @@ describe('ResultsStage', () => {
 
     expect(wrapper.find('[data-test-key="results-warning-content"]').exists()).toBe(false)
   })
+
+  it('results queries bypass the Apollo cache so a stats re-run at the same variables shows fresh rows', async () => {
+    // Recorded calls accumulate across tests (only the implementation is reset
+    // in beforeEach), so drop earlier tests' calls before mounting.
+    ;(useQuery as any).mockClear()
+    mountStage()
+    await flushPromises()
+    await nextTick()
+
+    // A stats-only re-run from Stage 2 keeps the same run generation and (because
+    // serverFilter strips fdrMax) the same query variables, so a cache-first
+    // policy would serve the previous run's rows. Both the table and the volcano
+    // query must go to the network every time this stage is mounted.
+    //
+    // Only ResultsStage's own queries are asserted on: the mounted tree also
+    // includes IntensityStripPlot, whose per-ion query is keyed by ionId and
+    // legitimately keeps its own (cache-and-network) policy.
+    const resultsOps = ['experimentResults', 'experimentResultsPlot']
+    const calls = ((useQuery as any).mock.calls as any[][]).filter((c) =>
+      resultsOps.includes(c[0]?.definitions?.[0]?.name?.value)
+    )
+    expect(calls.map((c) => c[0].definitions[0].name.value).sort()).toEqual(resultsOps)
+    expect(calls.every((c) => c[2]?.fetchPolicy === 'network-only')).toBe(true)
+  })
 })

@@ -119,3 +119,49 @@ def test_reconstruct_prep_computes_tic_from_blob():
     tic_by_sample = {s['sampleId']: s['tic'] for s in prep['samples']}
     assert tic_by_sample['A'] == 15.0
     assert tic_by_sample['B'] == 20.0
+
+
+@patch.object(runner_mod, '_fetch_intensity_blob')
+def test_stats_only_applies_ion_filters_using_shipped_all_ions(fetch):
+    """The blob carries no per-ion FDR/adduct/database, so the engine ships the
+    ``allIons`` snapshot alongside the stats-only request and the runner must
+    use it to apply the Stage 2 filter."""
+    fetch.return_value = [
+        {'ion_id': 1, 'region_key': 'r1', 'intensity': 10.0},
+        {'ion_id': 1, 'region_key': 'r2', 'intensity': 20.0},
+        {'ion_id': 2, 'region_key': 'r1', 'intensity': 5.0},
+        {'ion_id': 2, 'region_key': 'r2', 'intensity': 7.0},
+    ]
+    payload = {
+        'experiment_id': 'exp-1',
+        'run_generation': 3,
+        'intensity_blob_s3_key': 'experiments/exp-1/3/intensities.json.gz',
+        'filter': {'fdrMax': 0.1},
+        'excluded_samples': [],
+        'label_groups': [{'name': 'LG', 'color': '#000'}],
+        'all_ions': [
+            {'ion_id': 1, 'fdr': 0.05, 'adduct': '+H', 'moldb_id': 9, 'moldb_name': 'HMDB'},
+            {'ion_id': 2, 'fdr': 0.50, 'adduct': '+H', 'moldb_id': 9, 'moldb_name': 'HMDB'},
+        ],
+        'datasets': [
+            {
+                'dataset_id': 'd1',
+                'region_source': 'WHOLE',
+                'regions': [
+                    {
+                        'regionKey': 'r1',
+                        'labelGroupName': 'LG',
+                        'metadata': {'sampleId': 'sA', 'condition': 'A'},
+                    },
+                    {
+                        'regionKey': 'r2',
+                        'labelGroupName': 'LG',
+                        'metadata': {'sampleId': 'sB', 'condition': 'B'},
+                    },
+                ],
+            },
+        ],
+    }
+    result = run_experiment_stats('exp-1', 3, payload)
+    assert {r['ion_id'] for r in result['results']} == {1}
+    assert '+FDR <= 10%' in [s['name'] for s in result['run_qc']['filterChain']]

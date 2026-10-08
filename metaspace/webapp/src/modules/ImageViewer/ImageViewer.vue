@@ -289,7 +289,7 @@ export default defineComponent({
           store.state?.normalization &&
           store.state.normalization.error
       ),
-      showNormalizedIntensity: computed(() => store.getters?.settings?.annotationView?.normalization),
+      showNormalizedIntensity: computed(() => !!store.getters?.settings?.annotationView?.normalization),
       roiInfo,
       normalizationData: computed(() => store.state.normalization),
       hasOpticalImage: computed(() => !!props.imageLoaderSettings.opticalSrc),

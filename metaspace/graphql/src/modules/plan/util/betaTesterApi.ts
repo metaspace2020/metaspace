@@ -30,6 +30,14 @@ export const fetchBetaFeatures = async(userId: string): Promise<string[]> => {
   }
 }
 
+export const hasBetaFeature = async(userId: string | null | undefined, feature: string): Promise<boolean> => {
+  if (!userId) {
+    return false
+  }
+  const features = await fetchBetaFeatures(userId)
+  return features.includes(feature)
+}
+
 export type BetaActivationOutcome = 'success' | 'already-active' | 'invalid'
 
 export interface BetaActivationOverrides {

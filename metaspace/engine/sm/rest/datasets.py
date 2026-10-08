@@ -5,7 +5,7 @@ import bottle
 
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
-from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS, SM_UPDATE, SM_LITHOPS
+from sm.engine.queue import QueuePublisher, SM_DS_STATUS, SM_UPDATE, SM_LITHOPS
 from sm.engine.errors import UnknownDSID, DSIsBusy
 from sm.engine.config import SMConfig
 from sm.rest.dataset_manager import SMapiDatasetManager, DatasetActionPriority
@@ -32,7 +32,6 @@ def _create_dataset_manager(db):
     return SMapiDatasetManager(
         db=db,
         es=ESExporter(db, sm_config),
-        annot_queue=_create_queue_publisher(SM_ANNOTATE),
         update_queue=_create_queue_publisher(SM_UPDATE),
         lit_queue=_create_queue_publisher(SM_LITHOPS),
         status_queue=_create_queue_publisher(SM_DS_STATUS),
@@ -104,7 +103,6 @@ def add(ds_man, ds_id=None, params=None):
         force=params.get('force', False),
         email=params.get('email', None),
         priority=params.get('priority', DatasetActionPriority.DEFAULT),
-        use_lithops=params.get('use_lithops', False),
         perform_enrichment=params.get('perform_enrichment', False),
     )
     return {'ds_id': ds_id}

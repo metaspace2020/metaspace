@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Imports the enrichment ontologies and maps them to the molecular databases. Each set is
+# independent: a failure is reported at the end and makes the script exit non-zero, but does
+# not stop the other imports.
 
 cd /opt/dev/metaspace/metaspace/engine
 
@@ -19,50 +22,39 @@ pip install -e .
 #
 #rm /tmp/LION-LUT.csv /tmp/lipidmaps.json /tmp/HMDB.json /tmp/swisslipids.json /tmp/core_metabolome.json /tmp/LION_METASPACE_list.csv
 
-curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/v2/Metabo_super_class_list.csv" -o /tmp/Metabo_super_class_list.csv
-curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/v2/Metabo_super_class.json" -o /tmp/Metabo_super_class.json
-python scripts/import_lion_info.py "Super" /tmp/Metabo_super_class_list.csv HMDB v4 /tmp/Metabo_super_class.json /tmp/Metabo_super_class_list.csv --mol-type=metabolite --category=class
-python scripts/import_lion_info.py "Super" /tmp/Metabo_super_class_list.csv CoreMetabolome v3 /tmp/Metabo_super_class.json /tmp/Metabo_super_class_list.csv --mol-type=metabolite --category=class
-rm /tmp/Metabo_super_class.json /tmp/Metabo_super_class_list.csv
+BASE_URL=https://sm-lion-project.s3.eu-west-1.amazonaws.com/v2
+failed=()
 
-curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/v2/Metabo_sub_class_list.csv" -o /tmp/Metabo_sub_class_list.csv
-curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/v2/Metabo_sub_class.json" -o /tmp/Metabo_sub_class.json
-python scripts/import_lion_info.py "Subclass" /tmp/Metabo_sub_class_list.csv HMDB v4 /tmp/Metabo_sub_class.json /tmp/Metabo_sub_class_list.csv --mol-type=metabolite --category=class
-python scripts/import_lion_info.py "Subclass" /tmp/Metabo_sub_class_list.csv CoreMetabolome v3 /tmp/Metabo_sub_class.json /tmp/Metabo_sub_class_list.csv --mol-type=metabolite --category=class
-rm /tmp/Metabo_sub_class.json /tmp/Metabo_sub_class_list.csv
+# import_set <enrichment name> <file stem> <mol type> <category>
+# Downloads <stem>_list.csv and <stem>.json, then maps the terms against HMDB v4 and
+# CoreMetabolome v3. A mapping against a molecular DB that is not installed is skipped by
+# import_lion_info.py (it logs "Molecular database not found") and does not count as a failure.
+import_set() {
+  local name=$1 stem=$2 mol_type=$3 category=$4
+  local list="/tmp/${stem}_list.csv" json="/tmp/${stem}.json"
+  if curl -f "$BASE_URL/${stem}_list.csv" -o "$list" && curl -f "$BASE_URL/${stem}.json" -o "$json"; then
+    for moldb in "HMDB v4" "CoreMetabolome v3"; do
+      # shellcheck disable=SC2086 # $moldb is "<name> <version>", two arguments
+      python scripts/import_lion_info.py "$name" "$list" $moldb "$json" "$list" \
+        --mol-type="$mol_type" --category="$category" \
+        || failed+=("$stem -> $moldb")
+    done
+  else
+    failed+=("$stem download")
+  fi
+  rm -f "$list" "$json"
+}
 
-curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/v2/Metabo_pathways_list.csv" -o /tmp/Metabo_pathways_list.csv
-curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/v2/Metabo_pathways.json" -o /tmp/Metabo_pathways.json
-python scripts/import_lion_info.py "Main" /tmp/Metabo_pathways_list.csv HMDB v4 /tmp/Metabo_pathways.json /tmp/Metabo_pathways_list.csv --mol-type=metabolite --category=pathways
-python scripts/import_lion_info.py "Main" /tmp/Metabo_pathways_list.csv CoreMetabolome v3 /tmp/Metabo_pathways.json /tmp/Metabo_pathways_list.csv --mol-type=metabolite --category=pathways
-rm /tmp/Metabo_pathways.json /tmp/Metabo_pathways_list.csv
+import_set Super    Metabo_super_class metabolite class
+import_set Subclass Metabo_sub_class   metabolite class
+import_set Main     Metabo_pathways    metabolite pathways
+import_set Main     Metabo_main_class  metabolite class
+import_set Super    Lipid_super_class  lipid      class
+import_set Sub      Lipid_sub_class    lipid      class
+import_set Main     Lipid_pathways     lipid      pathways
+import_set Main     Lipid_main_class   lipid      class
 
-curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/v2/Metabo_main_class_list.csv" -o /tmp/Metabo_main_class_list.csv
-curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/v2/Metabo_main_class.json" -o /tmp/Metabo_main_class.json
-python scripts/import_lion_info.py "Main" /tmp/Metabo_main_class_list.csv HMDB v4 /tmp/Metabo_main_class.json /tmp/Metabo_main_class_list.csv --mol-type=metabolite --category=class
-python scripts/import_lion_info.py "Main" /tmp/Metabo_main_class_list.csv CoreMetabolome v3 /tmp/Metabo_main_class.json /tmp/Metabo_main_class_list.csv --mol-type=metabolite --category=class
-rm /tmp/Metabo_main_class.json /tmp/Metabo_main_class_list.csv
-
-curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/v2/Lipid_super_class_list.csv" -o /tmp/Lipid_super_class_list.csv
-curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/v2/Lipid_super_class.json" -o /tmp/Lipid_super_class.json
-python scripts/import_lion_info.py "Super" /tmp/Lipid_super_class_list.csv HMDB v4 /tmp/Lipid_super_class.json /tmp/Lipid_super_class_list.csv --mol-type=lipid --category=class
-python scripts/import_lion_info.py "Super" /tmp/Lipid_super_class_list.csv CoreMetabolome v3 /tmp/Lipid_super_class.json /tmp/Lipid_super_class_list.csv --mol-type=lipid --category=class
-rm /tmp/Lipid_super_class.json /tmp/Lipid_super_class_list.csv
-
-curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/v2/Lipid_sub_class_list.csv" -o /tmp/Lipid_sub_class_list.csv
-curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/v2/Lipid_sub_class.json" -o /tmp/Lipid_sub_class.json
-python scripts/import_lion_info.py "Sub" /tmp/Lipid_sub_class_list.csv HMDB v4 /tmp/Lipid_sub_class.json /tmp/Lipid_sub_class_list.csv --mol-type=lipid --category=class
-python scripts/import_lion_info.py "Sub" /tmp/Lipid_sub_class_list.csv CoreMetabolome v3 /tmp/Lipid_sub_class.json /tmp/Lipid_sub_class_list.csv --mol-type=lipid --category=class
-rm /tmp/Lipid_sub_class.json /tmp/Lipid_sub_class_list.csv
-
-curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/v2/Lipid_pathways_list.csv" -o /tmp/Lipid_pathways_list.csv
-curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/v2/Lipid_pathways.json" -o /tmp/Lipid_pathways.json
-python scripts/import_lion_info.py "Main" /tmp/Lipid_pathways_list.csv HMDB v4 /tmp/Lipid_pathways.json /tmp/Lipid_pathways_list.csv --mol-type=lipid --category=pathways
-python scripts/import_lion_info.py "Main" /tmp/Lipid_pathways_list.csv CoreMetabolome v3 /tmp/Lipid_pathways.json /tmp/Lipid_pathways_list.csv --mol-type=lipid --category=pathways
-rm /tmp/Lipid_pathways.json /tmp/Lipid_pathways_list.csv
-
-curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/v2/Lipid_main_class_list.csv" -o /tmp/Lipid_main_class_list.csv
-curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/v2/Lipid_main_class.json" -o /tmp/Lipid_main_class.json
-python scripts/import_lion_info.py "Main" /tmp/Lipid_main_class_list.csv HMDB v4 /tmp/Lipid_main_class.json /tmp/Lipid_main_class_list.csv --mol-type=lipid --category=class
-python scripts/import_lion_info.py "Main" /tmp/Lipid_main_class_list.csv CoreMetabolome v3 /tmp/Lipid_main_class.json /tmp/Lipid_main_class_list.csv --mol-type=lipid --category=class
-rm /tmp/Lipid_main_class.json /tmp/Lipid_main_class_list.csv
+if [ ${#failed[@]} -gt 0 ]; then
+  echo "ERROR: failed to import enrichment sets: ${failed[*]}" >&2
+  exit 1
+fi

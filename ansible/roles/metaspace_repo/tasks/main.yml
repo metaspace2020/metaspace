@@ -5,8 +5,8 @@
   file:
     path: "{{ metaspace_home }}"
     state: directory
-    owner: "{{ spark_user }}"
-    group: "{{ spark_user }}"
+    owner: "{{ sm_user }}"
+    group: "{{ sm_user }}"
 
 - name: Check if .git dir exists
   stat:
@@ -114,7 +114,7 @@
         - --exclude=logs/*
         - --exclude=docker/*
         - --exclude=docs/*
-  tags: [master, slave, web]
+  tags: [web]
 
 - name: Remove vault password path from ansible.cfg
   lineinfile:

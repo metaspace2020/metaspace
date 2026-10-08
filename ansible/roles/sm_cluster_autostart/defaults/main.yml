@@ -1,3 +1,0 @@
-sm_cluster_autostart_ansible_version: 2.8.6
-inventory: ../aws/dev/hosts
-sm_cluster_autostart_python: /opt/dev/miniconda3/sm/envs/sm/bin/python

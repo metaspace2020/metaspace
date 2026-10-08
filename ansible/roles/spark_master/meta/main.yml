@@ -1,4 +1,0 @@
----
-
-dependencies:
-#  - { role: spark, become: yes }

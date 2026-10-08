@@ -20,6 +20,7 @@ import router from './router'
 
 import VueGtag from 'vue-gtag'
 import { setErrorNotifier } from './lib/reportError'
+import { buildGtagOptions } from './lib/gtag'
 import { migrateLocalStorage } from './lib/localStorage'
 
 import { install } from 'vue3-recaptcha-v2'
@@ -82,14 +83,10 @@ router.afterEach((to: Route) => {
   store.commit('updateFilterOnNavigate', to)
 })
 
-app.use(
-  VueGtag as any,
-  {
-    config: { id: 'UA-73509518-1' },
-    enabled: isProd, // disabled in dev because it impairs "break on uncaught exception"
-  },
-  router
-)
+const gaMeasurementId = config.ga_measurement_id || ''
+if (isProd && gaMeasurementId !== '') {
+  app.use(VueGtag as any, buildGtagOptions({ measurementId: gaMeasurementId, production: isProd }), router)
+}
 
 app.use(install, {
   sitekey: config.recaptcha_site_key,

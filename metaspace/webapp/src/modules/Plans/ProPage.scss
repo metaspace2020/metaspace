@@ -1,0 +1,1121 @@
+@import '../../assets/scss/_variables.scss';
+
+// Accent tokens are all derived from the brand $pro-color so a brand change
+// propagates through the whole page.
+$pro-accent: $pro-color;
+$pro-accent-strong: darken($pro-color, 10%);
+$pro-accent-hover: lighten($pro-color, 6%);
+$pro-accent-tint: mix($pro-color, #ffffff, 12%);
+$pro-accent-ink: darken($pro-color, 30%);
+
+// Page-local neutral scale. Kept slightly cooler and darker than the app-wide
+// blue-tinted greys so the long marketing page reads as a document rather than
+// as app chrome.
+$pro-ink: #101820;
+$pro-body: #55636e;
+$pro-muted: #7c8892;
+$pro-faint: #b4bcc4;
+$pro-line: #e2e8ed;
+$pro-surface: #f6f8fa;
+// Arrow/connector grey - one step darker than $pro-faint, used wherever a
+// glyph (→, ↓) has to read as chrome rather than as copy.
+$pro-arrow: #c0c9d1;
+// The muted counterpart of $pro-body for text on the ink bands (stats strip,
+// final CTA), where $pro-muted would disappear against $pro-ink.
+$pro-ink-muted: #a9b4be;
+// The very top of the neutral scale - a barely-there wash used for the hero
+// figure card, which must read as paper rather than as a tinted panel.
+$pro-wash: mix($pro-surface, #ffffff, 40%);
+
+// Derived from the app brand blue ($color-primary) so a brand change propagates here too.
+$pro-blue: $color-primary;
+$pro-blue-ink: darken($color-primary, 12%);
+$pro-blue-tint: mix($color-primary, #ffffff, 10%);
+
+$pro-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+.pro-page {
+  background: #ffffff;
+  color: $pro-ink;
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+
+  // App.vue applies the shared `.sm-main-content` class (overflow: auto) to
+  // every route's root element. This page never actually needs that element
+  // to scroll internally - the document itself scrolls - but `overflow:
+  // auto` makes it establish a scroll container for CSS positioning
+  // purposes, which silently defeats `position: sticky` on the section nav
+  // below. The compound selector outweighs the single-class global rule
+  // regardless of stylesheet order, so this is a safe, page-scoped override.
+  &.sm-main-content {
+    overflow: visible;
+  }
+
+  ::selection {
+    background: $pro-accent-tint;
+  }
+
+  a {
+    color: $pro-accent-ink;
+
+    &:hover {
+      color: $pro-ink;
+    }
+  }
+}
+
+.pro-shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 clamp(20px, 4vw, 32px);
+  width: 100%;
+  // Without this, width: 100% + padding pushes the true rendered box past its
+  // container at any viewport narrower than max-width - previously invisible
+  // because the shared `.sm-main-content` ancestor absorbed the overflow
+  // locally (see the .sm-main-content override above); now that it doesn't,
+  // the box must actually size itself correctly.
+  box-sizing: border-box;
+}
+
+.pro-section {
+  padding: clamp(72px, 9vw, 120px) 0;
+
+  &--tint {
+    background: $pro-surface;
+  }
+
+  &--tight {
+    padding: 72px 0;
+  }
+
+  // Shallower than `--tight`: a band that separates two sections rather than
+  // being a section in its own right (the hero stats strip).
+  &--band {
+    @apply mt-14;
+    padding: 40px 0;
+  }
+
+  // Dark band treatment - currently only the hero stats strip, but kept as a
+  // general-purpose modifier rather than a one-off stats class.
+  &--ink {
+    background: $pro-ink;
+    color: #ffffff;
+  }
+}
+
+// A section landed on via hash - through browser navigation or a same-page
+// anchor click (scrollToHashSection) - has to clear BOTH pieces of fixed
+// chrome: the 64px site header and the sticky section nav below it, which
+// measures 45px. That is 109px of overlay at every width, since the nav
+// stays visible on narrow viewports and scrolls horizontally rather than
+// collapsing. 120px clears the pair with a little breathing room, so this
+// deliberately carries no breakpoint - an offset that shrank on mobile
+// would tuck each section heading underneath the nav.
+#plans,
+#analysis,
+#privacy,
+#procurement,
+#docs,
+#faq {
+  scroll-margin-top: 120px;
+}
+
+// --- sticky section tab bar --------------------------------------------
+.pro-section-nav {
+  position: sticky;
+  top: 64px;
+  z-index: 900;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid $pro-line;
+
+  &__list {
+    display: flex;
+    align-items: center;
+    gap: clamp(16px, 2vw, 28px);
+    list-style: none;
+    margin: 0;
+    padding: 13px 0;
+    font-family: $pro-mono;
+    font-size: 11.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+
+    // The bar stays visible at every width - the 1080px breakpoint belongs to
+    // the site header's primary links, not to this. On narrow viewports the
+    // six links simply scroll horizontally rather than collapsing, which is
+    // the only way to reach a section from a phone without scrolling the
+    // whole page. The scrollbar itself is hidden so the strip reads as a tab
+    // bar rather than a scroll region.
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    a {
+      color: $pro-muted;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: color 0.2s ease;
+
+      &:hover,
+      &:active {
+        color: $pro-ink;
+      }
+    }
+  }
+}
+
+.pro-eyebrow {
+  margin: 0;
+  font-family: $pro-mono;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $pro-muted;
+
+  &--accent {
+    color: $pro-accent-ink;
+  }
+}
+
+.pro-h1 {
+  margin: 20px 0 26px;
+  max-width: 13ch;
+  font-weight: 600;
+  font-size: clamp(44px, 6.4vw, 78px);
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+}
+
+.pro-h2 {
+  margin: 18px 0 22px;
+  font-size: clamp(30px, 3.6vw, 42px);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+}
+
+.pro-h3 {
+  margin: 0 0 10px;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+}
+
+.pro-lede {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.55;
+  color: $pro-body;
+  max-width: 62ch;
+}
+
+.pro-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 14px 22px;
+  border-radius: 6px;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+
+  &--accent {
+    background: $pro-accent;
+    border: 1px solid $pro-accent-strong;
+    color: $pro-ink;
+
+    &:hover {
+      background: $pro-accent-hover;
+      color: $pro-ink;
+    }
+  }
+
+  &--ghost {
+    background: transparent;
+    border: 1px solid $pro-line;
+    color: $pro-ink;
+
+    &:hover {
+      border-color: $pro-ink;
+      color: $pro-ink;
+    }
+  }
+
+  &--block {
+    width: 100%;
+  }
+
+  // Quieter, smaller button for the add-on row, which must never compete with
+  // a plan CTA.
+  &--sm {
+    font-size: 14px;
+    padding: 9px 16px;
+  }
+}
+
+.pro-note {
+  margin: 0;
+  font-family: $pro-mono;
+  font-size: 12.5px;
+  color: $pro-muted;
+  line-height: 1.7;
+}
+
+// --- hero -------------------------------------------------------------
+.pro-signature {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+// Hero text and figure share one two-column row, collapsing to a single
+// column below the 900px content breakpoint used throughout the rest of the
+// page (kept distinct from the section nav's own 1080px breakpoint).
+.pro-hero__row {
+  display: grid;
+  grid-template-columns: 1fr minmax(240px, 420px);
+  // align-items: center;
+  gap: clamp(32px, 6vw, 64px);
+
+  @media (max-width: 899px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// The figure is a card, not a bare graphic: the border and the near-white
+// wash give the signature strip an edge to sit against, so it reads as a
+// framed exhibit beside the hero copy rather than as floating artwork.
+.pro-hero__figure {
+  width: 100%;
+  max-width: 420px;
+  justify-self: end;
+  box-sizing: border-box;
+  border: 1px solid $pro-line;
+  border-radius: 12px;
+  background: linear-gradient(180deg, $pro-wash, #ffffff);
+  overflow: hidden;
+
+  @media (max-width: 899px) {
+    justify-self: start;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+}
+
+// The card's header band. This is the only place the METASPACE Pro lockup
+// appears on the page - see the comment in ProHero.tsx for why it sits in the
+// figure panel rather than above the hero copy.
+.pro-hero__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  height: 96px;
+  box-sizing: border-box;
+  // Horizontal breathing room for the lockup at narrow widths. It insets the
+  // artwork, never the band: the fill still runs edge to edge.
+  padding: 0 20px;
+  background: $pro-accent;
+
+  // The wordmark artwork is white in the source file, which is what it needs
+  // to be on the accent fill. Sized by height so it keeps its own aspect
+  // ratio and clears the band edges by ~34px.
+  &-mark {
+    display: block;
+    height: 28px;
+    width: auto;
+    max-width: 100%;
+  }
+
+  // "Pro" is white here rather than the usual accent treatment: on the accent
+  // fill itself, accent-on-accent has no contrast at all.
+  &-suffix {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+  }
+}
+
+// The figure keeps the inset the card used to carry, so the artwork below the
+// band is unaffected. No height here - the card sizes to whatever the figure
+// is.
+.pro-hero__figure-body {
+  padding: 22px 20px 18px;
+}
+
+// No rules above or below the row: the ink band is its own boundary, and a
+// hairline inside it only fragments the numbers.
+.pro-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 26px 24px;
+
+  &__value {
+    font-family: $pro-mono;
+    font-size: 29px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+  }
+
+  &__label {
+    font-size: 13.5px;
+    color: $pro-ink-muted;
+    margin-top: 3px;
+  }
+}
+
+// --- callouts ---------------------------------------------------------
+.pro-callout {
+  border-radius: 0 8px 8px 0;
+  padding: 30px 34px;
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+
+  &__body {
+    flex: 1 1 520px;
+  }
+
+  &--blue {
+    background: $pro-blue-tint;
+    border-left: 3px solid $pro-blue;
+
+    .pro-h3 {
+      color: $pro-blue;
+    }
+
+    p {
+      color: $pro-blue-ink;
+      margin: 0;
+      max-width: 60ch;
+      font-size: 16px;
+    }
+  }
+}
+
+// --- rail (upload -> annotate -> analyse) -----------------------------
+.pro-rail {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  border: 1px solid $pro-line;
+  border-radius: 10px;
+  background: #ffffff;
+  margin-top: 44px;
+  overflow: hidden;
+
+  &__step {
+    padding: 26px 28px;
+
+    &--accent {
+      background: $pro-accent-tint;
+    }
+  }
+
+  &__arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    color: #c0c9d1;
+    font-size: 17px;
+    background: $pro-surface;
+    border-left: 1px solid $pro-line;
+    border-right: 1px solid $pro-line;
+  }
+
+  @media (max-width: 899px) {
+    grid-template-columns: 1fr;
+
+    &__arrow {
+      padding: 7px 0;
+      border-left: 0;
+      border-right: 0;
+      border-top: 1px solid $pro-line;
+      border-bottom: 1px solid $pro-line;
+
+      span {
+        display: inline-block;
+        transform: rotate(90deg);
+      }
+    }
+  }
+}
+
+// --- feature rows -----------------------------------------------------
+// Centred label introducing the three feature rows below it. The arrow is a
+// pseudo-element on its own line, so the caption points at what follows
+// instead of just naming it.
+.pro-tools-caption {
+  margin: 26px 0 0;
+  text-align: center;
+  font-family: $pro-mono;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: $pro-muted;
+
+  &::after {
+    content: '↓';
+    display: block;
+    font-size: 15px;
+    margin-top: 8px;
+    color: $pro-arrow;
+  }
+}
+
+.pro-feature {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(32px, 5vw, 64px);
+  align-items: center;
+  padding: 64px 0;
+  border-top: 1px solid $pro-line;
+
+  // The rule separates one feature row from the next. On the row that follows
+  // the caption it would instead land immediately under the caption's arrow,
+  // cutting the pointer off from the thing it points at.
+  .pro-tools-caption + & {
+    border-top: 0;
+  }
+
+  &--flip {
+    flex-direction: row-reverse;
+
+    @media (max-width: 899px) {
+      flex-direction: row;
+    }
+  }
+
+  &__copy {
+    flex: 1 1 340px;
+  }
+
+  &__media {
+    flex: 1 1 400px;
+  }
+
+  &__instead {
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px dashed $pro-line;
+    font-size: 15px;
+    color: $pro-muted;
+    max-width: 56ch;
+
+    b {
+      color: $pro-body;
+      font-weight: 500;
+    }
+  }
+}
+
+.pro-chart {
+  border: 1px solid $pro-line;
+  border-radius: 10px;
+  background: $pro-surface;
+  overflow: hidden;
+
+  &__caption {
+    padding: 11px 14px;
+    background: #ffffff;
+    border-top: 1px solid $pro-line;
+    font-family: $pro-mono;
+    font-size: 11.5px;
+    color: $pro-muted;
+  }
+
+  &__svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}
+
+// --- grids and cards --------------------------------------------------
+.pro-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1px;
+  background: $pro-line;
+  border: 1px solid $pro-line;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 44px;
+
+  > div {
+    background: #ffffff;
+    padding: 32px 28px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 15.5px;
+    color: $pro-body;
+  }
+}
+
+.pro-strip {
+  border: 1px solid $pro-line;
+  border-radius: 10px;
+  padding: 26px 30px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+  background: #ffffff;
+
+  &__body {
+    flex: 1 1 400px;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  // Body copy inside a strip. Matches the `.pro-grid p` size so the Free and
+  // Max rows read at the same weight as the rest of the page.
+  &__copy {
+    margin: 0;
+    font-size: 15.5px;
+    color: $pro-body;
+    max-width: 68ch;
+
+    em {
+      font-style: italic;
+    }
+  }
+
+  // Max shows its price inline beside the heading rather than in a price
+  // block, so the strip never reads as an oversized fourth card.
+  &__heading {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  &__price {
+    font-family: $pro-mono;
+    font-size: 26px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: $pro-ink;
+  }
+
+  &__price-note {
+    font-size: 14px;
+    font-weight: 400;
+    color: $pro-muted;
+  }
+
+  &__link {
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    color: $pro-accent-ink;
+  }
+
+  &--tint {
+    background: $pro-surface;
+  }
+}
+
+.pro-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 20px;
+}
+
+// --- docs section -------------------------------------------------------
+// The four guides are one joined row, not four floating tiles: the 1px grid
+// gap over a $pro-line background draws the hairlines between them, and each
+// card drops its own border and radius so the group keeps a single outline.
+.pro-docs-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1px;
+  background: $pro-line;
+  border: 1px solid $pro-line;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 44px;
+
+  .pro-card {
+    display: block;
+    border: 0;
+    border-radius: 0;
+    padding: 26px 24px;
+  }
+}
+
+// The Docs section renders each of its cards as `<a class="pro-card">`, so the
+// card would otherwise pick up the page-wide link treatment (accent colour +
+// underline) declared on `.pro-page a` at the top of this file. These rules
+// are anchor-only - the pricing cards are plain `<div>`s and are untouched -
+// and the `.pro-page` prefix is what outweighs that earlier link rule; a bare
+// `.pro-card` would tie on specificity and lose on source order.
+.pro-page a.pro-card {
+  color: inherit;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+
+  // The whole card washes on hover rather than the text changing colour, so
+  // the heading holds at ink and the card still reads as a document tile
+  // rather than as a link.
+  &:hover {
+    background: $pro-surface;
+    border-color: $pro-faint;
+    color: inherit;
+  }
+}
+
+// Inside the joined docs row the wash is the accent tint - the cards have no
+// border of their own to pick up, so the fill has to carry the hover on its
+// own. The extra class outweighs the `.pro-page a.pro-card:hover` rule above.
+.pro-page .pro-docs-cards a.pro-card:hover {
+  background: $pro-accent-tint;
+}
+
+.pro-card {
+  border: 1px solid $pro-line;
+  border-radius: 10px;
+  padding: 30px 26px 26px;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  position: relative;
+
+  &--highlight {
+    border-color: $pro-accent;
+    box-shadow: 0 0 0 3px $pro-accent-tint;
+  }
+
+  &__badge {
+    position: absolute;
+    top: -11px;
+    left: 26px;
+    background: $pro-accent;
+    color: $pro-ink;
+    font-family: $pro-mono;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+
+  &__tier {
+    margin: 0;
+    font-family: $pro-mono;
+    font-size: 12.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: $pro-muted;
+  }
+
+  &__price {
+    margin: 12px 0 2px;
+    font-family: $pro-mono;
+    font-size: 38px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1;
+
+    sup {
+      font-size: 19px;
+      top: -14px;
+      position: relative;
+      font-weight: 400;
+    }
+
+    // The "not available on this term" message occupies the price slot, so it
+    // has to drop out of the price's display scale.
+    &--unavailable {
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.4;
+      letter-spacing: 0;
+      color: $pro-muted;
+    }
+  }
+
+  &__period {
+    margin: 0 0 6px;
+    font-size: 14px;
+    color: $pro-muted;
+  }
+
+  &__blurb {
+    margin: 0;
+    font-size: 15px;
+    color: $pro-body;
+    padding-bottom: 20px;
+    border-bottom: 1px solid $pro-line;
+  }
+
+  &__bullets {
+    list-style: none;
+    margin: 20px 0 26px;
+    padding: 0;
+    display: grid;
+    gap: 11px;
+
+    li {
+      font-size: 15px;
+      color: $pro-body;
+      padding-left: 22px;
+      position: relative;
+
+      // A mono rule rather than a tick: the list states what the allowance
+      // IS, it isn't a checklist of things you get versus don't.
+      &::before {
+        content: '—';
+        position: absolute;
+        left: 0;
+        font-family: $pro-mono;
+        color: $pro-accent-ink;
+      }
+
+      // The allowance number carries the line, so it steps up to ink while
+      // the rest of the item stays in body grey.
+      b {
+        color: $pro-ink;
+        font-weight: 600;
+      }
+    }
+  }
+
+  &__cta {
+    margin-top: auto;
+  }
+}
+
+// --- comparison table -------------------------------------------------
+.pro-table-wrap {
+  margin-top: 64px;
+  overflow-x: auto;
+  border: 1px solid $pro-line;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.pro-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 860px;
+  font-size: 15px;
+
+  th,
+  td {
+    text-align: left;
+    padding: 13px 18px;
+    border-bottom: 1px solid $pro-line;
+  }
+
+  thead th {
+    font-family: $pro-mono;
+    font-size: 11.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: $pro-muted;
+    font-weight: 500;
+    background: $pro-surface;
+
+    &.is-highlight {
+      color: $pro-ink;
+    }
+  }
+
+  &__group th {
+    font-family: $pro-mono;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: $pro-ink;
+    background: $pro-surface;
+    font-weight: 600;
+    padding: 16px 18px;
+  }
+
+  tbody th {
+    font-weight: 400;
+    color: $pro-body;
+    width: 26%;
+  }
+
+  td {
+    color: $pro-body;
+    font-variant-numeric: tabular-nums;
+
+    &.is-accent {
+      color: $pro-accent-ink;
+      font-weight: 500;
+    }
+
+    &.is-empty {
+      color: $pro-faint;
+    }
+  }
+
+  tbody tr:last-child {
+    th,
+    td {
+      border-bottom: none;
+    }
+  }
+}
+
+// --- faq --------------------------------------------------------------
+// The rows run the full width of the shell - a question and its marker are a
+// row of the page, not a paragraph, so capping the row width leaves the
+// markers stranded mid-page. The reading measure is held on the answer copy
+// instead, where line length actually matters.
+.pro-faq {
+  margin-top: 44px;
+  border-top: 1px solid $pro-line;
+
+  &__item {
+    border-bottom: 1px solid $pro-line;
+  }
+
+  &__trigger {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 500;
+    color: $pro-ink;
+    letter-spacing: -0.01em;
+    line-height: 1.4;
+    padding: 22px 6px 22px 0;
+  }
+
+  &__marker {
+    font-family: $pro-mono;
+    font-size: 22px;
+    color: $pro-muted;
+    line-height: 1.2;
+  }
+
+  &__answer p {
+    margin: 0;
+    padding: 0 40px 24px 0;
+    color: $pro-body;
+    font-size: 16px;
+    max-width: 82ch;
+  }
+}
+
+// --- final cta --------------------------------------------------------
+.pro-cta {
+  background: $pro-ink;
+  color: #ffffff;
+  border-radius: 14px;
+  padding: clamp(52px, 7vw, 72px) clamp(26px, 5vw, 56px);
+  text-align: center;
+
+  .pro-h2 {
+    color: #ffffff;
+    margin: 0 0 18px;
+  }
+
+  // Only the lede is centred on a reading measure. The footnote below the
+  // buttons is not a paragraph of body copy - a bare `p` selector here used
+  // to outrank `.pro-note` and squeeze it to 52ch with no auto margins,
+  // which is what broke it onto two ragged lines.
+  &__lede {
+    color: $pro-ink-muted;
+    max-width: 52ch;
+    margin: 0 auto 32px;
+    font-size: 18px;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .pro-note {
+    margin: 20px 0 0;
+  }
+
+  .pro-btn--ghost {
+    border-color: #39444e;
+    color: #ffffff;
+
+    &:hover {
+      border-color: #ffffff;
+    }
+  }
+}
+
+// --- procurement ------------------------------------------------------
+.pro-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 26px 0 0;
+  display: grid;
+  gap: 16px;
+
+  li {
+    font-size: 16px;
+    color: $pro-body;
+    padding-left: 22px;
+    position: relative;
+    max-width: 60ch;
+
+    &::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: $pro-accent-ink;
+    }
+  }
+}
+
+.pro-quote-box {
+  flex: 1 1 340px;
+  border: 1px solid $pro-line;
+  border-radius: 10px;
+  overflow: hidden;
+
+  &__head {
+    padding: 12px 18px;
+    background: $pro-surface;
+    border-bottom: 1px solid $pro-line;
+    font-family: $pro-mono;
+    font-size: 11.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: $pro-muted;
+  }
+
+  &__body {
+    padding: 22px 18px;
+    font-family: $pro-mono;
+    font-size: 14px;
+    line-height: 1.75;
+    color: $pro-ink;
+  }
+}
+
+// --- billing toggle ---------------------------------------------------
+.pro-billing-toggle {
+  display: inline-flex;
+  margin-bottom: 32px;
+
+  .el-radio-button__inner {
+    font-family: $pro-mono;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 9px 14px;
+    border-color: $pro-line;
+    color: $pro-body;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .el-radio-button__original-radio:checked + .el-radio-button__inner {
+    background: $pro-ink;
+    border-color: $pro-ink;
+    color: #ffffff;
+    box-shadow: none;
+  }
+}
+
+// Dataset pack - deliberately quieter than a `.pro-strip`/`.pro-card` (dashed
+// border, transparent background, smaller type) so the one-off add-on never
+// reads as a fifth pricing tier. The dash is drawn at 2px in $pro-faint
+// because at 1px in $pro-line it was so close to the page white that the
+// boundary read as an accident rather than as an edge.
+.pro-datapack {
+  border: 2px dashed $pro-faint;
+  background: transparent;
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+
+  &__body {
+    flex: 1 1 420px;
+  }
+
+  &__title {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 600;
+    color: $pro-body;
+  }
+
+  &__price {
+    font-family: $pro-mono;
+    font-weight: 500;
+    color: $pro-ink;
+  }
+
+  &__copy {
+    margin: 0;
+    font-size: 13.5px;
+    color: $pro-muted;
+  }
+}
+
+// "No per-seat pricing" - a standalone reassurance, not a purchase-shaped
+// block, so it gets the same dashed treatment as the add-on row.
+.pro-seatnote {
+  margin: 22px 0 0;
+  padding: 16px;
+  text-align: center;
+  font-size: 14px;
+  color: $pro-body;
+  border-radius: 8px;
+
+  b {
+    color: $pro-ink;
+    font-weight: 600;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pro-page * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

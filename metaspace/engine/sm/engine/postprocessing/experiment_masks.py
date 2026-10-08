@@ -8,7 +8,7 @@ where the int is the cluster ``segment_index``.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 from PIL import Image, ImageDraw
@@ -28,7 +28,8 @@ def rasterise_roi_mask(
     ``roi_id`` is selected; for a bare Feature the ``roi_id`` filter is
     not applied (caller already located the feature by primary key).
 
-    Returns ``None`` if no usable feature is found.
+    A vertex whose ``x``/``y`` is missing or ``null`` is read as 0 (see
+    ``_vertex``). Returns ``None`` if no usable feature is found.
     """
     features = _features_from_geojson(geojson, roi_id)
     if not features:
@@ -39,8 +40,19 @@ def rasterise_roi_mask(
     if not coords:
         return np.zeros((height, width), dtype=np.uint8)
     img = Image.new('L', (width, height), 0)
-    ImageDraw.Draw(img).polygon([(int(c['x']), int(c['y'])) for c in coords], fill=1)
+    ImageDraw.Draw(img).polygon([_vertex(c) for c in coords], fill=1)
     return np.array(img, dtype=np.uint8)
+
+
+def _vertex(coord: Dict[str, Any]) -> Tuple[int, int]:
+    """Read an ``{x, y}`` vertex, treating a missing/null axis as 0.
+
+    The webapp ROI editor used to serialise vertices with ``coord.y || coord[1]``,
+    so a vertex on the image edge (``y == 0``) was persisted as ``{"x": N}`` (key
+    dropped by JSON.stringify) and as ``[N, null]`` in ``geometry.coordinates``.
+    Such rows still exist, and the only value that can go missing that way is 0.
+    """
+    return int(coord.get('x') or 0), int(coord.get('y') or 0)
 
 
 def _features_from_geojson(geojson: Dict[str, Any], roi_id: int) -> list:

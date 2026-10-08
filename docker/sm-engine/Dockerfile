@@ -3,11 +3,6 @@ FROM  --platform=linux/amd64  ubuntu:20.04
 MAINTAINER Vitaly Kovalev <kovalev@embl.de>
 WORKDIR /
 
-ENV SPARK_VER 3.0.1
-ENV SPARK_DIR spark-$SPARK_VER-bin-hadoop2.7
-ENV SPARK_HOME /$SPARK_DIR
-ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
-
 # Use the fastest apt mirror
 RUN sed -i -e 's|http://.*archive.ubuntu.com/ubuntu/|mirror://mirrors.ubuntu.com/mirrors.txt|' /etc/apt/sources.list
 
@@ -25,11 +20,6 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         netcat-openbsd \
         sudo \
         && \
-# ----- Spark -----
-    DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
-    ca-certificates-java wget && \
-    #     openjdk-8-jre-headless ca-certificates-java wget && \
-    # wget -qO - https://archive.apache.org/dist/spark/spark-$SPARK_VER/$SPARK_DIR.tgz | tar xz && \
 # ----- Python -----
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         software-properties-common && \

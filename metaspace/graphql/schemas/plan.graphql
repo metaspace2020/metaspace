@@ -20,6 +20,7 @@ type PricingOption {
 type Plan {
     id: String!
     tier: String!
+    type: String
     name: String!
     description: String
     isActive: Boolean

@@ -61,6 +61,8 @@ describe('GroupsListItem', () => {
     ;(useQuery as any).mockReturnValue({
       result: ref(Object.keys(params).reduce((acc, key) => ({ ...acc, [key]: params[key]() }), {})),
       loading: ref(false),
+      error: ref(null),
+      refetch: vi.fn(),
       onResult: vi.fn(),
     })
   }
@@ -76,6 +78,8 @@ describe('GroupsListItem', () => {
     ;(useQuery as any).mockReturnValue({
       result: ref(Object.keys(params).reduce((acc, key) => ({ ...acc, [key]: params[key]() }), {})),
       loading: ref(false),
+      error: ref(null),
+      refetch: vi.fn(),
       onResult: vi.fn(),
     })
   }
@@ -91,8 +95,32 @@ describe('GroupsListItem', () => {
     ;(useQuery as any).mockReturnValue({
       result: ref(Object.keys(params).reduce((acc, key) => ({ ...acc, [key]: params[key]() }), {})),
       loading: ref(false),
+      error: ref(null),
+      refetch: vi.fn(),
       onResult: vi.fn(),
     })
+  }
+
+  let mockRefetch
+  const groupsErrorQuery = async () => {
+    graphqlMocks = await initMockGraphqlClient({
+      Query: () => ({ currentUser: () => ({ id: 'userid', role: 'user' }) }),
+    })
+    mockRefetch = vi.fn()
+    ;(useQuery as any)
+      .mockReturnValueOnce({
+        result: ref({ currentUser: { id: 'userid', role: 'user' } }),
+        loading: ref(false),
+        error: ref(null),
+        onResult: vi.fn(),
+      })
+      .mockReturnValueOnce({
+        result: ref(undefined),
+        loading: ref(false),
+        error: ref(new Error('Network error: Failed to fetch')),
+        refetch: mockRefetch,
+        onResult: vi.fn(),
+      })
   }
 
   beforeEach(() => {
@@ -163,6 +191,27 @@ describe('GroupsListItem', () => {
     await nextTick()
 
     expect(wrapper.html()).toMatchSnapshot()
+  })
+
+  it('should show an error message with a retry button when the groups query fails', async () => {
+    await groupsErrorQuery()
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router],
+        provide: {
+          [DefaultApolloClient]: graphqlMocks,
+        },
+      },
+    })
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.text()).toContain('Something went wrong while loading the groups')
+    const retryButton = wrapper.find('[data-test-key="groups-retry"]')
+    expect(retryButton.exists()).toBe(true)
+
+    await retryButton.trigger('click')
+    expect(mockRefetch).toHaveBeenCalled()
   })
 
   it('should list the correct amount of groups', async () => {

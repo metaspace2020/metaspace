@@ -364,6 +364,23 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       return null
     }
   },
+
+  async topupOptions(_: any,
+    { groupId, userId }: { groupId?: string; userId?: string },
+    ctx: Context): Promise<any[]> {
+    if (!groupId && !userId) {
+      return []
+    }
+
+    try {
+      const scope = groupId ? `groupId=${encodeURIComponent(groupId)}` : `userId=${encodeURIComponent(userId!)}`
+      const result = await makeApiRequest(ctx, `/api/usage-credits/topup-options?${scope}`)
+      return result?.data || []
+    } catch (error) {
+      logger.error('Error fetching top-up options:', error)
+      return []
+    }
+  },
 }
 
 export default QueryResolvers

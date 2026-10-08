@@ -13,9 +13,7 @@ import numpy as np
 import pytest
 from elasticsearch import Elasticsearch
 import psycopg2
-from fasteners import InterProcessLock
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-from pysparkling import Context
 
 from sm.engine import image_storage
 from sm.engine.db import DB, ConnectionPool
@@ -76,25 +74,6 @@ def metadata():
 @pytest.fixture()
 def ds_config():
     return deepcopy(TEST_DS_CONFIG)
-
-
-@pytest.fixture(scope='module')
-def pysparkling_context(request):
-    return Context()
-
-
-@pytest.fixture()
-def spark_context(request):
-    from pyspark import SparkContext
-    import sys
-    import os
-
-    os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
-
-    # Prevent parallel tests from trying to launch more Spark contexts, as they get port conflicts
-    with InterProcessLock('spark-context.lock'):
-        with SparkContext(master='local[2]') as sc:
-            yield sc
 
 
 def _autocommit_execute(db_config, *sqls):

@@ -31,7 +31,8 @@ import MatchModeSelector, { MatchMode } from './components/MatchModeSelector'
 import RegionMappingGroups from './components/RegionMappingGroups'
 import ExperimentVariablesCard from './components/ExperimentVariablesCard'
 import BulkAssignPanel from './components/BulkAssignPanel'
-import { useExperimentPermissions, promptExperimentProUpgrade } from './composables/experimentPermissions'
+import { useExperimentPermissions, promptExperimentAccessDenied } from './composables/experimentPermissions'
+import { isPlanLimitError, notifyPlanLimitReached } from '../../lib/planLimits'
 import { ProjectRoleOptions } from '../../api/project'
 import { resolveRenameTarget, seedNameModeGroups } from './composables/groupNaming'
 import { buildSegmentationMasks } from './composables/useSegmentationMasks'
@@ -128,8 +129,6 @@ export default defineComponent({
     }))
     const candidates = computed<CandidateDataset[]>(() => dsResult.value?.allDatasets ?? [])
 
-    // Creating an experiment requires admin, or a project member/manager with an active
-    // Pro subscription. Editing an existing one is unaffected by this gate.
     const { result: projectRoleResult } = useQuery<{ project: { currentUserRole: string | null } | null }>(
       experimentProjectRoleQuery,
       () => ({ projectId }),
@@ -710,7 +709,7 @@ export default defineComponent({
 
     const onSave = async (): Promise<void> => {
       if (createBlocked.value) {
-        promptExperimentProUpgrade()
+        promptExperimentAccessDenied()
         return
       }
       try {
@@ -722,13 +721,17 @@ export default defineComponent({
         ElMessage.success('Saved')
         router.push({ path: `/project/${projectId}`, query: { ...route.query, tab: 'experiments' } })
       } catch (e: any) {
-        ElMessage.error(e?.message ?? 'Save failed')
+        if (isPlanLimitError(e)) {
+          notifyPlanLimitReached('experiments')
+        } else {
+          ElMessage.error(e?.message ?? 'Save failed')
+        }
       }
     }
 
     const onRun = async (): Promise<void> => {
       if (createBlocked.value) {
-        promptExperimentProUpgrade()
+        promptExperimentAccessDenied()
         return
       }
       try {
@@ -744,7 +747,11 @@ export default defineComponent({
         ElMessage.success('Experiment submitted')
         router.push({ path: `/project/${projectId}`, query: { ...route.query, tab: 'experiments' } })
       } catch (e: any) {
-        ElMessage.error(e?.message ?? 'Run failed')
+        if (isPlanLimitError(e)) {
+          notifyPlanLimitReached('experiments')
+        } else {
+          ElMessage.error(e?.message ?? 'Run failed')
+        }
       }
     }
 

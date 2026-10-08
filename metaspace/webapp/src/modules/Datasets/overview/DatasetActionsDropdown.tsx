@@ -27,7 +27,6 @@ import './DatasetActionsDropdown.scss'
 import { checkIfEnrichmentRequested } from '../../../api/enrichmentdb'
 import { ArrowDown } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
-import { useProFeatures } from '../../../lib/useProFeatures'
 // import { verifyRecaptcha } from '../../../api/auth'
 
 interface DatasetActionsDropdownProps {
@@ -77,7 +76,6 @@ export const DatasetActionsDropdown = defineComponent({
     const { emit } = ctx
     const router = useRouter()
     const apolloClient = inject(DefaultApolloClient)
-    const { canUse, loading: proLoading } = useProFeatures()
     // const token = computed(() => props.recaptchaToken)
 
     const state = reactive<DatasetActionsDropdownState>({
@@ -337,38 +335,22 @@ export const DatasetActionsDropdown = defineComponent({
         case 'segmentation':
           await segmentationJobsRefetch()
           hideFeatureBadge('imageSegmentation')
-          if (canUse('segmentation')) {
-            if (props.dataset?.canEdit) {
-              openSegmentationDialog()
-            } else {
-              // Users who can view but not edit may only open an existing
-              // segmentation result — they cannot run a new one.
-              const hasSegmentation = segmentationJobs.value?.find((job: any) => job.status === 'FINISHED')
-              if (props.dataset?.canDownload && hasSegmentation) {
-                router.push({
-                  name: 'dataset-segmentation',
-                  params: { dataset_id: props.dataset?.id },
-                })
-              } else {
-                ElNotification.warning(
-                  'You need to be the dataset owner or a member of its group to run image segmentation.'
-                )
-              }
-            }
-          } else if (proLoading.value) {
-            // Entitlement is still resolving — ignore the click rather than
-            // wrongly showing the upsell to a Pro user.
-            break
+          if (props.dataset?.canEdit) {
+            openSegmentationDialog()
           } else {
-            ElNotification.warning({
-              title: '',
-              message: `
-                You need to be a METASPACE Pro user to perform image
-                 segmentation. Check 
-                 <a href="/plans" target="_blank" rel="noopener">our plans</a> and get an upgrade.
-              `,
-              dangerouslyUseHTMLString: true,
-            })
+            // Users who can view but not edit may only open an existing
+            // segmentation result — they cannot run a new one.
+            const hasSegmentation = segmentationJobs.value?.find((job: any) => job.status === 'FINISHED')
+            if (props.dataset?.canDownload && hasSegmentation) {
+              router.push({
+                name: 'dataset-segmentation',
+                params: { dataset_id: props.dataset?.id },
+              })
+            } else {
+              ElNotification.warning(
+                'You need to be the dataset owner or a member of its group to run image segmentation.'
+              )
+            }
           }
           break
         case 'download':

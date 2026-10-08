@@ -10,6 +10,28 @@
     dest: /etc/redis/redis.conf
     regexp: ^bind
     line: "bind 0.0.0.0"
+  register: redis_bind
+
+- name: Run Redis in the foreground under systemd
+  become: yes
+  lineinfile:
+    dest: /etc/redis/redis.conf
+    regexp: ^daemonize
+    line: "daemonize no"
+  register: redis_daemonize
+
+- name: Let Redis signal readiness to systemd
+  become: yes
+  lineinfile:
+    dest: /etc/redis/redis.conf
+    regexp: ^supervised
+    line: "supervised systemd"
+  register: redis_supervised
+
+- name: Restart Redis if its config changed
+  become: yes
+  service: name=redis-server state=restarted enabled=yes
+  when: redis_bind.changed or redis_daemonize.changed or redis_supervised.changed
 
 - name: Make sure .aws directory exists
   file: path=/home/ubuntu/.aws/

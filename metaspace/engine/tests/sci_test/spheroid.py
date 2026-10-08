@@ -1,8 +1,6 @@
 import argparse
 from datetime import datetime
 from os.path import join
-import os
-import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from urllib.request import urlretrieve
@@ -12,7 +10,7 @@ import pandas as pd
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
-from sm.engine import image_storage, molecular_db
+from sm.engine import molecular_db
 from sm.engine.annotation.scoring_model import (
     upload_catboost_scoring_model,
     save_scoring_model_to_db,
@@ -21,7 +19,6 @@ from sm.engine.annotation.scoring_model import (
 from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
 from sm.engine.annotation_lithops.executor import Executor
 import sm.engine.annotation_lithops.executor as lithops_executor
-from sm.engine.annotation_spark.annotation_job import AnnotationJob
 from sm.engine.db import DB
 from sm.engine.errors import SMError
 from sm.engine.tests.db_sql_schema import DB_SQL_SCHEMA
@@ -58,7 +55,6 @@ class SciTester:
         self.output_results_path = reports_path / f'test-{suffix}-{timestamp}.csv'
 
         self.ds_name = 'sci_test_spheroid_untreated'
-        self.ds_data_path = join(self.sm_config['fs']['spark_data_path'], self.ds_name)
         self.moldb = MOL_DBS[database]
         self.analysis_version = analysis_version
         self.input_path = join(proj_root(), 'tests/data/untreated')
@@ -195,28 +191,8 @@ class SciTester:
         )
         return annotations_mismatch or metrics_differ
 
-    @classmethod
-    def _patch_image_storage(cls):
-        class ImageStorageMock:
-            ISO = image_storage.ISO
-
-            def __init__(self, *args, **kwargs):
-                pass
-
-            def post_image(self, *args, **kwargs):
-                pass
-
-        from sm.engine.annotation_spark import search_results
-
-        search_results.ImageStorage = ImageStorageMock
-
-    def run_search(self, store_images=False, use_lithops=False):
-        if not store_images:
-            self._patch_image_storage()
-
+    def run_search(self, store_images=False):
         moldb_id = molecular_db.find_by_name_version(self.moldb['name'], self.moldb['version']).id
-
-        os.environ['PYSPARK_PYTHON'] = sys.executable
 
         ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
         ds.config['analysis_version'] = self.analysis_version
@@ -231,29 +207,21 @@ class SciTester:
         self.db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self.db, allow_insert=True)
         perf = NullProfiler()
-        if use_lithops:
-            # Override the runtime to force it to run without docker.
-            lithops_executor.RUNTIME_VPC = 'python'
-            lithops_executor.RUNTIME_CE = 'python'
+        # Override the runtime to force it to run without docker.
+        lithops_executor.RUNTIME_VPC = 'python'
+        lithops_executor.RUNTIME_CE = 'python'
 
-            executor = Executor(self.sm_config['lithops'], perf)
-            job = ServerAnnotationJob(
-                executor,
-                ds,
-                perf,
-                self.sm_config,
-                store_images=store_images,
-            )
-            job.run(debug_validate=True)
-        else:
-            AnnotationJob(ds, perf).run()
+        executor = Executor(self.sm_config['lithops'], perf)
+        job = ServerAnnotationJob(
+            executor,
+            ds,
+            perf,
+            self.sm_config,
+            store_images=store_images,
+        )
+        job.run(debug_validate=True)
 
         self.make_comparison_df()
-
-    def clear_data_dirs(self):
-        path = Path(self.ds_data_path)
-        if path.exists():
-            path.rmdir()
 
 
 def run(
@@ -261,7 +229,6 @@ def run(
     analysis_version,
     database,
     store_images,
-    use_lithops,
     save_reference,
     save_comparison,
 ):
@@ -269,7 +236,7 @@ def run(
     run_search_successful = False
     search_results_different = False
     try:
-        sci_tester.run_search(store_images, use_lithops)
+        sci_tester.run_search(store_images)
         sci_tester.print_differences()
         run_search_successful = True
         if save_reference:
@@ -289,8 +256,6 @@ def run(
             raise Exception('Search was successful but the results are different!') from e
         else:
             raise
-    finally:
-        sci_tester.clear_data_dirs()
 
 
 def ensure_db_exists(sm_config):
@@ -352,7 +317,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Scientific tests runner\n'
         'Example: python tests/sci_test/spheroid.py'
-        'or: python tests/sci_test/spheroid.py --lithops --analysis-version 3'
+        'or: python tests/sci_test/spheroid.py --analysis-version 3'
     )
     parser.add_argument(
         '--save', action='store_true', help='save comparison report even on success'
@@ -368,11 +333,6 @@ if __name__ == '__main__':
         '--store-images',
         action='store_true',
         help='whether to store ion images. (Default: don\'t store)',
-    )
-    parser.add_argument(
-        '--lithops',
-        action='store_true',
-        help='whether to use the Lithops executor. (Default: use Spark executor)',
     )
     parser.add_argument(
         '--analysis-version', type=int, default=1, help='which pipeline analysis_version to use'
@@ -403,7 +363,6 @@ if __name__ == '__main__':
             analysis_version=args.analysis_version,
             database=args.database,
             store_images=args.store_images,
-            use_lithops=args.lithops,
             save_reference=args.save_ref,
             save_comparison=args.save,
         )

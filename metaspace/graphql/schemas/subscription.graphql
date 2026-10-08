@@ -98,6 +98,8 @@ enum TransactionType {
   downgrade
   renewal
   cancellation
+  usage_credit
+  pack
 }
 
 enum SubscriptionOrderBy {
@@ -172,6 +174,50 @@ input ValidateCouponInput {
   pricingId: String!
 }
 
+type PurchaseCheckout {
+  invoiceId: String
+  clientSecret: String
+  amountDue: Int
+  currency: String
+}
+
+type TopupGrant {
+  actionType: String
+  type: String
+  visibility: String
+  amount: Int
+}
+
+type TopupOption {
+  id: ID!
+  displayName: String
+  units: Int
+  priceCents: Int
+  grants: [TopupGrant!]
+}
+
+input CreatePackSubscriptionInput {
+  userId: String!
+  planId: String!
+  pricingId: String
+  groupId: String
+  groupName: String
+  email: String!
+  name: String!
+  address: JSON
+  paymentMethodId: String
+  couponCode: String
+}
+
+input PurchaseTopupInput {
+  userId: String
+  groupId: String
+  email: String!
+  topupOptionId: String!
+  address: JSON
+  paymentMethodId: String
+}
+
 type CouponValidationResult {
   isValid: Boolean!
   couponCode: String!
@@ -218,12 +264,16 @@ type Query {
   
   # Coupon validation
   validateCoupon(input: ValidateCouponInput!): CouponValidationResult
+
+  topupOptions(groupId: ID, userId: ID): [TopupOption!]
 }
 
 type Mutation {
   createSubscription(input: CreateSubscriptionInput!): Subscription
   updateSubscription(id: ID!, input: UpdateSubscriptionInput!): Subscription
   cancelSubscription(id: ID!, input: CancelSubscriptionInput): Subscription
+  createPackSubscription(input: CreatePackSubscriptionInput!): PurchaseCheckout
+  purchaseTopup(input: PurchaseTopupInput!): PurchaseCheckout
 }
 
 # If JSON scalar is not already defined elsewhere

@@ -58,3 +58,4 @@ CLAUDE.md
 docs/superpowers/*
 .playwright-mcp/*
 .superpowers/*
+*/__pycache__/

@@ -67,15 +67,20 @@ class MolecularDB:
         }
 
 
+REQUIRED_COLUMNS = {'id', 'name', 'formula'}
+
+
 def _validate_moldb_df(df):
     errors = []
-    max_value_length = 2500  # based on the max inchi in lipds uploaded
+    # Only the imported columns are length-checked: extra columns (e.g. inchi) are dropped on
+    # import, and public DBs such as ChEBI have peptide InChIs well above this limit.
+    max_value_length = 2500
     for idx, row in df.iterrows():
         line_n = idx + 2
         for col in df.columns:
             if not row[col] or row[col].isspace():
                 errors.append({'line': line_n, 'row': row.values.tolist(), 'error': 'Empty value'})
-            elif len(row[col]) > max_value_length:
+            elif col in REQUIRED_COLUMNS and len(row[col]) > max_value_length:
                 errors.append(
                     {
                         'line': line_n,
@@ -113,10 +118,9 @@ def read_moldb_file(file_path, bypass_row_limit=False):
     if not bypass_row_limit and len(moldb_df) > 100000:
         raise MaxRowsExceeded('CSV file exceeds the maximum allowed')
 
-    required_columns = {'id', 'name', 'formula'}
-    if not required_columns.issubset(set(moldb_df.columns)):
+    if not REQUIRED_COLUMNS.issubset(set(moldb_df.columns)):
         raise MalformedCSV(
-            f'Missing columns. Provided: {moldb_df.columns.to_list()} Required: {required_columns}'
+            f'Missing columns. Provided: {moldb_df.columns.to_list()} Required: {REQUIRED_COLUMNS}'
         )
 
     parsing_errors = _validate_moldb_df(moldb_df)

@@ -1182,4 +1182,94 @@ describe('modules/subscription/controller (queries)', () => {
       expect(result).toBeNull()
     })
   })
+
+  describe('Query.topupOptions', () => {
+    const queryTopupOptions = `query ($groupId: ID, $userId: ID) {
+      topupOptions(groupId: $groupId, userId: $userId) {
+        id
+        displayName
+        units
+        priceCents
+        grants {
+          actionType
+          type
+          visibility
+          amount
+        }
+      }
+    }`
+
+    const TOPUP_OPTIONS = [
+      {
+        id: 'topup-option-x10',
+        displayName: '10 units',
+        units: 10,
+        priceCents: 33300,
+        grants: [
+          { actionType: 'create', type: 'dataset', visibility: 'private', amount: 10 },
+          { actionType: 'reprocess', type: 'dataset', visibility: 'private', amount: 20 },
+        ],
+      },
+      {
+        id: 'topup-option-x15',
+        displayName: '15 units',
+        units: 15,
+        priceCents: 49900,
+        grants: [
+          { actionType: 'create', type: 'dataset', visibility: 'private', amount: 15 },
+          { actionType: 'reprocess', type: 'dataset', visibility: 'private', amount: 30 },
+        ],
+      },
+    ]
+
+    it('should return the top-up options for a group', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: TOPUP_OPTIONS }),
+      })
+
+      const result = await doQuery(queryTopupOptions, { groupId: 'group-123' })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://test-api.metaspace.example/api/usage-credits/topup-options?groupId=group-123',
+        expect.objectContaining({
+          method: 'GET',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+          }),
+        })
+      )
+
+      expect(result).toEqual(TOPUP_OPTIONS)
+    })
+
+    it('should return the top-up options for a user', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: TOPUP_OPTIONS }),
+      })
+
+      const result = await doQuery(queryTopupOptions, { userId: 'user-456' })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://test-api.metaspace.example/api/usage-credits/topup-options?userId=user-456',
+        expect.any(Object)
+      )
+
+      expect(result).toEqual(TOPUP_OPTIONS)
+    })
+
+    it('should return an empty list when the manager rejects the request', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+        text: () => Promise.resolve(JSON.stringify({ message: 'No active subscription' })),
+      })
+
+      const result = await doQuery(queryTopupOptions, { groupId: 'group-123' })
+
+      expect(result).toEqual([])
+    })
+  })
 })

@@ -22,6 +22,7 @@ export interface PricingOption {
 export interface Plan {
   id: string
   tier: string
+  type?: string
   name: string
   description: string
   isActive: boolean
@@ -160,6 +161,7 @@ export const planFragment = gql`
   fragment Plan on Plan {
     id
     tier
+    type
     name
     description
     isActive

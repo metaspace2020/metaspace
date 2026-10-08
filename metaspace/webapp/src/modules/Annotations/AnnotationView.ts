@@ -24,6 +24,7 @@ import viewerState from '../ImageViewer/state'
 import { ImageSettings, useIonImageSettings } from '../ImageViewer/ionImageState'
 import { OpacityMode } from '../../lib/createColormap'
 import safeJsonParse from '../../lib/safeJsonParse'
+import { NormalizationType, normalizationBadgeText } from '../../lib/normalization'
 import OpacitySettings from '../ImageViewer/OpacitySettings.vue'
 import { ElIcon } from '../../lib/element-plus'
 import { Setting } from '@element-plus/icons-vue'
@@ -342,7 +343,7 @@ export default defineComponent({
     })
 
     const scaleType = computed((): string => store.getters.settings.annotationView.scaleType)
-    const ticData = computed((): string => store.getters.settings.annotationView.normalization)
+    const ticData = computed((): NormalizationType | false => store.getters.settings.annotationView.normalization)
 
     const handleOpacityChange = (value: number) => {
       ionImageSettings.opacity = value
@@ -440,6 +441,7 @@ export default defineComponent({
       scaleBarColor,
       scaleType,
       ticData,
+      normalizationBadgeText,
       handleOpacityChange,
       handleOpticalOpacityChange,
       addRoiCoordinate,

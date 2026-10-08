@@ -7,6 +7,7 @@ import store from '../../store'
 import { annotationDetailItemFragment } from '../../api/annotation'
 import { isEqual } from 'lodash-es'
 import { nextTick } from 'vue'
+import { parseNormalization } from '../../lib/normalization'
 
 export default async ($apollo: any, id: string, datasetId: string, router: any) => {
   try {
@@ -59,7 +60,7 @@ export default async ($apollo: any, id: string, datasetId: string, router: any) 
     }
 
     if (parsed.query?.norm) {
-      store.commit('setNormalization', parsed.query.norm)
+      store.commit('setNormalization', parseNormalization(parsed.query.norm))
     }
 
     const restoreState = isEqual(annotationIds, (parsed.ionImage?.layers || []).map((layer: any) => layer.id).sort())

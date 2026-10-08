@@ -58,13 +58,13 @@ export default defineComponent({
     onMounted(() => {
       if (currentUser.value?.id) {
         // Track success page view
-        trackSuccessPageView(currentUser.value?.id, fromPayment.value)
+        trackSuccessPageView(true, fromPayment.value)
 
         // Track purchase completion if coming from payment
         if (fromPayment.value && subscription.value && latestTransaction.value) {
           trackPurchaseComplete({
             transactionId: latestTransaction?.value?.id,
-            value: latestTransaction?.value?.amount || 0,
+            valueCents: latestTransaction?.value?.amount || 0,
             planId: subscription?.value?.plan?.id || 'unknown',
             planName: subscription?.value?.plan?.name || 'unknown',
             subscriptionId: subscription?.value?.id,
@@ -95,7 +95,11 @@ export default defineComponent({
       })
     }
 
-    const formatBillingInterval = (interval: string) => {
+    const formatBillingInterval = (interval?: string | null) => {
+      // Packs are one-off subscriptions with no billing interval.
+      if (!interval) {
+        return 'One-time'
+      }
       return interval === 'monthly' ? 'Monthly' : 'Yearly'
     }
 
@@ -197,7 +201,7 @@ export default defineComponent({
 
                   <div class="detail-item">
                     <label>Billing Interval:</label>
-                    <span class="value">{formatBillingInterval(subscription.value.billingInterval || 'monthly')}</span>
+                    <span class="value">{formatBillingInterval(subscription.value.billingInterval)}</span>
                   </div>
 
                   <div class="detail-item">

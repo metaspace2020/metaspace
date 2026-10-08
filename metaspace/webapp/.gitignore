@@ -21,6 +21,9 @@ tests/e2e/screenshots
 # Build output
 /dist
 
+# SSR bundle used by scripts/prerender.mjs, thrown away after each build
+/dist-ssr
+
 
 # Docs build output
 /docs/dist-docs

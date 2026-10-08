@@ -309,7 +309,8 @@ export const processIonImage = (
 
   // assign normalized intensities
   if (normalizationData && normalizationData.metadata && scaleType !== 'hist') {
-    maxIntensity = normalizationData ? (maxIntensity / normalizationData.metadata.maxTic) * 1000000 : maxIntensity
+    const maxNormValue = normalizationData.metadata.maxNorm ?? normalizationData.metadata.maxTic
+    maxIntensity = normalizationData ? (maxIntensity / maxNormValue) * 1000000 : maxIntensity
     userMax = maxIntensity
   }
 
@@ -348,7 +349,8 @@ export const processIonImage = (
 
     // reassign intensity values to be displayed if normalized
     if (normalizationData && normalizationData.metadata) {
-      maxIntensity = normalizationData ? (maxIntensity / normalizationData.metadata.maxTic) * 1000000 : maxIntensity
+      const maxNormValue = normalizationData.metadata.maxNorm ?? normalizationData.metadata.maxTic
+      maxIntensity = normalizationData ? (maxIntensity / maxNormValue) * 1000000 : maxIntensity
       userMax = maxIntensity
       max = maxIntensity
 

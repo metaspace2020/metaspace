@@ -35,7 +35,6 @@ autodoc_mock_imports = [
     'psycopg2',
     'psycopg2.extensions',
     'psycopg2.extras',
-    'pyspark',
     'requests',
     'scipy',
     'scipy.optimize',

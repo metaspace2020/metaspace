@@ -23,6 +23,9 @@ export const setLocalStorage = (key: string, value: any, cookieFallback = false)
 }
 
 export const getLocalStorage = <T>(key: string): T | undefined => {
+  if (typeof localStorage === 'undefined') {
+    return memoryStorage[key] ? safeJsonParse(memoryStorage[key]) : undefined
+  }
   try {
     const json = localStorage.getItem(key) || memoryStorage[key] || JSON.stringify(cookies.get('storage_' + key))
     return json && safeJsonParse(json)

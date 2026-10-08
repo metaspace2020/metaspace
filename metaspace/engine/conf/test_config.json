@@ -28,13 +28,7 @@
   },
   "fs": {
     "data_path": "/tmp/abc",
-    "spark_data_path": "/tmp/abc",
     "s3_base_path": ""
-  },
-  "spark": {
-    "master": "local[4]",
-    "executor.memory": "2g",
-    "spark.sql.execution.arrow.enabled": true
   },
   "lithops": {
     "lithops": {
@@ -59,9 +53,6 @@
     }
   },
   "slack": {},
-  "isotope_storage": {
-    "path": "/tmp/isotope_storage"
-  },
   "logs": {
     "version": 1,
     "formatters": {
@@ -101,9 +92,6 @@
         "level": "INFO"
       },
       "update-daemon": {
-        "level": "INFO"
-      },
-      "annotate-daemon": {
         "level": "INFO"
       }
     }

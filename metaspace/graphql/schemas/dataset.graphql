@@ -489,6 +489,19 @@ input RoiInput {
   geojson: String!
 }
 
+type RoiValidationIssue {
+  featureIndex: Int
+  message: String!
+}
+
+type RoiValidationResult {
+  valid: Boolean!
+  roiCount: Int!
+  errors: [RoiValidationIssue!]!
+  warnings: [RoiValidationIssue!]!
+  features: [String!]!
+}
+
 
 type Query {
   dataset(id: String!): Dataset
@@ -531,6 +544,9 @@ type Query {
 
   rois(datasetId: String!, isDefault: Boolean): [Roi!]!
   roi(id: ID!): Roi
+  validateRoiGeoJson(datasetId: String!, geojson: String!): RoiValidationResult!
+
+  hasDiffRoiResults(datasetId: String!): Boolean!
 
   segmentationJobs(datasetId: String!): [ImageSegmentationJob!]!
   segmentations(datasetId: String!): [Segmentation!]!
@@ -600,6 +616,9 @@ type Mutation {
   updateRoi(id: ID!, input: RoiInput!): Roi!
   deleteRoi(id: ID!): Boolean!
   copyRoisToDatasets(sourceDatasetId: String!, targetDatasetIds: [String!]!): Boolean!
+  # Parses & appends ROIs from a GeoJSON payload. Never touches existing ROIs.
+  # Throws if validation fails -- see Query.validateRoiGeoJson to check first.
+  importRois(datasetId: String!, geojson: String!): [Roi!]!
 
   runSegmentation(
     datasetId: String!

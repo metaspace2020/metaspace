@@ -184,6 +184,15 @@ def test_server_annotation_job(test_db, executor: Executor, sm_config, ds_config
     assert len(jobs) == 1
     assert jobs.moldb_id[0] == moldb_id
 
+    # Validate acq_geometry was stored (4x4 grid from MOCK_COORDS, pixel size from TEST_METADATA)
+    acq_geometry = db.select_one('SELECT acq_geometry FROM dataset WHERE id = %s', (ds.id,))[0]
+    assert acq_geometry == {
+        'length_unit': 'nm',
+        'pixel_count': len(MOCK_COORDS),
+        'acquisition_grid': {'regular_grid': True, 'count_x': 4, 'count_y': 4},
+        'pixel_size': {'regular_size': True, 'size_x': 100, 'size_y': 100},
+    }
+
     # Validate annotations
     assert np.array_equal(anns.formula, MOCK_FORMULAS)  # Formulas should be MSM-descending
     assert np.array_equal(anns.fdr, [0.05] * 2 + [0.5] * 8)

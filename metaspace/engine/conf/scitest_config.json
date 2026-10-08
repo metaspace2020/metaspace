@@ -33,15 +33,7 @@
     "update_daemon_threads": 4
   },
   "fs": {
-    "spark_data_path": "/tmp/metaspace",
     "s3_base_path": ""
-  },
-  "spark": {
-    "master": "local[4]",
-    "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
-    "spark.rdd.compress": true,
-    "spark.ui.showConsoleProgress": false,
-    "spark.sql.execution.arrow.enabled": true
   },
   "lithops": {
     "lithops": {
@@ -65,9 +57,6 @@
   "slack": {
     "channel": "",
     "webhook_url": ""
-  },
-  "isotope_storage": {
-    "path": "/tmp/isotope_storage"
   },
   "logs": {
     "version": 1,
@@ -106,9 +95,6 @@
         "level": "INFO"
       },
       "api": {
-        "level": "INFO"
-      },
-      "annotate-daemon": {
         "level": "INFO"
       },
       "lithops-daemon": {

@@ -4,13 +4,12 @@ from pytest import fixture
 from queue import Queue
 import logging
 
-from sm.engine.queue import QueuePublisher, QueueConsumer, SM_ANNOTATE
+from sm.engine.queue import QueuePublisher, QueueConsumer
 
 
 logging.basicConfig(level=logging.DEBUG)
 
-QDESC = SM_ANNOTATE
-QDESC['name'] = 'sm_test'
+QDESC = {'name': 'sm_test', 'durable': True, 'arguments': {'x-max-priority': 3}}
 
 
 @fixture(scope='module')

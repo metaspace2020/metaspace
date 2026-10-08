@@ -3,6 +3,30 @@ sidebar: false
 ---
 
 # What's new
+## August 2026
+
+### Cross-dataset statistical analysis (Pro)
+
+A new Pro feature for comparing molecular abundance across datasets is now documented, alongside a reorganized sidebar section for it.
+
+**Features**
+- [Cross-Dataset Statistical Analysis](/features/cross-dataset-comparison/cross-dataset-statistical-analysis) — builds an Experiment from regions (ROIs, segmentation clusters, or whole datasets) across multiple datasets, tagged with sample metadata, and tests differential ion abundance between conditions using a limma-based moderated statistical model — robust even with as few as 3 replicates per condition
+- Existing [Multi-Dataset Comparison](/features/cross-dataset-comparison/multi-dataset-comparison) page moved from Visualization into a new **Cross-Dataset Comparison** category, alongside the new feature
+
+**Interpretation guide**
+- [Understanding Cross-Dataset Statistical Results](/guides/interpreting-results/understanding-cross-dataset-statistical-results) — explains why limma is used instead of a plain t-test or Wilcoxon test, how empirical Bayes moderation and replicate correlation work conceptually, how to read omnibus vs. pairwise results, and what each design warning means
+
+### RMS and median normalization
+
+The TIC normalization checkbox in the ion image viewer has been replaced by a **Normalization** dropdown offering three per-pixel methods. TIC remains the most commonly used option and the recommended starting point.
+
+**Features**
+- RMS and median normalization added alongside TIC, selectable from the normalization dropdown on the annotation page
+- Normalization is also available on the multi-dataset comparison page
+- Datasets processed before this release need to be reprocessed for RMS and median to become available
+
+**Documentation**
+- [Ion image visualization](/features/visualization/ion-image-visualization) updated to describe the normalization dropdown and each method
 
 ## June 2026
 
@@ -24,6 +48,7 @@ Two new Pro features for spatial pattern analysis are now documented.
 
 **Features**
 - [Custom Databases](/features/tools-and-integrations/custom-databases#isotope-labeled-compounds) — custom databases now support stable-isotope labeled compounds; encode labeled atoms with pseudo-element symbols (`Cx`, `Nx`, `Hx`, `Ox`, `Sx`) directly in the `formula` column for ¹³C, ¹⁵N, ²H, ¹⁸O, and ³⁴S tracing experiments
+
 
 ## April 2026
 

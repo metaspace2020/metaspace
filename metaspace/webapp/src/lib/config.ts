@@ -45,12 +45,14 @@ interface Features {
 interface ClientConfig {
   graphqlUrl: string | null
   wsGraphqlUrl: string | null
+  siteHostname?: string | null
   companionUrl: string | null
   imageStorage?: string | null
   appointment_url?: string | null
 
   google_client_id: string
   recaptcha_site_key: string
+  ga_measurement_id?: string | null
   stripe_pub: string
   order_service_url: string
 
@@ -74,6 +76,7 @@ const defaultConfig: ClientConfig = {
   companionUrl: null,
   google_client_id: '',
   recaptcha_site_key: '',
+  ga_measurement_id: '',
   stripe_pub: '',
   order_service_url: 'http://localhost:3003/',
   sentry: null,
@@ -90,7 +93,7 @@ const defaultConfig: ClientConfig = {
     segmentation: true,
     diff_analysis: false,
     enrichment: true,
-    experiment: false,
+    experiment: true,
     show_dataset_overview: true,
     metabo_enrich: false,
     imzml_browser: true,

@@ -13,6 +13,17 @@ docker-compose up -d
 echo "Waiting 10 seconds for everything to run init scripts..."
 sleep 10
 
+echo "Waiting for graphql to install dependencies and run migrations (several minutes on a fresh clone)..."
+until docker-compose exec -T graphql nc -z localhost 3010 2>/dev/null; do
+  printf '.'
+  sleep 5
+done
+echo " graphql is up"
+
+# create S3 buckets in the storage service
+echo "Creating storage buckets"
+docker-compose run --rm api /sm-engine/create-buckets.sh
+
 # set up ElasticSearch
 echo "Creating ElasticSearch index"
 docker-compose run --rm api /sm-engine/create-es-index.sh

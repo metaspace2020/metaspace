@@ -31,6 +31,7 @@ from psycopg2.extras import Json
 
 from sm.engine.config import SMConfig
 from sm.engine.daemons.actions import DaemonAction
+from sm.engine.db import transaction_context
 from sm.engine.queue import QueuePublisher, SM_UPDATE
 from sm.engine.storage import get_s3_resource
 
@@ -153,13 +154,9 @@ class ExperimentManager:
         )
         return {'experiment_id': experiment_id, 'run_generation': run_generation}
 
-    # Per-job poll/timeout when republishing pending jobs sequentially. Prep is
-    # heavy (multi-MB ES queries + intensity matrix build); running them in
-    # parallel risks OOM on the update-daemon. Sequential republishing trickles
-    # them through and keeps memory bounded. Timeout is generous so a single
-    # genuinely-long run doesn't strand the rest forever.
     _RESTART_POLL_INTERVAL_S = 5
     _RESTART_PER_JOB_TIMEOUT_S = 30 * 60  # 30 min — well above normal prep+stats
+    _RESTART_MAX_AGE_S = 2 * 60 * 60
 
     def restart_pending_jobs(self) -> Dict[str, Any]:
         """Republish EXPERIMENT_PREP / EXPERIMENT_STATS jobs whose runs are still in flight.
@@ -171,35 +168,70 @@ class ExperimentManager:
         failure mode where multiple heavy prep steps run concurrently after
         a service restart.
 
+        Rows whose ``run_started_at`` is older than :attr:`_RESTART_MAX_AGE_S`
+        are marked FAILED instead of republished. The queue message is acked
+        before the work runs, so a row can only be that old if the worker
+        died mid-run (e.g. OOM-killed); replaying it on every restart would
+        loop the same crash. The user can re-run once the cause is fixed.
+
         Returns:
-            Dict with ``restarted_count`` — count of pending rows found
-            (and queued for sequential republish, not necessarily finished
-            by the time the HTTP response returns).
+            Dict with ``restarted_count`` — count of pending rows queued for
+            sequential republish (not necessarily finished by the time the
+            HTTP response returns) — and ``abandoned_count``.
         """
         try:
             rows = self._db.select(
-                "SELECT id, run_generation FROM experiment "
+                'SELECT id, run_generation, '
+                '       run_started_at IS NOT NULL '
+                '       AND run_started_at < NOW() - make_interval(secs => %s) AS stale '
+                'FROM experiment '
                 "WHERE run_status IN ('PREPARING', 'RUNNING', 'RUNNING_STATS') "
-                "ORDER BY run_started_at ASC NULLS FIRST",
+                'ORDER BY run_started_at ASC NULLS FIRST',
+                params=(self._RESTART_MAX_AGE_S,),
             )
             if not rows:
                 logger.info('No pending experiment_stats jobs found to restart')
-                return {'restarted_count': 0}
-            # pylint: disable=unnecessary-comprehension
-            pending = [(exp_id, gen) for exp_id, gen in rows]
-            threading.Thread(
-                target=self._sequential_republish_worker,
-                args=(pending,),
-                daemon=True,
-                name='experiment-restart-pending',
-            ).start()
+                return {'restarted_count': 0, 'abandoned_count': 0}
+
+            pending = []
+            abandoned = 0
+            for exp_id, gen, stale in rows:
+                if stale:
+                    self._abandon_stale_run(exp_id, gen)
+                    abandoned += 1
+                else:
+                    pending.append((exp_id, gen))
+
+            if pending:
+                threading.Thread(
+                    target=self._sequential_republish_worker,
+                    args=(pending,),
+                    daemon=True,
+                    name='experiment-restart-pending',
+                ).start()
             logger.info(
-                f'Queued {len(pending)} pending experiment_stats jobs for sequential republish'
+                f'Queued {len(pending)} pending experiment_stats jobs for sequential republish; '
+                f'abandoned {abandoned} stale run(s)'
             )
-            return {'restarted_count': len(pending)}
+            return {'restarted_count': len(pending), 'abandoned_count': abandoned}
         except Exception as e:
             logger.error(f'Failed to restart pending experiment_stats jobs: {e}', exc_info=True)
             raise
+
+    def _abandon_stale_run(self, experiment_id: str, run_generation: int) -> None:
+        """Mark a run that outlived the restart cutoff as FAILED (pinned to its generation)."""
+        error = (
+            f'Run abandoned: still in flight after {self._RESTART_MAX_AGE_S // 60} min '
+            f'when the service restarted. Re-run the experiment to try again.'
+        )
+        self._db.alter(
+            "UPDATE experiment SET run_status='FAILED', run_error=%s, run_finished_at=NOW() "
+            'WHERE id=%s AND run_generation=%s',
+            params=(error, experiment_id, run_generation),
+        )
+        logger.warning(
+            f'Abandoned stale experiment run {experiment_id} run_generation={run_generation}'
+        )
 
     def _sequential_republish_worker(self, pending: List) -> None:
         """Background worker: publish one job, wait for it to finish, repeat.
@@ -342,30 +374,35 @@ class ExperimentManager:
             }
 
         if status == 'FINISHED':
-            self._write_results(experiment_id, run_generation, result or {})
-            inferred_test = (result or {}).get('inferred_test')
-            run_qc = (result or {}).get('run_qc')
-            # Stats-only re-runs intentionally omit some keys (notably
-            # ``allIons``) because the intensity blob lacks the per-ion
-            # FDR/adduct/moldb metadata to reconstruct them. Merge with the
-            # existing run_qc so those keys survive the re-run.
-            if run_qc is not None:
-                existing = self._db.select_one(
-                    'SELECT run_qc FROM experiment WHERE id=%s',
-                    params=(experiment_id,),
+            # One transaction for "delete old rows, insert new rows, flip status".
+            # The webapp fetches results the moment it sees FINISHED; without
+            # this a read can land between the DELETE and the INSERT and show an
+            # empty (or partial) result set until the page is reloaded.
+            with transaction_context():
+                self._write_results(experiment_id, run_generation, result or {})
+                inferred_test = (result or {}).get('inferred_test')
+                run_qc = (result or {}).get('run_qc')
+                # Stats-only re-runs intentionally omit some keys (notably
+                # ``allIons``) because the intensity blob lacks the per-ion
+                # FDR/adduct/moldb metadata to reconstruct them. Merge with the
+                # existing run_qc so those keys survive the re-run.
+                if run_qc is not None:
+                    existing = self._db.select_one(
+                        'SELECT run_qc FROM experiment WHERE id=%s',
+                        params=(experiment_id,),
+                    )
+                    prev = (existing[0] if existing else None) or {}
+                    merged = {**prev, **run_qc}
+                    run_qc = merged
+                self._db.alter(
+                    "UPDATE experiment SET run_status='FINISHED', run_stage='DONE', "
+                    "run_finished_at=NOW(), run_inferred_test=%s, run_qc=%s WHERE id=%s",
+                    params=(
+                        inferred_test,
+                        Json(run_qc) if run_qc is not None else None,
+                        experiment_id,
+                    ),
                 )
-                prev = (existing[0] if existing else None) or {}
-                merged = {**prev, **run_qc}
-                run_qc = merged
-            self._db.alter(
-                "UPDATE experiment SET run_status='FINISHED', run_stage='DONE', "
-                "run_finished_at=NOW(), run_inferred_test=%s, run_qc=%s WHERE id=%s",
-                params=(
-                    inferred_test,
-                    Json(run_qc) if run_qc is not None else None,
-                    experiment_id,
-                ),
-            )
         else:
             self._db.alter(
                 "UPDATE experiment SET run_status='FAILED', run_error=%s, "

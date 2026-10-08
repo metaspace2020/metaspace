@@ -52,11 +52,23 @@ def create_daemon_man(db=None, es=None, status_queue=None):
 
 
 class TestSMDaemonDatasetManager:
-    @patch('sm.engine.daemons.dataset_manager.AnnotationJob')
-    def test_annotate_ds(self, AnnotationJobMock, fill_db, metadata, ds_config):
+    @patch('sm.engine.daemons.dataset_manager.save_size_hash')
+    @patch('sm.engine.daemons.dataset_manager.Executor')
+    @patch('sm.engine.daemons.dataset_manager.ServerAnnotationJob')
+    def test_annotate_lithops_ds(
+        self,
+        ServerAnnotationJobMock,
+        ExecutorMock,
+        save_size_hash_mock,
+        fill_db,
+        metadata,
+        ds_config,
+    ):
         es_mock = MagicMock(spec=ESExporter)
         db = DB()
         manager = create_daemon_man(db=db, es=es_mock)
+        manager._sm_config['services']['colocalization'] = False
+        manager._sm_config['services']['ion_thumbnail'] = False
 
         ds_id = '2000-01-01'
         ds_name = 'ds_name'
@@ -70,7 +82,9 @@ class TestSMDaemonDatasetManager:
             metadata=metadata,
         )
 
-        manager.annotate(ds)
+        manager.annotate_lithops(ds)
+
+        ServerAnnotationJobMock.return_value.run.assert_called_once()
 
         DS_SEL = 'select name, input_path, upload_dt, metadata, config from dataset where id=%s'
         results = db.select_one(DS_SEL, params=(ds_id,))

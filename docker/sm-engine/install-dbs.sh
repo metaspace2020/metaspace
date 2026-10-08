@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Imports the default molecular databases. Each import is independent: a failure is reported
+# at the end and makes the script exit non-zero, but does not stop the other imports.
 
 cd /opt/dev/metaspace/metaspace/engine
 
@@ -8,18 +10,23 @@ pip install -e .
 # TODO: This doesn't include all databases, and the only way to exclude databases is to comment them out.
 # It would be much better as a Python script that interactively allowed databases to be selected.
 
-curl https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/hmdb/hmdb_4.tsv -o /tmp/hmdb_4.tsv \
- && python scripts/import_molecular_db.py HMDB v4 /tmp/hmdb_4.tsv --bypass-row-limit \
- && rm /tmp/hmdb_4.tsv
+BASE_URL=https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021
+failed=()
 
-curl https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/chebi/chebi_2018-01.tsv -o /tmp/chebi_2018-01.tsv \
- && python scripts/import_molecular_db.py ChEBI 2018-01 /tmp/chebi_2018-01.tsv --bypass-row-limit \
- && rm /tmp/chebi_2018-01.tsv
+import_db() { # name version url
+  local file="/tmp/$(basename "$3")"
+  if ! { curl -f "$3" -o "$file" && python scripts/import_molecular_db.py "$1" "$2" "$file" --bypass-row-limit; }; then
+    failed+=("$1 $2")
+  fi
+  rm -f "$file"
+}
 
-curl https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/lipidmaps/lipidmaps_2017-12-12-v2.tsv -o /tmp/lipidmaps_2017-12-12.tsv \
- && python scripts/import_molecular_db.py LipidMaps 2017-12-12 /tmp/lipidmaps_2017-12-12.tsv --bypass-row-limit \
- && rm /tmp/lipidmaps_2017-12-12.tsv
+import_db HMDB v4 "$BASE_URL/hmdb/hmdb_4.tsv"
+import_db ChEBI 2018-01 "$BASE_URL/chebi/chebi_2018-01.tsv"
+import_db LipidMaps 2017-12-12 "$BASE_URL/lipidmaps/lipidmaps_2017-12-12-v2.tsv"
+import_db SwissLipids 2018-02-02 "$BASE_URL/swisslipids/swisslipids_2018-02-02-v2.tsv"
 
-curl https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/swisslipids/swisslipids_2018-02-02-v2.tsv -o /tmp/swisslipids_2018-02-02 \
- && python scripts/import_molecular_db.py SwissLipids 2018-02-02 /tmp/swisslipids_2018-02-02 --bypass-row-limit \
- && rm /tmp/swisslipids_2018-02-02
+if [ ${#failed[@]} -gt 0 ]; then
+  echo "ERROR: failed to import: ${failed[*]}" >&2
+  exit 1
+fi

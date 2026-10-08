@@ -37,6 +37,12 @@ const canPerformAction = async(ctx: Context, action: any) : Promise<CanPerformRe
 
     const data = await response.json()
 
+    // A server error is an outage of the manager API, not a policy decision
+    if (response.status >= 500) {
+      logger.error(`Manager API returned ${response.status}, allowing action to proceed`)
+      return { allowed: true }
+    }
+
     if (!response.ok) {
       return { allowed: false, message: data.message }
     }
@@ -44,42 +50,27 @@ const canPerformAction = async(ctx: Context, action: any) : Promise<CanPerformRe
     // If the response is successful, return the 'allowed' value
     return { allowed: data.allowed === true, message: data.message }
   } catch (error) {
-    // If the service is down (connection error), return true to allow the action
-    // This ensures operations can continue when the external service is unavailable
-    logger.error('Error checking action permission:', error)
-
-    // Check if it's a connection error (service down)
-    // Safe type check without relying on catch clause type annotation
-    if (typeof error === 'object' && error !== null
-        && (('code' in error
-          && ((error).code === 'ECONNREFUSED'
-           || (error).code === 'ENOTFOUND'
-           || (error).code === 'ETIMEDOUT'))
-         || (error instanceof Error && error.message?.includes('Failed to fetch')))) {
-      logger.error('Manager API appears to be down, allowing action to proceed')
-      return { allowed: true }
-    }
-
-    // For other types of errors, still return false
-    return { allowed: false, message: 'Error checking permissions' }
+    logger.error('Error checking action permission, manager API unavailable, allowing action to proceed:', error)
+    return { allowed: true }
   }
 }
 
 export const performAction = async(ctx: Context, action: any) : Promise<any|null> => {
+  const token = ctx.req?.headers?.authorization || ''
+  const apiUrl = config.manager_api_url
+
+  if (!apiUrl) {
+    logger.error('Manager API URL is not configured')
+    return {}
+  }
+
+  if (ctx.isAdmin) {
+    return {}
+  }
+
+  let response
   try {
-    const token = ctx.req?.headers?.authorization || ''
-    const apiUrl = config.manager_api_url
-
-    if (!apiUrl) {
-      logger.error('Manager API URL is not configured')
-      return {}
-    }
-
-    if (ctx.isAdmin) {
-      return {}
-    }
-
-    const response = await fetch(`${apiUrl}/api/api-usages/`, {
+    response = await fetch(`${apiUrl}/api/api-usages/`, {
       method: 'POST',
       headers: {
         Authorization: token,
@@ -87,27 +78,23 @@ export const performAction = async(ctx: Context, action: any) : Promise<any|null
       },
       body: JSON.stringify(action),
     })
-    if (!response.ok) {
-      throw new Error(`Failed to perform action: ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    return data
   } catch (error) {
-    // Check if it's a connection error (service down)
-    if (typeof error === 'object' && error !== null
-        && (('code' in error
-          && ((error).code === 'ECONNREFUSED'
-           || (error).code === 'ENOTFOUND'
-           || (error).code === 'ETIMEDOUT'))
-         || (error instanceof Error && error.message?.includes('Failed to fetch')))) {
-      logger.error('Manager API appears to be down, allowing action to proceed')
-      return {}
-    }
-
-    // For other types of errors, still throw
-    throw error
+    logger.error('Error performing action, manager API unavailable, allowing action to proceed:', error)
+    return {}
   }
+
+  // A server error is an outage of the manager API — fail open as well
+  if (response.status >= 500) {
+    logger.error(`Manager API returned ${response.status}, allowing action to proceed`)
+    return {}
+  }
+
+  if (!response.ok) {
+    throw new Error(`Failed to perform action: ${response.statusText}`)
+  }
+
+  const data = await response.json()
+  return data
 }
 
 export const assertCanPerformAction = async(ctx: Context, action: any) : Promise<void> => {

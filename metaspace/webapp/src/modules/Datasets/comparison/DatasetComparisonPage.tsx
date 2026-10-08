@@ -1,5 +1,5 @@
-import { ElButton, ElCollapse, ElCollapseItem, ElIcon, ElPopover } from '../../../lib/element-plus'
-import { computed, defineComponent, onMounted, reactive, ref, watchEffect } from 'vue'
+import { ElButton, ElCollapse, ElCollapseItem, ElIcon, ElMessage, ElPopover } from '../../../lib/element-plus'
+import { computed, defineComponent, onMounted, reactive, ref, watch, watchEffect } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { annotationListQuery } from '../../../api/annotation'
 import safeJsonParse from '../../../lib/safeJsonParse'
@@ -22,6 +22,14 @@ import { DatasetComparisonModeButton } from './DatasetComparisonModeButton'
 import './DatasetComparisonPage.scss'
 import { getIonImage, loadPngFromUrl } from '../../../lib/ionImageRendering'
 import formatCsvRow, { csvExportIntensityHeader } from '../../../lib/formatCsvRow'
+import {
+  buildNormalizationMetadata,
+  findNormalizationImage,
+  normalizationBadgeText,
+  normalizationFileSuffix,
+  NormalizationType,
+  parseNormalization,
+} from '../../../lib/normalization'
 import FileSaver from 'file-saver'
 import FilterIcon from '../../../assets/inline/filter.svg'
 import { ANNOTATION_SPECIFIC_FILTERS } from '../../Filters/filterSpecs'
@@ -32,7 +40,7 @@ import { Loading } from '@element-plus/icons-vue'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
-  isNormalized: boolean
+  isNormalized: NormalizationType | false
   scaleBarColor: string
   scaleType: string
   colormap: string
@@ -303,48 +311,63 @@ export default defineComponent({
       dsQueryOptions
     )
 
-    onDatasetsResult(async (result) => {
+    // Loads the per-pixel normalization image of the currently selected type for each dataset in
+    // the grid. Datasets processed before a normalization type existed have no such diagnostic and
+    // are reported as needing reprocessing.
+    const loadNormalizationData = async (allDatasets: any[]) => {
+      const normType = state.globalImageSettings.isNormalized
+      if (!normType) {
+        state.normalizationData = {}
+        return
+      }
+
       const normalizationData: any = {}
-      // calculate normalization
-      if (result && result.data && result.data.allDatasets) {
-        let databases: any[] = []
+      const unavailableDatasets: string[] = []
 
-        for (let i = 0; i < result.data.allDatasets.length; i++) {
-          const dataset: any = result.data.allDatasets[i]
+      for (const dataset of allDatasets) {
+        try {
+          const normImage = findNormalizationImage(dataset.diagnostics, normType)
+          if (!normImage) {
+            throw new Error(`${normType} normalization is not available for ${dataset.id}`)
+          }
+          const { data, shape } = await readNpy(normImage.url)
 
-          databases = databases.concat(dataset.databases)
-
-          try {
-            const tics = dataset.diagnostics.filter((diagnostic: any) => diagnostic.type === 'TIC')
-            const tic = tics[0].images.filter((image: any) => image.key === 'TIC' && image.format === 'NPY')
-            const { data, shape } = await readNpy(tic[0].url)
-            const metadata = safeJsonParse(tics[0].data)
-            metadata.maxTic = metadata.max_tic
-            metadata.minTic = metadata.min_tic
-            delete metadata.max_tic
-            delete metadata.min_tic
-
-            normalizationData[dataset.id] = {
-              data,
-              shape,
-              metadata: metadata,
-              type: 'TIC',
-              showFullTIC: false,
-              error: false,
-            }
-          } catch (e) {
-            normalizationData[dataset.id] = {
-              data: null,
-              shape: null,
-              metadata: null,
-              showFullTIC: null,
-              type: 'TIC',
-              error: true,
-            }
+          normalizationData[dataset.id] = {
+            data,
+            shape,
+            metadata: buildNormalizationMetadata(safeJsonParse(normImage.data), normType),
+            type: normType,
+            showFullTIC: false,
+            error: false,
+          }
+        } catch (e) {
+          unavailableDatasets.push(dataset.name || dataset.id)
+          normalizationData[dataset.id] = {
+            data: null,
+            shape: null,
+            metadata: null,
+            showFullTIC: null,
+            type: normType,
+            error: true,
           }
         }
+      }
 
-        const databaseOptions = uniqBy(databases, 'id')
+      state.normalizationData = normalizationData
+
+      if (unavailableDatasets.length) {
+        ElMessage.warning(
+          `${normType} normalization is not available for ${unavailableDatasets.join(', ')}. Please reprocess it.`
+        )
+      }
+    }
+
+    onDatasetsResult(async (result) => {
+      if (result && result.data && result.data.allDatasets) {
+        const databaseOptions = uniqBy(
+          result.data.allDatasets.flatMap((dataset: any) => dataset.databases),
+          'id'
+        )
         const currentDatabaseId = store.getters?.gqlAnnotationFilter?.databaseId
         if (databaseOptions && databaseOptions.findIndex((db: any) => db.id === currentDatabaseId) === -1) {
           // set first databse if default not selected
@@ -353,9 +376,16 @@ export default defineComponent({
         }
 
         state.databaseOptions = { database: databaseOptions }
+        await loadNormalizationData(result.data.allDatasets)
+      } else {
+        state.normalizationData = {}
       }
-      state.normalizationData = normalizationData
     })
+
+    watch(
+      () => state.globalImageSettings.isNormalized,
+      () => loadNormalizationData(datasetsResult.value?.allDatasets || [])
+    )
 
     const loadAnnotations = () => {
       annotationQueryOptions.enabled = true
@@ -448,8 +478,8 @@ export default defineComponent({
       state.globalImageSettings.scaleType = scaleType
     }
 
-    const handleNormalizationChange = (isNormalized: boolean) => {
-      state.globalImageSettings.isNormalized = isNormalized
+    const handleNormalizationChange = (normalization: NormalizationType | false) => {
+      state.globalImageSettings.isNormalized = normalization
     }
 
     const handleTemplateChange = (dsId: string) => {
@@ -506,10 +536,8 @@ export default defineComponent({
           handleColormapChange(route.query.cmap as string)
         }
 
-        if (auxSettings.norm) {
-          handleNormalizationChange(true)
-        } else if (route.query.norm) {
-          handleNormalizationChange(true)
+        if (auxSettings.norm || route.query.norm) {
+          handleNormalizationChange(parseNormalization(auxSettings.norm || route.query.norm))
         }
 
         if (auxSettings.scaleType) {
@@ -618,7 +646,9 @@ export default defineComponent({
             if (!fileCols) {
               fileCols = formatCsvRow(cols)
               fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${
-                state.globalImageSettings.isNormalized ? '_tic_normalized' : ''
+                state.globalImageSettings.isNormalized
+                  ? normalizationFileSuffix(state.globalImageSettings.isNormalized)
+                  : ''
               }.csv`
             }
             rows += formatCsvRow(row)
@@ -769,7 +799,8 @@ export default defineComponent({
                   scaleType={globalImageSettings?.scaleType}
                   onScaleTypeChange={handleScaleTypeChange}
                   showIntensityTemplate={true}
-                  showNormalizedBadge={collapse.includes('images') && globalImageSettings.isNormalized}
+                  showNormalizedBadge={collapse.includes('images') && !!globalImageSettings.isNormalized}
+                  normalizationText={normalizationBadgeText(globalImageSettings.isNormalized)}
                   onNormalizationChange={handleNormalizationChange}
                   colormap={globalImageSettings?.colormap}
                   onColormapChange={handleColormapChange}
@@ -824,7 +855,7 @@ export default defineComponent({
                     scaleBarColor={globalImageSettings.scaleBarColor}
                     scaleType={globalImageSettings.scaleType}
                     colormap={globalImageSettings.colormap}
-                    isNormalized={globalImageSettings.isNormalized}
+                    isNormalized={!!globalImageSettings.isNormalized}
                     settings={gridSettings}
                     annotations={annotations || []}
                     normalizationData={normalizationData}

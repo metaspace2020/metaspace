@@ -21,7 +21,6 @@ vault_notification_email:
 vault_sm_postgres_password:
 vault_sm_es_user:
 vault_sm_es_password:
-vault_sm_isotope_storage_path:
 
 vault_mol_db_postgres_password:
 

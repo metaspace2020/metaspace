@@ -13,11 +13,9 @@ from sm.engine.daemons.lithops import LithopsDaemon
 from sm.engine.db import DB, ConnectionPool
 from sm.engine.es_export import ESExporter
 from sm.engine.daemons.update import SMUpdateDaemon
-from sm.engine.daemons.annotate import SMAnnotateDaemon
 from sm.engine.daemons.dataset_manager import DatasetManager
 from sm.engine import image_storage
 from sm.engine.queue import (
-    SM_ANNOTATE,
     SM_UPDATE,
     SM_LITHOPS,
     SM_DS_STATUS,
@@ -48,11 +46,7 @@ def main(daemon_name, exit_after):
     image_storage.configure_bucket(sm_config)
 
     daemons = []
-    if daemon_name == 'annotate':
-        daemons.append(
-            SMAnnotateDaemon(manager=get_manager(), annot_qdesc=SM_ANNOTATE, upd_qdesc=SM_UPDATE)
-        )
-    elif daemon_name == 'update':
+    if daemon_name == 'update':
         make_update_queue_cons = partial(
             QueueConsumer,
             config=sm_config['rabbitmq'],
@@ -76,9 +70,7 @@ def main(daemon_name, exit_after):
         except Exception:
             logger.warning('Failed to set the open file limit (non-critical)', exc_info=True)
 
-        daemon = LithopsDaemon(
-            get_manager(), lit_qdesc=SM_LITHOPS, annot_qdesc=SM_ANNOTATE, upd_qdesc=SM_UPDATE
-        )
+        daemon = LithopsDaemon(get_manager(), lit_qdesc=SM_LITHOPS, upd_qdesc=SM_UPDATE)
         daemons.append(daemon)
     else:
         raise Exception(f'Wrong SM daemon name: {daemon_name}')
@@ -119,7 +111,7 @@ if __name__ == "__main__":
         description='A daemon process for consuming messages from a '
         'queue and performing dataset manipulations'
     )
-    parser.add_argument('--name', type=str, help='SM daemon name (annotate/update/lithops)')
+    parser.add_argument('--name', type=str, help='SM daemon name (update/lithops)')
     parser.add_argument(
         '--config', dest='config_path', default='conf/config.json', type=str, help='SM config path'
     )
