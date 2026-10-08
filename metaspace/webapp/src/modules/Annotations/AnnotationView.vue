@@ -49,6 +49,24 @@
               <div>Show representative spatial patterns for dataset</div>
             </el-popover>
 
+            <el-popover v-if="hasBrowserFiles" class="av-icon" trigger="hover" placement="bottom">
+              <template v-slot:reference>
+                <a
+                  :href="browserHref"
+                  target="_blank"
+                  rel="noopener"
+                  class="av-browser-link block h-6 w-6"
+                  data-testid="open-in-browser"
+                  @click.stop=""
+                >
+                  <el-icon class="h-6 w-6 text-gray-700 hover:text-gray-500">
+                    <data-analysis />
+                  </el-icon>
+                </a>
+              </template>
+              <div>Open this m/z in the imzML browser</div>
+            </el-popover>
+
             <copy-button is-id :text="annotation.dataset.id" custom-class="dataset-id-copy">
               Copy dataset id to clipboard
             </copy-button>

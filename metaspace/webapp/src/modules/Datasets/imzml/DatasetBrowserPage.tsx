@@ -28,6 +28,7 @@ import { annotationListQuery } from '../../../api/annotation'
 import config from '../../../lib/config'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import { meanSpectrumEmptyMessage as buildMeanSpectrumEmptyMessage } from './meanSpectrumEmptyMessage'
+import { MZ_QUERY_PARAM, parseMzQueryParam } from './mzQueryParam'
 import { DatasetBrowserSpectrumChart } from './DatasetBrowserSpectrumChart'
 import './DatasetBrowserPage.scss'
 import { SimpleIonImageViewer } from '../../../components/SimpleIonImageViewer/SimpleIonImageViewer'
@@ -447,10 +448,11 @@ export default defineComponent({
       FileSaver.saveAs(blob, `${dataset?.value?.name.replace(/\s/g, '_')}_mean_spectrum.csv`)
     }
 
+    const requestedMz = parseMzQueryParam(route.query[MZ_QUERY_PARAM])
     const peakQueryOptions = reactive({ enabled: false, fetchPolicy: 'cache-first' as const })
     const { onResult: onInitialPeakResult } = useQuery<any>(
       getInitialPeak,
-      () => ({ datasetId: datasetId.value }),
+      () => ({ datasetId: datasetId.value, mz: requestedMz ?? undefined }),
       peakQueryOptions
     )
 
@@ -833,22 +835,32 @@ export default defineComponent({
     }
 
     onInitialPeakResult(async (result) => {
-      if (result?.data?.initialPeak && dataset.value) {
-        const { mz, x, y } = result.data.initialPeak
-        const config = safeJsonParse(dataset.value?.configJson)
-        const ppm = get(config, 'image_generation.ppm') || 3
+      if (result?.loading || !dataset.value) {
+        return
+      }
+      // With a requested m/z the filter is applied even if the engine found no peak for it
+      const peak = result?.data?.initialPeak
+      const mz = requestedMz ?? peak?.mz
+      if (mz == null) {
+        return
+      }
+      const config = safeJsonParse(dataset.value?.configJson)
+      const ppm = get(config, 'image_generation.ppm') || 3
 
-        state.mzmScoreFilter = mz
-        state.mzmShiftFilter = ppm
-        state.mzmScaleFilter = 'ppm'
-        state.showFullTIC = false
-        state.normalizationData['showFullTIC'] = false
-        state.x = x
-        state.y = y
+      state.mzmScoreFilter = mz
+      state.mzmShiftFilter = ppm
+      state.mzmScaleFilter = 'ppm'
+      state.showFullTIC = false
+      state.normalizationData['showFullTIC'] = false
 
-        await requestIonImage(mz)
-        buildMetadata(dataset.value)
-        await requestSpectrum(x, y)
+      await requestIonImage(mz)
+      buildMetadata(dataset.value)
+
+      // x/y are null when no pixel carries signal for the m/z
+      if (peak?.x != null && peak?.y != null) {
+        state.x = peak.x
+        state.y = peak.y
+        await requestSpectrum(peak.x, peak.y)
       }
     })
 
@@ -858,16 +870,21 @@ export default defineComponent({
           peakQueryOptions.enabled = true
           return
         }
-        // Fallback: if initial peak hasn't loaded yet, use first annotation
         if (!state.mzmScoreFilter) {
-          const mz = result.data?.allAnnotations[0]?.mz
-          const config = safeJsonParse(dataset.value?.configJson)
-          const ppm = get(config, 'image_generation.ppm') || 3
+          if (requestedMz != null) {
+            // The initial-peak handler applies the requested m/z and selects its brightest pixel
+            peakQueryOptions.enabled = true
+          } else {
+            // Fallback: if initial peak hasn't loaded yet, use first annotation
+            const mz = result.data?.allAnnotations[0]?.mz
+            const config = safeJsonParse(dataset.value?.configJson)
+            const ppm = get(config, 'image_generation.ppm') || 3
 
-          state.mzmScoreFilter = mz
-          state.mzmShiftFilter = ppm
-          state.mzmScaleFilter = 'ppm'
-          await requestIonImage()
+            state.mzmScoreFilter = mz
+            state.mzmShiftFilter = ppm
+            state.mzmScaleFilter = 'ppm'
+            await requestIonImage()
+          }
         }
 
         buildMetadata(dataset.value)

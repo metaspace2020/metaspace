@@ -801,8 +801,8 @@ export const getSpectrum = gql`
 `
 
 export const getInitialPeak = gql`
-  query getInitialPeakQuery($datasetId: String!) {
-    initialPeak(datasetId: $datasetId) {
+  query getInitialPeakQuery($datasetId: String!, $mz: Float) {
+    initialPeak(datasetId: $datasetId, mz: $mz) {
       mz
       x
       y
