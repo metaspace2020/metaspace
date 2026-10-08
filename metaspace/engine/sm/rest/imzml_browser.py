@@ -10,7 +10,8 @@ from matplotlib import pyplot as plt
 
 from sm.engine.annotation_lithops.io import deserialize
 from sm.rest.imzml_browser_manager import DatasetFiles, DatasetBrowser
-from sm.rest.utils import body_to_json, make_response, INTERNAL_ERROR
+from sm.rest.mean_spectrum_manager import MeanSpectrumManager
+from sm.rest.utils import body_to_json, make_response, INTERNAL_ERROR, WRONG_PARAMETERS
 
 logger = logging.getLogger('api')
 app = bottle.Bottle()
@@ -189,6 +190,51 @@ def get_initial_peak(dataset_id):
         result = find_initial_peak(dataset_id)
         headers = {'Content-Type': 'application/json'}
         return bottle.HTTPResponse(result, **headers)
+    except Exception as e:
+        logger.exception(f'{bottle.request} - {e}')
+        return make_response(INTERNAL_ERROR)
+
+
+@app.post('/mean_spectrum')
+def get_mean_spectrum():
+    """Aggregate intensity across an ROI (or the whole dataset) onto a reference m/z axis.
+
+    Intensities are returned summed; the caller divides by `n_pixels` for the mean.
+    """
+    try:
+        params = body_to_json(bottle.request)
+        logger.info(f'Received `mean_spectrum` request: {params}')
+
+        start = time.time()
+        result = MeanSpectrumManager().compute(params['ds_id'], params.get('roi_id'))
+        logger.info(f'Computed mean spectrum in {round(time.time() - start, 2)} sec')
+
+        body = {
+            'mzs': result['mzs'].tolist(),
+            'summed_ints': result['summed_ints'].tolist(),
+            'support': result['support'].tolist(),
+            'n_pixels': result['n_pixels'],
+            'total_peaks': result['total_peaks'],
+            'returned_peaks': result['returned_peaks'],
+            'clustering_ppm': result['clustering_ppm'],
+            'instrument': result['instrument'],
+        }
+        return bottle.HTTPResponse(body, **{'Content-Type': 'application/json'})
+    except ValueError as e:
+        logger.warning(f'{bottle.request} - {e}')
+        return make_response(WRONG_PARAMETERS, message=str(e))
+    except Exception as e:
+        logger.exception(f'{bottle.request} - {e}')
+        return make_response(INTERNAL_ERROR)
+
+
+@app.get('/mean_spectrum_availability/<dataset_id>')
+def get_mean_spectrum_availability(dataset_id):
+    """Whether the tab, and the whole-dataset option within it, can be offered."""
+    try:
+        logger.info(f'Received `mean_spectrum_availability` request for {dataset_id}')
+        result = MeanSpectrumManager().availability(dataset_id)
+        return bottle.HTTPResponse(result, **{'Content-Type': 'application/json'})
     except Exception as e:
         logger.exception(f'{bottle.request} - {e}')
         return make_response(INTERNAL_ERROR)

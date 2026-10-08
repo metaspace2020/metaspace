@@ -157,6 +157,11 @@ $header-height: 64px;
     max-width: 5rem;
   }
 
+  // Region names ("Whole dataset", user ROI names) need more room than the mini selects
+  .dataset-browser-mean-controls .region-select{
+    width: 12rem;
+  }
+
   p {
     @apply my-0 max-w-measure-4;
   }

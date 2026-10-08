@@ -410,6 +410,7 @@ CREATE TABLE "public"."image_segmentation_job" (
   "status" text NOT NULL, 
   "error" text, 
   "submitter_email" text, 
+  "parameters" jsonb, 
   "created_at" TIMESTAMP NOT NULL DEFAULT NOW(), 
   "updated_at" TIMESTAMP NOT NULL DEFAULT NOW(), 
   CONSTRAINT "PK_02b755530fe45b2070cf66f93b7" PRIMARY KEY ("id")

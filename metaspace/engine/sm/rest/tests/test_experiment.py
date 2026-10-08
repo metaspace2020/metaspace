@@ -97,17 +97,31 @@ def fake_db():
     return FakeDB()
 
 
+@contextlib.contextmanager
+def _noop_transaction_context():
+    """Stand-in for sm.engine.db.transaction_context.
+
+    The real one asserts that a ``ConnectionPool`` is open; these tests use
+    ``FakeDB`` and never open a pool, so the transaction wrapper is a no-op.
+    """
+    yield None
+
+
 @pytest.fixture(autouse=True)
 def patch_db_and_publisher(fake_db):
-    """Wire FakeDB into the manager and stub out RabbitMQ publish."""
+    """Wire FakeDB into the manager and stub out RabbitMQ publish + DB transactions."""
     publisher = MagicMock()
     with patch('sm.rest.experiment.DB', return_value=fake_db), patch(
+        'sm.rest.experiment_manager.transaction_context', _noop_transaction_context
+    ), patch(
         'sm.rest.experiment_manager.SMConfig.get_conf',
         return_value={
             'rabbitmq': {'host': 'h', 'user': 'u', 'password': 'p'},
             'image_storage': {'bucket': 'sm-test-bucket'},
         },
-    ), patch('sm.rest.experiment_manager.QueuePublisher', return_value=publisher) as publisher_cls:
+    ), patch(
+        'sm.rest.experiment_manager.QueuePublisher', return_value=publisher
+    ) as publisher_cls:
         yield {'publisher': publisher, 'publisher_cls': publisher_cls, 'db': fake_db}
 
 

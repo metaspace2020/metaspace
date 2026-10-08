@@ -44,22 +44,18 @@ class DatasetFiles:
                 self.ibd_key = obj['Key']
 
     def check_imzml_browser_files(self):
-        """Checking for the presence of all 5 files required for imzml browser"""
-        status = False
+        """Whether the 5 files the imzML browser needs exist. Other objects under the same
+        prefix (e.g. the segmentation input) are ignored."""
         response = self.s3_client.list_objects(Bucket=self.browser_bucket, Prefix=self.uuid)
-        if response.get('Contents'):
-            objects = {item['Key'] for item in response['Contents']}
-            files = {
-                self.mz_index_key,
-                self.mzs_key,
-                self.ints_key,
-                self.sp_idxs_key,
-                self.portable_spectrum_reader_key,
-            }
-            if len(objects) == 5 and (objects - files) == set():
-                status = True
-
-        return status
+        objects = {item['Key'] for item in response.get('Contents', [])}
+        required = {
+            self.mz_index_key,
+            self.mzs_key,
+            self.ints_key,
+            self.sp_idxs_key,
+            self.portable_spectrum_reader_key,
+        }
+        return required <= objects
 
     def read_file(self, key: str, bucket: str = '') -> bytes:
         if not bucket:

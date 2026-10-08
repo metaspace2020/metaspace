@@ -440,6 +440,34 @@ type Roi {
   geojson: String!  # JSON string representation of GeoJSON
 }
 
+type MeanSpectrum {
+  mzs: [Float!]!
+  summedIntensities: [Float!]!
+  support: [Int!]!
+  nPixels: Int!
+  # Clusters found before the top-N cap was applied; equals returnedPeaks when uncapped.
+  totalPeaks: Int!
+  returnedPeaks: Int!
+  # Peak-clustering tolerance, distinct from the user's ion-image ppm.
+  clusteringPpm: Float!
+  instrument: String!
+}
+
+type MeanSpectrumRegionAvailability {
+  roiId: ID
+  peaks: Int!
+  available: Boolean!
+  reason: String
+}
+
+type MeanSpectrumAvailability {
+  available: Boolean!
+  wholeDatasetAvailable: Boolean!
+  reason: String
+  whole: MeanSpectrumRegionAvailability!
+  regions: [MeanSpectrumRegionAvailability!]!
+}
+
 type DiffRoiResult {
   roi: Roi!
   lfc: Float!
@@ -507,6 +535,10 @@ type Query {
   pixelSpectrum(datasetId: String!, x: Int!, y: Int!): PixelSpectrum
 
   initialPeak(datasetId: String!): InitialPeak
+
+  # roiId omitted means the whole dataset (only offered when wholeDatasetAvailable).
+  meanSpectrum(datasetId: String!, roiId: ID): MeanSpectrum
+  meanSpectrumAvailability(datasetId: String!): MeanSpectrumAvailability
 
   diffRoiResults(datasetId: String!, filter: DiffRoiFilter = {}, annotationFilter: AnnotationFilter = {}): [DiffRoiResult!]!
 

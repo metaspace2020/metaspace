@@ -3,100 +3,49 @@ import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
 import { SVGRenderer } from 'echarts/renderers'
-import { ScatterChart, LineChart } from 'echarts/charts'
-import {
-  GridComponent,
-  TooltipComponent,
-  ToolboxComponent,
-  LegendComponent,
-  DataZoomComponent,
-  MarkPointComponent,
-  TitleComponent,
-  VisualMapPiecewiseComponent,
-  VisualMapContinuousComponent,
-} from 'echarts/components'
-import './DatasetBrowserKendrickPlot.scss'
+import { BarChart, LineChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent, ToolboxComponent, DataZoomComponent } from 'echarts/components'
+import './DatasetBrowserMeanSpectrum.scss'
 import { ElIcon } from '../../../lib/element-plus'
 import { Loading } from '@element-plus/icons-vue'
 
-use([
-  SVGRenderer,
-  ScatterChart,
-  LineChart,
-  GridComponent,
-  TooltipComponent,
-  ToolboxComponent,
-  LegendComponent,
-  DataZoomComponent,
-  MarkPointComponent,
-  TitleComponent,
-  VisualMapPiecewiseComponent,
-  VisualMapContinuousComponent,
-])
+use([SVGRenderer, BarChart, LineChart, GridComponent, TooltipComponent, ToolboxComponent, DataZoomComponent])
 
-interface DatasetBrowserKendrickPlotState {
-  scaleIntensity: boolean
+interface DatasetBrowserMeanSpectrumState {
   chartOptions: any
 }
 
-const PEAK_FILTER = {
-  ALL: 1,
-  FDR: 2,
-  OFF: 3,
-}
-
-export const DatasetBrowserKendrickPlot = defineComponent({
-  name: 'DatasetBrowserKendrickPlot',
+export const DatasetBrowserMeanSpectrum = defineComponent({
+  name: 'DatasetBrowserMeanSpectrum',
   props: {
     isEmpty: {
       type: Boolean,
       default: true,
     },
-    customStyle: {
-      type: Object,
-      default: () => ({}),
-    },
     isLoading: {
       type: Boolean,
       default: false,
     },
-    isDataLoading: {
-      type: Boolean,
-      default: false,
-    },
-    annotatedLabel: {
-      type: String,
-    },
+    // [mz, intensity, support] triples, already sorted by m/z
     data: {
       type: Array,
       default: () => [],
     },
-    annotatedData: {
-      type: Array,
-      default: () => [],
+    stat: {
+      type: String,
+      default: 'MEAN',
     },
-    peakFilter: {
-      type: Number,
-      default: PEAK_FILTER.ALL,
-    },
-    referenceMz: {
-      type: Number,
-      default: 14.0156, // m_CH2=14.0156
-    },
-    dataRange: {
-      type: Object as any,
-      default: () => {
-        return { maxX: 0, maxY: 0, minX: 0, minY: 0 }
-      },
+    emptyMessage: {
+      type: String,
+      default: '',
     },
   },
   setup(props, { emit }) {
-    const spectrumChart = ref(null)
-    const state = reactive<DatasetBrowserKendrickPlotState>({
-      scaleIntensity: false,
+    const meanSpectrumChart = ref(null)
+    const state = reactive<DatasetBrowserMeanSpectrumState>({
       chartOptions: {
         grid: {
-          top: 60,
+          top: 40,
           bottom: 80,
           left: '10%',
           right: '10%',
@@ -104,9 +53,7 @@ export const DatasetBrowserKendrickPlot = defineComponent({
         animation: false,
         tooltip: {
           show: true,
-          formatter: function (value: any) {
-            return value.data.tooltip
-          },
+          formatter: (value: any) => value.data.tooltip,
         },
         toolbox: {
           right: 20,
@@ -148,15 +95,13 @@ export const DatasetBrowserKendrickPlot = defineComponent({
             },
             saveAsImage: {
               title: 'Download',
-              name: 'mass_spectrum',
+              name: 'mean_spectrum',
             },
           },
         },
         xAxis: {
           name: 'm/z',
-          splitLine: {
-            show: false,
-          },
+          splitLine: { show: false },
           nameLocation: 'center',
           nameGap: 20,
           nameTextStyle: {
@@ -164,18 +109,10 @@ export const DatasetBrowserKendrickPlot = defineComponent({
             fontSize: 14,
           },
           type: 'value',
-          axisLabel: {
-            formatter: function (value: any) {
-              return value.toFixed(0.4)
-            },
-          },
         },
         yAxis: {
-          name: 'Mass Defect',
-          splitLine: {
-            show: false,
-          },
-          triggerEvent: true,
+          name: 'Mean intensity',
+          splitLine: { show: false },
           nameLocation: 'center',
           nameGap: 60,
           nameTextStyle: {
@@ -184,71 +121,25 @@ export const DatasetBrowserKendrickPlot = defineComponent({
           },
           type: 'value',
           axisLabel: {
-            formatter: function (value: any) {
-              return value
-            },
+            formatter: (value: any) => value.toExponential(2),
           },
           boundaryGap: [0, '30%'],
         },
         dataZoom: [
-          {
-            type: 'inside',
-            xAxisIndex: 0,
-            filterMode: 'none',
-          },
-          {
-            type: 'slider',
-            yAxisIndex: 0,
-            right: 16,
-            filterMode: 'none',
-          },
-          {
-            type: 'slider',
-            xAxisIndex: 0,
-            filterMode: 'none',
-          },
+          { type: 'inside', xAxisIndex: 0, filterMode: 'none' },
+          { type: 'slider', yAxisIndex: 0, filterMode: 'none', right: 16 },
+          { type: 'slider', xAxisIndex: 0, filterMode: 'none' },
         ],
-        legend: {
-          selectedMode: false,
-          data: [
-            { name: 'Unannotated', icon: 'diamond' },
-            { name: 'Annotated', icon: 'circle' },
-          ],
-        },
         series: [
           {
-            name: 'Unannotated',
+            name: 'Mean spectrum',
+            type: 'bar',
+            // Unlike the single-pixel Mass spectrum view, this is a single series: a
+            // region spectrum has no inherent link to any database or FDR result, so
+            // there is no annotated/unannotated split to colour by.
             data: [],
-            type: 'scatter',
-            sampling: 'none',
-            symbolSize: function (val: any) {
-              return val[2] * 2 || 20
-            },
-            label: {
-              show: false,
-              position: 'top',
-              formatter: '{b}',
-            },
-            tooltip: {
-              show: true,
-              formatter: function (params: any) {
-                return params?.data?.tooltip || `m/z: ${params?.value?.[0]}<br>`
-              },
-            },
-            labelLayout: {
-              hideOverlap: true,
-            },
-            itemStyle: {
-              color: '#DC3220',
-            },
-          },
-          {
-            name: 'Annotated',
-            type: 'scatter',
-            data: [],
-            labelLayout: {
-              hideOverlap: true,
-            },
+            large: true,
+            barWidth: 1,
             itemStyle: {
               color: '#005AB5',
             },
@@ -257,20 +148,31 @@ export const DatasetBrowserKendrickPlot = defineComponent({
       },
     })
 
+    const statLabel = computed(() => (props.stat === 'SUM' ? 'Summed intensity' : 'Mean intensity'))
+
     const chartOptions = computed(() => {
-      const OFFSET: number = 20
       const auxOptions = state.chartOptions
-      auxOptions.series[0].data = props.data.map((data: any) => data.dot)
-      auxOptions.xAxis.min = props.dataRange?.minX ? props.dataRange?.minX - OFFSET : 0
-      auxOptions.xAxis.max = props.dataRange?.maxX ? props.dataRange?.maxX + OFFSET : 0
-      auxOptions.yAxis.max = 1
+
+      auxOptions.series[0].data = props.data.map((d: any) => {
+        const [mz, intensity, support] = d
+        return {
+          value: [mz, intensity],
+          mz,
+          tooltip:
+            `m/z: ${mz.toFixed(4)}<br>` +
+            `${statLabel.value}: ${intensity.toExponential(3)}<br>` +
+            `Pixels: ${support}`,
+        }
+      })
+
+      auxOptions.yAxis.name = statLabel.value
       return auxOptions
     })
 
     const handleChartResize = () => {
-      if (spectrumChart.value) {
+      if (meanSpectrumChart.value) {
         // @ts-ignore
-        spectrumChart.value.chart.resize()
+        meanSpectrumChart.value.chart.resize()
       }
     }
 
@@ -283,9 +185,9 @@ export const DatasetBrowserKendrickPlot = defineComponent({
     })
 
     const handleZoomReset = () => {
-      if (spectrumChart.value) {
+      if (meanSpectrumChart.value) {
         // @ts-ignore
-        spectrumChart.value.chart.dispatchAction({
+        meanSpectrumChart.value.chart.dispatchAction({
           type: 'dataZoom',
           start: 0,
           end: 100,
@@ -294,22 +196,17 @@ export const DatasetBrowserKendrickPlot = defineComponent({
     }
 
     const handleItemSelect = (item: any) => {
-      if (item.targetType === 'axisName') {
-        state.scaleIntensity = !state.scaleIntensity
-      } else {
-        emit('itemSelected', item.data.mz)
-      }
+      // The intensity-weighted centroid, not the most intense raw peak. Goes into the
+      // existing manual m/z entry path, so the ion image uses the user's own ppm.
+      emit('itemSelected', item.data.mz)
     }
 
     const renderSpectrum = () => {
-      const { isLoading, isDataLoading } = props
+      const { isLoading } = props
 
       return (
-        <div class="chart-holder" style={props.customStyle}>
-          {!(isLoading || isDataLoading) && props.annotatedLabel && (
-            <div class="annotated-legend">{props.annotatedLabel}</div>
-          )}
-          {(isLoading || isDataLoading) && (
+        <div class="chart-holder !mt-0">
+          {isLoading && (
             <div class="loader-holder">
               <div>
                 <ElIcon class="is-loading">
@@ -319,21 +216,31 @@ export const DatasetBrowserKendrickPlot = defineComponent({
             </div>
           )}
           <ECharts
-            ref={spectrumChart}
+            ref={meanSpectrumChart}
+            class="chart"
             autoResize={true}
             {...{ 'onZr:dblclick': handleZoomReset }}
             onClick={handleItemSelect}
-            class="chart"
             option={chartOptions.value}
           />
         </div>
       )
     }
 
+    const renderEmpty = () => (
+      <div class="dataset-browser-mean-spectrum-empty">
+        <p class="text-sm text-gray-600">{props.emptyMessage}</p>
+      </div>
+    )
+
     return () => {
       const { isEmpty, isLoading } = props
 
-      return <div class={'dataset-browser-kendrick-container'}>{(!isEmpty || isLoading) && renderSpectrum()}</div>
+      return (
+        <div class="dataset-browser-mean-spectrum-container">
+          {!isEmpty || isLoading ? renderSpectrum() : renderEmpty()}
+        </div>
+      )
     }
   },
 })

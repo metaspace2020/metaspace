@@ -1,0 +1,27 @@
+.dataset-browser-mean-spectrum-container{
+  .echarts {
+    width: 100%;
+    height: 500px;
+  }
+
+  .chart{
+    @apply flex flex-row items-center justify-center;
+    height: 500px;
+    width: 100%;
+  }
+
+  .chart-holder{
+    @apply flex flex-col items-center justify-start relative;
+    min-height: 500px;
+    width: 100%;
+    background: rgba(0,0,0,0.01);
+    height: 100%;
+    margin-top: 6px;
+  }
+
+  .dataset-browser-mean-spectrum-empty{
+    @apply border-2 border-dashed border-gray-200 relative rounded m-6 p-6 flex flex-row items-center justify-center;
+    background: rgba(224,224,224,0.2);
+    min-height: 200px;
+  }
+}

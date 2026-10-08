@@ -248,6 +248,43 @@ export const getRoisQuery = gql`
   }
 `
 
+export const meanSpectrumAvailabilityQuery = gql`
+  query ($datasetId: String!) {
+    meanSpectrumAvailability(datasetId: $datasetId) {
+      available
+      wholeDatasetAvailable
+      reason
+      whole {
+        roiId
+        peaks
+        available
+        reason
+      }
+      regions {
+        roiId
+        peaks
+        available
+        reason
+      }
+    }
+  }
+`
+
+export const meanSpectrumQuery = gql`
+  query ($datasetId: String!, $roiId: ID) {
+    meanSpectrum(datasetId: $datasetId, roiId: $roiId) {
+      mzs
+      summedIntensities
+      support
+      nPixels
+      totalPeaks
+      returnedPeaks
+      clusteringPpm
+      instrument
+    }
+  }
+`
+
 export const getRoiQuery = gql`
   query ($id: ID!) {
     roi(id: $id) {

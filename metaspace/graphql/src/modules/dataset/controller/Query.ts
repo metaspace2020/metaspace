@@ -320,6 +320,84 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       return null
     }
   },
+  async meanSpectrumAvailability(source, { datasetId }, ctx: Context) {
+    if (!await esDatasetByID(datasetId, ctx.user)) {
+      return null
+    }
+    // Engine payload: `{available, whole_dataset_available, reason, whole: {peaks, available, reason},
+    // regions: [{roi_id, peaks, available, reason}]}`. `whole`/`regions` carry the per-region peak counts
+    // the webapp uses to disable ROIs over the cap.
+    const toRegionAvailability = (roiId: string | null, region: any) => ({
+      roiId,
+      peaks: region?.peaks ?? 0,
+      available: region?.available ?? false,
+      reason: region?.reason ?? null,
+    })
+    try {
+      const resp = await smApiJsonGet(`/v1/browser/mean_spectrum_availability/${datasetId}`)
+      const whole = toRegionAvailability(null, resp.whole)
+      return {
+        available: resp.available ?? false,
+        wholeDatasetAvailable: resp.whole_dataset_available ?? whole.available,
+        reason: resp.reason ?? null,
+        whole,
+        regions: (resp.regions ?? []).map((region: any) => toRegionAvailability(String(region.roi_id), region)),
+      }
+    } catch (e) {
+      const reason = 'Mean spectrum is unavailable'
+      return {
+        available: false,
+        wholeDatasetAvailable: false,
+        reason,
+        whole: toRegionAvailability(null, { reason }),
+        regions: [],
+      }
+    }
+  },
+  async meanSpectrum(source, { datasetId, roiId }, ctx: Context) {
+    if (!await esDatasetByID(datasetId, ctx.user)) {
+      return null
+    }
+
+    // Only ROIs the caller could have seen via `rois` may be requested: their own, or
+    // the dataset's defaults. Legacy `legacy_N` ids have no row and are rejected here.
+    if (roiId != null) {
+      if (!/^\d+$/.test(String(roiId))) {
+        throw new UserError('Unknown ROI')
+      }
+      const roi = await ctx.entityManager.createQueryBuilder(Roi, 'roi')
+        .where('roi.id = :roiId', { roiId })
+        .andWhere('roi.datasetId = :datasetId', { datasetId })
+        .getOne()
+      if (roi == null || (roi.userId !== ctx.user?.id && !roi.isDefault)) {
+        throw new UserError('Unknown ROI')
+      }
+    }
+
+    // Posted directly rather than via smApiDatasetRequest so the engine's own message
+    // ("region contains no acquired pixels", "above the peak limit") reaches the user.
+    const { response, content } = await smApiJsonPost('/v1/browser/mean_spectrum', {
+      ds_id: datasetId,
+      roi_id: roiId != null ? Number(roiId) : null,
+    })
+    if (!response.ok) {
+      throw new UserError(content?.message || 'Could not compute the mean spectrum')
+    }
+    const resp = content
+
+    // Summed intensities are returned as-is; the client derives the mean by dividing
+    // by nPixels, so toggling mean/sum never re-fires this resolver.
+    return {
+      mzs: resp.mzs,
+      summedIntensities: resp.summed_ints,
+      support: resp.support,
+      nPixels: resp.n_pixels,
+      totalPeaks: resp.total_peaks,
+      returnedPeaks: resp.returned_peaks,
+      clusteringPpm: resp.clustering_ppm,
+      instrument: resp.instrument,
+    }
+  },
   async pixelSpectrum(source, { datasetId, x, y }) {
     try {
       const resp = await smApiDatasetRequest('/v1/browser/peaks_from_pixel', {
