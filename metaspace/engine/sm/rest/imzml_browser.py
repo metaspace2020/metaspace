@@ -159,35 +159,65 @@ def get_peaks_from_pixel():
         return make_response(INTERNAL_ERROR)
 
 
-def find_initial_peak(ds_id, ppm=3):
-    """Pick the first m/z from the index and find a pixel with non-zero intensity."""
-    ds_files = DatasetFiles(ds_id)
-    mz_index = np.frombuffer(ds_files.read_file(ds_files.mz_index_key), dtype='f')
+def find_brightest_pixel(mz_peaks, coordinates):
+    """Return the (x, y) of the brightest pixel in mz_peaks, or None if every intensity is zero.
 
-    mz = float(mz_index[0])
+    mz_peaks columns: [mz, intensity, sp_idx]; sp_idx is the flattened pixel index (y * width + x).
+    """
+    non_zero = mz_peaks[mz_peaks[:, 1] > 0]
+    if len(non_zero) == 0:
+        return None
+    best_idx = np.argmax(non_zero[:, 1])
+    sp_idx = int(non_zero[best_idx, 2])
+
+    coordinates = coordinates - np.min(coordinates, axis=0)
+    width = int(np.max(coordinates[:, 0]) + 1)
+    return int(sp_idx % width), int(sp_idx // width)
+
+
+def find_initial_peak(ds_id, mz=None, ppm=3):
+    """Find a pixel with non-zero intensity for `mz`, defaulting to the first m/z from the index.
+
+    `x`/`y` are None when no pixel carries signal within the ppm window around `mz`.
+    """
+    ds_files = DatasetFiles(ds_id)
+    if mz is None:
+        mz_index = np.frombuffer(ds_files.read_file(ds_files.mz_index_key), dtype='f')
+        mz = float(mz_index[0])
+
     mz_low = mz * (1 - ppm * 1e-6)
     mz_high = mz * (1 + ppm * 1e-6)
 
     ds = DatasetBrowser(ds_id, mz_low, mz_high, ds_files)
+    pixel = find_brightest_pixel(ds.mz_peaks, ds.coordinates)
+    x, y = pixel if pixel is not None else (None, None)
 
-    # mz_peaks columns: [mz, intensity, sp_idx]; sp_idx is flattened pixel index (y * width + x)
-    non_zero = ds.mz_peaks[ds.mz_peaks[:, 1] > 0]
-    best_idx = np.argmax(non_zero[:, 1])
-    sp_idx = int(non_zero[best_idx, 2])
+    return {'mz': mz, 'x': x, 'y': y}
 
-    coordinates = ds.coordinates - np.min(ds.coordinates, axis=0)
-    width = int(np.max(coordinates[:, 0]) + 1)
-    x = sp_idx % width
-    y = sp_idx // width
 
-    return {'mz': mz, 'x': int(x), 'y': int(y)}
+def _parse_optional_mz(raw):
+    """Parse the optional `mz` query parameter.
+
+    Returns None when absent; raises ValueError when not a positive finite number.
+    """
+    if raw in (None, ''):
+        return None
+    mz = float(raw)
+    if not np.isfinite(mz) or mz <= 0:
+        raise ValueError(f'mz must be a positive number, got {raw!r}')
+    return mz
 
 
 @app.get('/initial_peak/<dataset_id>')
 def get_initial_peak(dataset_id):
     try:
-        logger.info(f'Received `initial_peak` request for {dataset_id} dataset')
-        result = find_initial_peak(dataset_id)
+        mz = _parse_optional_mz(bottle.request.query.get('mz'))
+    except ValueError as e:
+        logger.warning(f'{bottle.request} - {e}')
+        return make_response(WRONG_PARAMETERS)
+    try:
+        logger.info(f'Received `initial_peak` request for {dataset_id} dataset (mz={mz})')
+        result = find_initial_peak(dataset_id, mz=mz)
         headers = {'Content-Type': 'application/json'}
         return bottle.HTTPResponse(result, **headers)
     except Exception as e:

@@ -13,7 +13,13 @@ import { parseFormulaAndCharge } from '../../lib/formulaParser'
 import { encodeParams } from '../Filters'
 import { omit, pick, sortBy } from 'lodash-es'
 import ShareLink from '../ImageViewer/ShareLink.vue'
-import { datasetVisibilityQuery, msAcqGeometryQuery, OpticalImage, opticalImagesQuery } from '../../api/dataset'
+import {
+  checkIfHasBrowserFiles,
+  datasetVisibilityQuery,
+  msAcqGeometryQuery,
+  OpticalImage,
+  opticalImagesQuery,
+} from '../../api/dataset'
 import { reactive, defineAsyncComponent } from 'vue'
 import { currentUserRoleQuery } from '../../api/user'
 import config from '../../lib/config'
@@ -27,10 +33,11 @@ import safeJsonParse from '../../lib/safeJsonParse'
 import { NormalizationType, normalizationBadgeText } from '../../lib/normalization'
 import OpacitySettings from '../ImageViewer/OpacitySettings.vue'
 import { ElIcon } from '../../lib/element-plus'
-import { Setting } from '@element-plus/icons-vue'
+import { DataAnalysis, Setting } from '@element-plus/icons-vue'
 import ColocalizationSettings from './annotation-widgets/ColocalizationSettings.vue'
 import DatasetInfo from '../../components/DatasetInfo.vue'
 import StatefulIcon from '../../components/StatefulIcon.vue'
+import { MZ_QUERY_PARAM } from '../Datasets/imzml/mzQueryParam'
 
 const LockSvg = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-lock.svg'))
 
@@ -58,6 +65,7 @@ const componentsToRegister: any = {
   RelatedMolecules,
   ElIcon,
   Setting,
+  DataAnalysis,
   FilterIcon,
   DatasetInfo,
   StatefulIcon,
@@ -158,6 +166,22 @@ export default defineComponent({
     const getParsedFormula = (ion: string): string => {
       return parseFormulaAndCharge(ion)
     }
+
+    const { result: browserFilesResult } = useQuery<{ hasImzmlFiles: boolean }>(
+      checkIfHasBrowserFiles,
+      () => ({ datasetId: props.annotation.dataset.id }),
+      { enabled: config.features.imzml_browser, fetchPolicy: 'cache-first' }
+    )
+    const hasBrowserFiles = computed(() => browserFilesResult.value?.hasImzmlFiles === true)
+
+    const browserHref = computed(
+      () =>
+        router.resolve({
+          name: 'dataset-browser',
+          params: { dataset_id: props.annotation.dataset.id },
+          query: { [MZ_QUERY_PARAM]: props.annotation.mz.toFixed(4) },
+        }).href
+    )
 
     const permalinkHref = computed((): RouteLocationRaw => {
       const path = '/annotations'
@@ -417,6 +441,8 @@ export default defineComponent({
       onSectionsChange,
       getParsedFormula,
       permalinkHref,
+      hasBrowserFiles,
+      browserHref,
       loadVisibility,
       visibilityText,
       showColoc,

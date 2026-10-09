@@ -12,6 +12,7 @@ interface Features {
   diff_analysis: boolean
   enrichment: boolean
   experiment: boolean
+  mean_spectrum: boolean
   show_dataset_overview: boolean
   metabo_enrich: boolean
   imzml_browser: boolean
@@ -94,6 +95,7 @@ const defaultConfig: ClientConfig = {
     diff_analysis: false,
     enrichment: true,
     experiment: true,
+    mean_spectrum: false,
     show_dataset_overview: true,
     metabo_enrich: false,
     imzml_browser: true,

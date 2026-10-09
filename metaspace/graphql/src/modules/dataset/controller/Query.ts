@@ -312,9 +312,10 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       return null
     }
   },
-  async initialPeak(source, { datasetId }) {
+  async initialPeak(source, { datasetId, mz }) {
     try {
-      const resp = await smApiJsonGet(`/v1/browser/initial_peak/${datasetId}`)
+      const query = mz != null ? `?mz=${encodeURIComponent(mz)}` : ''
+      const resp = await smApiJsonGet(`/v1/browser/initial_peak/${datasetId}${query}`)
       return resp
     } catch (e) {
       return null

@@ -385,8 +385,8 @@ type SpectrumImage {
 
 type InitialPeak {
   mz: Float!
-  x: Int!
-  y: Int!
+  x: Int
+  y: Int
 }
 
 type ImageSegmentationJob {
@@ -534,7 +534,7 @@ type Query {
 
   pixelSpectrum(datasetId: String!, x: Int!, y: Int!): PixelSpectrum
 
-  initialPeak(datasetId: String!): InitialPeak
+  initialPeak(datasetId: String!, mz: Float): InitialPeak
 
   # roiId omitted means the whole dataset (only offered when wholeDatasetAvailable).
   meanSpectrum(datasetId: String!, roiId: ID): MeanSpectrum
