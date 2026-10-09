@@ -331,7 +331,9 @@ export default defineComponent({
     // --- Mean spectrum tab -------------------------------------------------------
     // Aggregated region spectrum. Independent of the pixel selection that drives the
     // Mass spectrum / Kendrick views.
-    const meanSpectrumEnabled = computed(() => state.currentView === VIEWS.MEAN && !!datasetId.value)
+    const meanSpectrumEnabled = computed(
+      () => config.features.mean_spectrum && state.currentView === VIEWS.MEAN && !!datasetId.value
+    )
 
     const { result: roisResult } = useQuery<any>(
       getRoisQuery,
@@ -1425,7 +1427,7 @@ export default defineComponent({
         >
           <ElRadioButton class="ml-2" label={VIEWS.SPECTRUM} />
           <ElRadioButton label={VIEWS.KENDRICK} />
-          <ElRadioButton label={VIEWS.MEAN} />
+          {config.features.mean_spectrum && <ElRadioButton label={VIEWS.MEAN} />}
         </ElRadioGroup>
       )
     }
