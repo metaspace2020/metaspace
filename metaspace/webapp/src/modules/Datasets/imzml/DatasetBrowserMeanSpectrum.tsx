@@ -1,22 +1,34 @@
-import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, defineComponent, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 // @ts-ignore
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
 import { SVGRenderer } from 'echarts/renderers'
-import { BarChart, LineChart } from 'echarts/charts'
+import { BarChart, LineChart, ScatterChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent, ToolboxComponent, DataZoomComponent } from 'echarts/components'
 import './DatasetBrowserMeanSpectrum.scss'
 import { ElIcon } from '../../../lib/element-plus'
 import { Loading } from '@element-plus/icons-vue'
-import { findPeakIndex, formatPeakTooltip, MeanSpectrumPeak } from './meanSpectrumPeakLookup'
+import { countPeaksInRange, findPeakIndex, formatPeakTooltip, MeanSpectrumPeak } from './meanSpectrumPeakLookup'
 
-const HIT_TOLERANCE_PX = 4
+const HIT_TOLERANCE_PX = 5
+const MARKER_SIZE = 10
+const MAX_MARKED_PEAKS = 300
 
-use([SVGRenderer, BarChart, LineChart, GridComponent, TooltipComponent, ToolboxComponent, DataZoomComponent])
+use([
+  SVGRenderer,
+  BarChart,
+  LineChart,
+  ScatterChart,
+  GridComponent,
+  TooltipComponent,
+  ToolboxComponent,
+  DataZoomComponent,
+])
 
 interface DatasetBrowserMeanSpectrumState {
   chartOptions: any
   hover?: { left: number; top: number; html: string }
+  visiblePeaks?: number
 }
 
 export const DatasetBrowserMeanSpectrum = defineComponent({
@@ -142,9 +154,29 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
             // there is no annotated/unannotated split to colour by.
             data: [],
             large: true,
+            silent: true,
             barWidth: 1,
             itemStyle: {
               color: '#005AB5',
+            },
+          },
+          {
+            name: 'Peak markers',
+            type: 'scatter',
+            data: [],
+            silent: true,
+            symbol: 'circle',
+            symbolSize: MARKER_SIZE,
+            itemStyle: {
+              color: '#005AB5',
+            },
+            label: {
+              show: true,
+              position: 'top',
+              formatter: (params: any) => params.value[0].toFixed(4),
+            },
+            labelLayout: {
+              hideOverlap: true,
             },
           },
         ],
@@ -156,7 +188,11 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
     const chartOptions = computed(() => {
       const auxOptions = state.chartOptions
 
-      auxOptions.series[0].data = props.data.map((d: any) => [d[0], d[1]])
+      const points = props.data.map((d: any) => [d[0], d[1]])
+      const showMarkers = (state.visiblePeaks ?? points.length) <= MAX_MARKED_PEAKS
+
+      auxOptions.series[0].data = points
+      auxOptions.series[1].data = showMarkers ? points : []
 
       auxOptions.yAxis.name = statLabel.value
       return auxOptions
@@ -188,8 +224,27 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
       }
     }
 
+    const getChart = (): any => (meanSpectrumChart.value as any)?.chart
+
+    const updateVisiblePeaks = () => {
+      const zoom = getChart()
+        ?.getOption()
+        ?.dataZoom?.find((item: any) => item.xAxisIndex)
+      if (zoom && zoom.startValue !== undefined && zoom.endValue !== undefined) {
+        state.visiblePeaks = countPeaksInRange(props.data as MeanSpectrumPeak[], zoom.startValue, zoom.endValue)
+      }
+    }
+
+    watch(
+      () => props.data,
+      () => {
+        state.visiblePeaks = undefined
+        nextTick(updateVisiblePeaks)
+      }
+    )
+
     const peakAtPointer = (event: any): MeanSpectrumPeak | undefined => {
-      const chart: any = (meanSpectrumChart.value as any)?.chart
+      const chart = getChart()
       if (!chart) {
         return undefined
       }
@@ -199,8 +254,17 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
       }
       const [mz] = chart.convertFromPixel({ gridIndex: 0 }, [offsetX, offsetY])
       const [mzNear] = chart.convertFromPixel({ gridIndex: 0 }, [offsetX + HIT_TOLERANCE_PX, offsetY])
+      const isHit = ([peakMz, intensity]: MeanSpectrumPeak) => {
+        const [peakX, peakY] = chart.convertToPixel({ gridIndex: 0 }, [peakMz, intensity])
+        const [, baselineY] = chart.convertToPixel({ gridIndex: 0 }, [peakMz, 0])
+        return (
+          Math.abs(peakX - offsetX) <= HIT_TOLERANCE_PX &&
+          offsetY >= peakY - MARKER_SIZE / 2 &&
+          offsetY <= baselineY + HIT_TOLERANCE_PX
+        )
+      }
       const peaks = props.data as MeanSpectrumPeak[]
-      const index = findPeakIndex(peaks, mz, Math.abs(mzNear - mz))
+      const index = findPeakIndex(peaks, mz, Math.abs(mzNear - mz), isHit)
       return index === -1 ? undefined : peaks[index]
     }
 
@@ -215,6 +279,9 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
 
     const handleChartMouseMove = (event: any) => {
       const peak = peakAtPointer(event)
+      getChart()
+        ?.getZr()
+        .setCursorStyle(peak ? 'pointer' : 'default')
       state.hover = peak
         ? { left: event.offsetX + 12, top: event.offsetY + 12, html: formatPeakTooltip(peak, statLabel.value) }
         : undefined
@@ -222,6 +289,10 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
 
     const handleChartMouseOut = () => {
       state.hover = undefined
+    }
+
+    const handleDataZoom = () => {
+      updateVisiblePeaks()
     }
 
     const renderSpectrum = () => {
@@ -242,6 +313,7 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
             ref={meanSpectrumChart}
             class="chart"
             autoResize={true}
+            onDatazoom={handleDataZoom}
             {...{
               'onZr:dblclick': handleZoomReset,
               'onZr:click': handleChartClick,
