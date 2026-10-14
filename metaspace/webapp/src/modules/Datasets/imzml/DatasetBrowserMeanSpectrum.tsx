@@ -8,11 +8,15 @@ import { GridComponent, TooltipComponent, ToolboxComponent, DataZoomComponent } 
 import './DatasetBrowserMeanSpectrum.scss'
 import { ElIcon } from '../../../lib/element-plus'
 import { Loading } from '@element-plus/icons-vue'
+import { findPeakIndex, formatPeakTooltip, MeanSpectrumPeak } from './meanSpectrumPeakLookup'
+
+const HIT_TOLERANCE_PX = 4
 
 use([SVGRenderer, BarChart, LineChart, GridComponent, TooltipComponent, ToolboxComponent, DataZoomComponent])
 
 interface DatasetBrowserMeanSpectrumState {
   chartOptions: any
+  hover?: { left: number; top: number; html: string }
 }
 
 export const DatasetBrowserMeanSpectrum = defineComponent({
@@ -52,8 +56,7 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
         },
         animation: false,
         tooltip: {
-          show: true,
-          formatter: (value: any) => value.data.tooltip,
+          show: false,
         },
         toolbox: {
           right: 20,
@@ -153,17 +156,7 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
     const chartOptions = computed(() => {
       const auxOptions = state.chartOptions
 
-      auxOptions.series[0].data = props.data.map((d: any) => {
-        const [mz, intensity, support] = d
-        return {
-          value: [mz, intensity],
-          mz,
-          tooltip:
-            `m/z: ${mz.toFixed(4)}<br>` +
-            `${statLabel.value}: ${intensity.toExponential(3)}<br>` +
-            `Pixels: ${support}`,
-        }
-      })
+      auxOptions.series[0].data = props.data.map((d: any) => [d[0], d[1]])
 
       auxOptions.yAxis.name = statLabel.value
       return auxOptions
@@ -195,10 +188,40 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
       }
     }
 
-    const handleItemSelect = (item: any) => {
-      // The intensity-weighted centroid, not the most intense raw peak. Goes into the
-      // existing manual m/z entry path, so the ion image uses the user's own ppm.
-      emit('itemSelected', item.data.mz)
+    const peakAtPointer = (event: any): MeanSpectrumPeak | undefined => {
+      const chart: any = (meanSpectrumChart.value as any)?.chart
+      if (!chart) {
+        return undefined
+      }
+      const { offsetX, offsetY } = event
+      if (!chart.containPixel('grid', [offsetX, offsetY])) {
+        return undefined
+      }
+      const [mz] = chart.convertFromPixel({ gridIndex: 0 }, [offsetX, offsetY])
+      const [mzNear] = chart.convertFromPixel({ gridIndex: 0 }, [offsetX + HIT_TOLERANCE_PX, offsetY])
+      const peaks = props.data as MeanSpectrumPeak[]
+      const index = findPeakIndex(peaks, mz, Math.abs(mzNear - mz))
+      return index === -1 ? undefined : peaks[index]
+    }
+
+    const handleChartClick = (event: any) => {
+      const peak = peakAtPointer(event)
+      if (peak) {
+        // The intensity-weighted centroid, not the most intense raw peak. Goes into the
+        // existing manual m/z entry path, so the ion image uses the user's own ppm.
+        emit('itemSelected', peak[0])
+      }
+    }
+
+    const handleChartMouseMove = (event: any) => {
+      const peak = peakAtPointer(event)
+      state.hover = peak
+        ? { left: event.offsetX + 12, top: event.offsetY + 12, html: formatPeakTooltip(peak, statLabel.value) }
+        : undefined
+    }
+
+    const handleChartMouseOut = () => {
+      state.hover = undefined
     }
 
     const renderSpectrum = () => {
@@ -219,10 +242,21 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
             ref={meanSpectrumChart}
             class="chart"
             autoResize={true}
-            {...{ 'onZr:dblclick': handleZoomReset }}
-            onClick={handleItemSelect}
+            {...{
+              'onZr:dblclick': handleZoomReset,
+              'onZr:click': handleChartClick,
+              'onZr:mousemove': handleChartMouseMove,
+              'onZr:globalout': handleChartMouseOut,
+            }}
             option={chartOptions.value}
           />
+          {state.hover && (
+            <div
+              class="mean-spectrum-tooltip"
+              style={{ left: `${state.hover.left}px`, top: `${state.hover.top}px` }}
+              innerHTML={state.hover.html}
+            />
+          )}
         </div>
       )
     }
