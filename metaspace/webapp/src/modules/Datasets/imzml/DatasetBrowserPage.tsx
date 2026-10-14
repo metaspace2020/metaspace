@@ -137,6 +137,11 @@ const VIEWS = {
 // Sentinel for the "whole dataset" entry in the ROI dropdown; sent to the API as no roiId.
 const WHOLE_DATASET_REGION = '__whole__'
 
+// Minimum share of a region's pixels a peak must be detected in to be listed; mirrors the engine's
+// ROI_MIN_SUPPORT_FRAC and MIN_SUPPORT_FRAC in mean_spectrum_manager.py.
+const ROI_MIN_COVERAGE_PERCENT = 80
+const WHOLE_DATASET_MIN_COVERAGE_PERCENT = 1
+
 export default defineComponent({
   name: 'DatasetBrowserPage',
   props: {
@@ -1493,6 +1498,13 @@ export default defineComponent({
                       <p class="m-0">
                         Peaks from every pixel in the region are merged onto one m/z axis. Peaks closer than the mass
                         tolerance count as the same peak. This is separate from the ion image ppm.
+                      </p>
+                      <p class="m-0">
+                        {`Only peaks detected in at least ${
+                          resolvedRegion.value === WHOLE_DATASET_REGION
+                            ? WHOLE_DATASET_MIN_COVERAGE_PERCENT
+                            : ROI_MIN_COVERAGE_PERCENT
+                        }% of the region's pixels are shown.`}
                       </p>
                       <p class="m-0">{`${spectrum.nPixels.toLocaleString()} pixels in the region`}</p>
                       {typeof regionPeaks === 'number' && (

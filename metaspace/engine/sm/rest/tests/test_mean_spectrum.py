@@ -165,6 +165,22 @@ def test_support_filter_fraction_applies_on_large_region():
     assert len(ref_mzs) == 1
 
 
+def test_roi_coverage_threshold_keeps_only_peaks_detected_in_most_pixels():
+    n_pixels = 10
+    threshold = mean_spectrum_manager.ROI_MIN_SUPPORT_FRAC
+
+    def clusters_kept(n_detected):
+        mzs = np.linspace(500.0, 500.000004, n_detected)
+        pix = np.arange(n_detected)
+        ref_mzs, _, _ = build_reference_axis_strict(
+            mzs, np.ones(n_detected), pix, 'TOF', 3.0, n_pixels, min_support_frac=threshold
+        )
+        return len(ref_mzs)
+
+    assert clusters_kept(int(threshold * n_pixels)) == 1
+    assert clusters_kept(int(threshold * n_pixels) - 1) == 0
+
+
 def test_intensity_weighted_centroid():
     """The reported m/z is the intensity-weighted centroid, not the most intense peak."""
     mzs = np.array([400.0000, 400.0004, 400.0008])
@@ -329,15 +345,18 @@ def test_compute_roi_reads_only_the_region_spectra(monkeypatch):
         )
 
     monkeypatch.setattr(mean_spectrum_manager, 'read_pixel_spectra', fake_read)
-    monkeypatch.setattr(
-        mean_spectrum_manager,
-        'build_reference_axis_strict',
-        lambda *a: (np.array([100.0]), np.array([3.0]), np.array([1])),
-    )
+    thresholds = []
+
+    def fake_build(*args, min_support_frac):  # pylint: disable=unused-argument
+        thresholds.append(min_support_frac)
+        return np.array([100.0]), np.array([3.0]), np.array([1])
+
+    monkeypatch.setattr(mean_spectrum_manager, 'build_reference_axis_strict', fake_build)
 
     result = manager.compute(DS, 1)
 
     assert calls == [('upload', 'the-uuid/f.ibd', [0])]
+    assert thresholds == [mean_spectrum_manager.ROI_MIN_SUPPORT_FRAC]
     assert result['n_pixels'] == 1
     assert result['returned_peaks'] == 1
 
@@ -353,8 +372,11 @@ def test_compute_whole_dataset_streams_and_keeps_acquired_pixels_only(monkeypatc
     )
     seen = {}
 
-    def fake_build(mzs, ints, pix, instrument, ppm, n_pixels):  # pylint: disable=unused-argument
+    def fake_build(  # pylint: disable=unused-argument, too-many-arguments
+        mzs, ints, pix, instrument, ppm, n_pixels, min_support_frac
+    ):
         seen['pix'] = pix.tolist()
+        seen['min_support_frac'] = min_support_frac
         return np.array([1.0]), np.array([1.0]), np.array([1])
 
     monkeypatch.setattr(mean_spectrum_manager, 'build_reference_axis_strict', fake_build)
@@ -362,6 +384,7 @@ def test_compute_whole_dataset_streams_and_keeps_acquired_pixels_only(monkeypatc
     result = manager.compute(DS, None)
 
     assert seen['pix'] == [0, 2]  # pixel 1 not acquired, pixel 7 outside the grid
+    assert seen['min_support_frac'] == mean_spectrum_manager.MIN_SUPPORT_FRAC
     assert result['n_pixels'] == 2
 
 

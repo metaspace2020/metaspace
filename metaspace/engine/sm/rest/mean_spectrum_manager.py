@@ -57,20 +57,23 @@ MEAN_SPECTRUM_MAX_POINTS = 20_000
 # application of the strict-clustering method.
 MIN_SUPPORT_FRAC = 0.01
 MIN_SUPPORT_PIXELS = 3
+# ROIs are homogeneous regions, so a real peak is expected in nearly all their pixels; peaks
+# detected in fewer are mostly noise. The whole dataset is heterogeneous and keeps the floor above.
+ROI_MIN_SUPPORT_FRAC = 0.8
 
 CACHE_TTL_S = 86_400
 CACHE_MAX_ENTRIES = 64
 # Bump to invalidate every cached result after an algorithm change.
-ALGO_VERSION = 1
+ALGO_VERSION = 2
 
 WHOLE_DATASET = 'whole'
 
 _cache: 'OrderedDict[str, Tuple[float, dict]]' = OrderedDict()
-_cache_lock = threading.Lock()
+_CACHE_LOCK = threading.Lock()
 
 
 def _cache_get(key: str) -> Optional[dict]:
-    with _cache_lock:
+    with _CACHE_LOCK:
         entry = _cache.get(key)
         if entry is None:
             return None
@@ -83,7 +86,7 @@ def _cache_get(key: str) -> Optional[dict]:
 
 
 def _cache_put(key: str, result: dict):
-    with _cache_lock:
+    with _CACHE_LOCK:
         _cache[key] = (time.monotonic() + CACHE_TTL_S, result)
         _cache.move_to_end(key)
         while len(_cache) > CACHE_MAX_ENTRIES:
@@ -292,7 +295,7 @@ class MeanSpectrumManager:
         """Locate the .ibd and load the spectrum reader pickle; cached across requests and
         re-validated against ``input_path`` so a re-uploaded dataset is never served stale."""
         input_path = self._input_path(ds_id)
-        with _cache_lock:
+        with _CACHE_LOCK:
             cached = _files_cache.get(ds_id)
             if cached is not None and cached.input_path == input_path:
                 _files_cache.move_to_end(ds_id)
@@ -310,7 +313,7 @@ class MeanSpectrumManager:
         )['Body'].read()
         files = DatasetPeakFiles(uuid, upload_bucket, ibd_keys[-1], deserialize(body), input_path)
 
-        with _cache_lock:
+        with _CACHE_LOCK:
             _files_cache[ds_id] = files
             _files_cache.move_to_end(ds_id)
             while len(_files_cache) > FILES_CACHE_MAX_ENTRIES:
@@ -502,7 +505,13 @@ class MeanSpectrumManager:
             mzs, ints, pix = self._region_peaks(ds_id, roi_id, mask)
 
         ref_mzs, summed_ints, support = build_reference_axis_strict(
-            mzs, ints, pix, instrument, ppm, n_pixels
+            mzs,
+            ints,
+            pix,
+            instrument,
+            ppm,
+            n_pixels,
+            min_support_frac=MIN_SUPPORT_FRAC if roi_id is None else ROI_MIN_SUPPORT_FRAC,
         )
         total_peaks = len(ref_mzs)
         ref_mzs, summed_ints, support = select_top_peaks(ref_mzs, summed_ints, support)
