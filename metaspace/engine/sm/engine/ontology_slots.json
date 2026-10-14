@@ -1,0 +1,70 @@
+{
+  "organism": [
+    {
+      "ontology": "ncbitaxon",
+      "root": "NCBITaxon:131567",
+      "obo_file": "ncbitaxon.obo"
+    }
+  ],
+  "anatomical_site_coarse": [
+    {
+      "ontology": "uberon",
+      "root": "UBERON:0001062",
+      "obo_file": "uberon.obo"
+    }
+  ],
+  "disease": [
+    {
+      "ontology": "mondo",
+      "root": "MONDO:0000001",
+      "obo_file": "mondo.obo"
+    }
+  ],
+  "developmental_stage": [
+    {
+      "ontology": "efo",
+      "root": "EFO:0000399",
+      "obo_file": "https://www.ebi.ac.uk/efo/efo.obo"
+    }
+  ],
+  "cell_line_id": [
+    {
+      "ontology": "efo",
+      "root": "CL:0000010",
+      "obo_file": "https://www.ebi.ac.uk/efo/efo.obo"
+    }
+  ],
+  "ionization_source": [
+    {
+      "ontology": "ms",
+      "root": "MS:1000008",
+      "obo_file": "ms.obo"
+    }
+  ],
+  "instrument_model": [
+    {
+      "ontology": "ms",
+      "root": "MS:1000031",
+      "obo_file": "ms.obo"
+    },
+    {
+      "ontology": "ms",
+      "root": "MS:1000443",
+      "obo_file": "ms.obo"
+    }
+  ],
+  "maldi_matrix": [
+    {
+      "ontology": "chebi",
+      "root": "CHEBI:24431",
+      "obo_file": "chebi.obo"
+    }
+  ],
+  "solvent": [
+    {
+      "ontology": "chebi",
+      "root": "CHEBI:24431",
+      "obo_file": "chebi.obo"
+    }
+  ]
+}

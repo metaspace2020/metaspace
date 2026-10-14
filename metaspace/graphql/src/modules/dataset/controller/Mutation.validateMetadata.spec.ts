@@ -1,10 +1,11 @@
-import { validateMetadata } from './Mutation'
+import { parseMetadataV2Envelope, processingSettingsChanged, resolveMetadataInput, validateMetadata } from './Mutation'
+import { LegacyMetadata, upProjectToV2 } from '../projection'
 
 // Deliberately does NOT import graphqlTestEnvironment/testDataCreation - validateMetadata is a pure
 // function (no DB, no GraphQL context), and this file exists specifically to verify the Ajv 4->8
 // migration's error shape without requiring a live database.
 
-const baseIms = {
+const baseIms: LegacyMetadata = {
   Data_Type: 'Imaging MS',
   Sample_Information: { Organism: 'Mus musculus', Organism_Part: 'liver', Condition: 'wildtype' },
   Sample_Preparation: {
@@ -67,5 +68,97 @@ describe('validateMetadata (Ajv 4 -> 8 migration)', () => {
     // Regression guard for Ajv 8's default strict-mode rejecting unknown keywords - if `strict: false`
     // is ever dropped from the Ajv04 instantiation, compiling ims.json throws before this call returns.
     expect(() => validateMetadata(baseIms)).not.toThrow()
+  })
+})
+
+const getFailedValidation = (fn: () => any): any[] => {
+  try {
+    fn()
+  } catch (err) {
+    const parsed = JSON.parse(err.message)
+    expect(parsed.type).toBe('failed_validation')
+    return parsed.validation_errors
+  }
+  throw new Error('expected failed_validation')
+}
+
+describe('metadata_v2 input handling', () => {
+  const validV2 = upProjectToV2(baseIms)
+
+  it.each([
+    ['not JSON', 'nope'],
+    ['empty object', '{}'],
+    ['document without sample/acquisition', JSON.stringify({ document: {}, unmodeled: {} })],
+    ['missing unmodeled', JSON.stringify({ document: validV2.document })],
+    ['acquisition without user_value objects', JSON.stringify({
+      document: { ...validV2.document, acquisition: { polarity: {}, ionization_source: {}, instrument_model: {} } },
+      unmodeled: {},
+    })],
+  ])('rejects a malformed envelope (%s) with a validation error instead of crashing', (_name, json) => {
+    const errors = getFailedValidation(() => parseMetadataV2Envelope(json))
+    expect(errors).toHaveLength(1)
+    expect(errors[0].dataPath).toBe('.metadataV2')
+  })
+
+  it('derives the legacy metadata from metadataV2Json and ignores metadataJson when both are given', () => {
+    const { metadata, metadataV2 } = resolveMetadataInput('{"Data_Type":"garbage"}', JSON.stringify(validV2))
+    expect(metadata).toMatchObject(baseIms)
+    expect(metadataV2).toEqual(validV2)
+    expect(() => validateMetadata(metadata, metadataV2)).not.toThrow()
+  })
+
+  it('falls back to metadataJson when metadataV2Json is absent', () => {
+    expect(resolveMetadataInput(JSON.stringify(baseIms), null)).toEqual({ metadata: baseIms, metadataV2: undefined })
+    expect(resolveMetadataInput(null, null)).toEqual({ metadata: undefined, metadataV2: undefined })
+  })
+
+  it('projects a controlled polarity given only by label, and leaves an unresolved one to validation', () => {
+    const withPolarity = (user_value: any) => ({
+      ...validV2,
+      document: {
+        ...validV2.document,
+        acquisition: { ...validV2.document.acquisition, polarity: { user_value, reconciliation_state: 'not_checked' } },
+      },
+    })
+    const byLabel = resolveMetadataInput(null, JSON.stringify(withPolarity({ value_label: 'Negative', curation_state: 'controlled' })))
+    expect(byLabel.metadata.MS_Analysis.Polarity).toBe('Negative')
+    const unresolved = resolveMetadataInput(null, JSON.stringify(withPolarity({ value_free_text: '??', curation_state: 'pending_curation' })))
+    expect(unresolved.metadata.MS_Analysis.Polarity).toBeUndefined()
+    const errors = getFailedValidation(() => validateMetadata(unresolved.metadata, unresolved.metadataV2))
+    expect(errors.some((e) => e.params?.missingProperty === 'Polarity')).toBe(true)
+  })
+
+  it('does not invent Detector_Resolving_Power when unmodeled omits it', () => {
+    const { metadata, metadataV2 } = resolveMetadataInput(null, JSON.stringify({ ...validV2, unmodeled: {} }))
+    expect(metadata.MS_Analysis.Detector_Resolving_Power).toBeUndefined()
+    const errors = getFailedValidation(() => validateMetadata(metadata, metadataV2))
+    expect(errors.some((e) => e.params?.missingProperty === 'Detector_Resolving_Power')).toBe(true)
+  })
+
+  it('reports schema errors in the v2 document under .metadataV2.document', () => {
+    const invalid = {
+      ...validV2,
+      document: { ...validV2.document, sample: { ...validV2.document.sample, organism: undefined } },
+    }
+    const errors = getFailedValidation(() => validateMetadata(baseIms, invalid as any))
+    expect(errors.some((e) => e.dataPath.startsWith('.metadataV2.document') && e.params?.missingProperty === 'organism'))
+      .toBe(true)
+  })
+})
+
+describe('processingSettingsChanged: analyzer class', () => {
+  const ds = { metadata: baseIms } as any
+  const withAnalyzer = (Analyzer: string) => ({
+    ...baseIms, MS_Analysis: { ...baseIms.MS_Analysis, Analyzer },
+  })
+
+  it('flags a reprocess when the analyzer class changes', () => {
+    const { procSettingsUpd } = processingSettingsChanged(ds, { metadata: withAnalyzer('timsTOF Pro') } as any)
+    expect(procSettingsUpd).toBe(true)
+  })
+
+  it('does not flag a relabel within the same class', () => {
+    const { procSettingsUpd } = processingSettingsChanged(ds, { metadata: withAnalyzer('Q Exactive HF') } as any)
+    expect(procSettingsUpd).toBe(false)
   })
 })

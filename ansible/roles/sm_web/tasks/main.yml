@@ -76,6 +76,11 @@
   become_user: postgres
   postgresql_ext: db=sm name=uuid-ossp
 
+- name: Import pg_trgm extension into sm postgres database (ontology term suggestions)
+  become: yes
+  become_user: postgres
+  postgresql_ext: db=sm name=pg_trgm
+
 - name: Create /opt/data/metaspace directory
   file: dest=/opt/data/metaspace state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes

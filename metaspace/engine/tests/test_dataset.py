@@ -11,6 +11,7 @@ from sm.engine.dataset import (
     _normalize_instrument,
 )
 from sm.engine.db import DB
+from sm.engine.metadata_v2 import get_instrument_model_curie
 from sm.engine.es_export import ESExporter
 from .utils import create_test_molecular_db, create_test_ds
 
@@ -123,6 +124,9 @@ def test_dataset_to_queue_message_works(metadata, ds_config):
         ('solariX', None),  # no keyword match - a real gap, not the case under test here
         ('SolariX FT-ICR', 'FTICR'),
         ('SYNAPT G2-Si', 'TOF'),
+        ('time-of-flight', 'TOF'),  # PSI-MS canonical analyzer-type labels
+        ('fourier transform ion cyclotron resonance', 'FTICR'),
+        ('LTQ FT', 'FTICR'),
         ('unrecognized instrument', None),
         (None, None),
     ],
@@ -139,7 +143,7 @@ def test_normalize_instrument_curie_path_uses_ontology_label():
 
     assert result == 'Orbitrap'
     db.select_one.assert_called_once()
-    assert db.select_one.call_args.kwargs['params'] == ('MS:1002634',)
+    assert db.select_one.call_args.kwargs['params'][0] == 'MS:1002634'
 
 
 def test_normalize_instrument_curie_path_falls_back_when_unresolvable():
@@ -184,13 +188,16 @@ def test_generate_ds_config_with_metadata_v2_curie_matches_legacy(metadata, ds_c
         'document': {
             'acquisition': {
                 'instrument_model': {
-                    'user_value': {'value_ontology_id': 'MS:1000448', 'curation_state': 'controlled'},
+                    'user_value': {
+                        'value_ontology_id': 'MS:1000448',
+                        'curation_state': 'controlled',
+                    },
                 }
             }
         }
     }
     db = MagicMock()
-    db.select_one.return_value = ('FT-ICR',)
+    db.select_one.return_value = ('LTQ FT',)  # the real label of MS:1000448
 
     legacy_config = generate_ds_config(metadata, moldb_ids=[0], adducts=["+H", "+Na", "+K", "[M]+"])
     v2_config = generate_ds_config(
@@ -202,3 +209,35 @@ def test_generate_ds_config_with_metadata_v2_curie_matches_legacy(metadata, ds_c
     )
 
     assert v2_config == legacy_config == ds_config
+
+
+@mark.parametrize(
+    'metadata_v2,expected',
+    [
+        (None, None),
+        ({}, None),
+        ({'document': {}}, None),
+        ({'document': {'acquisition': {'instrument_model': {'user_value': {}}}}}, None),
+        ({'document': {'acquisition': {'instrument_model': 'not a dict'}}}, None),
+        (
+            {
+                'document': {
+                    'acquisition': {'instrument_model': {'user_value': {'value_free_text': 'x'}}}
+                }
+            },
+            None,
+        ),
+        (
+            {
+                'document': {
+                    'acquisition': {
+                        'instrument_model': {'user_value': {'value_ontology_id': 'MS:1000448'}}
+                    }
+                }
+            },
+            'MS:1000448',
+        ),
+    ],
+)
+def test_get_instrument_model_curie_tolerates_malformed_documents(metadata_v2, expected):
+    assert get_instrument_model_curie(metadata_v2) == expected

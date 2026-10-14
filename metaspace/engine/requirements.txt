@@ -16,7 +16,6 @@ pika==0.13.1
 bottle
 Pillow==9.3.0
 numpy==1.19.5
-pydantic==2.10.6
 scipy==1.6.0
 pandas==1.2.0
 matplotlib==3.3.4
@@ -31,4 +30,3 @@ lithops[aws]==3.5.1
 # numba==0.54.0  # Only used by disabled v2 metrics
 catboost==1.0.3  # Warning - this installs optional dependencies plotly and matplotlib, which are large. Install it without dependencies in Lithops images.
 statsmodels==0.12.2
-oaklib==0.1.2  # ontology_term import (scripts/import_ontology_terms.py) - metadata schema v2

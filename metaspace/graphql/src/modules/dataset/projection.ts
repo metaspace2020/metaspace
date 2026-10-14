@@ -1,18 +1,13 @@
 /**
- * Projection between the new LinkML-authored `metadata_v2` document and the legacy free-text
- * metadata shape (`ims.json`). See metaspace_metadata's `docs/integration_metaspace.md` SS3.3-3.5
- * for the authoritative spec this implements.
- *
- * Only one direction is used in production (down-projection, `metadata_v2` -> legacy), run on every
- * create/update so the legacy blob - and therefore ElasticSearch, filters, the public API and the
- * Python client - keeps working unmodified while `metadata_v2` is the new write path (coexistence).
- * Up-projection exists for exactly two purposes per the spec (SS10): the projection round-trip test,
- * and up-projecting a legacy dataset when it's used as a metadata *template* for a new submission
- * (webapp's `importMetadata`) - it is never used to backfill `metadata_v2` for existing datasets.
+ * Projection between the LinkML-authored `metadata_v2` document and the legacy metadata shape
+ * (`ims.json`). Down-projection (v2 -> legacy) runs on every create/update that carries metadata_v2:
+ * the stored legacy blob is derived from it, so Elasticsearch, filters, the public API and the Python
+ * client keep working unchanged. Up-projection (legacy -> v2) exists for the round-trip test and for
+ * using a legacy dataset as a template in the webapp; it is never used to backfill stored datasets.
  */
 
 // ---------------------------------------------------------------------------
-// metadata_v2 document shape (mirrors schema/metaspace_submission.yaml)
+// metadata_v2 document shape (mirrors metaspace/metadata/linkml/generated/metaspace_submission.schema.json)
 // ---------------------------------------------------------------------------
 
 export type CurationState = 'controlled' | 'pending_curation' | 'free_text_accepted'
@@ -72,8 +67,8 @@ export interface MetadataV2Document {
   acquisition: AcquisitionInfo
 }
 
-// The closed set of legacy fields deliberately not modeled in the LinkML schema (integration spec
-// SS2.1) - carried verbatim beside `document` so the down-projection can still be total.
+// Legacy fields deliberately not modeled in the LinkML schema, carried beside `document` so the
+// down-projection can still produce a complete legacy document.
 export interface UnmodeledFields {
   Detector_Resolving_Power?: { mz: number, Resolving_Power: number } | null
   Pixel_Size?: { Xaxis: number, Yaxis: number } | null
@@ -82,7 +77,6 @@ export interface UnmodeledFields {
 }
 
 export interface MetadataV2Envelope {
-  schema_version: string
   document: MetadataV2Document
   unmodeled: UnmodeledFields
 }
@@ -106,19 +100,19 @@ export interface LegacyMetadata {
     MALDI_Matrix_Application: string
     Solvent?: string
   }
+  // Optional only so a projection of an incomplete v2 document can leave them out and let the
+  // ims.json validation report them, rather than inventing processing-critical values.
   MS_Analysis: {
-    Polarity: 'Positive' | 'Negative'
+    Polarity?: 'Positive' | 'Negative'
     Ionisation_Source: string
     Analyzer: string
-    Detector_Resolving_Power: { mz: number, Resolving_Power: number }
-    Pixel_Size: { Xaxis: number, Yaxis: number }
+    Detector_Resolving_Power?: { mz: number, Resolving_Power: number }
+    Pixel_Size?: { Xaxis: number, Yaxis: number }
   }
   Additional_Information?: {
     Supplementary?: string
   }
-  // Not a property of the current JSON Schema at all (integration spec SS2.1) - read by
-  // `dataset.py:175`/`to_queue_message` via chained `.get()` with defaults. Carried through
-  // `unmodeled.Submitted_By` because it must still survive the round trip.
+  // Not in ims.json, but the engine reads it (dataset.py `to_queue_message`), so it must survive.
   Submitted_By?: unknown
 }
 
@@ -126,20 +120,12 @@ export interface LegacyMetadata {
 // Down-projection: metadata_v2 -> legacy
 // ---------------------------------------------------------------------------
 
-/**
- * "value_label if non-empty, else value_free_text, else ''" - integration spec SS3.3.
- */
+/** value_label if non-empty, else value_free_text, else `fallback`. */
 function renderScalar(value: OntologyTermValue | null | undefined, fallback = ''): string {
   if (!value) {
     return fallback
   }
-  if (value.value_label) {
-    return value.value_label
-  }
-  if (value.value_free_text) {
-    return value.value_free_text
-  }
-  return fallback
+  return value.value_label || value.value_free_text || fallback
 }
 
 const POLARITY_CURIE_MAP: Record<string, 'Positive' | 'Negative'> = {
@@ -148,71 +134,55 @@ const POLARITY_CURIE_MAP: Record<string, 'Positive' | 'Negative'> = {
 }
 
 /**
- * Polarity is the one field the scalar rule breaks: the legacy field is a strict enum
- * (Positive/Negative), but the resolved PSI-MS labels are "positive scan"/"negative scan", which
- * would fail legacy validation. Uses an explicit CURIE map instead of the label, falling back to a
- * case-normalised match on free text when unresolved (integration spec SS3.3).
+ * The legacy field is a strict enum, while the PSI-MS labels are "positive scan"/"negative scan",
+ * so polarity maps by CURIE first, then by the label or free text. Unresolved stays undefined so
+ * the legacy validation reports it instead of guessing.
  */
-function renderPolarity(polarity: ReconciledValue): 'Positive' | 'Negative' {
-  const { value_ontology_id: curie, value_free_text: freeText } = polarity.user_value
+function renderPolarity(polarity: ReconciledValue): 'Positive' | 'Negative' | undefined {
+  const { value_ontology_id: curie, value_label: label, value_free_text: freeText } = polarity.user_value
   if (curie && POLARITY_CURIE_MAP[curie]) {
     return POLARITY_CURIE_MAP[curie]
   }
-  const normalized = (freeText || '').trim().toLowerCase()
-  if (normalized === 'positive') {
-    return 'Positive'
-  }
-  if (normalized === 'negative') {
+  const normalized = `${label || ''} ${freeText || ''}`.toLowerCase()
+  if (/\bneg/.test(normalized)) {
     return 'Negative'
   }
-  // Projection totality (SS3.5): polarity is `required: true` on AcquisitionInfo, so an unresolved
-  // value here is a data error upstream, not something the projection can invent - default to
-  // Positive (matching the legacy schema's own historical default bias) rather than throwing, since
-  // the projection must always produce a legacy-valid document (SS3.5).
-  return 'Positive'
+  if (/\bpos/.test(normalized)) {
+    return 'Positive'
+  }
+  return undefined
 }
 
 /**
- * The `Condition` composition rule (integration spec SS3.4) - the one genuinely lossy step in the
- * projection, because the schema splits one required legacy free-text field into three
- * (health_status, genetic_background, disease). Reproduces the short single-token register real
- * `Condition` values have (`wildtype`, `healthy`, `melanoma`) rather than synthesising a compound
- * string that would fragment the `condition` filter facet.
+ * The legacy `Condition` field is split into disease / health_status / genetic_background in v2.
+ * Pick one short value (disease first) rather than a compound string, so the `condition` facet
+ * keeps the single-token register real values have (`wildtype`, `healthy`, `melanoma`).
  */
 function renderCondition(sample: Sample): string {
-  if (sample.disease) {
-    if (sample.disease.value_label) {
-      return sample.disease.value_label
-    }
-    if (sample.disease.value_free_text) {
-      return sample.disease.value_free_text
-    }
+  const disease = renderScalar(sample.disease)
+  if (disease) {
+    return disease
   }
   if (sample.health_status && sample.health_status !== 'other') {
     return sample.health_status
   }
-  const geneticBackground = renderScalar(sample.genetic_background)
-  if (geneticBackground) {
-    return geneticBackground
-  }
-  return 'unspecified'
+  return renderScalar(sample.genetic_background) || 'unspecified'
 }
 
 /**
- * `Organism_Part` sentinels for non-tissue samples (integration spec SS3.5) - `anatomical_site_coarse`
- * is a TissueSample-only slot, so a CellCultureSample/PlantSample/EnvironmentalSample submission has
- * no source for the required legacy `Organism_Part`. These sentinels are deliberately visible in
- * search facets: a cell-culture dataset genuinely has no organism part.
+ * `anatomical_site_coarse` is a tissue-only slot, so other sample types get a visible sentinel for
+ * the required legacy `Organism_Part`. Keyed on `sample_type`, which the schema requires
+ * (`sample_class` is optional).
  */
 function renderOrganismPart(sample: Sample): string {
-  switch (sample.sample_class) {
-    case 'TissueSample':
+  switch (sample.sample_type) {
+    case 'tissue':
       return renderScalar(sample.anatomical_site_coarse)
-    case 'CellCultureSample':
+    case 'cell_culture':
       return renderScalar(sample.cell_line_id, 'cell culture')
-    case 'PlantSample':
+    case 'plant':
       return 'plant'
-    case 'EnvironmentalSample':
+    case 'environmental':
       return 'environmental'
     default:
       return ''
@@ -220,15 +190,15 @@ function renderOrganismPart(sample: Sample): string {
 }
 
 /**
- * metadata_v2 -> legacy metadata. Must be deterministic and side-effect free (re-projecting an
- * unchanged document is a no-op) and must always yield a document that passes legacy validation
- * (integration spec SS3.3, SS3.5) - this is the totality property the round-trip test checks.
+ * metadata_v2 -> legacy metadata. Deterministic and side-effect free. It is a pure mapping, not a
+ * validator: unresolved polarity or a missing `unmodeled` value is left undefined so the ims.json
+ * validation that follows reports it, rather than inventing a processing-critical default.
  */
 export function projectToLegacyMetadata(envelope: MetadataV2Envelope): LegacyMetadata {
   const { document: doc, unmodeled } = envelope
   const { sample, acquisition } = doc
 
-  const legacy: LegacyMetadata = {
+  return {
     Data_Type: doc.data_type,
     Sample_Information: {
       Organism: renderScalar(sample.organism),
@@ -237,8 +207,6 @@ export function projectToLegacyMetadata(envelope: MetadataV2Envelope): LegacyMet
       Sample_Growth_Conditions: sample.protocol_description || undefined,
     },
     Sample_Preparation: {
-      // required: true as of schema 0.2.0 (SS3.5) - sample_class is always TissueSample when these
-      // are populated in practice, but render whatever's present rather than assuming the subclass.
       Sample_Stabilisation: renderScalar(sample.sample_stabilisation),
       Tissue_Modification: renderScalar(sample.tissue_modification),
       MALDI_Matrix: renderScalar(acquisition.maldi_matrix, 'none'),
@@ -249,28 +217,19 @@ export function projectToLegacyMetadata(envelope: MetadataV2Envelope): LegacyMet
       Polarity: renderPolarity(acquisition.polarity),
       Ionisation_Source: renderScalar(acquisition.ionization_source.user_value),
       Analyzer: renderScalar(acquisition.instrument_model.user_value),
-      // Deliberately not modeled in metadata_v2 (SS2.1) - carried verbatim from `unmodeled`.
-      // Absence here means the metadata_v2 document is incomplete for Imaging MS; the belt-and-braces
-      // legacy validation this feeds into (Mutation.ts, commit 6) is what catches that, not this
-      // function - projection stays a pure mapping, not a validator.
-      Detector_Resolving_Power: unmodeled.Detector_Resolving_Power || { mz: 200, Resolving_Power: 140000 },
-      Pixel_Size: unmodeled.Pixel_Size || { Xaxis: 0, Yaxis: 0 },
+      Detector_Resolving_Power: unmodeled.Detector_Resolving_Power || undefined,
+      Pixel_Size: unmodeled.Pixel_Size || undefined,
     },
     Additional_Information: unmodeled.Supplementary ? { Supplementary: unmodeled.Supplementary } : undefined,
     Submitted_By: unmodeled.Submitted_By,
   }
-
-  return legacy
 }
 
 // ---------------------------------------------------------------------------
 // Up-projection: legacy -> metadata_v2
 // ---------------------------------------------------------------------------
 
-/**
- * Wraps a legacy free-text string as a `pending_curation` OntologyTermValue - honest, since nothing
- * in the legacy corpus is a resolved ontology term (integration spec SS10).
- */
+/** Legacy free text becomes a `pending_curation` value: nothing in the legacy corpus is a resolved term. */
 function toPendingCuration(freeText: string | undefined | null): OntologyTermValue {
   return {
     value_free_text: freeText || undefined,
@@ -286,20 +245,15 @@ function toReconciledPending(freeText: string | undefined | null): ReconciledVal
 }
 
 /**
- * legacy -> metadata_v2. Used only for the round-trip test and metadata-template up-projection
- * (webapp's `importMetadata`) - never to backfill `metadata_v2` for existing datasets, which keep
- * `metadata_v2 IS NULL` (integration spec SS10). Every ontology-bound field becomes `pending_curation`
- * free text; `Condition` cannot be reversed (it was never split on the way in), so it round-trips
- * only through `disease` as free text - the accepted, sole lossy step (SS3.4).
+ * legacy -> metadata_v2, for the round-trip test and for templating a new submission from a legacy
+ * dataset. `Condition` was never split on the way in, so it round-trips through `disease` as free
+ * text, which `renderCondition` checks first.
  */
 export function upProjectToV2(legacy: LegacyMetadata, schemaVersion = '0.2.0'): MetadataV2Envelope {
   const sample: Sample = {
     sample_class: 'TissueSample',
     organism: toPendingCuration(legacy.Sample_Information.Organism),
     sample_type: 'tissue',
-    // `Condition` was never split going in, so there is nothing to reconstruct health_status/
-    // genetic_background from - it round-trips through `disease` alone, as free text, which is what
-    // makes the down-projection reproduce it exactly (renderCondition's first branch).
     disease: toPendingCuration(legacy.Sample_Information.Condition),
     protocol_description: legacy.Sample_Information.Sample_Growth_Conditions || undefined,
     anatomical_site_coarse: toPendingCuration(legacy.Sample_Information.Organism_Part),
@@ -308,10 +262,7 @@ export function upProjectToV2(legacy: LegacyMetadata, schemaVersion = '0.2.0'): 
   }
 
   const acquisition: AcquisitionInfo = {
-    polarity: {
-      user_value: toPendingCuration(legacy.MS_Analysis.Polarity),
-      reconciliation_state: 'not_checked',
-    },
+    polarity: toReconciledPending(legacy.MS_Analysis.Polarity),
     ionization_source: toReconciledPending(legacy.MS_Analysis.Ionisation_Source),
     instrument_model: toReconciledPending(legacy.MS_Analysis.Analyzer),
     maldi_matrix: toPendingCuration(legacy.Sample_Preparation.MALDI_Matrix),
@@ -320,7 +271,6 @@ export function upProjectToV2(legacy: LegacyMetadata, schemaVersion = '0.2.0'): 
   }
 
   return {
-    schema_version: schemaVersion,
     document: {
       schema_version: schemaVersion,
       data_type: 'Imaging MS',

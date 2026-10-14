@@ -43,6 +43,7 @@ jobs:
             psql -h localhost -U sm -c "CREATE ROLE postgres WITH LOGIN SUPERUSER PASSWORD 'postgres'"
             psql -h localhost -U sm -c "CREATE DATABASE sm_test owner sm"
             psql -h localhost -U sm -d sm_test -c "CREATE EXTENSION \"uuid-ossp\";"
+            psql -h localhost -U sm -d sm_test -c "CREATE EXTENSION \"pg_trgm\";"
             psql -h localhost -U sm -d sm_test -c "CREATE SCHEMA graphql;"
             yarn run gen-binding
             yarn run deref-schema
@@ -100,9 +101,10 @@ jobs:
             psql -h localhost -U sm -c "CREATE DATABASE sm_test owner sm"
             yarn run gen-binding
             NODE_CONFIG_ENV=test yarn run gen-sql-schema
+            yarn run gen-ontology-slots
       - run:
-          name: Assert SQL schema doesn't have uncommitted changes
-          command: git diff --exit-code ../engine/scripts/db_schema.sql
+          name: Assert generated engine files don't have uncommitted changes
+          command: git diff --exit-code ../engine/scripts/db_schema.sql ../engine/sm/engine/ontology_slots.json
       - persist_to_workspace:
           root: dist
           paths:

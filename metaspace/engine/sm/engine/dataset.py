@@ -9,6 +9,7 @@ from sm.engine.errors import UnknownDSID
 
 from sm.engine.annotation.scoring_model import find_by_id
 from sm.engine.metadata_v2 import get_instrument_model_curie
+from sm.engine.ontology_term import SLOT_ONTOLOGY_ROOTS
 
 logger = logging.getLogger('engine')
 
@@ -183,32 +184,45 @@ class Dataset:
         return msg
 
 
+INSTRUMENT_MODEL_SUBTREES = [b['root'] for b in SLOT_ONTOLOGY_ROOTS['instrument_model']]
+
+
 def _classify_instrument_label(label: Optional[str]) -> Optional[str]:
     """Keyword classification shared by both the legacy free-text path and the CURIE path below -
     unlike _normalize_instrument, returns None rather than defaulting to Orbitrap, so callers can
     distinguish "recognized but unclassifiable" from "fall through to the next source"."""
+    # Keep in sync with ANALYZER_CLASSES in graphql's Mutation.ts. The longer phrases are PSI-MS
+    # canonical labels ("time-of-flight", "fourier transform ion cyclotron resonance", "LTQ FT").
     label = (label or '').lower()
     if any(phrase in label for phrase in ['orbitrap', 'exactive', 'exploris', 'hf-x', 'uhmr']):
         return 'Orbitrap'
-    if any(phrase in label for phrase in ['fticr', 'ft-icr', 'ftms', 'ft-ms']):
+    if any(
+        phrase in label
+        for phrase in [
+            'fticr',
+            'ft-icr',
+            'ftms',
+            'ft-ms',
+            'fourier transform ion cyclotron',
+            'ltq ft',
+        ]
+    ):
         return 'FTICR'
-    if any(phrase in label for phrase in ['tof', 'mrt', 'exploris', 'synapt', 'xevo']):
+    if any(
+        phrase in label for phrase in ['tof', 'mrt', 'exploris', 'synapt', 'xevo', 'time-of-flight']
+    ):
         return 'TOF'
     return None
 
 
 def _normalize_instrument(instrument, instrument_curie: str = None, db=None) -> str:
-    # CURIE path first: no ontological link exists between PSI-MS instrument-model terms
-    # (MS:1000031) and mass-analyzer-type terms (MS:1000443) - confirmed by inspecting ms.obo, the
-    # only relationship types used anywhere in that ontology are `part_of` and schema `has_*`
-    # relations, none of which bridge those two subtrees. So the map can't be derived by a graph
-    # walk; instead, classify the term's own canonical ontology label with the same keyword
-    # heuristic used for free text below.
+    # CURIE path first. PSI-MS has no relation linking instrument models (MS:1000031) to analyzer
+    # types (MS:1000443), so the class is derived from the term's canonical label with the same
+    # keyword heuristic used for free text.
     if instrument_curie and db is not None:
         row = db.select_one(
-            "SELECT label FROM ontology_term WHERE curie = %s "
-            "AND subtree IN ('MS:1000031', 'MS:1000443')",
-            params=(instrument_curie,),
+            'SELECT label FROM ontology_term WHERE curie = %s AND subtree = ANY(%s) LIMIT 1',
+            params=(instrument_curie, INSTRUMENT_MODEL_SUBTREES),
         )
         if row:
             classified = _classify_instrument_label(row[0])

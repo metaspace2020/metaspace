@@ -32,6 +32,7 @@ export = async() => {
   await knex.raw(`
       CREATE SCHEMA ${DbSchemaName} AUTHORIZATION ${config.db.user};
       CREATE EXTENSION "uuid-ossp";
+      CREATE EXTENSION "pg_trgm";
       GRANT ALL ON ALL TABLES IN SCHEMA public TO ${config.db.user}`)
   await knex.destroy()
 

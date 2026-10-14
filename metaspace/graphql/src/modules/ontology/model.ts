@@ -18,11 +18,8 @@ export class OntologyTerm {
   @Index('ontology_term_subtree_index')
   subtree: string;
 
-  // Also has a trigram GIN index (`ontology_term_label_trgm_index`, created in the migration) for
-  // the ontologyTermSuggestions resolver's fuzzy match. Not expressible via a plain @Index()
-  // decorator (no gin_trgm_ops operator-class support in this TypeORM version), so it won't appear
-  // in `db_schema.sql`'s entity-driven dump - the migration is the source of truth for it, not this
-  // annotation.
+  // `label` and `synonyms` also carry trigram GIN indexes for ontologyTermSuggestions. TypeORM 0.2
+  // cannot express gin_trgm_ops, so they live in the migration only and are absent from db_schema.sql.
   @Column({ type: 'text' })
   label: string;
 
