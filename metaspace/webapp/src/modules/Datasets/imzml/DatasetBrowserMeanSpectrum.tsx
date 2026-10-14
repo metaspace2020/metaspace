@@ -155,7 +155,7 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
             data: [],
             large: true,
             silent: true,
-            barWidth: 1,
+            barWidth: 2,
             itemStyle: {
               color: '#005AB5',
             },
@@ -227,11 +227,10 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
     const getChart = (): any => (meanSpectrumChart.value as any)?.chart
 
     const updateVisiblePeaks = () => {
-      const zoom = getChart()
-        ?.getOption()
-        ?.dataZoom?.find((item: any) => item.xAxisIndex)
-      if (zoom && zoom.startValue !== undefined && zoom.endValue !== undefined) {
-        state.visiblePeaks = countPeaksInRange(props.data as MeanSpectrumPeak[], zoom.startValue, zoom.endValue)
+      const axis = getChart()?.getModel()?.getComponent('xAxis', 0)?.axis
+      if (axis) {
+        const [low, high] = axis.scale.getExtent()
+        state.visiblePeaks = countPeaksInRange(props.data as MeanSpectrumPeak[], low, high)
       }
     }
 
