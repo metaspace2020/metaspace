@@ -57,20 +57,25 @@ MEAN_SPECTRUM_MAX_POINTS = 20_000
 # application of the strict-clustering method.
 MIN_SUPPORT_FRAC = 0.01
 MIN_SUPPORT_PIXELS = 3
+# ROIs also drop clusters seen in fewer than this share of the pixels that the region's most
+# intense clusters are seen in, so the cut follows each region's own detection rate. The whole
+# dataset is heterogeneous and uses only the floor above.
+ROI_RELATIVE_SUPPORT = 0.5
+ROI_REFERENCE_PEAKS = 100
 
 CACHE_TTL_S = 86_400
 CACHE_MAX_ENTRIES = 64
 # Bump to invalidate every cached result after an algorithm change.
-ALGO_VERSION = 1
+ALGO_VERSION = 3
 
 WHOLE_DATASET = 'whole'
 
 _cache: 'OrderedDict[str, Tuple[float, dict]]' = OrderedDict()
-_cache_lock = threading.Lock()
+_CACHE_LOCK = threading.Lock()
 
 
 def _cache_get(key: str) -> Optional[dict]:
-    with _cache_lock:
+    with _CACHE_LOCK:
         entry = _cache.get(key)
         if entry is None:
             return None
@@ -83,7 +88,7 @@ def _cache_get(key: str) -> Optional[dict]:
 
 
 def _cache_put(key: str, result: dict):
-    with _cache_lock:
+    with _CACHE_LOCK:
         _cache[key] = (time.monotonic() + CACHE_TTL_S, result)
         _cache.move_to_end(key)
         while len(_cache) > CACHE_MAX_ENTRIES:
@@ -188,7 +193,14 @@ def _cluster_bounds_strict(  # pylint: disable=too-many-locals
     return np.array(starts, dtype=np.int64)
 
 
-def build_reference_axis_strict(
+def reference_support(summed_ints, support, n_reference_peaks: int = ROI_REFERENCE_PEAKS) -> float:
+    """Median support of the most intense clusters: how many pixels a real peak is seen in."""
+    n_top = min(n_reference_peaks, len(summed_ints))
+    top_idx = np.argpartition(summed_ints, -n_top)[-n_top:]
+    return float(np.median(support[top_idx]))
+
+
+def build_reference_axis_strict(  # pylint: disable=too-many-arguments
     mzs,
     ints,
     pix,
@@ -197,6 +209,7 @@ def build_reference_axis_strict(
     n_pixels: int,
     min_support_frac: float = MIN_SUPPORT_FRAC,
     min_support_pixels: int = MIN_SUPPORT_PIXELS,
+    relative_support: Optional[float] = None,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Cluster pooled region peaks onto a reference axis.
 
@@ -233,6 +246,10 @@ def build_reference_axis_strict(
         ref_mzs = np.where(summed_ints > 0, weighted_mz / summed_ints, mzs[starts])
 
     required_support = max(min_support_pixels, min_support_frac * n_pixels)
+    if relative_support is not None:
+        required_support = max(
+            required_support, relative_support * reference_support(summed_ints, support)
+        )
     keep = support >= required_support
     if not keep.any():
         return empty
@@ -292,7 +309,7 @@ class MeanSpectrumManager:
         """Locate the .ibd and load the spectrum reader pickle; cached across requests and
         re-validated against ``input_path`` so a re-uploaded dataset is never served stale."""
         input_path = self._input_path(ds_id)
-        with _cache_lock:
+        with _CACHE_LOCK:
             cached = _files_cache.get(ds_id)
             if cached is not None and cached.input_path == input_path:
                 _files_cache.move_to_end(ds_id)
@@ -310,7 +327,7 @@ class MeanSpectrumManager:
         )['Body'].read()
         files = DatasetPeakFiles(uuid, upload_bucket, ibd_keys[-1], deserialize(body), input_path)
 
-        with _cache_lock:
+        with _CACHE_LOCK:
             _files_cache[ds_id] = files
             _files_cache.move_to_end(ds_id)
             while len(_files_cache) > FILES_CACHE_MAX_ENTRIES:
@@ -502,7 +519,13 @@ class MeanSpectrumManager:
             mzs, ints, pix = self._region_peaks(ds_id, roi_id, mask)
 
         ref_mzs, summed_ints, support = build_reference_axis_strict(
-            mzs, ints, pix, instrument, ppm, n_pixels
+            mzs,
+            ints,
+            pix,
+            instrument,
+            ppm,
+            n_pixels,
+            relative_support=None if roi_id is None else ROI_RELATIVE_SUPPORT,
         )
         total_peaks = len(ref_mzs)
         ref_mzs, summed_ints, support = select_top_peaks(ref_mzs, summed_ints, support)

@@ -19,6 +19,12 @@
     margin-top: 6px;
   }
 
+  .mean-spectrum-tooltip{
+    @apply absolute pointer-events-none z-10 rounded border border-solid border-blue-600 bg-white text-sm px-3 py-2;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    white-space: nowrap;
+  }
+
   .dataset-browser-mean-spectrum-empty{
     @apply border-2 border-dashed border-gray-200 relative rounded m-6 p-6 flex flex-row items-center justify-center;
     background: rgba(224,224,224,0.2);
