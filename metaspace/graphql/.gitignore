@@ -6,6 +6,7 @@ tmp/
 temp/
 src/binding.ts
 metadataSchemas/*.json
+!metadataSchemas/ontology_slots.json
 metadataSchemas/metadataMapping.js
 health.json
 .eslintcache
