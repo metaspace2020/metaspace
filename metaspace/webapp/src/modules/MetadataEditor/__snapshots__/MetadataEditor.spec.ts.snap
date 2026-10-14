@@ -201,6 +201,10 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                 </div>
               </div>
             </div>
+            <!-- metadata schema v2 - tier: extension fields (niche/facility, never required) are
+             collapsed by default so the larger field count the new schema brings stays tolerable.
+             core/recommended fields above are never collapsed. -->
+            <!--v-if-->
           </div>
         </form>
       </div>
@@ -305,6 +309,10 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                 </div>
               </div>
             </div>
+            <!-- metadata schema v2 - tier: extension fields (niche/facility, never required) are
+             collapsed by default so the larger field count the new schema brings stays tolerable.
+             core/recommended fields above are never collapsed. -->
+            <!--v-if-->
           </div>
         </form>
       </div>
@@ -486,6 +494,10 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                 </div>
               </div>
             </div>
+            <!-- metadata schema v2 - tier: extension fields (niche/facility, never required) are
+             collapsed by default so the larger field count the new schema brings stays tolerable.
+             core/recommended fields above are never collapsed. -->
+            <!--v-if-->
           </div>
         </form>
       </div>
