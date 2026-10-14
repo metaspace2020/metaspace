@@ -165,20 +165,66 @@ def test_support_filter_fraction_applies_on_large_region():
     assert len(ref_mzs) == 1
 
 
-def test_roi_coverage_threshold_keeps_only_peaks_detected_in_most_pixels():
-    n_pixels = 10
-    threshold = mean_spectrum_manager.ROI_MIN_SUPPORT_FRAC
+def _cluster_with_support(base_mz, n_detected, intensity):
+    mzs = base_mz + np.linspace(0.0, 4e-6, n_detected) * base_mz / 500.0
+    return mzs, np.full(n_detected, intensity), np.arange(n_detected)
 
-    def clusters_kept(n_detected):
-        mzs = np.linspace(500.0, 500.000004, n_detected)
-        pix = np.arange(n_detected)
-        ref_mzs, _, _ = build_reference_axis_strict(
-            mzs, np.ones(n_detected), pix, 'TOF', 3.0, n_pixels, min_support_frac=threshold
-        )
-        return len(ref_mzs)
 
-    assert clusters_kept(int(threshold * n_pixels)) == 1
-    assert clusters_kept(int(threshold * n_pixels) - 1) == 0
+@pytest.mark.parametrize('n_pixels', [50, 400])
+def test_relative_support_follows_the_regions_own_detection_rate(n_pixels):
+    strong_support = int(0.9 * n_pixels)
+    noise_support = int(0.05 * n_pixels)
+    borderline_support = int(0.4 * n_pixels)
+    peaks = [
+        _cluster_with_support(200.0 + 10 * i, strong_support, 1e6)
+        for i in range(mean_spectrum_manager.ROI_REFERENCE_PEAKS)
+    ]
+    peaks.append(_cluster_with_support(150.0, noise_support, 1.0))
+    peaks.append(_cluster_with_support(160.0, borderline_support, 1.0))
+    order = np.argsort([p[0][0] for p in peaks])
+    mzs = np.concatenate([peaks[i][0] for i in order])
+    ints = np.concatenate([peaks[i][1] for i in order])
+    pix = np.concatenate([peaks[i][2] for i in order])
+
+    _, _, support = build_reference_axis_strict(
+        mzs,
+        ints,
+        pix,
+        'TOF',
+        3.0,
+        n_pixels,
+        relative_support=mean_spectrum_manager.ROI_RELATIVE_SUPPORT,
+    )
+
+    assert noise_support not in support
+    assert borderline_support not in support
+    assert (support == strong_support).sum() == mean_spectrum_manager.ROI_REFERENCE_PEAKS
+
+
+def test_relative_support_keeps_more_in_a_low_sensitivity_region():
+    n_pixels = 100
+    strong_support = 40
+    peaks = [
+        _cluster_with_support(200.0 + 10 * i, strong_support, 1e6)
+        for i in range(mean_spectrum_manager.ROI_REFERENCE_PEAKS)
+    ]
+    peaks.append(_cluster_with_support(150.0, 25, 1.0))
+    order = np.argsort([p[0][0] for p in peaks])
+    mzs = np.concatenate([peaks[i][0] for i in order])
+    ints = np.concatenate([peaks[i][1] for i in order])
+    pix = np.concatenate([peaks[i][2] for i in order])
+
+    _, _, support = build_reference_axis_strict(
+        mzs,
+        ints,
+        pix,
+        'TOF',
+        3.0,
+        n_pixels,
+        relative_support=mean_spectrum_manager.ROI_RELATIVE_SUPPORT,
+    )
+
+    assert 25 in support
 
 
 def test_intensity_weighted_centroid():
@@ -347,8 +393,8 @@ def test_compute_roi_reads_only_the_region_spectra(monkeypatch):
     monkeypatch.setattr(mean_spectrum_manager, 'read_pixel_spectra', fake_read)
     thresholds = []
 
-    def fake_build(*args, min_support_frac):  # pylint: disable=unused-argument
-        thresholds.append(min_support_frac)
+    def fake_build(*args, relative_support):  # pylint: disable=unused-argument
+        thresholds.append(relative_support)
         return np.array([100.0]), np.array([3.0]), np.array([1])
 
     monkeypatch.setattr(mean_spectrum_manager, 'build_reference_axis_strict', fake_build)
@@ -356,7 +402,7 @@ def test_compute_roi_reads_only_the_region_spectra(monkeypatch):
     result = manager.compute(DS, 1)
 
     assert calls == [('upload', 'the-uuid/f.ibd', [0])]
-    assert thresholds == [mean_spectrum_manager.ROI_MIN_SUPPORT_FRAC]
+    assert thresholds == [mean_spectrum_manager.ROI_RELATIVE_SUPPORT]
     assert result['n_pixels'] == 1
     assert result['returned_peaks'] == 1
 
@@ -373,10 +419,10 @@ def test_compute_whole_dataset_streams_and_keeps_acquired_pixels_only(monkeypatc
     seen = {}
 
     def fake_build(  # pylint: disable=unused-argument, too-many-arguments
-        mzs, ints, pix, instrument, ppm, n_pixels, min_support_frac
+        mzs, ints, pix, instrument, ppm, n_pixels, relative_support
     ):
         seen['pix'] = pix.tolist()
-        seen['min_support_frac'] = min_support_frac
+        seen['relative_support'] = relative_support
         return np.array([1.0]), np.array([1.0]), np.array([1])
 
     monkeypatch.setattr(mean_spectrum_manager, 'build_reference_axis_strict', fake_build)
@@ -384,7 +430,7 @@ def test_compute_whole_dataset_streams_and_keeps_acquired_pixels_only(monkeypatc
     result = manager.compute(DS, None)
 
     assert seen['pix'] == [0, 2]  # pixel 1 not acquired, pixel 7 outside the grid
-    assert seen['min_support_frac'] == mean_spectrum_manager.MIN_SUPPORT_FRAC
+    assert seen['relative_support'] is None
     assert result['n_pixels'] == 2
 
 

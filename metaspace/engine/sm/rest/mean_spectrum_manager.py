@@ -57,14 +57,16 @@ MEAN_SPECTRUM_MAX_POINTS = 20_000
 # application of the strict-clustering method.
 MIN_SUPPORT_FRAC = 0.01
 MIN_SUPPORT_PIXELS = 3
-# ROIs are homogeneous regions, so a real peak is expected in nearly all their pixels; peaks
-# detected in fewer are mostly noise. The whole dataset is heterogeneous and keeps the floor above.
-ROI_MIN_SUPPORT_FRAC = 0.8
+# ROIs also drop clusters seen in fewer than this share of the pixels that the region's most
+# intense clusters are seen in, so the cut follows each region's own detection rate. The whole
+# dataset is heterogeneous and uses only the floor above.
+ROI_RELATIVE_SUPPORT = 0.5
+ROI_REFERENCE_PEAKS = 100
 
 CACHE_TTL_S = 86_400
 CACHE_MAX_ENTRIES = 64
 # Bump to invalidate every cached result after an algorithm change.
-ALGO_VERSION = 2
+ALGO_VERSION = 3
 
 WHOLE_DATASET = 'whole'
 
@@ -191,7 +193,14 @@ def _cluster_bounds_strict(  # pylint: disable=too-many-locals
     return np.array(starts, dtype=np.int64)
 
 
-def build_reference_axis_strict(
+def reference_support(summed_ints, support, n_reference_peaks: int = ROI_REFERENCE_PEAKS) -> float:
+    """Median support of the most intense clusters: how many pixels a real peak is seen in."""
+    n_top = min(n_reference_peaks, len(summed_ints))
+    top_idx = np.argpartition(summed_ints, -n_top)[-n_top:]
+    return float(np.median(support[top_idx]))
+
+
+def build_reference_axis_strict(  # pylint: disable=too-many-arguments
     mzs,
     ints,
     pix,
@@ -200,6 +209,7 @@ def build_reference_axis_strict(
     n_pixels: int,
     min_support_frac: float = MIN_SUPPORT_FRAC,
     min_support_pixels: int = MIN_SUPPORT_PIXELS,
+    relative_support: Optional[float] = None,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Cluster pooled region peaks onto a reference axis.
 
@@ -236,6 +246,10 @@ def build_reference_axis_strict(
         ref_mzs = np.where(summed_ints > 0, weighted_mz / summed_ints, mzs[starts])
 
     required_support = max(min_support_pixels, min_support_frac * n_pixels)
+    if relative_support is not None:
+        required_support = max(
+            required_support, relative_support * reference_support(summed_ints, support)
+        )
     keep = support >= required_support
     if not keep.any():
         return empty
@@ -511,7 +525,7 @@ class MeanSpectrumManager:
             instrument,
             ppm,
             n_pixels,
-            min_support_frac=MIN_SUPPORT_FRAC if roi_id is None else ROI_MIN_SUPPORT_FRAC,
+            relative_support=None if roi_id is None else ROI_RELATIVE_SUPPORT,
         )
         total_peaks = len(ref_mzs)
         ref_mzs, summed_ints, support = select_top_peaks(ref_mzs, summed_ints, support)
