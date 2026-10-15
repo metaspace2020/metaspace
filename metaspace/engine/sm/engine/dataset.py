@@ -9,7 +9,7 @@ from sm.engine.errors import UnknownDSID
 
 from sm.engine.annotation.scoring_model import find_by_id
 from sm.engine.metadata_v2 import get_instrument_model_curie
-from sm.engine.ontology_term import SLOT_ONTOLOGY_ROOTS
+from sm.engine.ontology_term import get_slot_ontology_roots
 
 logger = logging.getLogger('engine')
 
@@ -184,7 +184,8 @@ class Dataset:
         return msg
 
 
-INSTRUMENT_MODEL_SUBTREES = [b['root'] for b in SLOT_ONTOLOGY_ROOTS['instrument_model']]
+def _instrument_model_subtrees() -> list:
+    return [b['root'] for b in get_slot_ontology_roots()['instrument_model']]
 
 
 def _classify_instrument_label(label: Optional[str]) -> Optional[str]:
@@ -222,7 +223,7 @@ def _normalize_instrument(instrument, instrument_curie: str = None, db=None) -> 
     if instrument_curie and db is not None:
         row = db.select_one(
             'SELECT label FROM ontology_term WHERE curie = %s AND subtree = ANY(%s) LIMIT 1',
-            params=(instrument_curie, INSTRUMENT_MODEL_SUBTREES),
+            params=(instrument_curie, _instrument_model_subtrees()),
         )
         if row:
             classified = _classify_instrument_label(row[0])

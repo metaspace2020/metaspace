@@ -197,6 +197,7 @@ function renderOrganismPart(sample: Sample): string {
 export function projectToLegacyMetadata(envelope: MetadataV2Envelope): LegacyMetadata {
   const { document: doc, unmodeled } = envelope
   const { sample, acquisition } = doc
+  const nonTissueFallback = sample.sample_type === 'tissue' ? '' : 'N/A'
 
   return {
     Data_Type: doc.data_type,
@@ -207,8 +208,9 @@ export function projectToLegacyMetadata(envelope: MetadataV2Envelope): LegacyMet
       Sample_Growth_Conditions: sample.protocol_description || undefined,
     },
     Sample_Preparation: {
-      Sample_Stabilisation: renderScalar(sample.sample_stabilisation),
-      Tissue_Modification: renderScalar(sample.tissue_modification),
+      // tissue-only slots: other sample types get 'N/A' so the required legacy fields still validate
+      Sample_Stabilisation: renderScalar(sample.sample_stabilisation, nonTissueFallback),
+      Tissue_Modification: renderScalar(sample.tissue_modification, nonTissueFallback),
       MALDI_Matrix: renderScalar(acquisition.maldi_matrix, 'none'),
       MALDI_Matrix_Application: renderScalar(acquisition.maldi_matrix_application, 'none'),
       Solvent: renderScalar(acquisition.solvent, 'none'),

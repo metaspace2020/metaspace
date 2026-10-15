@@ -1,7 +1,7 @@
 import argparse
 import logging
 
-from sm.engine.ontology_term import SLOT_ONTOLOGY_ROOTS, clear_ontology_cache, import_subtree
+from sm.engine.ontology_term import clear_ontology_cache, get_slot_ontology_roots, import_subtree
 from sm.engine.util import GlobalInit
 
 logger = logging.getLogger('engine')
@@ -29,18 +29,19 @@ def main():
     )
     args = parser.parse_args()
 
-    slots = args.slots or list(SLOT_ONTOLOGY_ROOTS.keys())
-    unknown = set(slots) - set(SLOT_ONTOLOGY_ROOTS.keys())
+    slot_ontology_roots = get_slot_ontology_roots()
+    slots = args.slots or list(slot_ontology_roots.keys())
+    unknown = set(slots) - set(slot_ontology_roots.keys())
     if unknown:
         parser.error(
-            f'Unknown slot(s): {sorted(unknown)}. Known: {sorted(SLOT_ONTOLOGY_ROOTS.keys())}'
+            f'Unknown slot(s): {sorted(unknown)}. Known: {sorted(slot_ontology_roots.keys())}'
         )
 
     # Several slots can share a root (maldi_matrix/solvent both bind CHEBI:24431): walk each root
     # once, and group by OBO file so each ontology is parsed once and released before the next.
     bindings = {}
     for slot in slots:
-        for binding in SLOT_ONTOLOGY_ROOTS[slot]:
+        for binding in slot_ontology_roots[slot]:
             key = (binding['obo_file'], binding['ontology'], binding['root'])
             bindings.setdefault(key, []).append(slot)
 

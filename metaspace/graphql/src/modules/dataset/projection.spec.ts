@@ -130,6 +130,34 @@ describe('projectToLegacyMetadata: non-tissue sample sentinels (SS3.5)', () => {
     }
     expect(projectToLegacyMetadata(environmental).Sample_Information.Organism_Part).toBe('environmental')
   })
+
+  it('non-tissue samples render "N/A" for the tissue-only stabilisation and modification slots', () => {
+    const cellCulture = {
+      ...baseV2,
+      document: {
+        ...baseV2.document,
+        sample: {
+          organism: baseV2.document.sample.organism,
+          sample_class: 'CellCultureSample' as const,
+          sample_type: 'cell_culture' as const,
+        },
+      },
+    }
+    const prep = projectToLegacyMetadata(cellCulture).Sample_Preparation
+    expect(prep.Sample_Stabilisation).toBe('N/A')
+    expect(prep.Tissue_Modification).toBe('N/A')
+
+    // tissue keeps the empty string so the legacy validation still reports a missing value
+    const tissue = {
+      ...baseV2,
+      document: {
+        ...baseV2.document,
+        sample: { ...baseV2.document.sample, sample_stabilisation: undefined, tissue_modification: undefined },
+      },
+    }
+    expect(projectToLegacyMetadata(tissue).Sample_Preparation.Sample_Stabilisation).toBe('')
+    expect(projectToLegacyMetadata(tissue).Sample_Preparation.Tissue_Modification).toBe('')
+  })
 })
 
 describe('projectToLegacyMetadata: polarity CURIE map (SS3.3)', () => {

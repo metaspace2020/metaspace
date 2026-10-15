@@ -1,17 +1,21 @@
 <template>
   <div id="md-editor-container w-full">
-    <div v-if="state.value != null" style="position: relative">
+    <div v-if="state.loadFailed" class="text-danger font-medium p-4">
+      This dataset could not be loaded. Nothing has been changed; refresh the page or contact us
+      <a href="/contact" target="_blank">here</a> if the problem persists.
+    </div>
+    <div v-else-if="state.loaded" style="position: relative">
       <div id="md-section-list">
-        <div v-if="isNew" class="flex flex-row w-full flex-wrap mt-6 justify-end">
-          <el-popover trigger="click" placement="left">
-            <template #reference>
-              <el-button type="primary" class="mr-1">
-                Copy metadata from another dataset...<el-icon class="ml-1"><DocumentCopy /></el-icon>
-              </el-button>
-            </template>
-            <div class="max-w-sm">
+        <migration-banner v-if="v2Mode === 'legacy'" :status="v2Status" :failed-slots="v2FailedSlots" />
+        <metadata-v2-section :form="v2" :description-text="descriptionText">
+          <template v-if="isNew" #headerActions>
+            <el-popover trigger="click" placement="bottom-end" :width="320">
+              <template #reference>
+                <el-button size="small" class="md-copy-from-dataset">⧉ Copy from another dataset…</el-button>
+              </template>
               <el-select
                 v-model="state.metadataTemplate"
+                class="w-full"
                 placeholder="Start typing name"
                 remote
                 filterable
@@ -29,49 +33,58 @@
                   :label="option.name"
                 />
               </el-select>
-            </div>
-          </el-popover>
-        </div>
-        <div class="flex flex-row w-full flex-wrap mt-6">
-          <div class="metadata-section__title w-3/12">Dataset description</div>
-          <rich-text
-            id="description-container"
-            :content="state.metaspaceOptions.description"
-            :auto-focus="true"
-            :hide-state-status="true"
-            :readonly="false"
-            :update="handleDescriptionChange"
-            content-class-name="customEditor"
+            </el-popover>
+          </template>
+          <template #description>
+            <rich-text
+              id="description-container"
+              :content="state.metaspaceOptions.description"
+              :auto-focus="true"
+              :hide-state-status="true"
+              :readonly="false"
+              :update="handleDescriptionChange"
+              content-class-name="customEditor"
+            />
+          </template>
+        </metadata-v2-section>
+        <section-card class="md-data-management" title="Data management" subtitle="submitter, group, quota, visibility">
+          <template #headerRight>
+            <required-counter :filled="dataManagementFilled" :total="2" />
+          </template>
+          <data-management-section
+            :value="state.metaspaceOptions"
+            :error="errors['metaspaceOptions']"
+            :submitter="state.submitter"
+            :is-new-dataset="isNew"
+            @change="onOptionChange"
           />
-        </div>
-        <form-section v-bind="sectionBinds('Sample_Information')" v-on="sectionEvents('Sample_Information')" />
-        <form-section v-bind="sectionBinds('Sample_Preparation')" v-on="sectionEvents('Sample_Preparation')" />
-        <form-section v-bind="sectionBinds('MS_Analysis')" v-on="sectionEvents('MS_Analysis')" />
-        <data-management-section
-          :value="state.metaspaceOptions"
-          :error="errors['metaspaceOptions']"
-          :submitter="state.submitter"
-          :is-new-dataset="isNew"
-          @change="onOptionChange"
-        />
-        <visibility-option-section :is-public="state.metaspaceOptions.isPublic" @change="handleVisibilityChange" />
-        <metaspace-options-section
-          :value="state.metaspaceOptions"
-          :error="errors['metaspaceOptions']"
-          :databases-by-group="state.molDBsByGroup"
-          :ontology-dbs="state.ontologyDbs"
-          :default-db="state.defaultDb"
-          :adduct-options="adductOptions"
-          :is-new-dataset="isNew"
-          :scoring-models="state.scoringModels"
-          @change="onOptionChange"
-        />
-        <form-section
-          v-for="sectionKey in otherSections"
-          :key="sectionKey"
-          v-bind="sectionBinds(sectionKey)"
-          v-on="sectionEvents(sectionKey)"
-        />
+          <visibility-option-section
+            :is-public="state.metaspaceOptions.isPublic"
+            :disable-public="publicDisabled"
+            :disabled-reason="publicDisabledReason"
+            @change="handleVisibilityChange"
+          />
+        </section-card>
+        <section-card
+          class="md-annotation-settings"
+          title="Annotation settings"
+          subtitle="metabolite database, adducts, processing parameters"
+        >
+          <template #headerRight>
+            <required-counter :filled="annotationSettingsFilled" :total="5" />
+          </template>
+          <metaspace-options-section
+            :value="state.metaspaceOptions"
+            :error="errors['metaspaceOptions']"
+            :databases-by-group="state.molDBsByGroup"
+            :ontology-dbs="state.ontologyDbs"
+            :default-db="state.defaultDb"
+            :adduct-options="adductOptions"
+            :is-new-dataset="isNew"
+            :scoring-models="state.scoringModels"
+            @change="onOptionChange"
+          />
+        </section-card>
       </div>
     </div>
     <div v-else id="load-indicator" v-loading="true" />
@@ -84,85 +97,44 @@
   * editing metadata of existing datasets;
   * providing metadata during the initial upload.
 
-    It has a few simplifying assumptions on the structure and types used:
-  * nesting is limited to 2 levels: section -> field (any sub-fields are handled by having complex editors on the field level)
-  * sections are assumed to be objects (except Data_Type, which is a single string value)
+    Metadata lives in the schema v2 envelope owned by useMetadataV2Form; legacy (ims.json) datasets are
+    migrated into it on load. If datasetId is provided, the component fetches that dataset from the GraphQL
+    server so that it can be edited.
 
-    If datasetId is provided, the component fetches existing metadata for
-    that dataset from the GraphQL server so that it can be edited.
-    Autocompletion functionality also relies on the GraphQL server.
-
-    The other two props are for controlling the submit button behavior.
-
-    On submit button click, the form is checked for validity; if valid,
-    a submit event is emitted with dataset ID and stringified form value.
+    On submit, getFormValueForSubmit() checks the form for validity and, if valid, hands the pages
+    metadataV2Json plus the metaspace options (and their initial values, for change detection).
   */
 import { defineComponent, reactive, computed, watch, inject, onBeforeMount } from 'vue'
 import { useStore } from 'vuex'
-import { ElPopover, ElButton, ElSelect, ElOption, ElMessage, ElLoading, ElIcon } from '../../lib/element-plus'
+import { ElPopover, ElButton, ElSelect, ElOption, ElMessage, ElLoading } from '../../lib/element-plus'
 import RichText from '../../components/RichText/RichText'
-import FormSection from './sections/FormSection.vue'
 import MetaspaceOptionsSection from './sections/MetaspaceOptionsSection.vue'
 import VisibilityOptionSection from './sections/VisibilityOptionSection.vue'
 import DataManagementSection from './sections/DataManagementSection.vue'
-import {
-  get,
-  set,
-  cloneDeep,
-  defaults,
-  isEmpty,
-  isEqual,
-  isPlainObject,
-  mapValues,
-  forEach,
-  without,
-  omit,
-  uniq,
-  omitBy,
-  isNil,
-} from 'lodash-es'
+import { get, set, cloneDeep, defaults, isEmpty, omit, uniq, omitBy, isNil } from 'lodash-es'
 import { DefaultApolloClient } from '@vue/apollo-composable'
-import { defaultMetadataType, metadataSchemas } from '../../lib/metadataRegistry'
 import { getDatabasesByGroup } from '../MolecularDatabases/formatting'
-import { deriveFullSchema } from './formStructure'
 import {
   newDatasetQuery,
-  fetchAutocompleteSuggestionsQuery,
-  fetchOntologyTermSuggestionsQuery,
   editDatasetQuery,
   metadataOptionsQuery,
   datasetSubmitterQuery,
   editDatasetSubmitterQuery,
 } from '../../api/metadata'
 import safeJsonParse from '../../lib/safeJsonParse'
+import reportError from '../../lib/reportError'
 import isValidTiptapJson from '../../lib/isValidTiptapJson'
 import { datasetListItemsQuery } from '../../api/dataset'
 import emailRegex from '../../lib/emailRegex'
 import config from '../../lib/config'
-import { DocumentCopy } from '@element-plus/icons-vue'
 import { nestEnrichmentDbs } from '../../lib/util'
-
-// metadata schema v2 - an OntologyTermValue-shaped property (identified structurally, by having a
-// `curation_state` sub-property, since JSON Schema type alone can't distinguish it from any other
-// object) seeds as `{curation_state: 'pending_curation'}`, matching the LinkML schema's
-// `ifabsent: string(pending_curation)` default - not the generic recursive-empty-string default,
-// which would produce `curation_state: ''`, an invalid enum value.
-const isOntologyTermValueSchema = (schema) => !!schema.properties && 'curation_state' in schema.properties
-// Same structural check, applied to an actual metadata *value* rather than a JSON Schema node -
-// used by importMetadata's up-projection below, kept distinct from isOntologyTermValueSchema so the
-// schema-vs-value distinction stays visible at each call site.
-const isOntologyTermValue = (v) => isPlainObject(v) && 'curation_state' in v
-
-const factories = {
-  string: (schema) => schema.default || '',
-  number: (schema) => schema.default || 0,
-  object: (schema) =>
-    isOntologyTermValueSchema(schema)
-      ? { curation_state: 'pending_curation' }
-      : mapValues(schema.properties, (prop) => factories[prop.type](prop)),
-  array: (schema) => schema.default || [],
-  boolean: (schema) => schema.default || false,
-}
+import { MetadataV2Section } from './v2/components/MetadataV2Section'
+import { MigrationBanner } from './v2/components/MigrationBanner'
+import { RequiredCounter, SectionCard } from './v2/components/SectionCard'
+import { useMetadataV2Form } from './v2/useMetadataV2Form'
+import { setAtPath } from './v2/envelope'
+import { createTermResolver, createValueResolver } from './v2/termResolver'
+import { tiptapToPlainText } from './v2/descriptionText'
 
 const defaultMetaspaceOptions = {
   isPublic: true,
@@ -183,12 +155,13 @@ export default defineComponent({
     ElSelect,
     ElOption,
     RichText,
-    FormSection,
+    MetadataV2Section,
+    MigrationBanner,
+    SectionCard,
+    RequiredCounter,
     MetaspaceOptionsSection,
     VisibilityOptionSection,
     DataManagementSection,
-    ElIcon,
-    DocumentCopy,
   },
   directives: {
     loading: ElLoading.directive,
@@ -201,10 +174,11 @@ export default defineComponent({
   setup(props) {
     const store = useStore()
     const apolloClient = inject(DefaultApolloClient)
+    const v2 = useMetadataV2Form(createTermResolver(apolloClient), createValueResolver(apolloClient))
 
     const state = reactive({
-      value: null,
-      schema: null,
+      loaded: false,
+      loadFailed: false,
       loadingPromise: null,
       localErrors: {},
       defaultDb: null,
@@ -214,7 +188,6 @@ export default defineComponent({
       scoringModels: [],
       metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
       submitter: null,
-      initialValue: null,
       initialMetaspaceOptions: null,
       autoDatasetName: null,
       loadingTemplates: false,
@@ -229,64 +202,40 @@ export default defineComponent({
     })
 
     const isNew = computed(() => props.datasetId == null)
-    const otherSections = computed(() => {
-      const allSections = Object.keys(state.schema?.properties)
-      const specialSections = ['Data_Type', 'Sample_Information', 'Sample_Preparation', 'MS_Analysis']
-      return without(allSections, ...specialSections)
-    })
     const adductOptions = computed(() => {
-      const polarity = get(state.value, ['MS_Analysis', 'Polarity']) || 'Positive'
-      return state.possibleAdducts[polarity].map(({ adduct, name, ...ad }) => ({
-        ...ad,
-        value: adduct,
-        label: name,
-      }))
+      const polarity = v2.polarity.value || 'Positive'
+      return state.possibleAdducts[polarity].map(({ adduct, name, ...ad }) => ({ ...ad, value: adduct, label: name }))
     })
-
-    const metadataType = computed(() => store.getters.filter?.metadataType)
-    const dataType = computed(() => state.value?.Data_Type)
-
-    const getDefaultMetadataValue = (metadataType) => {
-      if (!metadataSchemas || !metadataSchemas[metadataType]) {
-        return {}
+    // Top-level computed so templates, pages and specs read a plain string (nested refs inside `v2` do not unwrap)
+    const v2Mode = computed(() => v2.mode.value)
+    const v2Status = computed(() => v2.status.value)
+    const v2FailedSlots = computed(() => v2.failedSlots.value)
+    const datasetName = computed(() => state.metaspaceOptions.name || '')
+    const descriptionText = computed(() => tiptapToPlainText(state.metaspaceOptions.description))
+    // header counters of the Data management (2) and Annotation settings (5) cards
+    const dataManagementFilled = computed(() => {
+      const { submitterId, groupId, principalInvestigator } = state.metaspaceOptions
+      const pi = principalInvestigator
+      const piValid = pi != null && (pi.name || '').length >= 4 && emailRegex.test(pi.email || '')
+      return (submitterId != null || state.submitter != null ? 1 : 0) + (groupId != null || piValid ? 1 : 0)
+    })
+    const annotationSettingsFilled = computed(() => {
+      const { databaseIds, adducts, name, scoringModelId, ppm } = state.metaspaceOptions
+      return [!isEmpty(databaseIds), !isEmpty(adducts), (name || '').length >= 5, scoringModelId != null, !!ppm].filter(
+        Boolean
+      ).length
+    })
+    // no required gap and nothing left to review (unmapped legacy rows do not block a submit)
+    const v2Complete = computed(() => v2.status.value.missingRequired.length === 0 && v2.status.value.reviewCount === 0)
+    // Only missing required v2 fields lock Public; values pending review or unmapped legacy values do not
+    const publicDisabled = computed(() => v2.mode.value === 'legacy' && v2.status.value.missingRequired.length > 0)
+    const publicDisabledReason = computed(() => {
+      if (!publicDisabled.value) {
+        return ''
       }
-      return factories.object(metadataSchemas[metadataType])
-    }
-
-    const importMetadata = (loadedMetadata, mdType) => {
-      const metadata = getDefaultMetadataValue(mdType)
-      metadata.Data_Type = mdType
-
-      // Copy loaded metadata over the top of the default value, but only include fields that actually exist and
-      // are of the same type to avoid propagating outdated schema
-      if (loadedMetadata != null) {
-        forEach(loadedMetadata, (loadedSection, sectionKey) => {
-          if (isPlainObject(metadata[sectionKey])) {
-            forEach(loadedSection, (loadedField, fieldKey) => {
-              if (fieldKey in metadata[sectionKey]) {
-                const target = metadata[sectionKey][fieldKey]
-                if (typeof loadedField === typeof target) {
-                  metadata[sectionKey][fieldKey] = cloneDeep(loadedField)
-                } else if (typeof loadedField === 'string' && isOntologyTermValue(target)) {
-                  // metadata schema v2: templating from a legacy-shaped dataset (loadedField is a
-                  // plain string) into a new-schema OntologyTermValue-shaped field. Up-project as
-                  // pending_curation free text rather than silently dropping it - honest, since
-                  // nothing in the legacy corpus is a resolved term (mirrors graphql's
-                  // projection.ts::upProjectToV2, scoped to one field - webapp can't import across
-                  // package boundaries into graphql/).
-                  metadata[sectionKey][fieldKey] = {
-                    value_free_text: loadedField || undefined,
-                    curation_state: 'pending_curation',
-                  }
-                }
-              }
-            })
-          }
-        })
-      }
-
-      return metadata
-    }
+      const n = v2.status.value.missingRequired.length
+      return `Public requires the required v2 fields — ${n} still missing.`
+    })
 
     const updateCurrentAdductOptions = () => {
       const selectedAdducts = state.metaspaceOptions.adducts || []
@@ -298,13 +247,32 @@ export default defineComponent({
       state.metaspaceOptions.adducts = newAdducts
     }
 
-    const loadForm = async (dataset, options, mdType) => {
-      const loadedMetadata = dataset.metadata
+    watch(
+      () => v2.polarity.value,
+      () => {
+        if (state.loaded) updateCurrentAdductOptions()
+      }
+    )
+    watch(
+      () => v2.resolvingPower.value?.Resolving_Power,
+      (rp) => {
+        // recommend ppm 10 below 70k resolving power and 3 above, on new uploads only
+        if (isNew.value && rp != null) state.metaspaceOptions.ppm = rp < 70000 ? 10 : 3
+      }
+    )
+    watch(
+      () => props.validationErrors,
+      (errs) => v2.setServerErrors(errs || []),
+      { immediate: true }
+    )
+
+    const loadForm = async (dataset, options) => {
       const metaspaceOptions = defaults({}, omitBy(dataset.metaspaceOptions, isNil), defaultMetaspaceOptions)
-      // in case user just opened a link to metadata editing page w/o navigation in web-app,
-      // filters are not set up
-      // store.commit('updateFilter', { metadataType: mdType })
-      const metadata = importMetadata(loadedMetadata, mdType)
+      if (isNew.value) {
+        await v2.loadNew(dataset.seed || {})
+      } else {
+        await v2.loadDataset(dataset.v2Source)
+      }
 
       // Load options
       const { adducts, molecularDatabases, scoringModels, ontologyDbs } = options
@@ -318,14 +286,6 @@ export default defineComponent({
       state.ontologyDbs = nestEnrichmentDbs(
         config.features.metabo_enrich ? ontologyDbs : [ontologyDbs.find((eDb) => eDb.name === 'LION')]
       )
-      state.schema = deriveFullSchema(metadataSchemas[mdType])
-
-      // TODO remove the additional information from the schema itself at some point
-      // hide additional info from dataset upload, without changing schema for compatibility reasons
-      if (state.schema && state.schema.properties && state.schema.properties.Additional_Information) {
-        delete state.schema.properties.Additional_Information
-      }
-
       const selectedDbs = dataset.databases || []
       const selectedOntologyDbs = dataset.ontologyDatabases || []
 
@@ -374,9 +334,8 @@ export default defineComponent({
         metaspaceOptions.name = ''
       }
 
-      state.value = metadata
+      state.loaded = true
       state.metaspaceOptions = metaspaceOptions
-      state.initialValue = cloneDeep(metadata)
       state.initialMetaspaceOptions = cloneDeep(metaspaceOptions)
       if (dataset.submitter != null) {
         state.submitter = dataset.submitter
@@ -394,14 +353,6 @@ export default defineComponent({
         ...data,
         adducts: config.features.all_adducts ? data.adducts : data.adducts.filter((ad) => !ad.hidden),
       }
-    }
-
-    const reloadForm = async (mdType) => {
-      const dataset = {
-        metadata: state.value,
-        metaspaceOptions: state.metaspaceOptions,
-      }
-      await loadForm(dataset, await loadOptions(), mdType)
     }
 
     const validate = () => {
@@ -442,89 +393,10 @@ export default defineComponent({
       state.localErrors = errors
     }
 
-    const getMetadataSuggestions = async (path, query) => {
-      const resp = await apolloClient.query({
-        query: fetchAutocompleteSuggestionsQuery,
-        variables: { field: path, query: query || '' },
-      })
-      return resp.data.metadataSuggestions.map((val) => ({ value: val }))
-    }
-
-    // metadata schema v2 - ontology matches, tagged with `curie`/`label` so OntologyTermInput's
-    // @select can tell them apart from free text (see there for how each is handled).
-    //
-    // The integration spec also calls for merging in past-submitter free-text history
-    // (metadataSuggestions) below the ontology matches, "so the field is no worse than today for
-    // someone who does not care about ontologies". Deliberately NOT done here: metadataSuggestions
-    // queries ES by the *legacy* dotted path (e.g. "Sample_Information.Organism"), and there is no
-    // established mapping from a v2 slot name (e.g. "organism") back to that legacy path in the
-    // webapp - building a third hand-maintained lookup table just for this, on top of graphql's
-    // SLOT_SUBTREES and engine's SLOT_ONTOLOGY_ROOTS (both already flagged as interim stopgaps
-    // pending the vendored schema), isn't worth it for a nice-to-have. Free text is still fully
-    // supported (OntologyTermInput's free-typing path), just without suggesting past submitters'
-    // exact prior wording. Revisit once the schema is vendored and a real slot->legacy-path table
-    // exists to derive this from.
-    const getOntologyTermSuggestions = async (slot, query) => {
-      const resp = await apolloClient.query({
-        query: fetchOntologyTermSuggestionsQuery,
-        variables: { slot, query: query || '' },
-      })
-      return resp.data.ontologyTermSuggestions.map((term) => ({
-        value: `${term.label} (${term.curie})`,
-        curie: term.curie,
-        label: term.label,
-      }))
-    }
-
-    const getSuggestionsForField = async (query, callback, ...args) => {
-      const [sectionKey, fieldKey] = args
-      const fieldSchema = state.schema?.properties?.[sectionKey]?.properties?.[fieldKey]
-      const results =
-        fieldSchema?.smEditorType === 'ontologyTerm'
-          ? await getOntologyTermSuggestions(fieldKey, query)
-          : await getMetadataSuggestions(args.join('.'), query)
-      callback(results)
-    }
-
-    const sectionBinds = (sectionKey) => {
-      return {
-        sectionKey,
-        section: state.schema.properties[sectionKey] || {},
-        value: state.value[sectionKey] || {},
-        error: errors.value[sectionKey],
-        getSuggestionsForField,
-      }
-    }
-
     /* for outside access from the upload page, to autofill it with the filename */
     const fillDatasetName = (name) => {
       if (!state.metaspaceOptions.name || state.metaspaceOptions.name === state.autoDatasetName) {
         state.metaspaceOptions.name = state.autoDatasetName = name
-      }
-    }
-
-    const onInput = (path, val) => {
-      set(state.value, path, val)
-
-      // recommend ppm to 10 if resolving power below 70000 and 3 if greater than 70000
-      if (isNew.value && isEqual(path, ['MS_Analysis', 'Detector_Resolving_Power']) && val.Resolving_Power < 70000) {
-        state.metaspaceOptions.ppm = 10
-      } else if (
-        isNew.value &&
-        isEqual(path, ['MS_Analysis', 'Detector_Resolving_Power']) &&
-        val.Resolving_Power >= 70000
-      ) {
-        state.metaspaceOptions.ppm = 3
-      }
-
-      if (isEqual(path, ['MS_Analysis', 'Polarity'])) {
-        updateCurrentAdductOptions()
-      }
-    }
-
-    const sectionEvents = () => {
-      return {
-        input: onInput,
       }
     }
 
@@ -554,21 +426,48 @@ export default defineComponent({
       state.metaspaceOptions.databaseIds = []
     }
 
+    /** The first visible field whose migrated or copied value still waits for the user's review. */
+    const firstReviewKey = () => {
+      const reports = v2.fields.value
+      const def = v2.visibleFields.value.find((f) => {
+        const state = reports[f.key]?.state
+        return (state === 'review' || state === 'copied') && !v2.acknowledged.value.includes(f.key)
+      })
+      return def ? def.key : null
+    }
+
     const getFormValueForSubmit = () => {
       validate()
-      if (!isEmpty(state.localErrors)) {
+      const status = v2.status.value
+      // key + label: the edit page links each gap to its field (v2.requestFocus)
+      const missingRequired = status.missingRequired.map((f) => ({ key: f.key, label: f.label }))
+      if (missingRequired.length > 0) {
+        v2.markSubmitAttempt()
+      }
+      if (v2.mode.value !== 'legacy' && missingRequired.length > 0) {
         ElMessage({
-          message: 'Please check that you entered metadata correctly!',
+          message: `Please fill the required metadata fields: ${missingRequired.map((f) => f.label).join(', ')}`,
           type: 'warning',
         })
         return null
       }
-
+      if (!isEmpty(state.localErrors)) {
+        ElMessage({ message: 'Please check that you entered metadata correctly!', type: 'warning' })
+        return null
+      }
+      const name = state.metaspaceOptions.name
       return {
         datasetId: props.datasetId ? props.datasetId : '',
-        metadataJson: JSON.stringify(state.value),
+        mode: v2.mode.value,
+        metadataV2Json: v2.serialize(name),
+        initialMetadataV2Json: v2.initialEnvelope.value
+          ? JSON.stringify(setAtPath(v2.initialEnvelope.value, 'document.dataset_name', name || undefined))
+          : null,
+        metadataDirty: v2.isDirty.value,
+        missingRequired,
+        reviewPending: status.reviewCount,
+        firstReviewKey: firstReviewKey(),
         metaspaceOptions: state.metaspaceOptions,
-        initialMetadataJson: JSON.stringify(state.initialValue),
         initialMetaspaceOptions: state.initialMetaspaceOptions,
       }
     }
@@ -651,7 +550,7 @@ export default defineComponent({
           const dataset = data.currentUserLastSubmittedDataset
 
           return {
-            metadata: (dataset && safeJsonParse(dataset.metadataJson)) || {},
+            seed: { metadataV2Json: dataset?.metadataV2Json, metadataJson: dataset?.metadataJson },
             metaspaceOptions: {
               ...(dataset != null ? metaspaceOptionsFromDataset(dataset, true) : null),
               submitterId: store.state.currentTour ? null : data.currentUser.id,
@@ -666,6 +565,10 @@ export default defineComponent({
         } else {
           const result = await fetchDatasetData()
           const data = result.data
+          if (data.dataset == null) {
+            state.loadFailed = true
+            return null
+          }
           let submitter
           // If submitter is not the current user, we need to make a second request after finding the submitter's userId
           // to get the rest of the submitter data (groups, projects, etc.)
@@ -679,15 +582,26 @@ export default defineComponent({
             submitter = submitterData.user
           }
           return {
-            metadata: JSON.parse(data.dataset.metadataJson),
+            v2Source: {
+              id: data.dataset.id,
+              metadataV2Json: data.dataset.metadataV2Json,
+              metadataJson: data.dataset.metadataJson,
+              uploadDT: data.dataset.uploadDT,
+              submitter: { name: submitter?.name || data.dataset.submitter?.name || null },
+            },
             metaspaceOptions: metaspaceOptionsFromDataset(data.dataset, false),
             submitter,
             databases: data.dataset.databases,
           }
         }
       } catch (e) {
+        if (props.datasetId) {
+          state.loadFailed = true
+          return null
+        }
         return {
-          metadata: {},
+          seed: {},
+          v2Source: { id: props.datasetId || '', metadataJson: '{}' },
           metaspaceOptions: {},
           databases: [],
           submitter: props.currentUser || {},
@@ -728,7 +642,7 @@ export default defineComponent({
           variables: { id: datasetId },
         })
         const dataset = {
-          metadata: (data.dataset && safeJsonParse(data.dataset.metadataJson)) || {},
+          seed: { metadataV2Json: data.dataset?.metadataV2Json, metadataJson: data.dataset?.metadataJson },
           metaspaceOptions: {
             ...(data.dataset != null ? metaspaceOptionsFromDataset(data.dataset, false) : null),
             submitterId: store.state.currentTour ? null : data.currentUser.id,
@@ -739,7 +653,7 @@ export default defineComponent({
           submitter: data.currentUser,
           databases: data.dataset ? data.dataset.databases : [],
         }
-        await loadForm(dataset, await loadOptions(), dataset.metadata.Data_Type || 'Imaging MS')
+        await loadForm(dataset, await loadOptions())
       } catch (e) {
         state.metadataTemplate = null
         reportError(e)
@@ -747,20 +661,14 @@ export default defineComponent({
     }
     const initializeForm = async () => {
       const [dataset, options] = await Promise.all([loadDataset(), loadOptions()])
-      const mdType =
-        (isNew.value ? store.getters.filter.metadataType : dataset && dataset.metadata && dataset.metadata.Data_Type) ||
-        defaultMetadataType
-      await loadForm(dataset, options, mdType)
+      if (dataset == null) {
+        return
+      }
+      await loadForm(dataset, options)
       if (isNew.value) {
         await fetchDatasets()
       }
     }
-
-    watch(metadataType, (newMdType) => {
-      if (isNew.value && newMdType !== dataType.value) {
-        reloadForm(newMdType)
-      }
-    })
 
     watch(
       () => state.metaspaceOptions.submitterId,
@@ -782,13 +690,22 @@ export default defineComponent({
     return {
       errors,
       isNew,
-      otherSections,
       adductOptions,
+      v2,
+      v2Mode,
+      v2Status,
+      v2FailedSlots,
+      datasetName,
+      descriptionText,
+      dataManagementFilled,
+      annotationSettingsFilled,
+      loadFailed: computed(() => state.loadFailed),
+      publicDisabled,
+      publicDisabledReason,
+      v2Complete,
       state,
       fetchDatasets,
       metadataTemplateSelection,
-      sectionBinds,
-      sectionEvents,
       handleDescriptionChange,
       fillDatasetName,
       handleVisibilityChange,
@@ -811,6 +728,7 @@ export default defineComponent({
 #md-section-list {
   display: flex;
   flex-direction: column;
+  max-width: 950px;
 }
 
 #load-indicator {
@@ -819,9 +737,8 @@ export default defineComponent({
 
 #description-container {
   @apply p-0 border rounded border-solid;
-  width: calc(75% - 10px);
+  min-width: 200px;
   border-color: #bccddc;
-  margin-left: 4px;
   overflow: hidden;
 }
 

@@ -15,6 +15,7 @@ import shutil
 import tempfile
 import urllib.request
 from collections import defaultdict
+from functools import lru_cache
 from itertools import islice
 from pathlib import Path
 from typing import Dict, Iterable, Iterator, List
@@ -30,7 +31,14 @@ OBO_LIBRARY_URL = 'http://purl.obolibrary.org/obo/'
 # `yarn gen-ontology-slots` (CI fails when stale) so the imported subtrees and the suggestion
 # scope cannot drift apart. Never edit the copy here.
 SLOTS_FILE = Path(__file__).with_name('ontology_slots.json')
-SLOT_ONTOLOGY_ROOTS: Dict[str, List[Dict[str, str]]] = json.loads(SLOTS_FILE.read_text())
+
+
+@lru_cache(maxsize=None)
+def get_slot_ontology_roots() -> Dict[str, List[Dict[str, str]]]:
+    """Loaded lazily: lithops ships only .py files to workers (include_modules), so the JSON sits
+    next to this module on the daemon side but not in workers — importing this module (pulled in
+    transitively when a worker unpickles an engine function) must not touch the file."""
+    return json.loads(SLOTS_FILE.read_text())
 
 UPSERT_SQL = (
     'INSERT INTO ontology_term (curie, label, synonyms, ontology, subtree, obsolete) '

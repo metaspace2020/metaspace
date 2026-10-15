@@ -107,8 +107,11 @@ describe('metadata_v2 input handling', () => {
     expect(() => validateMetadata(metadata, metadataV2)).not.toThrow()
   })
 
-  it('falls back to metadataJson when metadataV2Json is absent', () => {
-    expect(resolveMetadataInput(JSON.stringify(baseIms), null)).toEqual({ metadata: baseIms, metadataV2: undefined })
+  it('up-projects a metadata_v2 document when only metadataJson is given, so every dataset gets a v2 record', () => {
+    const resolved = resolveMetadataInput(JSON.stringify(baseIms), null)
+    expect(resolved.metadata).toEqual(baseIms)
+    expect(resolved.metadataV2).toEqual(upProjectToV2(baseIms))
+    expect(() => validateMetadata(resolved.metadata, resolved.metadataV2)).not.toThrow()
     expect(resolveMetadataInput(null, null)).toEqual({ metadata: undefined, metadataV2: undefined })
   })
 

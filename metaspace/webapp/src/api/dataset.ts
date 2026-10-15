@@ -118,6 +118,7 @@ export const datasetDetailItemFragment = gql`
     condition
     growthConditions
     metadataJson
+    metadataV2Json
     acquisitionGeometry
     sizeHash
     configJson

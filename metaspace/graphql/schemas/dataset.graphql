@@ -228,7 +228,8 @@ input DatasetCreateInput {
   uploadDT: String
   description: String
   sizeHashJson: String
-  metadataJson: String!
+  # one of metadataJson / metadataV2Json is required; metadataV2Json is the source of truth when given
+  metadataJson: String
   metadataV2Json: String
   databaseIds: [Int!]
   ontologyDbIds: [Int]

@@ -18,55 +18,61 @@
         </p>
       </div>
       <div v-else-if="isSignedIn || isTourRunning">
-        <div class="metadata-section">
-          <div class="el-row">
-            <div class="el-col el-col-6">&nbsp;</div>
-            <div class="el-col el-col-18">
-              <div class="flex justify-between items-center form-margin h-10">
-                <el-button class="text-gray-600 mr-auto" @click="state.helpDialog = true"> Need help? </el-button>
-                <fade-transition>
-                  <p v-if="state.autoSubmit" class="text-gray-700 m-0 mr-3 text-right text-sm leading-5">
-                    submitting after upload &ndash;
-                    <button
-                      class="button-reset font-medium text-primary"
-                      title="Cancel automatic submit"
-                      @click="state.autoSubmit = false"
-                    >
-                      cancel
-                    </button>
-                  </p>
-                </fade-transition>
-                <el-button type="primary" :disabled="submitDisabled" :loading="state.autoSubmit" @click="onSubmit">
-                  Submit
-                </el-button>
-              </div>
-            </div>
-          </div>
+        <div class="page-header">
+          <h2 class="page-header__heading">Upload dataset</h2>
+          <el-button @click="state.helpDialog = true"> Need help? </el-button>
+          <fade-transition>
+            <p v-if="state.autoSubmit" class="text-gray-700 m-0 text-right text-sm leading-5">
+              submitting after upload &ndash;
+              <button
+                class="button-reset font-medium text-primary"
+                title="Cancel automatic submit"
+                @click="state.autoSubmit = false"
+              >
+                cancel
+              </button>
+            </p>
+          </fade-transition>
+          <el-button type="primary" :disabled="submitDisabled" :loading="state.autoSubmit" @click="onSubmit">
+            Submit
+          </el-button>
         </div>
-
-        <div class="metadata-section">
-          <form class="el-form el-form--label-top el-row" @submit.prevent>
-            <div class="el-col el-col-6">
-              <div class="metadata-section__title">Imaging MS data</div>
+        <form class="upload-data-row" @submit.prevent>
+          <section-card class="md-imaging-data" title="Imaging MS data" subtitle=".imzML and .ibd pair">
+            <template #headerRight>
+              <span class="md-files-counter">{{ presentCount }} of 2 files</span>
+              <el-progress
+                class="md-files-progress"
+                :percentage="presentCount * 50"
+                :status="uploadedCount === 2 ? 'success' : undefined"
+                :stroke-width="6"
+                :show-text="false"
+                :aria-label="`${presentCount} of 2 files selected, ${uploadedCount} uploaded`"
+              />
+            </template>
+            <div v-loading="state.status === 'LOADING'">
+              <uppy-uploader
+                :key="state.uploaderKey"
+                variant="slots"
+                :disabled="state.status === 'SUBMITTING'"
+                :required-file-types="['imzML', 'ibd']"
+                :s3-options="s3Options"
+                :options="uppyOptions"
+                :current-user="currentUser"
+                @file-added="onFileAdded"
+                @file-removed="onFileRemoved"
+                @files-changed="onFilesChanged"
+                @upload="onUploadStart"
+                @complete="onUploadComplete"
+              />
             </div>
-            <div v-loading="state.status === 'LOADING'" class="el-col el-col-18">
-              <div class="md-form-field">
-                <uppy-uploader
-                  :key="state.storageKey.uuid"
-                  :disabled="state.status === 'SUBMITTING'"
-                  :required-file-types="['imzML', 'ibd']"
-                  :s3-options="s3Options"
-                  :options="uppyOptions"
-                  :current-user="currentUser"
-                  @file-added="onFileAdded"
-                  @file-removed="onFileRemoved"
-                  @upload="onUploadStart"
-                  @complete="onUploadComplete"
-                />
-              </div>
-            </div>
-          </form>
-        </div>
+          </section-card>
+        </form>
+        <el-alert v-if="state.otherErrors.length" type="warning" :closable="false" class="mb-4">
+          <ul class="my-1 pl-5">
+            <li v-for="err in state.otherErrors" :key="err">{{ err }}</li>
+          </ul>
+        </el-alert>
         <metadata-editor ref="editor" :validation-errors="state.validationErrors" :current-user="currentUser" />
       </div>
     </div>
@@ -78,10 +84,12 @@ import { defineComponent, ref, reactive, computed, watch, nextTick, inject, onMo
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
-import { ElMessage } from '../../lib/element-plus'
+import { ElMessage, ElAlert, ElProgress } from '../../lib/element-plus'
+import { mapServerErrors } from './v2/errorPaths'
 import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import FadeTransition from '../../components/FadeTransition'
 import MetadataEditor from './MetadataEditor.vue'
+import { SectionCard } from './v2/components/SectionCard'
 import HelpDialog from './HelpDialog.vue'
 import { RequestedAccessDialog } from '../Group/RequestedAccessDialog'
 import reportError from '../../lib/reportError'
@@ -117,7 +125,10 @@ export default defineComponent({
   name: 'UploadPage',
   components: {
     UppyUploader,
+    ElAlert,
+    ElProgress,
     MetadataEditor,
+    SectionCard,
     HelpDialog,
     FadeTransition,
     RequestedAccessDialog,
@@ -131,6 +142,7 @@ export default defineComponent({
       status: 'INIT',
       showRequestedDialog: false,
       validationErrors: [],
+      otherErrors: [],
       storageKey: {
         uuid: null,
         uuidSignature: null,
@@ -145,6 +157,10 @@ export default defineComponent({
       },
       autoSubmit: false,
       helpDialog: false,
+      // remounts the uploader; bumped with each new storage key except during a Replace (picker is open)
+      uploaderKey: 0,
+      // per required type status from the uploader ({ extension, status }[]) for the header counter
+      slotStatuses: [],
       group: null,
       inputPath: null,
     })
@@ -174,6 +190,14 @@ export default defineComponent({
     })
     const systemHealth = computed(() => systemHealthResult.value?.systemHealth)
     const uuid = computed(() => state.storageKey.uuid)
+    // "N of 2 files" in the Imaging MS data header: required files present (picked, uploading or uploaded)
+    const presentCount = computed(
+      () => state.slotStatuses.filter((f) => ['PENDING', 'UPLOADING', 'COMPLETE'].includes(f.status)).length
+    )
+    const uploadedCount = computed(() => state.slotStatuses.filter((f) => f.status === 'COMPLETE').length)
+    const onFilesChanged = (statuses) => {
+      state.slotStatuses = statuses
+    }
     const isTourRunning = computed(() => store.state.currentTour != null)
     const submitDisabled = computed(() => {
       return isTourRunning.value || ['INIT', 'LOADING', 'SUBMITTING'].includes(state.status)
@@ -195,7 +219,9 @@ export default defineComponent({
     const uppyOptions = computed(() => {
       return {
         debug: true,
-        autoProceed: true,
+        // UppyUploader starts the upload itself once both files are present; autoProceed would try after the
+        // first file and log a RestrictionError
+        autoProceed: false,
         restrictions: {
           maxNumberOfFiles: 2,
           minNumberOfFiles: 2, // add both files before uploading
@@ -259,7 +285,7 @@ export default defineComponent({
       router.go(-1)
     }
 
-    const fetchStorageKey = async () => {
+    const fetchStorageKey = async ({ keepUploader = false } = {}) => {
       state.status = 'LOADING'
       try {
         const response = await fetch(`${uploadEndpoint.value}/s3/uuid`, { cache: 'no-cache' })
@@ -269,6 +295,8 @@ export default defineComponent({
         } else {
           // uuid and uuidSignature
           state.storageKey = await response.json()
+          // a Replace keeps the mounted uploader (its picker is open); the new key reaches it via s3Options
+          if (!keepUploader) state.uploaderKey++
         }
       } catch (e) {
         reportError(e)
@@ -284,12 +312,12 @@ export default defineComponent({
       editor.value.fillDatasetName(dsName)
     }
 
-    const onFileRemoved = async (file) => {
+    const onFileRemoved = async (file, { replacing = false } = {}) => {
       state.uploads[file.extension.toLowerCase()] = false
       if (Object.values(state.uploads).every((flag) => !flag)) {
         // Get a new storage key, because the old uploads may have different filenames which would cause later issues
         // when trying to determine which file to use if they were uploaded to the same prefix.
-        await fetchStorageKey()
+        await fetchStorageKey({ keepUploader: replacing })
       } else {
         state.status = 'READY'
       }
@@ -335,6 +363,17 @@ export default defineComponent({
       if (state.status === 'SUBMITTING') return
 
       if (state.status !== 'UPLOADED') {
+        // Validate before arming "submit after upload": a form with gaps must not enter the submitting state.
+        // getFormValueForSubmit reports the gaps itself; focus the first missing metadata field.
+        if (editor.value.getFormValueForSubmit() === null) {
+          const first = editor.value.v2?.status?.value?.missingRequired?.[0]
+          if (first) editor.value.v2.requestFocus(first.key)
+          return
+        }
+        if (presentCount.value === 0) {
+          ElMessage({ message: 'Add the .imzML and .ibd files to upload first.', type: 'warning' })
+          return
+        }
         state.autoSubmit = true
       } else {
         submitForm()
@@ -342,11 +381,12 @@ export default defineComponent({
     }
 
     const submitForm = async () => {
+      state.otherErrors = []
       const formValue = editor.value.getFormValueForSubmit()
       if (formValue === null) return
 
       state.status = 'SUBMITTING'
-      const { metadataJson, metaspaceOptions } = formValue
+      const { metadataV2Json, metaspaceOptions } = formValue
       const performEnrichment = metaspaceOptions.performEnrichment
       delete metaspaceOptions.performEnrichment
       try {
@@ -355,7 +395,7 @@ export default defineComponent({
           variables: {
             input: {
               inputPath: state.inputPath,
-              metadataJson,
+              metadataV2Json,
               sizeHashJson: JSON.stringify({ imzml_size: state.fileSize?.imzml, ibd_size: state.fileSize?.ibd }),
               ...metaspaceOptions,
             },
@@ -366,6 +406,7 @@ export default defineComponent({
 
         state.inputPath = null
         state.validationErrors = []
+        state.otherErrors = []
         // Reset upload state to allow new uploads
         state.uploads = {
           imzml: false,
@@ -394,6 +435,7 @@ export default defineComponent({
           return false
         } else if (graphQLError && graphQLError.type === 'failed_validation') {
           state.validationErrors = graphQLError.validation_errors
+          state.otherErrors = mapServerErrors(graphQLError.validation_errors || []).otherErrors
           ElMessage({
             message: 'Please fix the highlighted fields and submit again',
             type: 'error',
@@ -469,6 +511,9 @@ export default defineComponent({
       isSignedIn,
       isTourRunning,
       submitDisabled,
+      uploadedCount,
+      onFilesChanged,
+      presentCount,
       onSubmit,
       s3Options,
       uppyOptions,
@@ -500,6 +545,7 @@ export default defineComponent({
 
 .upload-page-wrapper {
   width: 950px;
+  max-width: 100%;
 }
 
 .md-editor {
@@ -519,7 +565,29 @@ export default defineComponent({
   margin: 25px 5px;
 }
 
-.form-margin {
-  margin: 0 5px;
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 14px;
+}
+.page-header > button {
+  margin-left: 0;
+}
+.page-header__heading {
+  margin: 0 auto 0 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: #102a42;
+}
+.upload-data-row {
+  margin: 0;
+}
+.md-files-counter {
+  font-size: 12px;
+  color: #617f98;
+}
+.md-files-progress {
+  width: 90px;
 }
 </style>

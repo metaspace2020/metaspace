@@ -13,6 +13,13 @@
       "obo_file": "uberon.obo"
     }
   ],
+  "anatomical_site_fine": [
+    {
+      "ontology": "uberon",
+      "root": "UBERON:0001062",
+      "obo_file": "uberon.obo"
+    }
+  ],
   "disease": [
     {
       "ontology": "mondo",

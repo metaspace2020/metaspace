@@ -1,0 +1,239 @@
+/* Sample / Acquisition rows: 2-column grid inside a SectionRow */
+.v2-form .el-form-item {
+  margin-bottom: 0;
+  &.is-error .el-form-item__error {
+    position: static;
+  }
+}
+.v2-group__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 20px;
+}
+.v2-group__rule {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+  padding-top: 12px;
+  border-top: 1px dashed #dae4ec;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  line-height: 14px;
+  color: #617f98;
+  margin-bottom: -6px;
+}
+.v2-field--full {
+  grid-column: 1 / -1;
+}
+@media (max-width: 639px) {
+  .v2-group__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* inline composite numerics: [n] @ [n] m/z, [n] × [n] µm */
+.v2-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #829bb0;
+}
+
+/* migration banner (page level, above the Metadata card) */
+.v2-banner {
+  margin-bottom: 14px;
+}
+.v2-banner--partial {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 16px;
+  border: 1px solid #f3dcb3;
+  border-radius: 6px;
+  background: #fdf6ec;
+}
+.v2-banner__text {
+  font-size: 13px;
+  line-height: 19px;
+  color: #102a42;
+}
+.v2-bar {
+  display: flex;
+  height: 6px;
+  margin-top: 8px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #eed9b4;
+}
+.v2-banner__note {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #617f98;
+}
+
+/* header legend dots */
+.v2-legend {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.v2-legend__dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+/* unmapped legacy values panel */
+.v2-unmapped {
+  border: 1px dashed #bccddc;
+  border-radius: 6px;
+  background: #f8fafc;
+  padding: 10px 14px;
+}
+.v2-unmapped__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  font-size: 13px;
+  color: #102a42;
+}
+.v2-unmapped__head-text {
+  font-weight: 500;
+}
+.v2-unmapped__head-help {
+  font-size: 12px;
+  color: #617f98;
+}
+.v2-unmapped__row {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0 2px;
+  border-top: 1px solid #dae4ec;
+  margin-top: 10px;
+}
+.v2-unmapped__caption {
+  font-size: 10.5px;
+  color: #829bb0;
+}
+.v2-unmapped__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #102a42;
+}
+.v2-unmapped__value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  min-width: 0;
+}
+.v2-unmapped__code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  padding: 3px 8px;
+  border: 1px solid #dae4ec;
+  border-radius: 4px;
+  background: #fff;
+  color: #102a42;
+}
+.v2-unmapped__hint {
+  font-size: 11px;
+  color: #617f98;
+}
+.v2-unmapped__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  button.v2-unmapped__undo,
+  button.v2-unmapped__restore {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    color: var(--el-color-primary);
+  }
+}
+@media (max-width: 767px) {
+  .v2-unmapped__row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* legacy record view */
+.v2-legacy__value {
+  display: inline-block;
+  padding: 4px 10px;
+  border: 1px solid #dae4ec;
+  border-radius: 4px;
+  background: #f1f5f8;
+  font-size: 13px;
+  color: #102a42;
+}
+.v2-legacy__value--block {
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.v2-legacy__provenance {
+  font-size: 12px;
+  color: #617f98;
+}
+.v2-legacy__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 20px;
+}
+.v2-legacy__label {
+  font-size: 12px;
+  color: #324e67;
+  margin-bottom: 4px;
+}
+@media (max-width: 767px) {
+  .v2-legacy__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* schema switch sub-labels */
+.v2-switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 24px;
+  min-width: 0;
+}
+.v2-switch .el-radio-group {
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+.v2-switch__note {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: #617f98;
+}
+.v2-switch__sub {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.v2-legacy .v2-maptag {
+  text-align: left;
+  text-decoration: none;
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}

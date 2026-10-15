@@ -1,6 +1,7 @@
 {
   "organism": [{ "ontology": "ncbitaxon", "root": "NCBITaxon:131567", "obo_file": "ncbitaxon.obo" }],
   "anatomical_site_coarse": [{ "ontology": "uberon", "root": "UBERON:0001062", "obo_file": "uberon.obo" }],
+  "anatomical_site_fine": [{ "ontology": "uberon", "root": "UBERON:0001062", "obo_file": "uberon.obo" }],
   "disease": [{ "ontology": "mondo", "root": "MONDO:0000001", "obo_file": "mondo.obo" }],
   "developmental_stage": [{ "ontology": "efo", "root": "EFO:0000399", "obo_file": "https://www.ebi.ac.uk/efo/efo.obo" }],
   "cell_line_id": [{ "ontology": "efo", "root": "CL:0000010", "obo_file": "https://www.ebi.ac.uk/efo/efo.obo" }],

@@ -124,3 +124,32 @@ def test_import_subtree_refuses_an_empty_walk_and_keeps_existing_rows(test_db, o
         import_subtree('test', 'TEST:0005', v1)  # a real root with no descendants
 
     assert _stored_terms() == before
+
+
+def test_module_imports_without_ontology_slots_json(tmp_path):
+    """Lithops ships modules to workers as .py files only (include_modules), so importing
+    ontology_term there — pulled in transitively by unpickling any engine function — must not
+    require ontology_slots.json to sit next to the module file."""
+    import importlib.util
+    import shutil
+
+    import sm.engine.ontology_term as ontology_term
+
+    module_copy = tmp_path / 'ontology_term.py'  # the .py is shipped, the .json is not
+    shutil.copy(ontology_term.__file__, module_copy)
+
+    spec = importlib.util.spec_from_file_location('ontology_term_worker_copy', str(module_copy))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)  # must not raise FileNotFoundError
+
+    # The data itself still only exists on the daemon side
+    with pytest.raises(FileNotFoundError):
+        module.get_slot_ontology_roots()
+
+
+def test_get_slot_ontology_roots_reads_the_real_file():
+    from sm.engine.ontology_term import get_slot_ontology_roots
+
+    roots = get_slot_ontology_roots()
+    assert 'instrument_model' in roots
+    assert all('root' in binding for binding in roots['instrument_model'])

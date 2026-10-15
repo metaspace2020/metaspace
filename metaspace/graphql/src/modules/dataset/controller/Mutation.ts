@@ -15,7 +15,7 @@ import { FieldResolversFor } from '../../../bindingTypes'
 import { getUserProjectRoles } from '../../../utils/db'
 import { metadataSchemas } from '../../../../metadataSchemas/metadataRegistry'
 import { getDatasetForEditing } from '../operation/getDatasetForEditing'
-import { projectToLegacyMetadata, MetadataV2Envelope } from '../projection'
+import { projectToLegacyMetadata, upProjectToV2, MetadataV2Envelope } from '../projection'
 import { deleteDataset } from '../operation/deleteDataset'
 import { checkNoPublishedProjectRemoved, checkProjectsPublicationStatus } from '../operation/publicationChecks'
 import {
@@ -172,10 +172,19 @@ export function parseMetadataV2Envelope(metadataV2Json: string): MetadataV2Envel
  * Resolves the metadata documents to store from a mutation's input. When metadataV2Json is given it
  * is the source of truth and the legacy document is derived from it, so the two can never diverge
  * and legacy consumers (Elasticsearch, filters, processingSettingsChanged) keep working unchanged.
+ * When only the legacy document is given (API clients such as the Python SDK), it is kept as sent and
+ * a metadata_v2 document is up-projected from it (values pending curation), so every dataset whose
+ * metadata is created or changed through this API carries a v2 record.
  */
-export function resolveMetadataInput(metadataJson?: string | null, metadataV2Json?: string | null) {
+export function resolveMetadataInput(
+  metadataJson?: string | null, metadataV2Json?: string | null, upProjectLegacy = true,
+): { metadata: any, metadataV2: MetadataV2Envelope | undefined } {
   if (!metadataV2Json) {
-    return { metadata: metadataJson ? JSON.parse(metadataJson) : undefined, metadataV2: undefined }
+    if (!metadataJson) {
+      return { metadata: undefined, metadataV2: undefined }
+    }
+    const metadata = JSON.parse(metadataJson)
+    return { metadata, metadataV2: upProjectLegacy ? upProjectToV2(metadata) : undefined }
   }
   const metadataV2 = parseMetadataV2Envelope(metadataV2Json)
   return { metadata: projectToLegacyMetadata(metadataV2), metadataV2 }
@@ -419,6 +428,9 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     assertCanCreateDataset(ctx.user)
   }
 
+  if (!input.metadataJson && !input.metadataV2Json) {
+    throw failedValidation([{ dataPath: '.metadataV2', message: 'metadataJson or metadataV2Json is required' }])
+  }
   const { metadata, metadataV2 } = resolveMetadataInput(input.metadataJson, input.metadataV2Json)
   if (!skipValidation || !ctx.isAdmin) {
     validateMetadata(metadata, metadataV2)
@@ -524,7 +536,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     logger.info(`User '${ctx.user.id}' updating '${datasetId}' dataset...`)
     const dataset = await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId)
 
-    const { metadata, metadataV2 } = resolveMetadataInput(update.metadataJson, update.metadataV2Json)
+    // Legacy-only edits are up-projected below, once we know the dataset has no v2 record yet
+    const resolved = resolveMetadataInput(update.metadataJson, update.metadataV2Json, false)
+    const metadata = resolved.metadata
+    let metadataV2 = resolved.metadataV2
     if (metadata && (!skipValidation || !ctx.isAdmin)) {
       validateMetadata(metadata, metadataV2)
     }
@@ -562,6 +577,14 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         dataPath: '.metadataV2',
         message: 'This dataset uses metadata schema v2; send metadataV2Json instead of metadataJson',
       }])
+    }
+    if (metadata && !metadataV2) {
+      // A legacy dataset changed through the legacy document (e.g. the Python SDK) becomes a v2 dataset:
+      // the edit itself produces its v2 record, with the values pending curation.
+      metadataV2 = upProjectToV2(metadata)
+      if (!skipValidation || !ctx.isAdmin) {
+        validateMetadata(metadata, metadataV2)
+      }
     }
     let isEnriched : boolean | any = false
 

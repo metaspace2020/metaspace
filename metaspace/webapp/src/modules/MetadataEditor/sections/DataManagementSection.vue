@@ -1,5 +1,72 @@
 <template>
-  <div class="metadata-section">
+  <div class="md-data-management-rows section-rows">
+    <section-row title="Ownership">
+      <el-form class="section-grid" size="default" label-position="top">
+        <div v-if="isAdmin">
+          <form-field
+            :value="(submitter && `${submitter.name} (${submitter.email})`) || null"
+            type="autocomplete"
+            name="Submitter"
+            :fetch-suggestions="handleSearchUsers"
+            required
+            @select="handleSelectSubmitter"
+          />
+        </div>
+        <div v-else>
+          <form-field
+            type="text"
+            name="Submitter"
+            :value="submitter != null ? `${submitter.name}${submitter.email ? ` (${submitter.email})` : ''}` : ''"
+            required
+            disabled
+          />
+          <div class="md-field-help">From your account</div>
+        </div>
+        <form-field
+          :value="groupId"
+          :error="error && error.groupId"
+          :options="groupOptions"
+          type="select"
+          placeholder="Select your group"
+          name="Group"
+          required
+          @input="setGroupId"
+        />
+        <form-field
+          v-model="projectIds"
+          :error="error && error.projectIds"
+          :options="projectOptions"
+          type="selectMulti"
+          name="Projects"
+          @input="(val) => setProjectIds(val)"
+        />
+      </el-form>
+    </section-row>
+    <el-collapse-transition>
+      <section-row v-if="showPI && groupId == 'NO_GROUP'" title="Principal Investigator">
+        <el-form class="section-grid" size="default" label-position="top">
+          <form-field
+            type="text"
+            name="Full name"
+            :value="value.principalInvestigator ? value.principalInvestigator.name : ''"
+            :error="error && error.principalInvestigator && error.principalInvestigator.name"
+            required
+            @input="(value) => handleInputPI('name', value)"
+          />
+          <form-field
+            type="text"
+            name="Email address"
+            :value="value.principalInvestigator ? value.principalInvestigator.email : ''"
+            :error="error && error.principalInvestigator && error.principalInvestigator.email"
+            required
+            @input="(value) => handleInputPI('email', value)"
+          />
+        </el-form>
+      </section-row>
+    </el-collapse-transition>
+    <section-row title="Group quota">
+      <group-quota :groupId="groupId" :types="getTypes" />
+    </section-row>
     <find-group-dialog :visible="showFindGroupDialog" @close="hideFindGroupDialog" @selectGroup="handleSelectGroup" />
     <create-project-dialog
       v-if="currentUser != null"
@@ -8,99 +75,6 @@
       @close="hideCreateProjectDialog"
       @create="handleSelectProject"
     />
-    <el-row>
-      <el-col :span="6">
-        <div class="metadata-section__title">Data management</div>
-      </el-col>
-      <el-col :span="18">
-        <el-row :gutter="8">
-          <el-form class="w-full flex flex-wrap" size="default" label-position="top">
-            <el-col v-if="isAdmin" :span="16" :offset="8" :pull="8">
-              <form-field
-                :value="(submitter && `${submitter.name} (${submitter.email})`) || null"
-                type="autocomplete"
-                name="Submitter"
-                :fetch-suggestions="handleSearchUsers"
-                required
-                @select="handleSelectSubmitter"
-              />
-            </el-col>
-            <el-col v-else :span="8">
-              <form-field
-                type="text"
-                name="Submitter name"
-                :value="submitter != null ? submitter.name : ''"
-                required
-                disabled
-              />
-            </el-col>
-            <el-col :span="8">
-              <form-field
-                :value="groupId"
-                :error="error && error.groupId"
-                :options="groupOptions"
-                type="select"
-                placeholder="Select your group"
-                name="Group"
-                required
-                @input="setGroupId"
-              />
-            </el-col>
-            <el-col :span="8">
-              <form-field
-                v-model="projectIds"
-                :error="error && error.projectIds"
-                :options="projectOptions"
-                type="selectMulti"
-                name="Projects"
-                @input="(val) => setProjectIds(val)"
-              />
-            </el-col>
-          </el-form>
-        </el-row>
-      </el-col>
-    </el-row>
-    <el-collapse-transition class="mt-8">
-      <el-row v-if="showPI && groupId == 'NO_GROUP'">
-        <el-col :span="6">
-          <div class="metadata-section__title">Principal Investigator</div>
-        </el-col>
-        <el-col :span="18">
-          <el-row :gutter="8">
-            <el-form size="default" class="w-full" label-position="top">
-              <el-col :span="8">
-                <form-field
-                  type="text"
-                  name="Full name"
-                  :value="value.principalInvestigator ? value.principalInvestigator.name : ''"
-                  :error="error && error.principalInvestigator && error.principalInvestigator.name"
-                  required
-                  @input="(value) => handleInputPI('name', value)"
-                />
-              </el-col>
-              <el-col :span="8">
-                <form-field
-                  type="text"
-                  name="Email address"
-                  :value="value.principalInvestigator ? value.principalInvestigator.email : ''"
-                  :error="error && error.principalInvestigator && error.principalInvestigator.email"
-                  required
-                  @input="(value) => handleInputPI('email', value)"
-                />
-              </el-col>
-            </el-form>
-          </el-row>
-        </el-col>
-      </el-row>
-    </el-collapse-transition>
-    <el-row>
-      <el-col :span="6">
-        <span class="metadata-section__title">Group quota</span>
-      </el-col>
-      <el-col :span="18">
-        <group-quota :groupId="groupId" :types="getTypes" />
-      </el-col>
-    </el-row>
   </div>
 </template>
 
@@ -112,10 +86,10 @@ import FindGroupDialog from './FindGroupDialog.vue'
 import CreateProjectDialog from '../../Project/CreateProjectDialog.vue'
 import { currentUserRoleQuery, DatasetSubmitterFragment } from '../../../api/user'
 import { GroupListItem, oneGroupQuery, oneProjectQuery } from '../../../api/dataManagement'
-import './FormSection.scss'
+import { SectionRow } from '../v2/components/SectionRow'
 import gql from 'graphql-tag' // imported directly so that the Project pages aren't pulled into the bundle
 import { MetaspaceOptions } from '../formStructure'
-import { ElRow, ElCol, ElForm, ElCollapseTransition } from '../../../lib/element-plus'
+import { ElForm, ElCollapseTransition } from '../../../lib/element-plus'
 import GroupQuota from '../../Group/GroupQuota'
 import { getActiveGroupSubscriptionQuery } from '../../../api/subscription'
 import { useStore } from 'vuex'
@@ -134,8 +108,7 @@ export default defineComponent({
   components: {
     FormField,
     FindGroupDialog,
-    ElRow,
-    ElCol,
+    SectionRow,
     ElForm,
     ElCollapseTransition,
     CreateProjectDialog,

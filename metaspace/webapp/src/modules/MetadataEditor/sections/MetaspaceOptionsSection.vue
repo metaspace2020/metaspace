@@ -1,162 +1,140 @@
 <template>
-  <div class="metadata-section">
-    <el-form size="default" label-position="top">
-      <el-row>
-        <el-col :span="6">
-          <div class="metadata-section__title">Annotation settings</div>
-        </el-col>
-        <el-col :span="18">
-          <el-row :gutter="8">
-            <el-col :span="8">
-              <popup-anchor feature-key="uploadCustomDatabases" placement="top" class="block">
-                <form-field
-                  type="selectMulti"
-                  name="Metabolite database"
-                  :help="dbHelp"
-                  :value="value?.databaseIds"
-                  :error="error && error?.databaseIds"
-                  :multiple-limit="maxMolDBs"
-                  required
-                  @remove-tag="onDbRemoval"
-                  @input="(val) => onInput('databaseIds', val)"
-                >
-                  <template v-slot:options>
-                    <el-option-group v-for="group in databaseOptions" :key="group.label" :label="group.label">
-                      <el-option
-                        v-for="option in group.options"
-                        :key="option.value"
-                        :value="option.value"
-                        :label="option.label"
-                      />
-                    </el-option-group>
-                  </template>
-                </form-field>
-              </popup-anchor>
-            </el-col>
-            <el-col :span="8">
-              <form-field
-                type="selectMulti"
-                name="Adducts"
-                :value="value?.adducts"
-                :error="error && error.adducts"
-                :options="adductOptions"
-                :help="AdductsHelp"
-                required
-                @input="(val) => onInput('adducts', val)"
+  <section-row class="md-annotation-rows" title="Search parameters" help="Changing these re-runs annotation">
+    <el-form class="section-grid" size="default" label-position="top">
+      <popup-anchor feature-key="uploadCustomDatabases" placement="top" class="block">
+        <form-field
+          type="selectMulti"
+          name="Metabolite database"
+          :help="dbHelp"
+          :value="value?.databaseIds"
+          :error="error && error?.databaseIds"
+          :multiple-limit="maxMolDBs"
+          required
+          @remove-tag="onDbRemoval"
+          @input="(val) => onInput('databaseIds', val)"
+        >
+          <template v-slot:options>
+            <el-option-group v-for="group in databaseOptions" :key="group.label" :label="group.label">
+              <el-option
+                v-for="option in group.options"
+                :key="option.value"
+                :value="option.value"
+                :label="option.label"
               />
-            </el-col>
-            <el-col :span="8">
-              <form-field
-                type="text"
-                name="Dataset name"
-                placeholder="Dataset name"
-                :value="value?.name"
-                :error="error && error.name"
-                required
-                @input="(val) => onInput('name', val)"
-              />
-            </el-col>
-          </el-row>
-          <el-row v-if="features.neutral_losses || features.chem_mods || features.advanced_ds_config" :gutter="8">
-            <el-col v-if="features.neutral_losses" :span="8">
-              <form-field
-                type="selectMultiWithCreate"
-                name="Neutral losses"
-                :help="NeutralLossesHelp"
-                :value="value?.neutralLosses"
-                :error="error && error.neutralLosses"
-                :multiple-limit="MAX_NEUTRAL_LOSSES"
-                :normalize-input="normalizeNeutralLoss"
-                @input="(val) => onInput('neutralLosses', val)"
-              />
-            </el-col>
-
-            <el-col v-if="features.chem_mods" :span="8">
-              <form-field
-                type="selectMultiWithCreate"
-                name="Chemical modifications"
-                :help="ChemModsHelp"
-                :value="value?.chemMods"
-                :error="error && error.chemMods"
-                :multiple-limit="MAX_CHEM_MODS"
-                :normalize-input="normalizeChemMod"
-                @input="(val) => onInput('chemMods', val)"
-              />
-            </el-col>
-            <el-col :span="8">
-              <popup-anchor feature-key="v2" placement="top" :show-until="new Date('2022-09-01')" class="block">
-                <form-field
-                  type="select"
-                  required
-                  name="Analysis version"
-                  :help="AnalysisVersionHelp"
-                  :value="value?.scoringModelId"
-                  :error="error && error.analysisVersion"
-                  :options="analysisVersionOptions"
-                  @input="(val) => onScoringModelChange(val)"
-                />
-              </popup-anchor>
-            </el-col>
-          </el-row>
-          <el-row :gutter="8">
-            <el-col :span="8">
-              <form-field
-                type="number"
-                name="m/z tolerance (ppm)"
-                required
-                :value="value?.ppm"
-                :error="error && error.ppm"
-                :help="PpmHelp"
-                :min="0.1"
-                :step="1"
-                :max="15"
-                @input="(val) => onInput('ppm', val)"
-              />
-            </el-col>
-            <el-col v-if="features.advanced_ds_config" :span="8">
-              <form-field
-                type="number"
-                name="Isotopic peaks per formula"
-                :value="value?.numPeaks"
-                :error="error && error.numPeaks"
-                is-integer
-                :min="2"
-                :max="16"
-                @input="(val) => onInput('numPeaks', val)"
-              />
-            </el-col>
-            <el-col v-if="features.advanced_ds_config" :span="8">
-              <form-field
-                type="number"
-                name="Decoy adducts per formula"
-                :value="value?.decoySampleSize"
-                :error="error && error.decoySampleSize"
-                is-integer
-                :min="1"
-                :max="80"
-                @input="(val) => onInput('decoySampleSize', val)"
-              />
-            </el-col>
-          </el-row>
-          <el-row v-if="features.enrichment" :gutter="8">
-            <el-col :span="8">
-              <popup-anchor feature-key="v2" placement="top" :show-until="new Date('2022-09-01')" class="block">
-                <form-field
-                  type="selectMultiTree"
-                  name="Enrichment ontology"
-                  :help="EnrichmentHelp"
-                  :value="value?.ontologyDbIds"
-                  :error="error && error.performEnrichment"
-                  :options="ontologyDbs"
-                  @input="(val) => onInput('ontologyDbIds', val)"
-                />
-              </popup-anchor>
-            </el-col>
-          </el-row>
-        </el-col>
-      </el-row>
+            </el-option-group>
+          </template>
+        </form-field>
+      </popup-anchor>
+      <form-field
+        type="selectMulti"
+        name="Adducts"
+        :value="value?.adducts"
+        :error="error && error.adducts"
+        :options="adductOptions"
+        :help="AdductsHelp"
+        required
+        @input="(val) => onInput('adducts', val)"
+      />
+      <form-field
+        type="text"
+        name="Dataset name"
+        placeholder="Dataset name"
+        :value="value?.name"
+        :error="error && error.name"
+        required
+        @input="(val) => onInput('name', val)"
+      />
+      <div class="section-grid__rule" aria-hidden="true" />
+      <popup-anchor feature-key="v2" placement="top" :show-until="new Date('2022-09-01')" class="block">
+        <form-field
+          type="select"
+          required
+          name="Analysis version"
+          :help="AnalysisVersionHelp"
+          :value="value?.scoringModelId"
+          :error="error && error.analysisVersion"
+          :options="analysisVersionOptions"
+          @input="(val) => onScoringModelChange(val)"
+        />
+      </popup-anchor>
+      <div class="md-ppm">
+        <form-field
+          type="number"
+          name="m/z tolerance"
+          required
+          :value="value?.ppm"
+          :error="error && error.ppm"
+          :help="PpmHelp"
+          :min="0.1"
+          :step="1"
+          :max="15"
+          @input="(val) => onInput('ppm', val)"
+        />
+        <span class="md-ppm__unit">ppm</span>
+      </div>
+      <form-field
+        v-if="features.chem_mods"
+        type="selectMultiWithCreate"
+        name="Chemical modifications"
+        :help="ChemModsHelp"
+        :value="value?.chemMods"
+        :error="error && error.chemMods"
+        :multiple-limit="MAX_CHEM_MODS"
+        :normalize-input="normalizeChemMod"
+        @input="(val) => onInput('chemMods', val)"
+      />
+      <form-field
+        v-if="features.neutral_losses"
+        type="selectMultiWithCreate"
+        name="Neutral losses"
+        :help="NeutralLossesHelp"
+        :value="value?.neutralLosses"
+        :error="error && error.neutralLosses"
+        :multiple-limit="MAX_NEUTRAL_LOSSES"
+        :normalize-input="normalizeNeutralLoss"
+        @input="(val) => onInput('neutralLosses', val)"
+      />
+      <popup-anchor
+        v-if="features.enrichment"
+        feature-key="v2"
+        placement="top"
+        :show-until="new Date('2022-09-01')"
+        class="block"
+      >
+        <form-field
+          type="selectMultiTree"
+          name="Enrichment ontology"
+          :help="EnrichmentHelp"
+          :value="value?.ontologyDbIds"
+          :error="error && error.performEnrichment"
+          :options="ontologyDbs"
+          @input="(val) => onInput('ontologyDbIds', val)"
+        />
+      </popup-anchor>
+      <form-field
+        v-if="features.advanced_ds_config"
+        type="number"
+        name="Isotopic peaks per formula"
+        :value="value?.numPeaks"
+        :error="error && error.numPeaks"
+        is-integer
+        :min="2"
+        :max="16"
+        @input="(val) => onInput('numPeaks', val)"
+      />
+      <form-field
+        v-if="features.advanced_ds_config"
+        type="number"
+        name="Decoy adducts per formula"
+        :value="value?.decoySampleSize"
+        :error="error && error.decoySampleSize"
+        is-integer
+        :min="1"
+        :max="80"
+        @input="(val) => onInput('decoySampleSize', val)"
+      />
     </el-form>
-  </div>
+  </section-row>
 </template>
 
 <script lang="ts">
@@ -169,7 +147,8 @@ import { normalizeFormulaModifier } from '../../../lib/normalizeFormulaModifier'
 import { MolecularDB } from '../../../api/moldb'
 import { formatDatabaseLabel, MolDBsByGroup } from '../../MolecularDatabases/formatting'
 import { sortBy } from 'lodash-es'
-import { ElMessage, ElRow, ElCol, ElForm } from '../../../lib/element-plus'
+import { ElMessage, ElForm } from '../../../lib/element-plus'
+import { SectionRow } from '../v2/components/SectionRow'
 import DatabaseHelpLink from '../inputs/DatabaseHelpLink.vue'
 import AnalysisVersionHelp from '../inputs/AnalysisVersionHelp.vue'
 import EnrichmentHelp from '../inputs/EnrichmentHelp.vue'
@@ -185,8 +164,7 @@ export default defineComponent({
   components: {
     FormField,
     PopupAnchor,
-    ElRow,
-    ElCol,
+    SectionRow,
     ElForm,
   },
   props: {
@@ -286,6 +264,25 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
+.md-ppm {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  .md-form-field {
+    width: 86px;
+    flex-shrink: 0;
+  }
+  .el-form-item__label {
+    white-space: nowrap;
+  }
+}
+.md-ppm__unit {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  font-size: 12px;
+  color: #829bb0;
+}
 .example-input {
   background: #eeeeee;
   padding: 2px 8px;

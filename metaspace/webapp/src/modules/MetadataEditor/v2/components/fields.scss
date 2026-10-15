@@ -1,0 +1,161 @@
+/* field label: 12px #324e67; ElFormItem's own label line-height is tightened */
+.v2-field.el-form-item {
+  margin-bottom: 0;
+  .el-form-item__label {
+    font-size: 12px;
+    line-height: 16px;
+    margin-bottom: 4px;
+    padding: 0;
+    color: #324e67;
+    font-weight: 400;
+  }
+}
+/* required-and-empty or server error: 2px danger border on the control */
+.v2-field.is-error {
+  .el-input__wrapper,
+  .el-select__wrapper,
+  .el-select .el-input__wrapper,
+  .el-textarea__inner {
+    box-shadow: 0 0 0 2px var(--el-color-danger) inset;
+  }
+}
+.v2-prov {
+  @apply inline-flex items-center gap-1 font-normal ml-2;
+  font-size: 10px;
+  color: var(--el-text-color-secondary);
+  .v2-dot {
+    @apply inline-block w-2 h-2 rounded-full;
+    background: currentColor;
+  }
+  &--migrated {
+    color: var(--el-color-success);
+  }
+  &--review,
+  &--copied {
+    color: var(--el-color-warning);
+  }
+  &--required-empty {
+    color: var(--el-color-danger);
+  }
+  &--new {
+    color: var(--el-color-primary);
+  }
+  &--empty {
+    color: var(--el-text-color-placeholder);
+  }
+}
+.v2-required {
+  color: var(--el-color-danger);
+  margin-left: 2px;
+}
+.v2-hint {
+  margin-top: 4px;
+  font-size: 10.5px;
+  line-height: 14px;
+  color: #829bb0;
+}
+.v2-hint--danger {
+  color: var(--el-color-danger);
+}
+.v2-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid;
+  border-radius: 15px;
+  font-size: 12px;
+  color: #102a42;
+  cursor: pointer;
+  &__dot {
+    flex-shrink: 0;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #e6a23c;
+  }
+  &__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  &__mark {
+    font-size: 12px;
+    color: #e6a23c;
+  }
+  &:focus-visible {
+    outline: 2px solid var(--el-color-primary);
+    outline-offset: 1px;
+  }
+  &--controlled,
+  &--accepted {
+    border-color: #2cba8f;
+    background: #eaf8f4;
+    .v2-chip__dot {
+      background: #2cba8f;
+    }
+    .v2-chip__mark {
+      color: #2cba8f;
+    }
+  }
+  &--pending {
+    border-color: #e6a23c;
+    background: #fdf6ec;
+  }
+  &__id {
+    font-size: 10px;
+    color: #617f98;
+    white-space: nowrap;
+  }
+  &__use,
+  &__keep {
+    @apply text-xs underline ml-2 bg-transparent border-0 cursor-pointer p-0;
+    color: var(--el-color-primary);
+  }
+  /* × inside the pill, after the id/state text */
+  &__clear {
+    flex-shrink: 0;
+    padding: 0 0 0 2px;
+    border: 0;
+    background: transparent;
+    font-size: 12px;
+    line-height: 1;
+    text-decoration: none;
+    color: #617f98;
+    cursor: pointer;
+    &:hover,
+    &:focus-visible {
+      color: var(--el-color-danger);
+    }
+  }
+}
+.v2-carry {
+  @apply text-xs mt-1;
+  color: var(--el-text-color-secondary);
+  button {
+    @apply underline bg-transparent border-0 p-0 cursor-pointer;
+    color: var(--el-color-primary);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .v2-chip,
+  .v2-prov {
+    transition: none;
+  }
+}
+
+/* autocomplete: "no matching terms" row is muted text; selecting it adds the typed text as pending curation */
+.v2-ac-empty {
+  display: block;
+  padding: 6px 0;
+  font-size: 11px;
+  color: #829bb0;
+  white-space: normal;
+  line-height: 16px;
+}
+.v2-ac-empty__action {
+  color: var(--el-color-primary);
+  font-weight: 500;
+}

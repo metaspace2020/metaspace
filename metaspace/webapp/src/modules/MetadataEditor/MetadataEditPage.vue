@@ -19,34 +19,58 @@
           </div>
         </div>
       </fade-transition>
-      <div class="button-bar">
+      <div class="page-header">
+        <div class="page-header__title">
+          <h2 class="page-header__heading">
+            Edit dataset<template v-if="editor && editor.datasetName"> — {{ editor.datasetName }}</template>
+          </h2>
+          <el-tag
+            v-if="editor && editor.v2Mode && !editor.loadFailed"
+            size="small"
+            round
+            :type="editor.v2Mode === 'legacy' ? 'warning' : 'success'"
+          >
+            {{ editor.v2Mode === 'legacy' ? 'Legacy v1 → v2' : 'Schema v2' }}
+          </el-tag>
+        </div>
         <el-button @click="handleCancel"> Cancel </el-button>
         <el-button
           type="primary"
-          :disabled="!loggedIn || state.isSubmitting"
+          :disabled="!loggedIn || state.isSubmitting || (editor && editor.loadFailed)"
           :title="loggedIn ? undefined : 'You must be logged in to perform this operation'"
           @click="handleSubmit"
         >
           Submit
         </el-button>
       </div>
+      <el-alert v-if="state.gapAlert" type="warning" :closable="true" class="mb-4" @close="state.gapAlert = null">
+        <p class="m-0 font-medium">The v2 record is not complete yet.</p>
+        <ul class="my-1 pl-5">
+          <li v-for="field in state.gapAlert.missingRequired" :key="field.key">
+            <a href="#" class="gap-link" @click.prevent="focusGap(field.key)">{{ field.label }}</a> is required and
+            empty
+          </li>
+          <li v-for="err in state.gapAlert.otherErrors" :key="err">{{ err }}</li>
+        </ul>
+      </el-alert>
       <metadata-editor ref="editor" :dataset-id="datasetId" :validation-errors="state.validationErrors" />
     </div>
   </div>
 </template>
 
 <script>
-import { defineComponent, ref, reactive, computed, inject, onMounted } from 'vue'
+import { defineComponent, ref, reactive, computed, inject, onMounted, watch } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
 import MetadataEditor from './MetadataEditor.vue'
+import { mapServerErrors } from './v2/errorPaths'
 import FadeTransition from '../../components/FadeTransition'
 import { currentUserRoleQuery } from '../../api/user'
 import { updateDatasetQuery } from '../../api/metadata'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
 import { getDatasetStatusQuery } from '../../api/dataset'
-import { ElMessage, ElMessageBox } from '../../lib/element-plus'
+import { ElMessage, ElMessageBox, ElTag, ElAlert } from '../../lib/element-plus'
 import { isArray, isEqual, get } from 'lodash-es'
 import config from '../../lib/config'
 
@@ -55,6 +79,8 @@ export default defineComponent({
   components: {
     MetadataEditor,
     FadeTransition,
+    ElTag,
+    ElAlert,
   },
   setup() {
     const store = useStore()
@@ -66,6 +92,7 @@ export default defineComponent({
       errorMessage: null,
       validationErrors: [],
       isSubmitting: false,
+      gapAlert: null,
     })
     const { result: currentUserResult } = useQuery(currentUserRoleQuery, null, {
       fetchPolicy: 'cache-first',
@@ -87,6 +114,21 @@ export default defineComponent({
     onMounted(() => {
       subscribeToMore(getSystemHealthSubscribeToMore)
     })
+
+    /** Scrolls to and focuses a v2 field; MetadataV2Section expands its card for the request. */
+    const focusGap = (key) => {
+      if (key) editor.value?.v2?.requestFocus(key)
+    }
+
+    // the gap alert describes the form at submit time: drop it once every listed gap is resolved
+    watch(
+      () => editor.value?.v2Complete,
+      (complete) => {
+        if (!complete || !state.gapAlert) return
+        const { otherErrors } = state.gapAlert
+        state.gapAlert = otherErrors.length > 0 ? { missingRequired: [], otherErrors } : null
+      }
+    )
 
     const handleCancel = () => {
       router.back()
@@ -206,6 +248,8 @@ export default defineComponent({
           })
         } else if (graphQLError && graphQLError.type === 'failed_validation') {
           state.validationErrors = graphQLError.validation_errors
+          const otherErrors = mapServerErrors(graphQLError.validation_errors || []).otherErrors
+          state.gapAlert = otherErrors.length > 0 ? { missingRequired: [], otherErrors } : null
           if (currentUser.value && currentUser.value.role === 'admin' && (await confirmSkipValidation())) {
             return saveDataset(datasetId, payload, { ...options, skipValidation: true })
           }
@@ -243,16 +287,38 @@ export default defineComponent({
       const formValue = editor.value.getFormValueForSubmit()
 
       if (formValue != null) {
-        const { datasetId, metadataJson, metaspaceOptions, initialMetadataJson, initialMetaspaceOptions } = formValue
+        const {
+          datasetId,
+          mode,
+          metadataV2Json,
+          initialMetadataV2Json,
+          missingRequired,
+          reviewPending,
+          metaspaceOptions,
+          initialMetaspaceOptions,
+        } = formValue
         // Prevent duplicate submissions if user double-clicks
         if (state.isSubmitting) return
-        state.isSubmitting = true
-
         const payload = {}
         const options = {}
-        // Only include changed fields in payload
-        if (metadataJson !== initialMetadataJson) {
-          payload.metadataJson = metadataJson
+        // A legacy (v1) dataset is migrated on every save: submitting it requires a complete v2 record, even
+        // when only other settings changed. A v2 dataset sends metadata only when it changed.
+        const sendMetadata = mode === 'legacy' || metadataV2Json !== initialMetadataV2Json
+        if (sendMetadata && missingRequired.length > 0) {
+          state.gapAlert = { missingRequired, otherErrors: [] }
+          // take the user to the first gap (this also expands a collapsed Metadata card)
+          focusGap(missingRequired[0].key)
+          return
+        }
+        // values still flagged "needs review" never block a save: the user filled what is required and submitted,
+        // so the migrated values count as reviewed
+        if (sendMetadata && reviewPending > 0) {
+          editor.value?.v2?.acknowledgeAll?.()
+        }
+        state.gapAlert = null
+        state.isSubmitting = true
+        if (sendMetadata) {
+          payload.metadataV2Json = metadataV2Json
         }
 
         // Include performEnrichment
@@ -307,6 +373,7 @@ export default defineComponent({
       systemHealth,
       state,
       editor,
+      focusGap,
       handleCancel,
       handleSubmit,
       saveDataset,
@@ -325,13 +392,40 @@ export default defineComponent({
 }
 .content {
   width: 950px;
+  max-width: calc(100% - 32px);
 }
-.button-bar {
+.page-header {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
   > button {
-    width: 100px;
-    padding: 6px;
+    min-width: 80px;
+    margin-left: 0;
+  }
+}
+.page-header__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+  min-width: 0;
+}
+.gap-link {
+  color: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+}
+.page-header__heading {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: #102a42;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 767px) {
+  .page-header {
+    flex-wrap: wrap;
   }
 }
 </style>

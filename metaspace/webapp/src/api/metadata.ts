@@ -5,6 +5,8 @@ export const editDatasetFragment = gql`
   fragment EditDatasetFragment on Dataset {
     id
     metadataJson
+    metadataV2Json
+    uploadDT
     configJson
     description
     isPublic
@@ -39,6 +41,7 @@ export const editDatasetQuery = gql`
       ...EditDatasetFragment
       submitter {
         id
+        name
       }
     }
     currentUser {
@@ -87,8 +90,8 @@ export const datasetSubmitterQuery = gql`
 `
 
 export const fetchAutocompleteSuggestionsQuery = gql`
-  query suggestions($field: String!, $query: String!) {
-    metadataSuggestions(field: $field, query: $query, limit: 5)
+  query suggestions($field: String!, $query: String!, $limit: Int = 5) {
+    metadataSuggestions(field: $field, query: $query, limit: $limit)
   }
 `
 
