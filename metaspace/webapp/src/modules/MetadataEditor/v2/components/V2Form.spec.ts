@@ -3,6 +3,8 @@ import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { V2Form } from './V2Form'
 import { useMetadataV2Form } from '../useMetadataV2Form'
+import { CURATED_VALUES } from '../curatedValues'
+import { FieldKey } from '../types'
 
 const legacyJson = JSON.stringify({
   Sample_Information: { Organism: 'Mus musculus', Organism_Part: 'Liver', Condition: 'Wildtype' },
@@ -49,21 +51,6 @@ describe('V2Form', () => {
     expect(form.envelope.value.document.sample.protocol_description).toBe('hello')
   })
 
-  it('shows the Condition carry-over hint under health status and genetic background on legacy edit', async () => {
-    const form = useMetadataV2Form(async () => [])
-    await form.loadDataset({ id: 'ds', metadataJson: legacyJson })
-    const w = mount(V2Form, { props: { form } })
-    const hints = w.findAllComponents({ name: 'CarryOverHint' })
-    expect(hints).toHaveLength(2)
-    hints[0].vm.$emit('use', 'genetic_background')
-    await nextTick()
-    expect(form.fields.value.genetic_background?.state).toBe('copied')
-    expect(form.envelope.value.document.sample.genetic_background).toEqual({
-      value_free_text: 'Wildtype',
-      curation_state: 'pending_curation',
-    })
-  })
-
   it('focus requests scroll to and open the target field', async () => {
     const form = useMetadataV2Form(async () => [])
     await form.loadNew()
@@ -105,21 +92,6 @@ describe('V2Form', () => {
     expect(field.findComponent({ name: 'ElAutocomplete' }).props('modelValue')).toBe('Mus')
     w.unmount()
     Element.prototype.scrollIntoView = original
-  })
-
-  it('offers "Mark as reviewed" for a review-state textarea and acknowledges on click', async () => {
-    const form = useMetadataV2Form(async () => [])
-    await form.loadDataset({ id: 'ds', metadataJson: legacyJson })
-    expect(form.fields.value.protocol_description?.state).toBe('review')
-    const w = mount(V2Form, { props: { form } })
-    await nextTick()
-    const row = w.find('#v2-field-protocol_description').element.closest('.v2-field')!
-    const keep = row.querySelector('button.v2-chip__keep')
-    expect(keep).not.toBeNull()
-    ;(keep as HTMLElement).click()
-    await nextTick()
-    expect(form.acknowledged.value).toContain('protocol_description')
-    expect(row.querySelector('button.v2-chip__keep')).toBeNull()
   })
 
   it('clears a handled focus request so a remount does not replay it', async () => {
@@ -237,6 +209,34 @@ describe('V2Form', () => {
     expect(form.envelope.value.unmodeled.Pixel_Size).toEqual({ Xaxis: 20, Yaxis: 25 })
   })
 
+  it('after a submit attempt a half-filled composite marks only its empty input', async () => {
+    const form = useMetadataV2Form(async () => [])
+    await form.loadNew()
+    // a new form prefills resolving power (ims.json default); start from an empty pair
+    form.setField('resolving_power', { mz: null, Resolving_Power: null })
+    form.submitAttempted.value = true
+    const w = mount(V2Form, { props: { form } })
+    const rp = () => w.find('#v2-field-resolving_power')
+    // nothing entered: the whole pair is required-empty, both inputs are marked by the field's error state
+    expect(rp().classes()).not.toContain('v2-inline--partial')
+    expect(w.find('[data-field-key="resolving_power"] .v2-field').classes()).toContain('is-error')
+    const [power] = rp().findAllComponents({ name: 'CustomNumberInput' })
+    power.vm.$emit('update:modelValue', 70000)
+    await nextTick()
+    expect(rp().classes()).toContain('v2-inline--partial')
+    const nums = rp().findAll('.v2-inline__num')
+    expect(nums[0].classes()).not.toContain('v2-inline__num--empty')
+    expect(nums[1].classes()).toContain('v2-inline__num--empty')
+    const px = w.find('#v2-field-pixel_size')
+    const [, y] = px.findAllComponents({ name: 'CustomNumberInput' })
+    y.vm.$emit('update:modelValue', 25)
+    await nextTick()
+    const pxNums = w.find('#v2-field-pixel_size').findAll('.v2-inline__num')
+    expect(w.find('#v2-field-pixel_size').classes()).toContain('v2-inline--partial')
+    expect(pxNums[0].classes()).toContain('v2-inline__num--empty')
+    expect(pxNums[1].classes()).not.toContain('v2-inline__num--empty')
+  })
+
   it('typing a new sample type shows the pending chip; × restores the select with the class value', async () => {
     const form = useMetadataV2Form(async () => [])
     await form.loadNew()
@@ -259,17 +259,30 @@ describe('V2Form', () => {
     expect(field.find('.v2-field').classes()).not.toContain('is-error')
     expect(w.find('[data-field-key="sample_stabilisation"]').exists()).toBe(true)
 
-    await field.find('.v2-chip__clear').trigger('click')
+    // same chip structure as OntologyField: non-interactive pill, body and × as siblings
+    expect(chip.attributes('role')).toBeUndefined()
+    const body = chip.find('.v2-chip__body')
+    const clear = chip.find('button[aria-label="Clear value"]')
+    expect(body.text()).toContain('Organoid')
+    expect(body.find('button').exists()).toBe(false)
+    expect(clear.attributes('type')).toBe('button')
+    expect(clear.classes()).toContain('v2-chip__clear')
+    expect(Array.from(chip.element.children)).toEqual([body.element, clear.element])
+    expect(field.findAll('[role="button"]')).toHaveLength(0)
+
+    await clear.trigger('click')
     expect(form.envelope.value.unmodeled.sample_type_other).toBeUndefined()
     expect(select()!.props('value')).toBe('tissue')
     expect(w.find('[data-field-key="sample_type"] .v2-chip').exists()).toBe(false)
   })
 
-  it('community free-text fields suggest values from 1 character; others keep the 3-char rule', async () => {
+  it('community fields suggest from 1 character with their curated list; others keep the 3-char rule', async () => {
     const valueResolver = vi.fn(async (_key: string, q: string) => [{ label: `${q} value` }])
-    const form = useMetadataV2Form(async () => [], valueResolver)
+    const resolver = vi.fn(async () => [])
+    const form = useMetadataV2Form(resolver, valueResolver)
     await form.loadNew()
-    const w = mount(V2Form, { props: { form } })
+    // setupTests.ts stubs el-autocomplete globally; the real one exposes fetchSuggestions
+    const w = mount(V2Form, { props: { form }, global: { stubs: { 'el-autocomplete': false, ElAutocomplete: false } } })
     const field = (key: string) =>
       w.findAllComponents({ name: 'OntologyField' }).find((c) => c.props('inputId') === `v2-field-${key}`)!
     for (const key of [
@@ -281,8 +294,23 @@ describe('V2Form', () => {
       expect(field(key).props('minQueryLength')).toBe(1)
       expect(await field(key).props('fetchValues')('fr')).toEqual([{ label: 'fr value' }])
       expect(valueResolver).toHaveBeenLastCalledWith(key, 'fr')
+      // the field's own lookup runs on a 1-character query
+      valueResolver.mockClear()
+      const cb = vi.fn()
+      await field(key).findComponent({ name: 'ElAutocomplete' }).props('fetchSuggestions')('f', cb)
+      expect(valueResolver).toHaveBeenCalledWith(key, 'f')
+      expect(cb).toHaveBeenLastCalledWith([{ value: 'f value' }])
+      expect(field(key).props('knownValues')).toEqual(CURATED_VALUES[key as FieldKey])
+      expect(field(key).props('knownValues').length).toBeGreaterThan(0)
     }
     expect(field('organism').props('fetchValues')).toBeUndefined()
+    expect(field('organism').props('knownValues')).toEqual([])
     expect(field('organism').props('minQueryLength')).toBe(3)
+    // an ontology field does not look anything up for a 1-character query
+    const cb = vi.fn()
+    await field('organism').findComponent({ name: 'ElAutocomplete' }).props('fetchSuggestions')('m', cb)
+    expect(cb).toHaveBeenLastCalledWith([])
+    expect(resolver).not.toHaveBeenCalled()
+    expect(valueResolver).not.toHaveBeenCalledWith('organism', expect.anything())
   })
 })

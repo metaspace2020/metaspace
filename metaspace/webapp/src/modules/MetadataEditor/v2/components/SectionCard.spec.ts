@@ -35,6 +35,24 @@ describe('SectionCard', () => {
     expect(w.find('button').attributes('aria-expanded')).toBe('false')
   })
 
+  it('points aria-controls at the body only while the body is mounted', async () => {
+    const w = mount(SectionCard, {
+      props: { title: 'T' },
+      slots: { default: '<p id="body">B</p>' },
+    })
+    const toggle = w.find('button.section-card__toggle')
+    const bodyId = toggle.attributes('aria-controls')
+    expect(bodyId).toBeTruthy()
+    expect(w.find(`#${bodyId}`).classes()).toContain('section-card__body')
+    await toggle.trigger('click')
+    expect(w.find('.section-card__body').exists()).toBe(false)
+    expect(toggle.attributes('aria-controls')).toBeUndefined()
+    await toggle.trigger('click')
+    expect(toggle.attributes('aria-controls')).toBe(bodyId)
+    const collapsed = mount(SectionCard, { props: { title: 'T', defaultCollapsed: true } })
+    expect(collapsed.find('button').attributes('aria-controls')).toBeUndefined()
+  })
+
   it('expand() opens a collapsed card', async () => {
     const w = mount(SectionCard, {
       props: { title: 'T', defaultCollapsed: true },

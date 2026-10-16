@@ -1,11 +1,5 @@
 import { projectToLegacyMetadata, upProjectToV2, LegacyMetadata } from './projection'
 
-// Deliberately imports nothing from graphqlTestEnvironment/testDataCreation/Mutation - projection.ts
-// has zero DB/GraphQL-context dependencies, so this suite is genuinely runnable standalone.
-
-// Representative fixtures, chosen to cover the worked examples in design_decisions.md's Condition
-// migration table (single-token values are the "clean" case the composition rule targets) and every
-// field the projection touches - not derived from real submitter data, but shaped like it.
 const fixtures: LegacyMetadata[] = [
   {
     Data_Type: 'Imaging MS',
@@ -56,78 +50,41 @@ const fixtures: LegacyMetadata[] = [
   },
 ]
 
-describe('projection round-trip (fixture-scoped, not the SS11 corpus cutover gate)', () => {
+const baseV2 = upProjectToV2(fixtures[0])
+
+function withSample(overrides: Partial<typeof baseV2.document.sample>) {
+  return {
+    ...baseV2,
+    document: { ...baseV2.document, sample: { ...baseV2.document.sample, ...overrides } },
+  }
+}
+
+describe('projection round-trip', () => {
   it.each(fixtures.map((f, i) => [i, f] as const))('fixture %i: up-project then down-project reproduces the original', (_i, legacy) => {
     const v2 = upProjectToV2(legacy)
     const roundTripped = projectToLegacyMetadata(v2)
-    // upProjectToV2 deliberately funnels the whole `Condition` string into `disease.value_free_text`
-    // (the most faithful single-field placeholder for one legacy string with no real decomposition
-    // available), and renderCondition checks `disease` first - so THIS specific pipeline achieves a
-    // fully lossless round-trip, stronger than the spec's "only Condition may differ" minimum bar.
-    // That allowance is about the general case (a real webapp-authored metadata_v2 document with
-    // health_status/genetic_background/disease genuinely split across three separate fields, which
-    // this synthetic up-projection never produces) - see design_decisions.md's worked-examples table.
     expect(roundTripped).toEqual(legacy)
-  })
-
-  it('does not mistake the round-trip for the corpus-wide cutover gate', () => {
-    // Explicit marker, not a real assertion: this suite covers a handful of hand-written fixtures.
-    // The actual cutover gate (integration spec SS11) is a corpus-wide run against a production DB
-    // snapshot, asserting Condition is the *only* permitted delta across every real stored dataset -
-    // a separate, later exercise this suite does not and cannot stand in for.
-    expect(fixtures.length).toBeGreaterThan(0)
   })
 })
 
-describe('projectToLegacyMetadata: non-tissue sample sentinels (SS3.5)', () => {
-  const baseV2 = upProjectToV2(fixtures[0])
-
+describe('projectToLegacyMetadata: non-tissue sample sentinels', () => {
   it('CellCultureSample renders Organism_Part from cell_line_id, falling back to "cell culture"', () => {
-    const cellCulture = {
-      ...baseV2,
-      document: {
-        ...baseV2.document,
-        sample: {
-          ...baseV2.document.sample,
-          sample_class: 'CellCultureSample' as const,
-          sample_type: 'cell_culture' as const,
-          cell_line_id: { value_label: 'HeLa', curation_state: 'controlled' as const },
-        },
-      },
-    }
+    const cellCulture = withSample({
+      sample_class: 'CellCultureSample',
+      sample_type: 'cell_culture',
+      cell_line_id: { value_label: 'HeLa', curation_state: 'controlled' },
+    })
     expect(projectToLegacyMetadata(cellCulture).Sample_Information.Organism_Part).toBe('HeLa')
 
-    const cellCultureNoLine = {
-      ...cellCulture,
-      document: {
-        ...cellCulture.document,
-        sample: { ...cellCulture.document.sample, cell_line_id: undefined },
-      },
-    }
+    const cellCultureNoLine = withSample({ sample_class: 'CellCultureSample', sample_type: 'cell_culture' })
     expect(projectToLegacyMetadata(cellCultureNoLine).Sample_Information.Organism_Part).toBe('cell culture')
   })
 
   it('PlantSample and EnvironmentalSample render fixed sentinels', () => {
-    const plant = {
-      ...baseV2,
-      document: {
-        ...baseV2.document,
-        sample: { ...baseV2.document.sample, sample_class: 'PlantSample' as const, sample_type: 'plant' as const },
-      },
-    }
+    const plant = withSample({ sample_class: 'PlantSample', sample_type: 'plant' })
     expect(projectToLegacyMetadata(plant).Sample_Information.Organism_Part).toBe('plant')
 
-    const environmental = {
-      ...baseV2,
-      document: {
-        ...baseV2.document,
-        sample: {
-          ...baseV2.document.sample,
-          sample_class: 'EnvironmentalSample' as const,
-          sample_type: 'environmental' as const,
-        },
-      },
-    }
+    const environmental = withSample({ sample_class: 'EnvironmentalSample', sample_type: 'environmental' })
     expect(projectToLegacyMetadata(environmental).Sample_Information.Organism_Part).toBe('environmental')
   })
 
@@ -148,21 +105,13 @@ describe('projectToLegacyMetadata: non-tissue sample sentinels (SS3.5)', () => {
     expect(prep.Tissue_Modification).toBe('N/A')
 
     // tissue keeps the empty string so the legacy validation still reports a missing value
-    const tissue = {
-      ...baseV2,
-      document: {
-        ...baseV2.document,
-        sample: { ...baseV2.document.sample, sample_stabilisation: undefined, tissue_modification: undefined },
-      },
-    }
+    const tissue = withSample({ sample_stabilisation: undefined, tissue_modification: undefined })
     expect(projectToLegacyMetadata(tissue).Sample_Preparation.Sample_Stabilisation).toBe('')
     expect(projectToLegacyMetadata(tissue).Sample_Preparation.Tissue_Modification).toBe('')
   })
 })
 
-describe('projectToLegacyMetadata: polarity CURIE map (SS3.3)', () => {
-  const baseV2 = upProjectToV2(fixtures[0])
-
+describe('projectToLegacyMetadata: polarity CURIE map', () => {
   it('maps MS:1000130 to Positive and MS:1000129 to Negative from the resolved CURIE, ignoring the label', () => {
     const positive = {
       ...baseV2,
@@ -196,16 +145,7 @@ describe('projectToLegacyMetadata: polarity CURIE map (SS3.3)', () => {
   })
 })
 
-describe('projectToLegacyMetadata: Condition composition priority (SS3.4)', () => {
-  const baseV2 = upProjectToV2(fixtures[0])
-
-  function withSample(overrides: Partial<typeof baseV2.document.sample>) {
-    return {
-      ...baseV2,
-      document: { ...baseV2.document, sample: { ...baseV2.document.sample, ...overrides } },
-    }
-  }
-
+describe('projectToLegacyMetadata: Condition composition priority', () => {
   it('prefers a resolved disease label over health_status and genetic_background', () => {
     const v2 = withSample({
       disease: { value_label: 'Alzheimer disease', value_ontology_id: 'MONDO:0004975', curation_state: 'controlled' },

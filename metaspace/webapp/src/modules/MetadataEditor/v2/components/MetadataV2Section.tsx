@@ -1,26 +1,24 @@
 import { defineComponent, PropType, ref, toRaw, watch } from 'vue'
 import { ElButton, ElTag } from '../../../../lib/element-plus'
 import { MetadataV2Form } from '../useMetadataV2Form'
-import { FieldKey, FieldReport } from '../types'
+import { FieldKey } from '../types'
 import { copyLegacyJson, exportLegacyJson, LegacyRecordView, legacyProvenance } from './LegacyRecordView'
 import { RequiredCounter, SectionCard } from './SectionCard'
 import { SectionRow } from './SectionRow'
 import { SchemaSwitch } from './SchemaSwitch'
-import { UnmappedPanel } from './UnmappedPanel'
 import { V2Form } from './V2Form'
 import './V2Form.scss'
 
 const LEGEND: { label: string; color: string }[] = [
-  { label: 'Migrated', color: '#2cba8f' },
-  { label: 'Needs review', color: '#e6a23c' },
-  { label: 'Required, empty', color: '#f56c6c' },
-  { label: 'New in v2', color: '#1187ee' },
+  { label: 'Migrated', color: 'var(--mv2-success)' },
+  { label: 'Required, empty', color: 'var(--mv2-danger)' },
+  { label: 'New in v2', color: 'var(--mv2-accent)' },
 ]
 
 /**
  * The "Metadata" card: schema switch (when a legacy record exists), description, the v2 form or the
- * read-only legacy record, and the unmapped-values panel. Slots: `description` (editable description row),
- * `headerActions` (e.g. "Copy from another dataset…", shown in the header before the schema pill). The migration banner lives outside the card
+ * read-only legacy record. Slots: `description` (editable description row),
+ * `headerActions` (e.g. "Copy from another dataset…", shown in the header before the required counter). The migration banner lives outside the card
  * (MetadataEditor renders it above).
  */
 export const MetadataV2Section = defineComponent({
@@ -44,16 +42,6 @@ export const MetadataV2Section = defineComponent({
       },
       { flush: 'sync' }
     )
-
-    const copiedTargets = () => {
-      const out: Partial<Record<string, FieldKey>> = {}
-      ;(Object.entries(getForm().fields.value) as [FieldKey, FieldReport | undefined][]).forEach(([key, report]) => {
-        if (report?.state === 'copied' && report.source?.legacyKey) {
-          out[report.source.legacyKey] = key
-        }
-      })
-      return out
-    }
 
     return () => {
       const form = getForm()
@@ -88,11 +76,7 @@ export const MetadataV2Section = defineComponent({
               </span>
             ))}
           </span>
-        ) : (
-          <ElTag key="pill" size="small" type="info" round>
-            Schema v2
-          </ElTag>
-        ),
+        ) : null,
         !legacyView && <RequiredCounter key="counter" filled={s.requiredFilled} total={s.requiredTotal} bar />,
       ]
 
@@ -112,7 +96,11 @@ export const MetadataV2Section = defineComponent({
                   size="small"
                   round
                   class="v2-legacy-tag"
-                  style="background: #4f6b84; border-color: #4f6b84; color: #fff"
+                  style={{
+                    background: 'var(--mv2-badge-legacy)',
+                    borderColor: 'var(--mv2-badge-legacy)',
+                    color: 'var(--mv2-text-inverse)',
+                  }}
                 >
                   LEGACY · READ-ONLY
                 </ElTag>
@@ -142,33 +130,14 @@ export const MetadataV2Section = defineComponent({
                   key="legacy"
                   legacy={legacy}
                   fields={form.fields.value}
-                  unmapped={form.unmapped.value.filter(
-                    (u) => !form.copied.value.includes(u.legacyKey) && !form.dismissed.value.includes(u.legacyKey)
-                  )}
+                  unmapped={form.unmapped.value}
                   readOnlyProvenance={!isLegacy}
                   descriptionText={props.descriptionText}
                   onJump={(key: FieldKey) => form.requestFocus(key)}
-                  onCopy={(legacyKey: string) => {
-                    const row = form.unmapped.value.find((u) => u.legacyKey === legacyKey)
-                    if (row) form.requestFocus(row.targets[0], row.raw)
-                  }}
                   onSearch={(raw: string) => form.requestFocus('instrument_model', raw)}
                 />
               ) : (
                 <V2Form key="v2" form={form} />
-              ),
-              isLegacy && form.unmapped.value.length > 0 && !legacyView && (
-                <UnmappedPanel
-                  key="unmapped"
-                  rows={form.unmapped.value}
-                  copied={form.copied.value}
-                  dismissed={form.dismissed.value}
-                  copiedTargets={copiedTargets()}
-                  onCopy={(legacyKey: string, target: FieldKey) => form.copyUnmapped(legacyKey, target)}
-                  onDismiss={(legacyKey: string) => form.dismiss(legacyKey)}
-                  onRestore={(legacyKey: string) => form.restoreUnmapped(legacyKey)}
-                  onUndo={(target: FieldKey) => form.undoCopy(target)}
-                />
               ),
             ],
           }}

@@ -1,7 +1,7 @@
 import { defineComponent, PropType, ref } from 'vue'
 import './SectionCard.scss'
 
-export type SectionCardVariant = 'default' | 'legacy'
+type SectionCardVariant = 'default' | 'legacy'
 
 let cardSeq = 0
 
@@ -33,7 +33,8 @@ export const SectionCard = defineComponent({
             type="button"
             class="section-card__toggle"
             aria-expanded={!collapsed.value}
-            aria-controls={bodyId}
+            // the body is unmounted while collapsed, so only reference it while it exists
+            aria-controls={collapsed.value ? undefined : bodyId}
             onClick={() => (collapsed.value = !collapsed.value)}
           >
             <span class="section-card__caret" aria-hidden="true">

@@ -1,9 +1,11 @@
+@import './tokens';
+
 .section-card {
-  border: 1px solid #dae4ec;
+  border: 1px solid var(--mv2-border);
   border-radius: 6px;
   overflow: hidden;
   margin-bottom: 14px;
-  background: #fff;
+  background: var(--mv2-surface);
 }
 .section-card__header {
   display: flex;
@@ -14,10 +16,10 @@
   box-sizing: border-box;
   min-height: 46px;
   padding: 8px 16px;
-  background: #f1f5f8;
+  background: var(--mv2-surface-muted);
 }
 .section-card--legacy .section-card__header {
-  background: repeating-linear-gradient(135deg, #e6ecf1 0 6px, #f1f5f8 6px 12px);
+  background: repeating-linear-gradient(135deg, var(--mv2-surface-stripe) 0 6px, var(--mv2-surface-muted) 6px 12px);
 }
 .section-card__toggle {
   display: inline-flex;
@@ -35,16 +37,16 @@
 }
 .section-card__caret {
   font-size: 11px;
-  color: #617f98;
+  color: var(--mv2-text-muted);
 }
 .section-card__title {
   font-size: 14px;
   font-weight: 500;
-  color: #102a42;
+  color: var(--mv2-text);
 }
 .section-card__subtitle {
   font-size: 12px;
-  color: #617f98;
+  color: var(--mv2-text-muted);
 }
 .section-card__right {
   margin-left: auto;
@@ -53,7 +55,7 @@
   flex-wrap: wrap;
   gap: 8px 12px;
   font-size: 11px;
-  color: #617f98;
+  color: var(--mv2-text-muted);
 }
 .section-card__body {
   padding: 16px;
@@ -62,14 +64,14 @@
   gap: 14px;
 }
 .section-card--legacy .section-card__body {
-  background: #fafbfc;
+  background: var(--mv2-surface-legacy);
 }
 .section-card__progress {
   display: inline-block;
   width: 90px;
   height: 6px;
   border-radius: 3px;
-  background: #dae4ec;
+  background: var(--mv2-border);
   overflow: hidden;
   > span {
     display: block;
@@ -77,7 +79,7 @@
     background: var(--el-color-primary);
   }
   &.is-complete > span {
-    background: #2cba8f;
+    background: var(--mv2-success);
   }
 }
 
@@ -86,7 +88,7 @@
   gap: 20px;
 }
 .section-row + .section-row {
-  border-top: 1px solid #dae4ec;
+  border-top: 1px solid var(--mv2-border);
   padding-top: 14px;
 }
 .section-row__label {
@@ -97,7 +99,7 @@
   font-size: 13px;
   font-weight: 500;
   line-height: 20px;
-  color: #102a42;
+  color: var(--mv2-text);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -105,7 +107,7 @@
 .section-row__help {
   font-size: 11px;
   line-height: 15px;
-  color: #617f98;
+  color: var(--mv2-text-muted);
 }
 .section-row__body {
   flex: 1;
@@ -126,7 +128,7 @@
       font-size: 12px;
       line-height: 16px;
       margin-bottom: 4px;
-      color: #324e67;
+      color: var(--mv2-text-label);
     }
   }
   /* room for the absolutely positioned error message */
@@ -136,7 +138,7 @@
 }
 .section-grid__rule {
   grid-column: 1 / -1;
-  border-top: 1px dashed #dae4ec;
+  border-top: 1px dashed var(--mv2-border);
 }
 @media (max-width: 767px) {
   .section-row {
@@ -150,12 +152,6 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .section-card__toggle {
-    transition: none;
-  }
-}
-
 /* a container of SectionRows (V2Form, LegacyRecordView) placed after other rows in a card body */
 .section-rows {
   display: flex;
@@ -163,11 +159,11 @@
   gap: 14px;
 }
 .section-card__body > * + .section-rows > .section-row:first-child {
-  border-top: 1px solid #dae4ec;
+  border-top: 1px solid var(--mv2-border);
   padding-top: 14px;
 }
 .section-rows + .section-row {
-  border-top: 1px solid #dae4ec;
+  border-top: 1px solid var(--mv2-border);
   padding-top: 14px;
 }
 /* small grey help line under a field */
@@ -175,7 +171,7 @@
   margin-top: 4px;
   font-size: 10.5px;
   line-height: 14px;
-  color: #829bb0;
+  color: var(--mv2-text-subtle);
 }
 .section-row .metadata-help-icon {
   cursor: pointer;

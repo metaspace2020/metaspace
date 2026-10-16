@@ -48,11 +48,7 @@ describe('FieldRow', () => {
     expect(w.text()).toContain('analyzer type')
   })
 
-  it('shows copied · review, new in v2 and server errors', async () => {
-    const copied = mount(FieldRow, {
-      props: { def: fieldByKey('disease'), required: false, inputId: 'a', report: { state: 'copied' } },
-    })
-    expect(copied.find('.v2-prov--copied').text()).toBe('copied · review')
+  it('shows new in v2 and server errors', async () => {
     const fresh = mount(FieldRow, {
       props: { def: fieldByKey('sex'), required: false, inputId: 'b', report: { state: 'new' } },
     })

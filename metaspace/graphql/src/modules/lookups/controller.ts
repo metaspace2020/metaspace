@@ -23,6 +23,32 @@ const ONTOLOGY_FUZZY_TIMEOUT_MS = 1500
 const ONTOLOGY_FUZZY_MAX_IN_FLIGHT = 3
 let fuzzyInFlight = 0
 
+// Rank of a candidate term against the query, lower is better: 1 exact label, 2 exact synonym, 3 label prefix,
+// 4 any other match. `queryParam` holds the lower-cased query, `prefixParam` the escaped LIKE prefix pattern.
+const ontologyMatchRank = (queryParam: string, prefixParam: string) => `CASE
+          WHEN lower(label) = ${queryParam} THEN 1
+          WHEN EXISTS (SELECT 1 FROM unnest(synonyms) AS synonym WHERE lower(synonym) = ${queryParam}) THEN 2
+          WHEN lower(label) LIKE ${prefixParam} THEN 3
+          ELSE 4
+        END`
+
+// Merges ranked rows keeping the better-ranked copy of a term found twice, sorted by rank, then shortest label.
+const mergeRankedSuggestions = (current: any[], extra: any[], rowLimit: number): any[] => {
+  const byCurie = new Map<string, any>()
+  for (const row of [...current, ...extra]) {
+    const seen = byCurie.get(row.curie)
+    if (seen === undefined || row.rank < seen.rank) {
+      byCurie.set(row.curie, row)
+    }
+  }
+  return Array.from(byCurie.values())
+    .sort((a, b) => a.rank - b.rank || a.label.length - b.label.length || a.label.localeCompare(b.label))
+    .slice(0, rowLimit)
+}
+
+/** Drops the internal `rank` column so cached and returned rows carry only OntologyTerm fields. */
+const withoutRank = (row: any) => _.omit(row, 'rank')
+
 // Suggestions only change when the term table is re-imported (an admin script, run rarely), and short
 // queries repeat across users, so each distinct (slot, query, limit) is computed once per TTL. A very
 // common token like "meth" matches 100k CHEBI rows and costs ~0.5 s uncached; cached it costs nothing.
@@ -151,40 +177,59 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     // Escape ILIKE metacharacters so a literal '%' or '_' can't match the whole subtree.
     const escaped = trimmedQuery.replace(/[\\%_]/g, '\\$&')
     const rowLimit = Math.min(Math.max(limit || 10, 1), MAX_ONTOLOGY_SUGGESTIONS)
-    // Two stages, both ranked shortest label first. Stage 1 is a label prefix match through the plain
-    // btree on lower(label), cheap at any table size and what people usually type ("homo s"). Stage 2
-    // runs only when prefixes don't fill the limit: substring matches on label or synonyms through the
-    // trigram GIN indexes. Each stage sorts at most ONTOLOGY_CANDIDATE_LIMIT matching rows: a
-    // low-information token like "sp." matches 1.4M NCBITaxon rows, and sorting them all costs
-    // seconds, while the first thousand in index order give an equally useful shortlist.
-    return await cachedOntologySuggestions(`${slot}\0${trimmedQuery.toLowerCase()}\0${rowLimit}`, async() => {
+    // Stage 1: label prefixes via the btree on lower(label), cheap at any table size. If no exact label
+    // came back, a probe finds exact synonyms (e.g. "hippocampus" on hippocampal formation), which a page
+    // of prefix matches would otherwise hide. Stage 2, only while the limit is unfilled: label or synonym
+    // substrings. Probe and stage 2 use the trigram GIN indexes. Every query sorts at most
+    // ONTOLOGY_CANDIDATE_LIMIT rows ("sp." matches 1.4M NCBITaxon rows; sorting them all costs seconds).
+    const lowerQuery = trimmedQuery.toLowerCase()
+    const prefixPattern = `${escaped.toLowerCase()}%`
+    const substringPattern = `%${escaped}%`
+    return await cachedOntologySuggestions(`${slot}\0${lowerQuery}\0${rowLimit}`, async() => {
       const prefixRows: any[] = await ctx.entityManager.query(`
-        SELECT curie, label, synonyms, ontology, subtree, obsolete FROM (
+        SELECT curie, label, synonyms, ontology, subtree, obsolete, ${ontologyMatchRank('$4', '$2')} AS rank FROM (
           SELECT curie, label, synonyms, ontology, subtree, obsolete
           FROM public.ontology_term
           WHERE subtree = ANY($1) AND obsolete = false AND lower(label) LIKE $2
           LIMIT ${ONTOLOGY_CANDIDATE_LIMIT}
         ) candidates
-        ORDER BY length(label) ASC, label ASC
+        ORDER BY rank ASC, length(label) ASC, label ASC
         LIMIT $3`,
-      [subtrees, `${escaped.toLowerCase()}%`, rowLimit])
-      if (prefixRows.length >= rowLimit) {
-        return prefixRows
+      [subtrees, prefixPattern, rowLimit, lowerQuery])
+      let rows = prefixRows
+      if (!prefixRows.some(row => row.rank === 1)) {
+        const exactSynonymRows: any[] = await ctx.entityManager.query(`
+          SELECT curie, label, synonyms, ontology, subtree, obsolete, 2 AS rank FROM (
+            SELECT curie, label, synonyms, ontology, subtree, obsolete
+            FROM public.ontology_term
+            WHERE subtree = ANY($1) AND obsolete = false AND ontology_term_synonym_text(synonyms) ILIKE $2
+            LIMIT ${ONTOLOGY_CANDIDATE_LIMIT}
+          ) candidates
+          WHERE EXISTS (SELECT 1 FROM unnest(synonyms) AS synonym WHERE lower(synonym) = $3)
+          ORDER BY length(label) ASC, label ASC
+          LIMIT $4`,
+        [subtrees, substringPattern, lowerQuery, rowLimit])
+        rows = mergeRankedSuggestions(rows, exactSynonymRows, rowLimit)
       }
+      if (rows.length >= rowLimit) {
+        return rows.map(withoutRank)
+      }
+      // The rank's prefix branch never fires here: the WHERE excludes label prefixes.
       const substringRows: any[] = await ctx.entityManager.query(`
-        SELECT curie, label, synonyms, ontology, subtree, obsolete FROM (
-          SELECT curie, label, synonyms, ontology, subtree, obsolete, (label ILIKE $3) AS label_hit
+        SELECT curie, label, synonyms, ontology, subtree, obsolete, ${ontologyMatchRank('$5', '$2')} AS rank FROM (
+          SELECT curie, label, synonyms, ontology, subtree, obsolete
           FROM public.ontology_term
           WHERE subtree = ANY($1) AND obsolete = false
             AND NOT (lower(label) LIKE $2)
             AND (label ILIKE $3 OR ontology_term_synonym_text(synonyms) ILIKE $3)
           LIMIT ${ONTOLOGY_CANDIDATE_LIMIT}
         ) candidates
-        ORDER BY label_hit DESC, length(label) ASC, label ASC
+        ORDER BY rank ASC, length(label) ASC, label ASC
         LIMIT $4`,
-      [subtrees, `${escaped.toLowerCase()}%`, `%${escaped}%`, rowLimit - prefixRows.length])
-      if (prefixRows.length + substringRows.length > 0) {
-        return [...prefixRows, ...substringRows]
+      [subtrees, prefixPattern, substringPattern, rowLimit, lowerQuery])
+      rows = mergeRankedSuggestions(rows, substringRows, rowLimit)
+      if (rows.length > 0) {
+        return rows.map(withoutRank)
       }
       // Stage 3, typos: nothing contains the text, so fall back to trigram similarity (`%` uses
       // pg_trgm.similarity_threshold, 0.3 by default) - "melanona" -> melanoma. Useful typos cost

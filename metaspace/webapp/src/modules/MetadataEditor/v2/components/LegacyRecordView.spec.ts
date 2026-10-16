@@ -1,4 +1,3 @@
-// metaspace/webapp/src/modules/MetadataEditor/v2/components/LegacyRecordView.spec.ts
 import { mount } from '@vue/test-utils'
 import { LegacyRecordView, legacyProvenance } from './LegacyRecordView'
 
@@ -26,9 +25,9 @@ const legacy = {
 }
 const fields = {
   organism: { state: 'migrated' as const },
-  anatomical_site_coarse: { state: 'review' as const },
-  maldi_matrix_application: { state: 'review' as const, note: 'device → method' },
-  solvent: { state: 'review' as const, note: 'concentration kept in Protocol description' },
+  anatomical_site_coarse: { state: 'empty' as const },
+  maldi_matrix_application: { state: 'migrated' as const, note: 'device → method' },
+  solvent: { state: 'migrated' as const, note: 'concentration kept in Protocol description' },
   instrument_model: {
     state: 'required-empty' as const,
     source: { legacyKey: 'MS_Analysis.Analyzer', raw: 'Orbitrap' },
@@ -36,22 +35,8 @@ const fields = {
   polarity: { state: 'migrated' as const },
 }
 const unmapped = [
-  {
-    legacyKey: 'Sample_Information.Condition',
-    label: 'Condition',
-    raw: 'Wildtype',
-    hint: '',
-    targets: ['disease' as const],
-    safeToDismiss: false,
-  },
-  {
-    legacyKey: 'Sample_Information.Sample_Growth_Conditions',
-    label: 'Sample growth conditions',
-    raw: 'None',
-    hint: '',
-    targets: ['protocol_description' as const],
-    safeToDismiss: true,
-  },
+  { legacyKey: 'Sample_Information.Condition' },
+  { legacyKey: 'Sample_Information.Sample_Growth_Conditions' },
 ]
 const mountView = () =>
   mount(LegacyRecordView, {
@@ -73,24 +58,19 @@ describe('LegacyRecordView', () => {
     expect(w.text()).toContain('85 × 85 µm')
     const tags = w.findAll('button.v2-maptag').map((t) => t.text())
     expect(tags).toContain('mapped → Organism')
-    expect(tags).toContain('review → Anatomical site (coarse)')
+    expect(tags).toContain('not migrated → Anatomical site (coarse)')
     expect(tags).toContain('partly → MALDI matrix application + Protocol')
     expect(tags).toContain('partly → Solvent + Protocol')
     expect(w.findAll('.v2-maptag--none').map((t) => t.text())).toEqual(['no v2 field', 'no v2 field', 'no v2 field'])
   })
 
-  it('emits jump, copy and search', async () => {
+  it('emits jump and search', async () => {
     const w = mountView()
     await w
       .findAll('button.v2-maptag')
       .find((b) => b.text() === 'mapped → Organism')!
       .trigger('click')
     expect(w.emitted('jump')![0]).toEqual(['organism'])
-    await w
-      .findAll('button.v2-copy')
-      .find((b) => b.text().includes('Copy to'))!
-      .trigger('click')
-    expect(w.emitted('copy')![0]).toEqual(['Sample_Information.Condition'])
     await w.find('button.v2-search').trigger('click')
     expect(w.emitted('search')![0]).toEqual(['Orbitrap'])
   })
@@ -136,8 +116,50 @@ describe('LegacyRecordView', () => {
         readOnlyProvenance: true,
       },
     })
-    expect(w.find('button.v2-copy').exists()).toBe(false)
     expect(w.find('button.v2-maptag').exists()).toBe(false)
     expect(w.text()).toContain('Sample information')
+  })
+  it('renders partial or null numeric pairs without "undefined" or "null"', () => {
+    const cases: [Record<string, unknown> | null, Record<string, unknown> | null, string, string][] = [
+      [{ Resolving_Power: 140000 }, { Xaxis: 85 }, '140000 @ — m/z', '85 × — µm'],
+      [{ mz: 200 }, { Yaxis: 85 }, '— @ 200 m/z', '— × 85 µm'],
+      [{ mz: null, Resolving_Power: null }, { Xaxis: null, Yaxis: null }, '—', '—'],
+      [null, null, '—', '—'],
+      [{}, {}, '—', '—'],
+    ]
+    for (const [rp, px, rpText, pxText] of cases) {
+      const w = mount(LegacyRecordView, {
+        props: {
+          legacy: { ...legacy, MS_Analysis: { ...legacy.MS_Analysis, Detector_Resolving_Power: rp, Pixel_Size: px } },
+          fields,
+          unmapped,
+        },
+      })
+      const values = w.findAll('.v2-legacy__value').map((v) => v.text())
+      expect(values).toContain(rpText)
+      expect(values).toContain(pxText)
+      expect(w.text()).not.toContain('undefined')
+      expect(w.text()).not.toContain('null')
+    }
+  })
+
+  it('shows no Search button when the analyzer has no raw value to search', () => {
+    for (const source of [{ legacyKey: 'MS_Analysis.Analyzer', raw: '' }, undefined]) {
+      const w = mount(LegacyRecordView, {
+        props: {
+          legacy,
+          fields: { ...fields, instrument_model: { state: 'required-empty' as const, source } },
+          unmapped,
+        },
+      })
+      expect(w.find('button.v2-search').exists()).toBe(false)
+      expect(w.text()).not.toContain('Search ""')
+    }
+  })
+
+  it('mapping tag buttons get a focus-visible ring', () => {
+    const w = mountView()
+    const tag = w.findAll('button.v2-maptag')[0]
+    expect(tag.classes()).toEqual(expect.arrayContaining(['focus-visible:outline-none', 'focus-visible:ring-2']))
   })
 })

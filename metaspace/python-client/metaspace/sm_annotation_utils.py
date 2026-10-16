@@ -1699,6 +1699,15 @@ class ScoringModel:
         return self._info[item]
 
 
+def _metadata_v2_input(metadata_v2: Optional[Union[str, dict]]) -> dict:
+    """Returns the GraphQL input entry for a v2 metadata record, or {} when it is None."""
+    if metadata_v2 is None:
+        return {}
+    if isinstance(metadata_v2, str):
+        return {'metadataV2Json': metadata_v2}
+    return {'metadataV2Json': json.dumps(metadata_v2)}
+
+
 class SMInstance(object):
     """Client class for communication with the Metaspace API."""
 
@@ -1965,6 +1974,7 @@ class SMInstance(object):
         input_path: Optional[str] = None,
         description: Optional[str] = None,
         perform_enrichment: Optional[bool] = False,
+        metadata_v2: Optional[Union[str, dict]] = None,
     ) -> str:
         """Submit a dataset for processing in METASPACE.
 
@@ -1973,7 +1983,8 @@ class SMInstance(object):
         :param name: New dataset name
         :param metadata: A JSON string or Python dict containing metadata. This must exactly follow
             the expected format - see the `submit dataset example notebook`_.
-
+            If ``metadata_v2`` is not given, the server converts this metadata to the v2 metadata
+            schema ("up-projection"), and the converted values are marked as pending curation.
         :param is_public: If True, the dataset will be publicly visible.
             If False, it will only be visible to yourself, other members of your Group,
             METASPACE administrators, and members of any Projects you add it to
@@ -1995,6 +2006,9 @@ class SMInstance(object):
             When input_path is suppled, imzml_fn and ibd_fn can be set to None.
         :param description: Optional text to describe the dataset
         :param perform_enrichment: Optional enable LION for dataset.
+        :param metadata_v2: Optional JSON string or Python dict with a curated record in the v2
+            metadata schema, sent as ``metadataV2Json`` and used directly instead of the server
+            up-projecting ``metadata``.
 
         :return: The newly created dataset ID
 
@@ -2047,6 +2061,7 @@ class SMInstance(object):
                 'inputPath': input_path,
                 'description': description_json,
                 'metadataJson': json.dumps(metadata),
+                **_metadata_v2_input(metadata_v2),
                 'sizeHashJson': json.dumps(file_size) if file_size else None,
                 'databaseIds': database_ids,
                 'adducts': adducts,
@@ -2089,6 +2104,7 @@ class SMInstance(object):
         reprocess: Optional[bool] = None,
         force: bool = False,
         perform_enrichment: Optional[bool] = False,
+        metadata_v2: Optional[Union[str, dict]] = None,
     ):
         """Updates a dataset's metadata and/or processing settings. Only specify the fields that
         should change. All arguments should be specified as keyword arguments,
@@ -2101,7 +2117,9 @@ class SMInstance(object):
 
         :param id: (Required) ID of an existing dataset
         :param name: New dataset name
-        :param metadata: A JSON string or Python dict containing updated metadata
+        :param metadata: A JSON string or Python dict containing updated metadata. If
+            ``metadata_v2`` is not given, the server up-projects it to the v2 metadata schema and
+            marks the converted values as pending curation.
         :param databases: List of databases to process with, either as IDs or (name, version)
             tuples, e.g. [22, ('LipidMaps', '2017-12-12')]
         :param adducts: List of adducts. e.g. ['-H', '+Cl']
@@ -2125,6 +2143,9 @@ class SMInstance(object):
             True: Allow changes to datasets that are already being processed. This should be used
             with caution, as it can cause errors or inconsistent results.
         :param perform_enrichment: Optional enable LION for dataset.
+        :param metadata_v2: Optional JSON string or Python dict with a curated record in the v2
+            metadata schema, sent as ``metadataV2Json`` and used directly instead of the server
+            up-projecting ``metadata``.
         """
 
         input_field = {}
@@ -2136,6 +2157,7 @@ class SMInstance(object):
                 input_field['metadataJson'] = metadata
             else:
                 input_field['metadataJson'] = json.dumps(metadata)
+        input_field.update(_metadata_v2_input(metadata_v2))
         if databases is not None:
             input_field['databaseIds'] = [self._gqclient.map_database_to_id(db) for db in databases]
         if adducts is not None:

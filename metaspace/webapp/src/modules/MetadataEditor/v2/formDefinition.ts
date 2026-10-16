@@ -1,4 +1,3 @@
-// metaspace/webapp/src/modules/MetadataEditor/v2/formDefinition.ts
 import { FieldKey, SampleType } from './types'
 
 export type FieldTier = 'core' | 'recommended' | 'advanced'

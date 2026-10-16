@@ -24,14 +24,6 @@
           <h2 class="page-header__heading">
             Edit dataset<template v-if="editor && editor.datasetName"> — {{ editor.datasetName }}</template>
           </h2>
-          <el-tag
-            v-if="editor && editor.v2Mode && !editor.loadFailed"
-            size="small"
-            round
-            :type="editor.v2Mode === 'legacy' ? 'warning' : 'success'"
-          >
-            {{ editor.v2Mode === 'legacy' ? 'Legacy v1 → v2' : 'Schema v2' }}
-          </el-tag>
         </div>
         <el-button @click="handleCancel"> Cancel </el-button>
         <el-button
@@ -44,7 +36,7 @@
         </el-button>
       </div>
       <el-alert v-if="state.gapAlert" type="warning" :closable="true" class="mb-4" @close="state.gapAlert = null">
-        <p class="m-0 font-medium">The v2 record is not complete yet.</p>
+        <p class="m-0 font-medium">The metadata is not complete yet.</p>
         <ul class="my-1 pl-5">
           <li v-for="field in state.gapAlert.missingRequired" :key="field.key">
             <a href="#" class="gap-link" @click.prevent="focusGap(field.key)">{{ field.label }}</a> is required and
@@ -70,7 +62,7 @@ import { currentUserRoleQuery } from '../../api/user'
 import { updateDatasetQuery } from '../../api/metadata'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
 import { getDatasetStatusQuery } from '../../api/dataset'
-import { ElMessage, ElMessageBox, ElTag, ElAlert } from '../../lib/element-plus'
+import { ElMessage, ElMessageBox, ElAlert } from '../../lib/element-plus'
 import { isArray, isEqual, get } from 'lodash-es'
 import config from '../../lib/config'
 
@@ -79,7 +71,6 @@ export default defineComponent({
   components: {
     MetadataEditor,
     FadeTransition,
-    ElTag,
     ElAlert,
   },
   setup() {
@@ -293,7 +284,6 @@ export default defineComponent({
           metadataV2Json,
           initialMetadataV2Json,
           missingRequired,
-          reviewPending,
           metaspaceOptions,
           initialMetaspaceOptions,
         } = formValue
@@ -310,10 +300,18 @@ export default defineComponent({
           focusGap(missingRequired[0].key)
           return
         }
-        // values still flagged "needs review" never block a save: the user filled what is required and submitted,
-        // so the migrated values count as reviewed
-        if (sendMetadata && reviewPending > 0) {
-          editor.value?.v2?.acknowledgeAll?.()
+        // For arrays (molDBs, adducts, projectIds) ignore changes in order
+        const changedOptions = Object.keys(metaspaceOptions).filter((key) => {
+          const oldVal = initialMetaspaceOptions[key]
+          const newVal = metaspaceOptions[key]
+          return isArray(oldVal) && isArray(newVal)
+            ? !isEqual(oldVal.slice().sort(), newVal.slice().sort())
+            : !isEqual(oldVal, newVal)
+        })
+        // an untouched v2 dataset: nothing to send, behave like Cancel
+        if (!sendMetadata && changedOptions.length === 0) {
+          handleCancel()
+          return
         }
         state.gapAlert = null
         state.isSubmitting = true
@@ -326,17 +324,8 @@ export default defineComponent({
           payload.performEnrichment = metaspaceOptions.performEnrichment
         }
 
-        Object.keys(metaspaceOptions).forEach((key) => {
-          const oldVal = initialMetaspaceOptions[key]
-          const newVal = metaspaceOptions[key]
-          // For arrays (molDBs, adducts, projectIds) ignore changes in order
-          if (
-            isArray(oldVal) && isArray(newVal)
-              ? !isEqual(oldVal.slice().sort(), newVal.slice().sort())
-              : !isEqual(oldVal, newVal)
-          ) {
-            payload[key] = newVal
-          }
+        changedOptions.forEach((key) => {
+          payload[key] = metaspaceOptions[key]
         })
 
         try {

@@ -19,22 +19,14 @@ const legacyJson = JSON.stringify({
     Pixel_Size: { Xaxis: 50, Yaxis: 50 },
   },
 })
-const stubs = {
-  ElDropdown: { name: 'ElDropdown', template: '<div><slot /><slot name="dropdown" /></div>' },
-  ElDropdownMenu: { template: '<div><slot /></div>' },
-  ElDropdownItem: { template: '<div><slot /></div>' },
-}
-
 describe('MetadataV2Section', () => {
-  it('new upload: pill, counter, no banner, no switcher, description row first', async () => {
+  it('new upload: counter, no banner, no switcher, description row first', async () => {
     const form = useMetadataV2Form(async () => [])
     await form.loadNew()
     const w = mount(MetadataV2Section, {
       props: { form },
       slots: { description: '<div id="desc">D</div>' },
-      global: { stubs },
     })
-    expect(w.text()).toContain('Schema v2')
     // only the default resolving power: a new form has no sample type until one is picked
     expect(w.text()).toContain('1 of 10 required')
     expect(w.findComponent({ name: 'MigrationBanner' }).exists()).toBe(false)
@@ -47,14 +39,12 @@ describe('MetadataV2Section', () => {
     expect(first.find('#desc').exists()).toBe(true)
   })
 
-  it('legacy edit: switcher, unmapped panel; switching views keeps the body state', async () => {
+  it('legacy edit: switcher; switching views keeps the body state', async () => {
     const form = useMetadataV2Form(async () => [])
     await form.loadDataset({ id: 'ds', metadataJson: legacyJson })
-    const w = mount(MetadataV2Section, { props: { form }, global: { stubs } })
-    // the banner moved to the page (MetadataEditor), above the card
+    const w = mount(MetadataV2Section, { props: { form } })
     expect(w.findComponent({ name: 'MigrationBanner' }).exists()).toBe(false)
     expect(w.findComponent({ name: 'SchemaSwitch' }).exists()).toBe(true)
-    expect(w.findComponent({ name: 'UnmappedPanel' }).exists()).toBe(true)
     expect(w.findComponent({ name: 'V2Form' }).exists()).toBe(true)
     form.view.value = 'legacy'
     await nextTick()
@@ -72,10 +62,8 @@ describe('MetadataV2Section', () => {
     const w = mount(MetadataV2Section, {
       props: { form },
       slots: { description: '<div id="desc">D</div>' },
-      global: { stubs },
     })
     const right = w.find('.section-card__right')
-    expect(right.text()).toContain('Needs review')
     expect(right.text()).toContain('New in v2')
     expect(right.text()).toMatch(/\d+ of \d+ required/)
     expect(w.find('.section-card__body > :first-child').classes()).toContain('v2-switch')
@@ -95,22 +83,21 @@ describe('MetadataV2Section', () => {
     expect(w.find('.section-card__body > :first-child').classes()).toContain('v2-switch')
     expect(w.find('.section-card__right').text()).toContain('Export JSON')
     expect(w.find('.section-card__right').text()).toContain('Copy all')
-    expect(w.find('.section-card__right').text()).not.toContain('Needs review')
+    expect(w.find('.section-card__right').text()).not.toContain('New in v2')
     expect(w.find('#desc').exists()).toBe(false)
   })
 
-  it('renders headerActions before the pill without toggling the card', async () => {
+  it('renders headerActions before the required counter without toggling the card', async () => {
     const form = useMetadataV2Form(async () => [])
     await form.loadNew()
     const w = mount(MetadataV2Section, {
       props: { form },
       slots: { headerActions: '<button id="copy-ds">Copy from another dataset…</button>' },
-      global: { stubs },
     })
     const right = w.find('.section-card__right')
     const html = right.html()
     expect(html.indexOf('copy-ds')).toBeGreaterThan(-1)
-    expect(html.indexOf('copy-ds')).toBeLessThan(html.indexOf('Schema v2'))
+    expect(html.indexOf('copy-ds')).toBeLessThan(html.indexOf('required'))
     expect(w.find('.section-card__toggle').find('#copy-ds').exists()).toBe(false)
     await w.find('#copy-ds').trigger('click')
     expect(w.find('.section-card__body').exists()).toBe(true)
@@ -121,7 +108,6 @@ describe('MetadataV2Section', () => {
     await form.loadDataset({ id: 'ds', metadataJson: legacyJson })
     const w = mount(MetadataV2Section, {
       props: { form, descriptionText: 'Mouse liver' },
-      global: { stubs },
     })
     form.view.value = 'legacy'
     await nextTick()
@@ -131,7 +117,7 @@ describe('MetadataV2Section', () => {
   it('a focus request into the collapsed card expands it so V2Form can focus the field', async () => {
     const form = useMetadataV2Form(async () => [])
     await form.loadDataset({ id: 'ds', metadataJson: legacyJson })
-    const w = mount(MetadataV2Section, { props: { form }, global: { stubs }, attachTo: document.body })
+    const w = mount(MetadataV2Section, { props: { form }, attachTo: document.body })
     await w.find('.section-card__toggle').trigger('click')
     expect(w.find('.section-card__body').exists()).toBe(false)
     form.requestFocus('organism')

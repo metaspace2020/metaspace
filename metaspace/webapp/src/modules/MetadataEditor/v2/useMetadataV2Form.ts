@@ -1,10 +1,8 @@
-// metaspace/webapp/src/modules/MetadataEditor/v2/useMetadataV2Form.ts
 /* eslint-disable camelcase */
 import { computed, ComputedRef, ref, Ref } from 'vue'
 import { cloneDeep, isEqual } from 'lodash-es'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import {
-  appendProtocol,
   createEmptyEnvelope,
   emptyTermValue,
   getAtPath,
@@ -16,8 +14,8 @@ import {
 } from './envelope'
 import { curatedValueResolver } from './curatedValues'
 import { mapServerErrors } from './errorPaths'
-import { ENUM_VALUES, FieldDef, fieldByKey, fieldsFor, LEGACY_LABELS, requiredFor } from './formDefinition'
-import { migrateLegacy, resolveTerm } from './legacyMigration'
+import { ENUM_VALUES, FieldDef, fieldByKey, fieldsFor, requiredFor } from './formDefinition'
+import { migrateLegacy } from './legacyMigration'
 import { computeStatus, StatusSummary } from './status'
 import {
   EditorMode,
@@ -49,9 +47,6 @@ export interface MetadataV2Form {
   legacyMeta: Ref<{ uploadDT: string | null; submitterName: string | null }>
   fields: Ref<Partial<Record<FieldKey, FieldReport>>>
   unmapped: Ref<UnmappedRow[]>
-  acknowledged: Ref<FieldKey[]>
-  copied: Ref<string[]>
-  dismissed: Ref<string[]>
   failedSlots: Ref<string[]>
   fieldErrors: Ref<Partial<Record<FieldKey, string>>>
   otherErrors: Ref<string[]>
@@ -73,14 +68,6 @@ export interface MetadataV2Form {
   setSampleType(type: SampleType | null): void
   /** stores a typed sample type for curation; the layout keeps the current class (tissue when none) */
   setSampleTypeOther(text: string): void
-  acknowledge(key: FieldKey): void
-  /** marks every value still flagged "needs review" as reviewed (used when the user submits) */
-  acknowledgeAll(): void
-  applySuggestion(key: FieldKey): void
-  copyUnmapped(legacyKey: string, target: FieldKey): Promise<void>
-  undoCopy(key: FieldKey): void
-  dismiss(legacyKey: string): void
-  restoreUnmapped(legacyKey: string): void
   requestFocus(key: FieldKey, prefill?: string): void
   setServerErrors(errors: { dataPath: string; message: string }[]): void
   clearFieldError(key: FieldKey): void
@@ -96,7 +83,6 @@ export interface MetadataV2Form {
 interface ClassStash {
   values: Partial<Record<FieldKey, unknown>>
   reports: Partial<Record<FieldKey, FieldReport>>
-  acknowledged: FieldKey[]
 }
 
 const parseEnvelope = (json: string | null | undefined): MetadataV2Envelope | null => {
@@ -110,6 +96,9 @@ const parseEnvelope = (json: string | null | undefined): MetadataV2Envelope | nu
     unmodeled: { ...base.unmodeled, ...parsed.unmodeled },
   }
 }
+
+/** Narrows a string to one of the curated sample types (ENUM_VALUES is typed as plain strings). */
+const isSampleType = (value: string): value is SampleType => ENUM_VALUES.SampleType.includes(value)
 
 /** A template never inherits provenance or submitter data from its source dataset. */
 const stripForTemplate = (env: MetadataV2Envelope): MetadataV2Envelope => {
@@ -133,9 +122,6 @@ export function useMetadataV2Form(
   const legacyMeta = ref({ uploadDT: null as string | null, submitterName: null as string | null })
   const fields = ref<Partial<Record<FieldKey, FieldReport>>>({})
   const unmapped = ref<UnmappedRow[]>([])
-  const acknowledged = ref<FieldKey[]>([])
-  const copied = ref<string[]>([])
-  const dismissed = ref<string[]>([])
   const failedSlots = ref<string[]>([])
   const fieldErrors = ref<Partial<Record<FieldKey, string>>>({})
   const otherErrors = ref<string[]>([])
@@ -145,7 +131,6 @@ export function useMetadataV2Form(
   const lastSampleType = ref<SampleType>('tissue')
   // the sample_type report as it was before the select was cleared, restored when a type is picked again
   let clearedSampleTypeReport: FieldReport | undefined
-  const undoStack = new Map<FieldKey, { value: unknown; report: FieldReport | undefined; legacyKey: string }>()
   // values (and their reports) a sample-type switch hid, per class they belong to; in memory only, never serialized
   const classStash = new Map<SampleType, ClassStash>()
   let focusSeq = 0
@@ -157,29 +142,16 @@ export function useMetadataV2Form(
       envelope: envelope.value,
       sampleType: sampleType.value,
       fields: fields.value,
-      unmapped: unmapped.value,
-      acknowledged: acknowledged.value,
-      copied: copied.value,
-      dismissed: dismissed.value,
     })
   )
   const polarity = computed(() => polarityOf(envelope.value))
   const resolvingPower = computed(() => envelope.value.unmodeled.Detector_Resolving_Power || null)
-  const isDirty = computed(
-    () =>
-      (initialEnvelope.value != null && !isEqual(envelope.value, initialEnvelope.value)) ||
-      acknowledged.value.length > 0 ||
-      copied.value.length > 0 ||
-      dismissed.value.length > 0
-  )
+  const isDirty = computed(() => initialEnvelope.value != null && !isEqual(envelope.value, initialEnvelope.value))
   const hasLegacyRecord = computed(() => legacy.value != null)
 
   const reset = () => {
     fields.value = {}
     unmapped.value = []
-    acknowledged.value = []
-    copied.value = []
-    dismissed.value = []
     failedSlots.value = []
     fieldErrors.value = {}
     otherErrors.value = []
@@ -189,7 +161,6 @@ export function useMetadataV2Form(
     clearedSampleTypeReport = undefined
     legacy.value = null
     legacyMeta.value = { uploadDT: null, submitterName: null }
-    undoStack.clear()
     classStash.clear()
   }
 
@@ -201,7 +172,7 @@ export function useMetadataV2Form(
     if (fromV2) {
       envelope.value = stripForTemplate(fromV2)
     } else if (seed.metadataJson && safeJsonParse(seed.metadataJson)?.Sample_Information) {
-      // a template copies values only: migration provenance (tags, hints, review gating) belongs to editing
+      // a template copies values only: migration provenance (tags, hints) belongs to editing
       // the legacy dataset itself, so fields/unmapped/failedSlots stay as reset() left them
       const result = await migrateLegacy(safeJsonParse(seed.metadataJson), resolver)
       envelope.value = stripForTemplate(result.envelope)
@@ -252,7 +223,8 @@ export function useMetadataV2Form(
   }
 
   const setField: MetadataV2Form['setField'] = (key, value) => {
-    const path = fieldByKey(key).path
+    const def = fieldByKey(key)
+    const path = def.path
     if (value === undefined || value === null) {
       // optional fields are removed (the schema rejects null); required ones fall back to the empty term
       const isRequired = requiredFor(sampleType.value).some((f) => f.key === key)
@@ -264,15 +236,14 @@ export function useMetadataV2Form(
     }
     clearFieldError(key)
     const report = fields.value[key]
-    if (report && (report.state === 'required-empty' || report.state === 'empty' || report.state === 'new')) {
-      fields.value = { ...fields.value, [key]: { ...report, state: 'migrated', source: undefined, note: undefined } }
-    } else if (report && (report.state === 'review' || report.state === 'copied')) {
-      // editing a review/copied value counts as reviewing it; the report stays so the legacy source hint remains
-      acknowledge(key)
+    if (report && report.state !== 'migrated') {
+      const next = { ...fields.value }
+      delete next[key]
+      fields.value = next
     }
   }
 
-  /** Drops reports and acknowledgements of fields the given sample type does not show, so they stop counting. */
+  /** Drops reports of fields the given sample type does not show, so they stop counting. */
   const pruneHiddenReports = (type: SampleType) => {
     const visible = new Set(fieldsFor(type).map((f) => f.key))
     const next = { ...fields.value }
@@ -280,7 +251,6 @@ export function useMetadataV2Form(
       if (!visible.has(key)) delete next[key]
     })
     fields.value = next
-    acknowledged.value = acknowledged.value.filter((key) => visible.has(key))
   }
 
   /** Drops the typed sample type; picking or clearing the select replaces it. */
@@ -290,27 +260,25 @@ export function useMetadataV2Form(
     }
   }
 
-  /** Drops the sample_type migration report and its acknowledgement: the value is now the user's own. */
+  /** Drops the sample_type migration report: the value is now the user's own. */
   const dropSampleTypeReport = () => {
     if (fields.value.sample_type) {
       const next = { ...fields.value }
       delete next.sample_type
       fields.value = next
     }
-    acknowledged.value = acknowledged.value.filter((key) => key !== 'sample_type')
   }
 
-  /** Remembers the values of `from` that the `to` layout hides, with their reports and acknowledgements. */
+  /** Remembers the values of `from` that the `to` layout hides, with their reports. */
   const stashHiddenValues = (from: SampleType, to: SampleType) => {
     const kept = new Set(fieldsFor(to).map((f) => f.key))
-    const entry: ClassStash = { values: {}, reports: {}, acknowledged: [] }
+    const entry: ClassStash = { values: {}, reports: {} }
     fieldsFor(from)
       .filter((def) => !kept.has(def.key))
       .forEach((def) => {
         const value = getAtPath(envelope.value, def.path)
         if (value !== undefined) entry.values[def.key] = cloneDeep(value)
         if (fields.value[def.key]) entry.reports[def.key] = fields.value[def.key]
-        if (acknowledged.value.includes(def.key)) entry.acknowledged.push(def.key)
       })
     classStash.set(from, entry)
   }
@@ -331,8 +299,6 @@ export function useMetadataV2Form(
       if (applies.has(key)) reports[key] = entry.reports[key]
     })
     fields.value = reports
-    const acks = entry.acknowledged.filter((key) => applies.has(key) && !acknowledged.value.includes(key))
-    if (acks.length) acknowledged.value = [...acknowledged.value, ...acks]
   }
 
   const setSampleType: MetadataV2Form['setSampleType'] = (type) => {
@@ -377,7 +343,8 @@ export function useMetadataV2Form(
     const text = (raw || '').trim()
     if (!text) return
     // a typed value that is just a curated type spelled differently ("TISSUE", "cell culture") selects it
-    const curated = ENUM_VALUES.SampleType.find((v) => v === text.toLowerCase().replace(/[\s-]+/g, '_'))
+    const key = text.toLowerCase().replace(/[\s-]+/g, '_')
+    const curated: SampleType | undefined = isSampleType(key) ? key : undefined
     if (curated) {
       setSampleType(curated)
       return
@@ -400,93 +367,9 @@ export function useMetadataV2Form(
     clearFieldError('sample_type')
   }
 
-  const acknowledge: MetadataV2Form['acknowledge'] = (key) => {
-    if (!acknowledged.value.includes(key)) {
-      acknowledged.value = [...acknowledged.value, key]
-    }
-  }
-
-  const acknowledgeAll: MetadataV2Form['acknowledgeAll'] = () => {
-    const pending = (Object.entries(fields.value) as [FieldKey, FieldReport][])
-      .filter(([key, r]) => (r.state === 'review' || r.state === 'copied') && !acknowledged.value.includes(key))
-      .map(([key]) => key)
-    if (pending.length > 0) {
-      acknowledged.value = [...acknowledged.value, ...pending]
-    }
-  }
-
-  const applySuggestion: MetadataV2Form['applySuggestion'] = (key) => {
-    const suggestion = fields.value[key]?.suggestion
-    if (!suggestion) {
-      return
-    }
-    setField(key, { value_ontology_id: suggestion.curie, value_label: suggestion.label, curation_state: 'controlled' })
-    acknowledge(key)
-  }
-
   const requestFocus: MetadataV2Form['requestFocus'] = (key, prefill) => {
     view.value = 'v2'
     focusRequest.value = { key, prefill, seq: ++focusSeq }
-  }
-
-  const copyUnmapped: MetadataV2Form['copyUnmapped'] = async (legacyKey, target) => {
-    const row = unmapped.value.find((u) => u.legacyKey === legacyKey)
-    if (!row) {
-      return
-    }
-    const def = fieldByKey(target)
-    undoStack.set(target, {
-      value: cloneDeep(getAtPath(envelope.value, def.path)),
-      report: fields.value[target],
-      legacyKey,
-    })
-    const source = { legacyKey, raw: row.raw }
-    if (def.editor === 'textarea') {
-      envelope.value = appendProtocol(envelope.value, `${LEGACY_LABELS[legacyKey] || row.label}: ${row.raw}.`)
-    } else if (def.editor === 'ontology' && def.slot) {
-      const res = await resolveTerm(def.slot, row.raw, resolver)
-      envelope.value = setAtPath(envelope.value, def.path, res.value)
-      fields.value = { ...fields.value, [target]: { state: 'copied', source, suggestion: res.suggestion } }
-      copied.value = [...copied.value, legacyKey]
-      return
-    } else if (def.editor === 'freeText') {
-      envelope.value = setAtPath(envelope.value, def.path, {
-        value_free_text: row.raw,
-        curation_state: 'pending_curation',
-      })
-    } else {
-      // enum: the user picks the value; the row counts as handled once they do
-      requestFocus(target, row.raw)
-    }
-    fields.value = { ...fields.value, [target]: { state: 'copied', source } }
-    copied.value = [...copied.value, legacyKey]
-  }
-
-  const undoCopy: MetadataV2Form['undoCopy'] = (key) => {
-    const entry = undoStack.get(key)
-    if (!entry) {
-      return
-    }
-    envelope.value = setAtPath(envelope.value, fieldByKey(key).path, entry.value)
-    const next = { ...fields.value }
-    if (entry.report) {
-      next[key] = entry.report
-    } else {
-      delete next[key]
-    }
-    fields.value = next
-    copied.value = copied.value.filter((k) => k !== entry.legacyKey)
-    acknowledged.value = acknowledged.value.filter((k) => k !== key)
-    undoStack.delete(key)
-  }
-
-  const dismiss: MetadataV2Form['dismiss'] = (legacyKey) => {
-    if (!dismissed.value.includes(legacyKey)) {
-      dismissed.value = [...dismissed.value, legacyKey]
-    }
-  }
-  const restoreUnmapped: MetadataV2Form['restoreUnmapped'] = (legacyKey) => {
-    dismissed.value = dismissed.value.filter((k) => k !== legacyKey)
   }
 
   const setServerErrors: MetadataV2Form['setServerErrors'] = (errors) => {
@@ -507,9 +390,6 @@ export function useMetadataV2Form(
     legacyMeta,
     fields,
     unmapped,
-    acknowledged,
-    copied,
-    dismissed,
     failedSlots,
     fieldErrors,
     otherErrors,
@@ -528,13 +408,6 @@ export function useMetadataV2Form(
     setField,
     setSampleType,
     setSampleTypeOther,
-    acknowledge,
-    acknowledgeAll,
-    applySuggestion,
-    copyUnmapped,
-    undoCopy,
-    dismiss,
-    restoreUnmapped,
     requestFocus,
     setServerErrors,
     clearFieldError,

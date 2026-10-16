@@ -40,6 +40,7 @@ def get_slot_ontology_roots() -> Dict[str, List[Dict[str, str]]]:
     transitively when a worker unpickles an engine function) must not touch the file."""
     return json.loads(SLOTS_FILE.read_text())
 
+
 UPSERT_SQL = (
     'INSERT INTO ontology_term (curie, label, synonyms, ontology, subtree, obsolete) '
     'VALUES %s '

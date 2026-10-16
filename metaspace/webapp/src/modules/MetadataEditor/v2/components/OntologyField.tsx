@@ -3,7 +3,7 @@ import { computed, defineComponent, nextTick, PropType, ref } from 'vue'
 import { ElAutocomplete } from '../../../../lib/element-plus'
 import { isTermEmpty, termText } from '../envelope'
 import { MIN_QUERY_LENGTH } from '../termResolver'
-import { FieldReport, OntologyTermValue, Term, TermResolver, ValueSuggestion } from '../types'
+import { OntologyTermValue, Term, TermResolver, ValueSuggestion } from '../types'
 import './fields.scss'
 
 interface TermSuggestion {
@@ -26,6 +26,10 @@ interface EmptySuggestion {
   empty: true
 }
 type Suggestion = TermSuggestion | ValueRow | EmptySuggestion
+const isEmptyRow = (item: Suggestion): item is EmptySuggestion => item.empty === true
+
+/** compare key for "the typed text is this known value": trimmed, case-insensitive */
+const normalize = (text: string): string => text.trim().toLowerCase()
 
 export const OntologyField = defineComponent({
   name: 'OntologyField',
@@ -34,8 +38,6 @@ export const OntologyField = defineComponent({
     slot: { type: String as PropType<string | undefined>, default: undefined },
     placeholder: { type: String, default: '' },
     inputId: { type: String, default: undefined },
-    report: { type: Object as PropType<FieldReport | undefined>, default: undefined },
-    acknowledged: { type: Boolean, default: false },
     fetchTerms: { type: Function as PropType<TermResolver>, required: true },
     /**
      * plain-text suggestions for fields without an ontology slot; when set it replaces the term lookup and a
@@ -45,28 +47,32 @@ export const OntologyField = defineComponent({
       type: Function as PropType<(query: string) => Promise<ValueSuggestion[]>>,
       default: undefined,
     },
-    /** characters needed before suggestions are fetched (0 lists every value as soon as the input is focused) */
+    /**
+     * characters needed before suggestions are fetched; the short local curated / community lists use 1. Never
+     * below 1: an empty query fetches nothing
+     */
     minQueryLength: { type: Number, default: MIN_QUERY_LENGTH },
-    /** show the suggestion list on focus, before anything is typed */
-    openOnFocus: { type: Boolean, default: false },
+    /**
+     * the field's curated values; Enter on text equal to one of them (any case) stores it as accepted free text,
+     * the same as selecting it from the list, even before a lookup has run
+     */
+    knownValues: { type: Array as PropType<string[]>, default: () => [] },
     disabled: { type: Boolean, default: false },
   },
-  emits: ['input', 'acknowledge', 'applySuggestion'],
+  emits: ['input'],
   setup(props, { emit, expose }) {
     const editing = ref(false)
     const draft = ref('')
     // true once the editor has committed (select or Enter), so the following blur does not commit again
     const committed = ref(false)
     const autocomplete = ref<any>(null)
-    // the last value suggestions shown, so Enter on text that equals one stores it like a selection
-    let lastValues: ValueSuggestion[] = []
+    // the rows of the last lookup for the current editing session, so Enter on text that equals one of them stores
+    // it like a selection; open() empties it and bumps the generation so a lookup still in flight is dropped
+    let lastSuggestions: (TermSuggestion | ValueRow)[] = []
+    let generation = 0
 
     const hasValue = computed(() => !isTermEmpty(props.value))
     const showChip = computed(() => hasValue.value && !editing.value)
-    const suggestion = computed(() => (props.acknowledged ? undefined : props.report?.suggestion))
-    const needsReview = computed(
-      () => (props.report?.state === 'review' || props.report?.state === 'copied') && !props.acknowledged
-    )
     const chipClass = computed(() => {
       const state = props.value?.curation_state
       if (state === 'controlled') return 'v2-chip--controlled'
@@ -75,6 +81,8 @@ export const OntologyField = defineComponent({
     })
 
     const open = async (prefill?: string) => {
+      lastSuggestions = []
+      generation += 1
       draft.value = prefill ?? termText(props.value)
       editing.value = true
       committed.value = false
@@ -88,69 +96,97 @@ export const OntologyField = defineComponent({
       open('')
     }
 
-    const commitFreeText = () => {
+    /** the value a selection of this row stores (shared by onSelect and Enter on matching text) */
+    const valueOf = (row: TermSuggestion | ValueRow): OntologyTermValue =>
+      row.term
+        ? { value_ontology_id: row.term.curie, value_label: row.term.label, curation_state: 'controlled' }
+        : { value_free_text: row.value, curation_state: 'free_text_accepted' }
+
+    /**
+     * the known value the typed text names: a row of the last lookup (a term by its label or by its row text) or
+     * one of the field's curated values, compared trimmed and case-insensitively
+     */
+    const knownValueFor = (text: string): OntologyTermValue | undefined => {
+      const key = normalize(text)
+      const row = lastSuggestions.find(
+        (r) => normalize(r.value) === key || (r.term !== undefined && normalize(r.term.label) === key)
+      )
+      if (row) return valueOf(row)
+      const curated = props.knownValues.find((v) => normalize(v) === key)
+      return curated ? valueOf({ value: curated.trim() }) : undefined
+    }
+
+    const isSameValue = (a: OntologyTermValue, b: OntologyTermValue | null): boolean =>
+      !!b &&
+      a.curation_state === b.curation_state &&
+      (a.value_ontology_id || null) === (b.value_ontology_id || null) &&
+      termText(a) === termText(b)
+
+    /**
+     * commits the typed text (Enter, the "No match" row, blur). A blur that leaves the text unchanged (ignoring case
+     * and padding) keeps a controlled or accepted value exactly as it is: opening a chip and leaving it never
+     * re-spells or downgrades it. A pending value still goes through, so a curated match promotes it.
+     */
+    const commitFreeText = (fromBlur = false) => {
       if (committed.value) return
       committed.value = true
       const text = draft.value.trim()
-      const known = lastValues.find((v) => v.label.toLowerCase() === text.toLowerCase())
-      if (text && text !== termText(props.value)) {
-        emit(
-          'input',
-          known
-            ? { value_free_text: known.label, curation_state: 'free_text_accepted' }
-            : { value_free_text: text, curation_state: 'pending_curation' }
-        )
-      } else if (!text && hasValue.value) {
-        emit('input', { curation_state: 'pending_curation' })
+      const unchanged =
+        fromBlur &&
+        hasValue.value &&
+        props.value?.curation_state !== 'pending_curation' &&
+        normalize(text) === normalize(termText(props.value))
+      if (!unchanged) {
+        const known = text ? knownValueFor(text) : undefined
+        if (known) {
+          if (!isSameValue(known, props.value)) emit('input', known)
+        } else if (text && text !== termText(props.value)) {
+          emit('input', { value_free_text: text, curation_state: 'pending_curation' })
+        } else if (!text && hasValue.value) {
+          emit('input', { curation_state: 'pending_curation' })
+        }
       }
       editing.value = false
     }
 
+    const lookup = async (q: string): Promise<(TermSuggestion | ValueRow)[]> => {
+      try {
+        if (props.fetchValues) {
+          const values: ValueSuggestion[] = await props.fetchValues(q)
+          return values.map((v) => ({ value: v.label }))
+        }
+        if (props.slot) {
+          const terms = await props.fetchTerms(props.slot, q)
+          return terms.map((term) => ({ value: `${term.label} (${term.curie})`, term }))
+        }
+      } catch (err) {
+        // a failed lookup offers only the "No match" row
+      }
+      return []
+    }
+
     const fetchSuggestions = async (query: string, cb: (items: Suggestion[]) => void) => {
       const q = (query || '').trim()
-      if (q.length < props.minQueryLength) {
+      if (q.length < Math.max(1, props.minQueryLength)) {
         cb([])
         return
       }
-      const empty: EmptySuggestion[] = q ? [{ value: q, empty: true }] : []
-      if (props.fetchValues) {
-        try {
-          lastValues = await props.fetchValues(q)
-        } catch (err) {
-          lastValues = []
-        }
-        cb(lastValues.length > 0 ? lastValues.map((v) => ({ value: v.label })) : empty)
-        return
-      }
-      if (!props.slot) {
-        cb(empty)
-        return
-      }
-      try {
-        const terms = await props.fetchTerms(props.slot, q)
-        cb(terms.length > 0 ? terms.map((term) => ({ value: `${term.label} (${term.curie})`, term })) : empty)
-      } catch (err) {
-        cb(empty)
-      }
+      const started = generation
+      const rows = await lookup(q)
+      // a lookup that started before open() belongs to the previous editing session
+      if (started === generation) lastSuggestions = rows
+      cb(rows.length > 0 ? rows : [{ value: q, empty: true }])
     }
 
     const onSelect = (item: Suggestion) => {
       // the "no matching terms" row adds the typed text as pending curation (ElAutocomplete has already emitted
       // `input` with the row's value, so the draft holds the query)
-      if (item.empty) {
+      if (isEmptyRow(item)) {
         commitFreeText()
         return
       }
       committed.value = true
-      if (item.term) {
-        emit('input', {
-          value_ontology_id: item.term.curie,
-          value_label: item.term.label,
-          curation_state: 'controlled',
-        })
-      } else {
-        emit('input', { value_free_text: item.value, curation_state: 'free_text_accepted' })
-      }
+      emit('input', valueOf(item))
       editing.value = false
     }
 
@@ -170,57 +206,36 @@ export const OntologyField = defineComponent({
         const label = termText(v)
         return (
           <div class="flex flex-wrap items-center gap-1">
-            <span
-              class={['v2-chip', chipClass.value]}
-              role="button"
-              tabindex={props.disabled ? -1 : 0}
-              aria-label={`${label}, press Enter to change, Backspace to clear`}
-              onClick={() => !props.disabled && open()}
-              onKeydown={onChipKeydown}
-            >
-              <i class="v2-chip__dot" aria-hidden="true" />
-              <span class="v2-chip__label">{label}</span>
-              {v.value_ontology_id && <span class="v2-chip__id">{v.value_ontology_id}</span>}
-              {suggestion.value && (
-                <span class="v2-chip__id">
-                  → {suggestion.value.label} ({suggestion.value.curie}) ?
+            {/* the pill is not interactive itself: its body (re-opens the editor) and the × are sibling buttons */}
+            <span class={['v2-chip', chipClass.value]}>
+              <button
+                type="button"
+                class="v2-chip__body"
+                disabled={props.disabled}
+                aria-label={`${label}, press Enter to change, Backspace to clear`}
+                onClick={() => open()}
+                onKeydown={onChipKeydown}
+              >
+                <i class="v2-chip__dot" aria-hidden="true" />
+                <span class="v2-chip__label">{label}</span>
+                {v.value_ontology_id && <span class="v2-chip__id">{v.value_ontology_id}</span>}
+                {!v.value_ontology_id && v.curation_state === 'pending_curation' && (
+                  <span class="v2-chip__id">pending curation</span>
+                )}
+                {!v.value_ontology_id && v.curation_state === 'free_text_accepted' && (
+                  <span class="v2-chip__id">accepted</span>
+                )}{' '}
+                <span class="v2-chip__mark" aria-hidden="true">
+                  {chipClass.value === 'v2-chip--pending' ? '✎' : '✓'}
                 </span>
-              )}
-              {!v.value_ontology_id && !suggestion.value && v.curation_state === 'pending_curation' && (
-                <span class="v2-chip__id">pending curation</span>
-              )}
-              {!v.value_ontology_id && !suggestion.value && v.curation_state === 'free_text_accepted' && (
-                <span class="v2-chip__id">accepted</span>
-              )}{' '}
-              <span class="v2-chip__mark" aria-hidden="true">
-                {chipClass.value === 'v2-chip--pending' ? '✎' : '✓'}
-              </span>
+              </button>
               {!props.disabled && (
-                // inside the pill so it never wraps to its own line; its events must not reach the chip
-                <button
-                  type="button"
-                  class="v2-chip__clear"
-                  aria-label="Clear value"
-                  onClick={(e: MouseEvent) => {
-                    e.stopPropagation()
-                    clear()
-                  }}
-                  onKeydown={(e: KeyboardEvent) => e.stopPropagation()}
-                >
+                // inside the pill (so it never wraps to its own line) but not inside the body button
+                <button type="button" class="v2-chip__clear" aria-label="Clear value" onClick={clear}>
                   ×
                 </button>
               )}
             </span>
-            {suggestion.value && (
-              <button type="button" class="v2-chip__use" onClick={() => emit('applySuggestion')}>
-                Use suggestion
-              </button>
-            )}
-            {needsReview.value && (
-              <button type="button" class="v2-chip__keep" onClick={() => emit('acknowledge')}>
-                Keep as typed
-              </button>
-            )}
           </div>
         )
       }
@@ -235,14 +250,14 @@ export const OntologyField = defineComponent({
             placeholder={props.placeholder}
             disabled={props.disabled}
             debounce={300}
-            triggerOnFocus={props.openOnFocus}
+            triggerOnFocus={false}
             fetchSuggestions={fetchSuggestions}
             onInput={(text: string) => {
               draft.value = text
               committed.value = false
             }}
             onSelect={onSelect}
-            onBlur={commitFreeText}
+            onBlur={() => commitFreeText(true)}
             popperClass="v2-ac-popper"
             v-slots={{
               // the test-utils stub renders this slot without props, so `item` may be missing

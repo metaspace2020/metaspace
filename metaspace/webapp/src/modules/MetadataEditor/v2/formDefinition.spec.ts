@@ -1,4 +1,3 @@
-// metaspace/webapp/src/modules/MetadataEditor/v2/formDefinition.spec.ts
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { get } from 'lodash-es'

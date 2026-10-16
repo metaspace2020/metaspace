@@ -10,7 +10,6 @@ export const FieldRow = defineComponent({
   props: {
     def: { type: Object as PropType<FieldDef>, required: true },
     report: { type: Object as PropType<FieldReport | undefined>, default: undefined },
-    acknowledged: { type: Boolean, default: false },
     error: { type: String as PropType<string | undefined>, default: undefined },
     required: { type: Boolean, default: false },
     /** a submit was attempted while this required field was empty */
@@ -53,7 +52,7 @@ export const FieldRow = defineComponent({
                     *
                   </span>
                 )}
-                {state && <FieldProvenance state={state} acknowledged={props.acknowledged} />}
+                {state && <FieldProvenance state={state} />}
               </label>
             ),
           }}

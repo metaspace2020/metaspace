@@ -120,7 +120,6 @@ export interface LegacyMetadata {
 // Down-projection: metadata_v2 -> legacy
 // ---------------------------------------------------------------------------
 
-/** value_label if non-empty, else value_free_text, else `fallback`. */
 function renderScalar(value: OntologyTermValue | null | undefined, fallback = ''): string {
   if (!value) {
     return fallback
@@ -190,9 +189,9 @@ function renderOrganismPart(sample: Sample): string {
 }
 
 /**
- * metadata_v2 -> legacy metadata. Deterministic and side-effect free. It is a pure mapping, not a
- * validator: unresolved polarity or a missing `unmodeled` value is left undefined so the ims.json
- * validation that follows reports it, rather than inventing a processing-critical default.
+ * metadata_v2 -> legacy metadata. It is a pure mapping, not a validator: unresolved polarity or a
+ * missing `unmodeled` value is left undefined so the ims.json validation that follows reports it,
+ * rather than inventing a processing-critical default.
  */
 export function projectToLegacyMetadata(envelope: MetadataV2Envelope): LegacyMetadata {
   const { document: doc, unmodeled } = envelope
@@ -247,9 +246,8 @@ function toReconciledPending(freeText: string | undefined | null): ReconciledVal
 }
 
 /**
- * legacy -> metadata_v2, for the round-trip test and for templating a new submission from a legacy
- * dataset. `Condition` was never split on the way in, so it round-trips through `disease` as free
- * text, which `renderCondition` checks first.
+ * legacy -> metadata_v2. `Condition` was never split on the way in, so it round-trips through
+ * `disease` as free text, which `renderCondition` checks first.
  */
 export function upProjectToV2(legacy: LegacyMetadata, schemaVersion = '0.2.0'): MetadataV2Envelope {
   const sample: Sample = {

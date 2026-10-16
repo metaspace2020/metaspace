@@ -1,4 +1,3 @@
-// metaspace/webapp/src/modules/MetadataEditor/v2/components/LegacyRecordView.tsx
 /* eslint-disable camelcase */
 import { defineComponent, PropType } from 'vue'
 import moment from 'moment'
@@ -34,10 +33,29 @@ const PARTLY: Partial<Record<FieldKey, string>> = {
 
 const EMPTY = '—'
 
-const renderValue = (key: string, value: any): string => {
-  if (value == null || value === '') return EMPTY
-  if (key === 'Detector_Resolving_Power') return `${value.Resolving_Power} @ ${value.mz} m/z`
-  if (key === 'Pixel_Size') return `${value.Xaxis} × ${value.Yaxis} µm`
+/** keyboard focus ring for the tag buttons: same 2px primary ring, 2px offset as the section toggles */
+const FOCUS_RING =
+  'rounded-sm focus-visible:outline-none focus-visible:ring-2 ' +
+  'focus-visible:ring-[color:var(--el-color-primary)] focus-visible:ring-offset-2'
+
+const isBlank = (value: unknown): boolean => value == null || value === ''
+
+/** One part of a numeric pair, or a dash when the legacy record left it out. */
+const part = (value: unknown): string => (isBlank(value) ? EMPTY : String(value))
+
+/**
+ * Formats a legacy value for display. Numeric pairs may be partial or null in old records: a missing part shows
+ * as a dash, and a pair with no part at all is empty.
+ */
+const renderValue = (key: string, value: unknown): string => {
+  if (isBlank(value)) return EMPTY
+  if (key === 'Detector_Resolving_Power' || key === 'Pixel_Size') {
+    if (typeof value !== 'object') return String(value)
+    const pair = value as Record<string, unknown>
+    const [a, b] = key === 'Pixel_Size' ? [pair.Xaxis, pair.Yaxis] : [pair.Resolving_Power, pair.mz]
+    if (isBlank(a) && isBlank(b)) return EMPTY
+    return key === 'Pixel_Size' ? `${part(a)} × ${part(b)} µm` : `${part(a)} @ ${part(b)} m/z`
+  }
   return String(value)
 }
 
@@ -78,7 +96,7 @@ export const LegacyRecordView = defineComponent({
     /** plain text of the dataset description, shown read-only as the first row */
     descriptionText: { type: String, default: '' },
   },
-  emits: ['jump', 'copy', 'search'],
+  emits: ['jump', 'search'],
   setup(props, { emit }) {
     const mappingTag = (legacyPath: string) => {
       if (props.readOnlyProvenance) return null
@@ -86,21 +104,18 @@ export const LegacyRecordView = defineComponent({
       if (legacyPath === 'MS_Analysis.Analyzer') {
         const report = props.fields.instrument_model
         if (report?.state === 'required-empty') {
+          const raw = (report.source?.raw || '').trim()
           return (
             <span class="text-xs">
               <span class="v2-maptag--none" style="color: var(--el-color-danger)">
                 <i class="v2-legend__dot" style="background: var(--el-color-danger)" aria-hidden="true" />
                 no v2 field
               </span>
-              <ElButton
-                link
-                type="primary"
-                size="small"
-                class="v2-search ml-2"
-                onClick={() => emit('search', report.source?.raw || '')}
-              >
-                ↗ Search "{report.source?.raw}" models
-              </ElButton>
+              {raw && (
+                <ElButton link type="primary" size="small" class="v2-search ml-2" onClick={() => emit('search', raw)}>
+                  ↗ Search "{raw}" models
+                </ElButton>
+              )}
             </span>
           )
         }
@@ -112,23 +127,18 @@ export const LegacyRecordView = defineComponent({
               <i class="v2-legend__dot" style="background: var(--el-color-danger)" aria-hidden="true" />
               no v2 field
             </span>
-            {props.unmapped.some((u) => u.legacyKey === legacyPath) && (
-              <ElButton link type="primary" size="small" class="v2-copy ml-2" onClick={() => emit('copy', legacyPath)}>
-                ↗ Copy to…
-              </ElButton>
-            )}
           </span>
         )
       }
       const def = defs[0]
       const report = props.fields[def.key]
       const partly = PARTLY[def.key]
-      const word = partly ? 'partly' : report?.state === 'migrated' ? 'mapped' : 'review'
+      const word = partly ? 'partly' : report?.state === 'migrated' ? 'mapped' : 'not migrated'
       const color = word === 'mapped' ? 'var(--el-color-success)' : 'var(--el-color-warning)'
       return (
         <button
           type="button"
-          class="v2-maptag text-xs bg-transparent border-0 p-0 cursor-pointer"
+          class={['v2-maptag text-xs bg-transparent border-0 p-0 cursor-pointer', FOCUS_RING]}
           style={{ color }}
           onClick={() => emit('jump', def.key)}
         >

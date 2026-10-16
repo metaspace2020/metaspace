@@ -1,4 +1,3 @@
-// metaspace/webapp/src/modules/MetadataEditor/v2/envelope.ts
 /* eslint-disable camelcase */
 import { cloneDeep, get, set, unset } from 'lodash-es'
 import { MetadataV2Envelope, OntologyTermValue, ReconciledValue, SampleClass, SampleType, SampleV2 } from './types'

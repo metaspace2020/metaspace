@@ -1,4 +1,3 @@
-// metaspace/webapp/src/modules/MetadataEditor/v2/errorPaths.ts
 import { FIELD_DEFS } from './formDefinition'
 import { FieldKey } from './types'
 

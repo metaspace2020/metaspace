@@ -106,10 +106,7 @@ function trimEmptyFields(schema: MetadataSchema, value: MetadataNode) {
 
 // Ajv >= 7 reports `instancePath` (JSON Pointer) instead of the dot-path `dataPath` the webapp still
 // reads (MetadataEditor.vue), so every Ajv error is translated here before it reaches the client.
-function translateAjvError(err: { instancePath?: string, dataPath?: string, [key: string]: any }, prefix = '') {
-  if (err.dataPath != null) {
-    return err // hand-constructed errors are already in the legacy shape
-  }
+function translateAjvError(err: { instancePath?: string, [key: string]: any }, prefix = '') {
   const { instancePath, ...rest } = err
   return { ...rest, dataPath: prefix + (instancePath || '').replace(/\//g, '.') }
 }
@@ -193,7 +190,6 @@ export function resolveMetadataInput(
 /**
  * Validates the legacy metadata against its ims.json/lcms.json schema and, when supplied, the
  * metadata_v2 document against the vendored schema. All errors are reported together.
- * Exported for unit testing (Mutation.validateMetadata.spec.ts).
  */
 export function validateMetadata(metadata: MetadataNode, metadataV2?: MetadataV2Envelope) {
   const mdSchema = metadataSchemas[metadata.Data_Type]
@@ -263,11 +259,13 @@ export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpda
       }
     }
 
-    // The analyzer class feeds the DSConfig's isotope generation. Compare classes, not labels, so a
-    // cosmetic relabel within a class does not force a reprocess. Orbitrap is the engine's fallback.
+    // From analysis version 2 the analyzer class feeds the DSConfig's isotope generation; version 1
+    // ("Original MSM", also when unset) ignores it. Compare classes, not labels, so a cosmetic relabel
+    // within a class does not force a reprocess. Orbitrap is the engine's fallback.
+    const analysisVersion = ds.config?.analysis_version ?? 1
     const oldAnalyzerClass = classifyAnalyzer(ds.metadata?.MS_Analysis?.Analyzer) || 'Orbitrap'
     const newAnalyzerClass = classifyAnalyzer(update.metadata?.MS_Analysis?.Analyzer) || 'Orbitrap'
-    if (oldAnalyzerClass !== newAnalyzerClass) {
+    if (analysisVersion >= 2 && oldAnalyzerClass !== newAnalyzerClass) {
       procSettingsUpd = true
     }
   }

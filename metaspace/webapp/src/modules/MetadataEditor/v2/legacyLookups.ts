@@ -1,7 +1,32 @@
-const PLACEHOLDERS = new Set(['', 'none', 'n/a', 'na', '-', '--', 'not applicable', 'null', 'unknown', 'unspecified'])
+const PLACEHOLDERS = new Set([
+  '',
+  'none',
+  'n/a',
+  'na',
+  '-',
+  '--',
+  'not applicable',
+  'not specified',
+  'null',
+  'unknown',
+  'unspecified',
+])
 
+const isBarePlaceholder = (text: string): boolean => PLACEHOLDERS.has(text.trim().replace(/\s+/g, ' ').toLowerCase())
+
+/**
+ * True for values that carry no information: "none", "N/A", … and their parenthetical variants such as
+ * "(none)", "N/A (unknown)" or "- (n/a)". Every part (outside and inside the parentheses) must be a placeholder,
+ * so "Mus musculus (none)" and "(liver)" are real values.
+ */
 export function isPlaceholder(text: string | null | undefined): boolean {
-  return PLACEHOLDERS.has((text || '').trim().toLowerCase())
+  const value = text || ''
+  const inner: string[] = []
+  const outside = value.replace(/\(([^()]*)\)/g, (_, content: string) => {
+    inner.push(content)
+    return ' '
+  })
+  return isBarePlaceholder(outside) && inner.every(isBarePlaceholder)
 }
 
 /** lowercase, collapse whitespace, drop a trailing "(…)" such as "Mus musculus (mouse)". */
@@ -15,18 +40,29 @@ export function normaliseText(text: string | null | undefined): string {
 
 type AliasTable = Record<string, string>
 
-const lower = (table: AliasTable): AliasTable =>
-  Object.fromEntries(Object.entries(table).map(([k, v]) => [k.toLowerCase(), v]))
+const lowered = new WeakMap<AliasTable, Map<string, string>>()
+
+/**
+ * The table keyed by lowercase alias. A Map built from the table's own entries, so prototype keys such as
+ * "constructor", "__proto__" or "toString" never hit.
+ */
+const lower = (table: AliasTable): Map<string, string> => {
+  let map = lowered.get(table)
+  if (!map) {
+    map = new Map(Object.keys(table).map((k) => [k.toLowerCase(), table[k]]))
+    lowered.set(table, map)
+  }
+  return map
+}
 
 /** Replace a whole-value alias (case-insensitive); unknown input is returned unchanged. */
 export function applyAliases(text: string, table: AliasTable): string {
-  const hit = lower(table)[normaliseText(text)]
-  return hit || text
+  return lower(table).get(normaliseText(text)) || text
 }
 
 /** Canonical label for a lookup table hit (case-insensitive), or null. */
 export function lookupTable(text: string, table: AliasTable): string | null {
-  return lower(table)[normaliseText(text)] || null
+  return lower(table).get(normaliseText(text)) || null
 }
 
 // Keys are what submitters typed in ims.json; values are CHEBI primary labels so the term search
@@ -138,19 +174,45 @@ export function matrixApplication(raw: string): { method: string | null; device:
   return { method: null, device: null }
 }
 
+// Additives are only picked as the compound when no real solvent appears in the string ("0.1% TFA in 70% ACN").
+const SOLVENT_ADDITIVES = new Set(['trifluoroacetic acid', 'formic acid'])
+
+/** "70%", "0.1%" -> the number; anything else -> null. */
+const percentOf = (token: string | undefined): number | null => {
+  const m = /^(\d+(?:\.\d+)?)%$/.exec(token || '')
+  return m ? Number(m[1]) : null
+}
+
 /**
- * "70% ACN" -> { compound: 'acetonitrile', remainder: '70% ACN' }. The first token that resolves
- * through SOLVENT_ALIASES wins; the raw string is kept as remainder when it carries anything beyond
- * the bare compound (concentration, additives).
+ * "70% ACN" -> { compound: 'acetonitrile', percent: 70, remainder: '70% ACN' }. The first token that resolves
+ * through SOLVENT_ALIASES to a solvent wins, an additive (TFA, FA) only when no solvent is present. The
+ * percentage is the one written right before the chosen token ("70% ACN") or glued to it ("70%ACN").
+ * Trailing punctuation ("ACN.") is ignored. The raw string is kept as remainder when it carries anything
+ * beyond the bare compound (concentration, additives).
  */
-export function parseSolvent(raw: string): { compound: string | null; remainder: string | null } {
+export function parseSolvent(raw: string): {
+  compound: string | null
+  percent: number | null
+  remainder: string | null
+} {
   const text = raw.trim()
-  const tokens = text.split(/[\s,/:;+]+/).filter((t) => t && !/^[\d.]+%?$/.test(t))
   const table = lower(SOLVENT_ALIASES)
-  const compound = tokens.map((t) => table[t.toLowerCase()]).find((c) => c) || null
-  if (!compound) {
-    return { compound: null, remainder: text || null }
+  const tokens = text
+    .split(/[\s,/:;+()]+/)
+    .map((t) => t.replace(/[.,;:!?]+$/, ''))
+    .filter((t) => t)
+  const hits = tokens
+    .map((token, index) => {
+      const glued = /^(\d+(?:\.\d+)?)%(.+)$/.exec(token)
+      const compound = table.get((glued ? glued[2] : token).toLowerCase())
+      const percent = glued ? Number(glued[1]) : percentOf(tokens[index - 1])
+      return compound ? { compound, percent } : null
+    })
+    .filter((hit): hit is { compound: string; percent: number | null } => hit != null)
+  const hit = hits.find((h) => !SOLVENT_ADDITIVES.has(h.compound)) || hits[0]
+  if (!hit) {
+    return { compound: null, percent: null, remainder: text || null }
   }
-  const bare = tokens.length === 1 && text === tokens[0]
-  return { compound, remainder: bare ? null : text }
+  const bare = hit.percent == null && tokens.length === 1 && text.replace(/^\(|[.,;:!?)]+$/g, '') === tokens[0]
+  return { compound: hit.compound, percent: hit.percent, remainder: bare ? null : text }
 }

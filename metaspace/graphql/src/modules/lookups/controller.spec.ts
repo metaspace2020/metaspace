@@ -49,6 +49,61 @@ describe('Query.ontologyTermSuggestions', () => {
     expect((await suggest('exactive sibling')).map(r => r.curie)).toEqual(['MS:1000449'])
   })
 
+  it('ranks an exact label match first, then exact synonyms, label prefixes and substrings', async() => {
+    await insertTerms([
+      ['MS:1', 'DHBOA-Glc', []],
+      ['MS:2', '2,5-dihydroxybenzoic acid', ['DHB', 'gentisic acid']],
+      ['MS:3', 'DHB', []],
+      ['MS:4', 'acid DHB mix', []],
+    ])
+
+    expect((await suggest('dhb')).map(r => r.label)).toEqual(['DHB', '2,5-dihydroxybenzoic acid', 'DHBOA-Glc', 'acid DHB mix'])
+  })
+
+  it('ranks an exact synonym match above a shorter label prefix or label substring match', async() => {
+    await insertTerms([
+      ['MS:1', 'Orbitrap Elite', []],
+      ['MS:2', 'LTQ Orbitrap', []],
+      ['MS:3', 'Fourier transform ion trap analyzer', ['orbitrap']],
+    ])
+
+    expect((await suggest('Orbitrap')).map(r => r.label))
+      .toEqual(['Fourier transform ion trap analyzer', 'Orbitrap Elite', 'LTQ Orbitrap'])
+  })
+
+  it('surfaces parents known only by an exact synonym even when label prefixes fill the limit', async() => {
+    await insertTerms([
+      ['MS:1', 'hippocampus alveus', []],
+      ['MS:2', 'hippocampus fimbria', []],
+      ['MS:3', 'hippocampus stratum oriens', []],
+      ['MS:4', 'hippocampus molecular layer', []],
+      ['MS:5', 'hippocampal formation', ['Hippocampus', 'hippocampal region']],
+      ['MS:6', "Ammon's horn", ['hippocampus proper', 'hippocampus']],
+      ['MS:7', 'hippocampus (sensu lato)', ['hippocampus']],
+    ])
+
+    const results = await suggest('hippocampus', 'instrument_model', 4)
+
+    // MS:7 is both a label prefix and an exact synonym: listed once, at the synonym rank.
+    expect(results.map(r => r.label)).toEqual(["Ammon's horn", 'hippocampal formation', 'hippocampus (sensu lato)', 'hippocampus alveus'])
+  })
+
+  it('keeps a label prefix match in the top results ahead of shorter substring matches', async() => {
+    await insertTerms([
+      ['MS:1', 'Remus', []],
+      ['MS:2', 'Apodemus', []],
+      ['MS:3', 'Microtus musculus', []],
+      ['MS:4', 'Apodemus sylvaticus', []],
+      ['MS:5', 'Pseudomus x', []],
+      ['MS:6', 'Humus', []],
+      ['MS:7', 'Mus musculus', []],
+    ])
+
+    const labels = (await suggest('mus', 'instrument_model', 5)).map(r => r.label)
+    expect(labels[0]).toBe('Mus musculus')
+    expect(labels).toHaveLength(5)
+  })
+
   it('treats ILIKE wildcards in the query literally', async() => {
     // The decoys would match if '_' / '%' acted as wildcards, and are too dissimilar for the typo fallback.
     await insertTerms([

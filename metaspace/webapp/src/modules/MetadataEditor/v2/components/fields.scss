@@ -1,4 +1,6 @@
-/* field label: 12px #324e67; ElFormItem's own label line-height is tightened */
+@import './tokens';
+
+/* field label: 12px, label colour; ElFormItem's own label line-height is tightened */
 .v2-field.el-form-item {
   margin-bottom: 0;
   .el-form-item__label {
@@ -6,17 +8,29 @@
     line-height: 16px;
     margin-bottom: 4px;
     padding: 0;
-    color: #324e67;
+    color: var(--mv2-text-label);
     font-weight: 400;
   }
 }
-/* required-and-empty or server error: 2px danger border on the control */
+/* required-and-empty or server error: 2px danger border on the control. A half-filled composite pair
+   (resolving power, pixel size) is marked `--partial`: only its empty input(s) get the border. */
 .v2-field.is-error {
-  .el-input__wrapper,
+  .el-input__wrapper:not(.v2-inline--partial .el-input__wrapper),
+  .v2-inline--partial .v2-inline__num--empty .el-input__wrapper,
   .el-select__wrapper,
   .el-select .el-input__wrapper,
   .el-textarea__inner {
     box-shadow: 0 0 0 2px var(--el-color-danger) inset;
+  }
+  /* the filled half of a partial pair keeps the plain input look (ElFormItem's own is-error rule paints it too) */
+  .v2-inline--partial .v2-inline__num:not(.v2-inline__num--empty) .el-input__wrapper {
+    box-shadow: 0 0 0 1px var(--el-input-border-color, var(--el-border-color)) inset;
+    &:hover {
+      box-shadow: 0 0 0 1px var(--el-input-hover-border-color) inset;
+    }
+    &.is-focus {
+      box-shadow: 0 0 0 1px var(--el-input-focus-border-color) inset;
+    }
   }
 }
 .v2-prov {
@@ -30,18 +44,11 @@
   &--migrated {
     color: var(--el-color-success);
   }
-  &--review,
-  &--copied {
-    color: var(--el-color-warning);
-  }
   &--required-empty {
     color: var(--el-color-danger);
   }
   &--new {
     color: var(--el-color-primary);
-  }
-  &--empty {
-    color: var(--el-text-color-placeholder);
   }
 }
 .v2-required {
@@ -52,7 +59,7 @@
   margin-top: 4px;
   font-size: 10.5px;
   line-height: 14px;
-  color: #829bb0;
+  color: var(--mv2-text-subtle);
 }
 .v2-hint--danger {
   color: var(--el-color-danger);
@@ -67,14 +74,34 @@
   border: 1px solid;
   border-radius: 15px;
   font-size: 12px;
-  color: #102a42;
-  cursor: pointer;
+  color: var(--mv2-text);
+  /* dot, label, id / state text and mark; a button when it re-opens the editor, laid out like the pill itself */
+  &__body {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    color: inherit;
+    text-align: inherit;
+  }
+  button.v2-chip__body {
+    cursor: pointer;
+    &:disabled {
+      cursor: default;
+    }
+  }
   &__dot {
     flex-shrink: 0;
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: #e6a23c;
+    background: var(--mv2-pending);
   }
   &__label {
     overflow: hidden;
@@ -83,36 +110,37 @@
   }
   &__mark {
     font-size: 12px;
-    color: #e6a23c;
+    color: var(--mv2-pending);
   }
-  &:focus-visible {
+  /* the focus ring goes round the whole pill while its body has focus (the × keeps its own colour change) */
+  &:has(> .v2-chip__body:focus-visible) {
     outline: 2px solid var(--el-color-primary);
     outline-offset: 1px;
   }
+  @supports selector(:has(*)) {
+    &__body:focus-visible {
+      outline: none;
+    }
+  }
   &--controlled,
   &--accepted {
-    border-color: #2cba8f;
-    background: #eaf8f4;
+    border-color: var(--mv2-success);
+    background: var(--mv2-success-bg);
     .v2-chip__dot {
-      background: #2cba8f;
+      background: var(--mv2-success);
     }
     .v2-chip__mark {
-      color: #2cba8f;
+      color: var(--mv2-success);
     }
   }
   &--pending {
-    border-color: #e6a23c;
-    background: #fdf6ec;
+    border-color: var(--mv2-pending);
+    background: var(--mv2-pending-bg);
   }
   &__id {
     font-size: 10px;
-    color: #617f98;
+    color: var(--mv2-text-muted);
     white-space: nowrap;
-  }
-  &__use,
-  &__keep {
-    @apply text-xs underline ml-2 bg-transparent border-0 cursor-pointer p-0;
-    color: var(--el-color-primary);
   }
   /* × inside the pill, after the id/state text */
   &__clear {
@@ -123,7 +151,7 @@
     font-size: 12px;
     line-height: 1;
     text-decoration: none;
-    color: #617f98;
+    color: var(--mv2-text-muted);
     cursor: pointer;
     &:hover,
     &:focus-visible {
@@ -131,27 +159,12 @@
     }
   }
 }
-.v2-carry {
-  @apply text-xs mt-1;
-  color: var(--el-text-color-secondary);
-  button {
-    @apply underline bg-transparent border-0 p-0 cursor-pointer;
-    color: var(--el-color-primary);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .v2-chip,
-  .v2-prov {
-    transition: none;
-  }
-}
-
 /* autocomplete: "no matching terms" row is muted text; selecting it adds the typed text as pending curation */
 .v2-ac-empty {
   display: block;
   padding: 6px 0;
   font-size: 11px;
-  color: #829bb0;
+  color: var(--mv2-text-subtle);
   white-space: normal;
   line-height: 16px;
 }

@@ -1,8 +1,7 @@
-// metaspace/webapp/src/modules/MetadataEditor/v2/legacyMigration.ts
 /* eslint-disable camelcase */
 import { cloneDeep } from 'lodash-es'
 import { appendProtocol, createEmptyEnvelope, POLARITY_TERMS, setAtPath } from './envelope'
-import { fieldByKey, LEGACY_LABELS } from './formDefinition'
+import { fieldByKey } from './formDefinition'
 import {
   applyAliases,
   isPlaceholder,
@@ -27,10 +26,8 @@ import {
   UnmappedRow,
 } from './types'
 
-export interface Resolution {
+interface Resolution {
   value: OntologyTermValue
-  state: 'migrated' | 'review'
-  suggestion?: Term
   failed: boolean
 }
 
@@ -38,27 +35,26 @@ const matches = (term: Term, text: string) =>
   [term.label, ...(term.synonyms || [])].some((s) => normaliseText(s) === text)
 
 /**
- * Resolve legacy free text against a bound slot. Exact label/synonym match -> controlled; any hit ->
- * free text with a suggestion; no hit or request failure -> free text, review.
+ * Resolve legacy free text against a bound slot. Exact label/synonym match -> controlled; otherwise (or on
+ * request failure) -> free text.
  */
-export async function resolveTerm(slot: string, raw: string, resolver: TermResolver): Promise<Resolution> {
+async function resolveTerm(slot: string, raw: string, resolver: TermResolver): Promise<Resolution> {
   const text = normaliseText(raw)
   const freeText: OntologyTermValue = { value_free_text: raw, curation_state: 'pending_curation' }
   let terms: Term[] = []
   try {
     terms = await resolver(slot, text)
   } catch (err) {
-    return { value: freeText, state: 'review', failed: true }
+    return { value: freeText, failed: true }
   }
   const exact = terms.find((t) => matches(t, text))
   if (exact) {
     return {
       value: { value_ontology_id: exact.curie, value_label: exact.label, curation_state: 'controlled' },
-      state: 'migrated',
       failed: false,
     }
   }
-  return { value: freeText, state: 'review', suggestion: terms[0], failed: false }
+  return { value: freeText, failed: false }
 }
 
 const accepted = (label: string): OntologyTermValue => ({ value_label: label, curation_state: 'free_text_accepted' })
@@ -104,11 +100,7 @@ export async function migrateLegacy(
     if (res.failed) {
       failedSlots.push(def.slot!)
     }
-    put(key, res.state === 'migrated' ? res.value : pending(source.raw), {
-      state: res.state,
-      source,
-      suggestion: res.suggestion,
-    })
+    put(key, res.value.curation_state === 'controlled' ? res.value : pending(source.raw), { state: 'migrated', source })
   }
 
   // Unbound slot: lookup table hit -> free_text_accepted, else pending_curation.
@@ -118,7 +110,7 @@ export async function migrateLegacy(
       return
     }
     const hit = lookupTable(source.raw, table)
-    put(key, hit ? accepted(hit) : pending(source.raw), { state: hit ? 'migrated' : 'review', source })
+    put(key, hit ? accepted(hit) : pending(source.raw), { state: 'migrated', source })
   }
 
   const organism = raw('Sample_Information', 'Organism', si.Organism)
@@ -151,17 +143,16 @@ export async function migrateLegacy(
       if (res.failed) {
         failedSlots.push('instrument_model')
         put('instrument_model', pending(analyzer.raw), {
-          state: 'review',
+          state: 'migrated',
           source: analyzer,
           note: 'term lookup failed — kept as typed',
         })
-      } else if (res.state === 'migrated') {
+      } else if (res.value.curation_state === 'controlled') {
         put('instrument_model', res.value, { state: 'migrated', source: analyzer })
       } else {
         fields.instrument_model = {
           state: 'required-empty',
           source: analyzer,
-          suggestion: res.suggestion,
           note: `legacy "Analyzer: ${analyzer.raw}" is an analyzer type, not a model — search "${analyzer.raw}" models`,
         }
       }
@@ -173,17 +164,16 @@ export async function migrateLegacy(
       }
       const { compound, remainder } = parseSolvent(solvent.raw)
       if (!compound) {
-        put('solvent', pending(solvent.raw), { state: 'review', source: solvent })
+        put('solvent', pending(solvent.raw), { state: 'migrated', source: solvent })
         return
       }
       const res = await resolveTerm('solvent', compound, resolver)
       if (res.failed) {
         failedSlots.push('solvent')
       }
-      put('solvent', res.state === 'migrated' ? res.value : pending(compound), {
-        state: res.state,
+      put('solvent', res.value.curation_state === 'controlled' ? res.value : pending(compound), {
+        state: 'migrated',
         source: solvent,
-        suggestion: res.suggestion,
         note: remainder ? 'concentration kept in Protocol description' : undefined,
       })
       if (remainder) {
@@ -200,7 +190,7 @@ export async function migrateLegacy(
   } else {
     const { method, device } = matrixApplication(application.raw)
     put('maldi_matrix_application', method ? accepted(method) : pending(application.raw), {
-      state: 'review',
+      state: 'migrated',
       source: application,
       note: device ? 'device → method. Device kept in Protocol description.' : undefined,
     })
@@ -265,14 +255,7 @@ export async function migrateLegacy(
   if (!isPlaceholder(growth.raw)) {
     env = appendProtocol(env, growth.raw)
   } else if (growth.raw !== '' || si.Sample_Growth_Conditions !== undefined) {
-    unmapped.push({
-      legacyKey: growth.legacyKey,
-      label: LEGACY_LABELS[growth.legacyKey],
-      raw: growth.raw,
-      hint: 'Placeholder value — safe to dismiss',
-      targets: ['protocol_description'],
-      safeToDismiss: true,
-    })
+    unmapped.push({ legacyKey: growth.legacyKey })
   }
   protocolLines.filter(Boolean).forEach((line) => {
     env = appendProtocol(env, line)
@@ -283,7 +266,7 @@ export async function migrateLegacy(
   const protocol = env.document.sample.protocol_description
   fields.protocol_description = protocol
     ? {
-        state: 'review',
+        state: 'migrated',
         note:
           'auto-composed from legacy "MALDI matrix application", "Solvent" and ' +
           '"Supplementary" details that have no v2 field — edit freely',
@@ -292,28 +275,11 @@ export async function migrateLegacy(
 
   // Condition has no single v2 home.
   if (condition.raw !== '' || si.Condition !== undefined) {
-    const placeholder = isPlaceholder(condition.raw)
-    unmapped.unshift({
-      legacyKey: condition.legacyKey,
-      label: LEGACY_LABELS[condition.legacyKey],
-      raw: condition.raw,
-      hint: placeholder
-        ? 'Placeholder value — safe to dismiss'
-        : 'Suggested: Disease · Genetic background · Health status · Protocol description',
-      targets: ['disease', 'genetic_background', 'health_status', 'protocol_description'],
-      safeToDismiss: placeholder,
-    })
+    unmapped.unshift({ legacyKey: condition.legacyKey })
   }
 
   if (unrecognisedPolarity) {
-    unmapped.push({
-      legacyKey: polarity.legacyKey,
-      label: LEGACY_LABELS[polarity.legacyKey],
-      raw: polarity.raw,
-      hint: 'Not a recognised polarity — pick Positive or Negative',
-      targets: ['protocol_description'],
-      safeToDismiss: false,
-    })
+    unmapped.push({ legacyKey: polarity.legacyKey })
   }
 
   const newKeys: FieldKey[] = [

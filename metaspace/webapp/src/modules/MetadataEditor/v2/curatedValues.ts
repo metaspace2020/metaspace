@@ -1,4 +1,3 @@
-// metaspace/webapp/src/modules/MetadataEditor/v2/curatedValues.ts
 import { isPlaceholder } from './legacyLookups'
 import { FieldKey, ValueResolver, ValueSuggestion } from './types'
 
@@ -59,19 +58,18 @@ const NONE_IS_MEANINGFUL: FieldKey[] = ['tissue_modification', 'maldi_matrix_app
 export interface MergeOptions {
   /** keep community values equal to "none" (other placeholders such as "N/A" are always dropped) */
   keepNone?: boolean
-  limit?: number
 }
 
 /**
  * Curated values first, then community values: both filtered by case-insensitive substring of the query,
  * deduplicated case-insensitively (the curated spelling wins), placeholders dropped from the community values,
- * capped at `limit`.
+ * capped at MAX_VALUE_SUGGESTIONS.
  */
 export function mergeValueSuggestions(
   curated: string[],
   community: string[],
   query: string,
-  { keepNone = false, limit = MAX_VALUE_SUGGESTIONS }: MergeOptions = {}
+  { keepNone = false }: MergeOptions = {}
 ): ValueSuggestion[] {
   const q = (query || '').trim().toLowerCase()
   const seen = new Set<string>()
@@ -85,7 +83,7 @@ export function mergeValueSuggestions(
   }
   curated.forEach(add)
   community.filter((v) => !isPlaceholder(v) || (keepNone && (v || '').trim().toLowerCase() === 'none')).forEach(add)
-  return out.slice(0, limit)
+  return out.slice(0, MAX_VALUE_SUGGESTIONS)
 }
 
 /** options for merging the given field's community values with its curated list */

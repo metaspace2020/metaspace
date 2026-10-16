@@ -1,10 +1,6 @@
 import { parseMetadataV2Envelope, processingSettingsChanged, resolveMetadataInput, validateMetadata } from './Mutation'
 import { LegacyMetadata, upProjectToV2 } from '../projection'
 
-// Deliberately does NOT import graphqlTestEnvironment/testDataCreation - validateMetadata is a pure
-// function (no DB, no GraphQL context), and this file exists specifically to verify the Ajv 4->8
-// migration's error shape without requiring a live database.
-
 const baseIms: LegacyMetadata = {
   Data_Type: 'Imaging MS',
   Sample_Information: { Organism: 'Mus musculus', Organism_Part: 'liver', Condition: 'wildtype' },
@@ -23,54 +19,6 @@ const baseIms: LegacyMetadata = {
   },
 }
 
-function getValidationErrors(metadata: any): any[] {
-  try {
-    validateMetadata(metadata)
-    return []
-  } catch (err) {
-    return JSON.parse(err.message).validation_errors
-  }
-}
-
-describe('validateMetadata (Ajv 4 -> 8 migration)', () => {
-  it('accepts a fully valid Imaging MS payload with no errors', () => {
-    expect(getValidationErrors(baseIms)).toEqual([])
-  })
-
-  it('reports dot-path dataPath (legacy shape), not JSON-Pointer instancePath, for a nested field', () => {
-    const invalid = { ...baseIms, Sample_Information: { ...baseIms.Sample_Information, Organism: '' } }
-    const errors = getValidationErrors(invalid)
-    const organismError = errors.find((e) => e.keyword === 'minLength')
-    expect(organismError.dataPath).toBe('.Sample_Information.Organism')
-    expect(organismError.instancePath).toBeUndefined()
-  })
-
-  it('reports a top-level-object dataPath correctly for a missing required property', () => {
-    const invalid = {
-      ...baseIms,
-      Sample_Preparation: { MALDI_Matrix: 'DHB', MALDI_Matrix_Application: 'sublimation' },
-    }
-    const errors = getValidationErrors(invalid)
-    const missingStabilisation = errors.find((e) => e.params?.missingProperty === 'Sample_Stabilisation')
-    expect(missingStabilisation.dataPath).toBe('.Sample_Preparation')
-  })
-
-  it('still flags an unrecognized analyzer with the hand-constructed legacy error shape', () => {
-    const invalid = { ...baseIms, MS_Analysis: { ...baseIms.MS_Analysis, Analyzer: 'a totally novel gadget' } }
-    const errors = getValidationErrors(invalid)
-    expect(errors).toContainEqual({
-      dataPath: '.MS_Analysis.Analyzer',
-      message: 'Unrecognized analyzer. Please specify the technology: FT-ICR, Orbitrap or TOF.',
-    })
-  })
-
-  it('accepts custom UI-hint keywords (help, smEditorType, ...) in the schema without throwing', () => {
-    // Regression guard for Ajv 8's default strict-mode rejecting unknown keywords - if `strict: false`
-    // is ever dropped from the Ajv04 instantiation, compiling ims.json throws before this call returns.
-    expect(() => validateMetadata(baseIms)).not.toThrow()
-  })
-})
-
 const getFailedValidation = (fn: () => any): any[] => {
   try {
     fn()
@@ -81,6 +29,39 @@ const getFailedValidation = (fn: () => any): any[] => {
   }
   throw new Error('expected failed_validation')
 }
+
+describe('validateMetadata (Ajv 4 -> 8 migration)', () => {
+  it('accepts a fully valid Imaging MS payload with no errors', () => {
+    expect(() => validateMetadata(baseIms)).not.toThrow()
+  })
+
+  it('reports dot-path dataPath (legacy shape), not JSON-Pointer instancePath, for a nested field', () => {
+    const invalid = { ...baseIms, Sample_Information: { ...baseIms.Sample_Information, Organism: '' } }
+    const errors = getFailedValidation(() => validateMetadata(invalid))
+    const organismError = errors.find((e) => e.keyword === 'minLength')
+    expect(organismError.dataPath).toBe('.Sample_Information.Organism')
+    expect(organismError.instancePath).toBeUndefined()
+  })
+
+  it('reports a top-level-object dataPath correctly for a missing required property', () => {
+    const invalid = {
+      ...baseIms,
+      Sample_Preparation: { MALDI_Matrix: 'DHB', MALDI_Matrix_Application: 'sublimation' },
+    }
+    const errors = getFailedValidation(() => validateMetadata(invalid))
+    const missingStabilisation = errors.find((e) => e.params?.missingProperty === 'Sample_Stabilisation')
+    expect(missingStabilisation.dataPath).toBe('.Sample_Preparation')
+  })
+
+  it('still flags an unrecognized analyzer with the hand-constructed legacy error shape', () => {
+    const invalid = { ...baseIms, MS_Analysis: { ...baseIms.MS_Analysis, Analyzer: 'a totally novel gadget' } }
+    const errors = getFailedValidation(() => validateMetadata(invalid))
+    expect(errors).toContainEqual({
+      dataPath: '.MS_Analysis.Analyzer',
+      message: 'Unrecognized analyzer. Please specify the technology: FT-ICR, Orbitrap or TOF.',
+    })
+  })
+})
 
 describe('metadata_v2 input handling', () => {
   const validV2 = upProjectToV2(baseIms)
@@ -150,18 +131,42 @@ describe('metadata_v2 input handling', () => {
 })
 
 describe('processingSettingsChanged: analyzer class', () => {
-  const ds = { metadata: baseIms } as any
+  const dsAtVersion = (analysisVersion?: number) => ({
+    metadata: baseIms,
+    config: analysisVersion === undefined ? {} : { analysis_version: analysisVersion },
+  }) as any
   const withAnalyzer = (Analyzer: string) => ({
     ...baseIms, MS_Analysis: { ...baseIms.MS_Analysis, Analyzer },
   })
 
-  it('flags a reprocess when the analyzer class changes', () => {
-    const { procSettingsUpd } = processingSettingsChanged(ds, { metadata: withAnalyzer('timsTOF Pro') } as any)
+  it('does not flag a reprocess for a class change at analysis version 1', () => {
+    const { procSettingsUpd } = processingSettingsChanged(dsAtVersion(1), { metadata: withAnalyzer('timsTOF Pro') } as any)
+    expect(procSettingsUpd).toBe(false)
+  })
+
+  it('treats a missing analysis version as 1', () => {
+    const { procSettingsUpd } = processingSettingsChanged(dsAtVersion(), { metadata: withAnalyzer('timsTOF Pro') } as any)
+    expect(procSettingsUpd).toBe(false)
+  })
+
+  it('flags a reprocess for a class change at analysis version 2', () => {
+    const { procSettingsUpd } = processingSettingsChanged(dsAtVersion(2), { metadata: withAnalyzer('timsTOF Pro') } as any)
     expect(procSettingsUpd).toBe(true)
   })
 
-  it('does not flag a relabel within the same class', () => {
-    const { procSettingsUpd } = processingSettingsChanged(ds, { metadata: withAnalyzer('Q Exactive HF') } as any)
+  it('flags a reprocess for a class change at analysis version 3', () => {
+    const { procSettingsUpd } = processingSettingsChanged(dsAtVersion(3), { metadata: withAnalyzer('FTICR') } as any)
+    expect(procSettingsUpd).toBe(true)
+  })
+
+  it('flags a reprocess for a polarity change at analysis version 1', () => {
+    const metadata = { ...baseIms, MS_Analysis: { ...baseIms.MS_Analysis, Polarity: 'Negative' } }
+    const { procSettingsUpd } = processingSettingsChanged(dsAtVersion(1), { metadata } as any)
+    expect(procSettingsUpd).toBe(true)
+  })
+
+  it('does not flag a relabel within the same class at analysis version 2', () => {
+    const { procSettingsUpd } = processingSettingsChanged(dsAtVersion(2), { metadata: withAnalyzer('Q Exactive HF') } as any)
     expect(procSettingsUpd).toBe(false)
   })
 })

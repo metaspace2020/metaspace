@@ -2,8 +2,8 @@ import { Column, Entity, Index, PrimaryColumn } from 'typeorm'
 
 /**
  * Ontology term store (metadata schema v2 - see metaspace_metadata's
- * docs/integration_metaspace.md SS6). Rows are populated by engine/scripts/import_ontology_terms.py
- * via an oaklib walk of each bound slot's `reachable_from` root(s), never hand-written.
+ * docs/integration_metaspace.md SS6). Rows are populated by engine/scripts/import_ontology_terms.py,
+ * never hand-written.
  *
  * `(curie, subtree)` is the composite primary key rather than `curie` alone so that one term can
  * appear under more than one binding without ambiguity - needed by `instrument_model`, which spans

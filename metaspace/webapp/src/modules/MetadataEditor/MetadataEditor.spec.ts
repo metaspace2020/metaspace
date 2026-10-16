@@ -56,7 +56,11 @@ const mountEditor = (
     }),
   })
   return mount(MetadataEditor, {
-    global: { plugins: [store, router], provide: { [DefaultApolloClient]: graphqlMockClient }, stubs },
+    global: {
+      plugins: [store, router],
+      provide: { [DefaultApolloClient]: graphqlMockClient },
+      stubs: { ElSkeleton: true, ElSkeletonItem: true, ...stubs },
+    },
     props,
   })
 }
@@ -86,7 +90,6 @@ describe('MetadataEditor', () => {
     expect(wrapper.find('.v2-card [data-field-key="sample_type"]').exists()).toBe(true)
     expect(wrapper.find('.md-data-management').exists()).toBe(true)
     expect(wrapper.find('.md-annotation-settings').exists()).toBe(true)
-    expect(wrapper.text()).not.toContain('Save draft')
   })
 
   it('loads a legacy dataset into migration mode', async () => {
@@ -106,8 +109,6 @@ describe('MetadataEditor', () => {
       Resolving_Power: 123456,
     })
     expect(wrapper.vm.state.metaspaceOptions).toMatchSnapshot('metaspaceOptions')
-    // values pending review never lock Public; only missing required fields do
-    expect(wrapper.vm.publicDisabledReason).not.toContain('need review')
     // the banner sits above the Metadata card, not inside it
     const banner = wrapper.find('.v2-banner')
     expect(banner.exists()).toBe(true)
@@ -123,7 +124,6 @@ describe('MetadataEditor', () => {
     expect(titles).toEqual(['Metadata', 'Data management', 'Annotation settings'])
     expect(wrapper.find('.md-data-management .section-card__right').text()).toMatch(/^\d of 2 required$/)
     expect(wrapper.find('.md-annotation-settings .section-card__right').text()).toMatch(/^\d of 5 required$/)
-    expect(wrapper.findAll('.metadata-section')).toHaveLength(0)
     wrapper.vm.state.metaspaceOptions.name = 'my dataset'
     expect(wrapper.vm.datasetName).toBe('my dataset')
   })
@@ -138,8 +138,6 @@ describe('MetadataEditor', () => {
     const button = upload.find('.v2-card .section-card__right .md-copy-from-dataset')
     expect(button.exists()).toBe(true)
     expect(button.text()).toContain('Copy from another dataset…')
-    // the old right-aligned row above the card is gone
-    expect(upload.text()).not.toContain('Copy metadata from another dataset')
 
     // the remote dataset select lives in the popover
     expect(upload.find('.v2-header-actions .mock-el-select, .v2-header-actions .el-select').exists()).toBe(true)
@@ -178,10 +176,9 @@ describe('MetadataEditor', () => {
     expect(legacy.vm.v2Mode).toBe('new')
     expect(legacy.vm.v2.envelope.value.document.sample.organism.value_free_text).toBe('Human')
     expect(legacy.vm.v2.envelope.value.unmodeled.legacy_record).toBeUndefined()
-    // a template copies values only: no migration tags, hints or review gating
+    // a template copies values only: no migration tags or hints
     expect(legacy.vm.v2.fields.value).toEqual({})
     expect(legacy.vm.v2.unmapped.value).toEqual([])
-    expect(legacy.vm.v2.status.value.reviewCount).toBe(0)
 
     const v2 = mountEditor({ currentUserLastSubmittedDataset: () => v2Dataset })
     await v2.vm.state.loadingPromise

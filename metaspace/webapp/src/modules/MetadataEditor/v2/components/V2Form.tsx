@@ -2,11 +2,11 @@
 import { defineComponent, nextTick, PropType, ref, toRaw, watch } from 'vue'
 import { ElForm, ElInput } from '../../../../lib/element-plus'
 import CustomNumberInput from '../../inputs/CustomNumberInput.vue'
+import { CURATED_VALUES } from '../curatedValues'
 import { getAtPath, isTermEmpty, POLARITY_TERMS, termText } from '../envelope'
-import { FieldDef, FieldTier, fieldByKey, LEGACY_LABELS, requiredFor } from '../formDefinition'
+import { FieldDef, FieldTier, fieldByKey, requiredFor } from '../formDefinition'
 import { MetadataV2Form } from '../useMetadataV2Form'
 import { FieldKey, PixelSizeValue, ResolvingPower, SampleType } from '../types'
-import { CarryOverHint } from './CarryOverHint'
 import { EnumField } from './EnumField'
 import { FieldRow } from './FieldRow'
 import { OntologyField } from './OntologyField'
@@ -22,7 +22,6 @@ const TIERS: { tier: FieldTier; rule: string | null }[] = [
   { tier: 'recommended', rule: 'RECOMMENDED' },
   { tier: 'advanced', rule: 'ADVANCED' },
 ]
-const CARRY_TARGETS: FieldKey[] = ['health_status', 'genetic_background']
 
 const SAMPLE_TYPE_HELP =
   'Tissue · Cell culture · Plant · Environmental, or type another (goes to curation). Changes the fields below.'
@@ -34,13 +33,13 @@ const FOCUSABLE_DESCENDANT = 'input:not([type="hidden"]), textarea, [tabindex]:n
  * The element a focus request should focus: the target itself when it is a control, otherwise its first
  * focusable descendant (composite editors such as pixel size carry the field id on a wrapper div).
  */
-export const focusableIn = (el: Element | null | undefined): HTMLElement | null => {
+const focusableIn = (el: Element | null | undefined): HTMLElement | null => {
   if (!el) return null
   if (el.matches(FOCUSABLE)) return el as HTMLElement
   return el.querySelector<HTMLElement>(FOCUSABLE_DESCENDANT)
 }
 
-export const inputIdFor = (key: FieldKey) => `v2-field-${key}`
+const inputIdFor = (key: FieldKey) => `v2-field-${key}`
 
 export const V2Form = defineComponent({
   name: 'V2Form',
@@ -77,14 +76,6 @@ export const V2Form = defineComponent({
       { immediate: true, flush: 'post' }
     )
 
-    const conditionRow = () =>
-      getForm().unmapped.value.find(
-        (u) =>
-          u.legacyKey === 'Sample_Information.Condition' &&
-          !getForm().copied.value.includes(u.legacyKey) &&
-          !getForm().dismissed.value.includes(u.legacyKey)
-      )
-
     // read at emit time so two edits within one render tick do not overwrite each other
     const currentRp = (): ResolvingPower =>
       getAtPath<ResolvingPower | undefined>(getForm().envelope.value, fieldByKey('resolving_power').path) || {
@@ -96,6 +87,19 @@ export const V2Form = defineComponent({
         Xaxis: null,
         Yaxis: null,
       }
+
+    /**
+     * Composite numerics (resolving power, pixel size): each input is flagged empty on its own, and the pair is
+     * `--partial` when only some parts are filled, so the required-empty border lands on the empty input(s) only.
+     */
+    const numClass = (part: number | null | undefined): (string | Record<string, boolean>)[] => [
+      'v2-inline__num',
+      { 'v2-inline__num--empty': part == null },
+    ]
+    const inlineClass = (parts: (number | null | undefined)[]): (string | Record<string, boolean>)[] => {
+      const empty = parts.filter((part) => part == null).length
+      return ['v2-inline', { 'v2-inline--partial': empty > 0 && empty < parts.length }]
+    }
 
     /**
      * Sample type: the curated classes, or a typed value kept for curation (amber chip) while the class
@@ -112,16 +116,18 @@ export const V2Form = defineComponent({
           <>
             <div class="flex flex-wrap items-center gap-1">
               <span id={id} class="v2-chip v2-chip--pending" data-testid="sample-type-other">
-                <i class="v2-chip__dot" aria-hidden="true" />
-                <span class="v2-chip__label">{label}</span>
-                <span class="v2-chip__id">pending curation</span>{' '}
-                <span class="v2-chip__mark" aria-hidden="true">
-                  ✎
+                <span class="v2-chip__body">
+                  <i class="v2-chip__dot" aria-hidden="true" />
+                  <span class="v2-chip__label">{label}</span>
+                  <span class="v2-chip__id">pending curation</span>{' '}
+                  <span class="v2-chip__mark" aria-hidden="true">
+                    ✎
+                  </span>
                 </span>
                 <button
                   type="button"
                   class="v2-chip__clear"
-                  aria-label="Clear typed sample type"
+                  aria-label="Clear value"
                   onClick={() => form.setSampleType(form.sampleType.value)}
                 >
                   ×
@@ -160,8 +166,6 @@ export const V2Form = defineComponent({
       const form = getForm()
       const value = getAtPath<any>(form.envelope.value, def.path)
       const id = inputIdFor(def.key)
-      const report = form.fields.value[def.key]
-      const acknowledged = form.acknowledged.value.includes(def.key)
       switch (def.editor) {
         case 'enum':
           if (def.key === 'polarity') {
@@ -202,32 +206,22 @@ export const V2Form = defineComponent({
               }
               // the curated / community value lists are short, so they are worth showing from the first character
               minQueryLength={def.valueSource === 'community' ? 1 : undefined}
+              knownValues={(def.valueSource === 'community' && CURATED_VALUES[def.key]) || []}
               placeholder={def.placeholder}
-              report={report}
-              acknowledged={acknowledged}
               fetchTerms={form.resolver}
               onInput={(v: any) => form.setField(def.key, v)}
-              onAcknowledge={() => form.acknowledge(def.key)}
-              onApplySuggestion={() => form.applySuggestion(def.key)}
             />
           )
         case 'textarea':
           return (
-            <>
-              <ElInput
-                id={id}
-                type="textarea"
-                autosize={{ minRows: 2, maxRows: 6 }}
-                modelValue={value || ''}
-                placeholder={def.placeholder}
-                onUpdate:modelValue={(v: string) => form.setField(def.key, v || null)}
-              />
-              {(report?.state === 'review' || report?.state === 'copied') && !acknowledged && (
-                <button type="button" class="v2-chip__keep" onClick={() => form.acknowledge(def.key)}>
-                  Mark as reviewed
-                </button>
-              )}
-            </>
+            <ElInput
+              id={id}
+              type="textarea"
+              autosize={{ minRows: 2, maxRows: 6 }}
+              modelValue={value || ''}
+              placeholder={def.placeholder}
+              onUpdate:modelValue={(v: string) => form.setField(def.key, v || null)}
+            />
           )
         case 'integer':
           return (
@@ -241,9 +235,9 @@ export const V2Form = defineComponent({
         case 'resolvingPower': {
           const rp: ResolvingPower = value || { mz: null, Resolving_Power: null }
           return (
-            <div id={id} class="v2-inline">
+            <div id={id} class={inlineClass([rp.Resolving_Power, rp.mz])}>
               <CustomNumberInput
-                class="v2-inline__num"
+                class={numClass(rp.Resolving_Power)}
                 style="width: 86px"
                 value={rp.Resolving_Power}
                 precision={0}
@@ -254,7 +248,7 @@ export const V2Form = defineComponent({
               />
               <span class="v2-inline__sep">@</span>
               <CustomNumberInput
-                class="v2-inline__num"
+                class={numClass(rp.mz)}
                 style="width: 64px"
                 value={rp.mz}
                 precision={0}
@@ -268,9 +262,9 @@ export const V2Form = defineComponent({
         case 'pixelSize': {
           const px: PixelSizeValue = value || { Xaxis: null, Yaxis: null }
           return (
-            <div id={id} class="v2-inline">
+            <div id={id} class={inlineClass([px.Xaxis, px.Yaxis])}>
               <CustomNumberInput
-                class="v2-inline__num"
+                class={numClass(px.Xaxis)}
                 style="width: 86px"
                 value={px.Xaxis}
                 aria-label="Pixel size x"
@@ -278,7 +272,7 @@ export const V2Form = defineComponent({
               />
               <span class="v2-inline__sep">×</span>
               <CustomNumberInput
-                class="v2-inline__num"
+                class={numClass(px.Yaxis)}
                 style="width: 64px"
                 value={px.Yaxis}
                 aria-label="Pixel size y"
@@ -298,7 +292,6 @@ export const V2Form = defineComponent({
       const required = new Set(requiredFor(form.sampleType.value).map((f) => f.key))
       // after a submit attempt every still-empty required field is highlighted, not only migrated gaps
       const missing = new Set(form.submitAttempted.value ? form.status.value.missingRequired.map((f) => f.key) : [])
-      const condition = conditionRow()
       return (
         <ElForm labelPosition="top" class="v2-form section-rows" onSubmit={(e: Event) => e.preventDefault()}>
           {GROUPS.map((group) => {
@@ -325,7 +318,6 @@ export const V2Form = defineComponent({
                           <FieldRow
                             def={def}
                             report={form.fields.value[def.key]}
-                            acknowledged={form.acknowledged.value.includes(def.key)}
                             error={form.fieldErrors.value[def.key]}
                             required={required.has(def.key)}
                             showRequired={missing.has(def.key)}
@@ -333,17 +325,6 @@ export const V2Form = defineComponent({
                           >
                             {renderEditor(def)}
                           </FieldRow>
-                          {condition && CARRY_TARGETS.includes(def.key) && (
-                            <CarryOverHint
-                              legacyLabel={LEGACY_LABELS[condition.legacyKey]}
-                              raw={condition.raw}
-                              targets={[def.key, ...CARRY_TARGETS.filter((k) => k !== def.key)].map((k) => ({
-                                key: k,
-                                label: fieldByKey(k).label,
-                              }))}
-                              onUse={(key: FieldKey) => form.copyUnmapped(condition.legacyKey, key)}
-                            />
-                          )}
                         </div>
                       )),
                     ]

@@ -1,9 +1,8 @@
-// metaspace/webapp/src/modules/MetadataEditor/v2/useMetadataV2Form.spec.ts
 /* eslint-disable camelcase */
 import { nextTick } from 'vue'
 import { useMetadataV2Form } from './useMetadataV2Form'
 import { createEmptyEnvelope } from './envelope'
-import { Term, TermResolver } from './types'
+import { SampleType, Term, TermResolver } from './types'
 
 const mouse: Term = { curie: 'NCBITaxon:10090', label: 'Mus musculus', synonyms: ['mouse'] }
 const resolver: TermResolver = async (slot, q) => (slot === 'organism' && /mus musculus/i.test(q) ? [mouse] : [])
@@ -33,16 +32,6 @@ const legacyJson = JSON.stringify({
 })
 
 describe('useMetadataV2Form', () => {
-  it('editing a review field acknowledges it', async () => {
-    const form = useMetadataV2Form(resolver)
-    await form.loadDataset({ id: 'ds1', metadataJson: legacyJson, metadataV2Json: null })
-    expect(form.fields.value.anatomical_site_coarse?.state).toBe('review')
-    const before = form.status.value.reviewCount
-    form.setField('anatomical_site_coarse', { value_free_text: 'Liver lobe', curation_state: 'pending_curation' })
-    expect(form.acknowledged.value).toContain('anatomical_site_coarse')
-    expect(form.status.value.reviewCount).toBe(before - 1)
-  })
-
   it('loads a new form as v2 with an empty envelope', async () => {
     const form = useMetadataV2Form(resolver)
     await form.loadNew()
@@ -96,7 +85,7 @@ describe('useMetadataV2Form', () => {
     expect(form.envelope.value.document.sample.organism).toEqual({ curation_state: 'pending_curation' })
   })
 
-  it('migrates a legacy dataset and tracks dirtiness through every touch', async () => {
+  it('migrates a legacy dataset and tracks dirtiness', async () => {
     const form = useMetadataV2Form(resolver)
     await form.loadDataset({
       id: 'ds1',
@@ -109,60 +98,37 @@ describe('useMetadataV2Form', () => {
     expect(form.legacy.value?.Sample_Information?.Condition).toBe('Wildtype')
     expect(form.legacyMeta.value).toEqual({ uploadDT: '2019-04-17', submitterName: 'L. Vieira' })
     expect(form.fields.value.organism?.state).toBe('migrated')
-    expect(form.fields.value.anatomical_site_coarse?.state).toBe('review')
+    expect(form.fields.value.anatomical_site_coarse?.state).toBe('migrated')
     expect(form.unmapped.value.map((u) => u.legacyKey)).toEqual([
       'Sample_Information.Condition',
       'Sample_Information.Sample_Growth_Conditions',
     ])
     expect(form.isDirty.value).toBe(false)
 
-    form.acknowledge('anatomical_site_coarse')
+    form.setField('anatomical_site_coarse', { value_free_text: 'Liver lobe', curation_state: 'pending_curation' })
     expect(form.isDirty.value).toBe(true)
-    expect(form.status.value.reviewCount).toBe(form.status.value.reviewCount) // no throw
   })
 
-  it('copies an unmapped value into protocol description and undoes it', async () => {
+  it('a value typed into a non-migrated field drops its report; an edited migrated field keeps it', async () => {
     const form = useMetadataV2Form(resolver)
     await form.loadDataset({ id: 'ds1', metadataJson: legacyJson })
-    const before = form.envelope.value.document.sample.protocol_description
-    await form.copyUnmapped('Sample_Information.Condition', 'protocol_description')
-    expect(form.envelope.value.document.sample.protocol_description).toBe('Condition: Wildtype.')
-    expect(form.fields.value.protocol_description?.state).toBe('copied')
-    expect(form.copied.value).toEqual(['Sample_Information.Condition'])
-    expect(form.status.value.unmappedCount).toBe(1)
-    form.undoCopy('protocol_description')
-    expect(form.envelope.value.document.sample.protocol_description).toBe(before)
-    expect(form.copied.value).toEqual([])
+    expect(form.fields.value.instrument_model?.state).toBe('required-empty')
+    expect(form.fields.value.sex?.state).toBe('new')
+    const migrated = form.status.value.migratedCount
+    form.setField('instrument_model', { value_free_text: 'Q Exactive', curation_state: 'pending_curation' })
+    form.setField('sex', 'female')
+    expect(form.fields.value.instrument_model).toBeUndefined()
+    expect(form.fields.value.sex).toBeUndefined()
+    expect(form.status.value.migratedCount).toBe(migrated)
+    const organismReport = form.fields.value.organism
+    expect(organismReport?.state).toBe('migrated')
+    form.setField('organism', { value_free_text: 'Rattus', curation_state: 'pending_curation' })
+    expect(form.fields.value.organism).toBe(organismReport)
   })
 
-  it('copies into an ontology field by resolving, into an enum by focusing, and dismisses', async () => {
-    const form = useMetadataV2Form(async (slot, q) =>
-      slot === 'disease' && q === 'melanoma' ? [{ curie: 'MONDO:0005105', label: 'melanoma', synonyms: [] }] : []
-    )
-    await form.loadDataset({ id: 'ds1', metadataJson: legacyJson.replace('Wildtype', 'melanoma') })
-    await form.copyUnmapped('Sample_Information.Condition', 'disease')
-    expect(form.envelope.value.document.sample.disease).toEqual({
-      value_ontology_id: 'MONDO:0005105',
-      value_label: 'melanoma',
-      curation_state: 'controlled',
-    })
-    expect(form.fields.value.disease?.state).toBe('copied')
-    form.undoCopy('disease')
-    await form.copyUnmapped('Sample_Information.Condition', 'health_status')
-    expect(form.focusRequest.value).toMatchObject({ key: 'health_status', prefill: 'melanoma' })
-    form.dismiss('Sample_Information.Sample_Growth_Conditions')
-    expect(form.status.value.unmappedCount).toBe(0)
-    form.restoreUnmapped('Sample_Information.Sample_Growth_Conditions')
-    expect(form.status.value.unmappedCount).toBe(1)
-  })
-
-  it('applies a suggestion and serialises with the dataset name', async () => {
-    const form = useMetadataV2Form(async () => [{ curie: 'UBERON:0002107', label: 'liver parenchyma', synonyms: [] }])
+  it('serialises with the dataset name', async () => {
+    const form = useMetadataV2Form(resolver)
     await form.loadDataset({ id: 'ds1', metadataJson: legacyJson })
-    expect(form.fields.value.anatomical_site_coarse?.suggestion?.curie).toBe('UBERON:0002107')
-    form.applySuggestion('anatomical_site_coarse')
-    expect(form.envelope.value.document.sample.anatomical_site_coarse?.curation_state).toBe('controlled')
-    expect(form.acknowledged.value).toContain('anatomical_site_coarse')
     const json = JSON.parse(form.serialize('My dataset'))
     expect(json.document.dataset_name).toBe('My dataset')
     expect(json.unmodeled.legacy_record.metadata.Sample_Information.Organism).toBe('Mus musculus')
@@ -173,7 +139,6 @@ describe('useMetadataV2Form', () => {
     const form = useMetadataV2Form(resolver)
     await form.loadDataset({ id: 'ds2', metadataV2Json: JSON.stringify(env), uploadDT: '2026-06-01T00:00:00Z' })
     expect(form.mode.value).toBe('v2')
-    expect((form as any).pendingDraft).toBeUndefined()
 
     form.setServerErrors([
       { dataPath: '.Sample_Information.Organism', message: 'too short' },
@@ -211,7 +176,7 @@ describe('useMetadataV2Form', () => {
     const form = useMetadataV2Form(resolver)
     await form.loadDataset({ id: 'ds1', metadataJson: legacyJson })
     const organism = form.envelope.value.document.sample.organism
-    expect(form.fields.value.anatomical_site_coarse?.state).toBe('review')
+    expect(form.fields.value.anatomical_site_coarse?.state).toBe('migrated')
     form.setSampleType('cell_culture')
     const sample = form.envelope.value.document.sample
     expect(sample.sample_type).toBe('cell_culture')
@@ -220,7 +185,7 @@ describe('useMetadataV2Form', () => {
     expect(sample.organism).toEqual(organism)
     expect(form.visibleFields.value.map((f) => f.key)).toContain('cell_line_id')
     expect(form.visibleFields.value.map((f) => f.key)).not.toContain('sample_stabilisation')
-    // hidden fields no longer count as needing review
+    // hidden fields no longer count
     expect(form.fields.value.anatomical_site_coarse).toBeUndefined()
 
     form.setSampleType('tissue')
@@ -241,8 +206,7 @@ describe('useMetadataV2Form', () => {
     form.setField('tissue_modification', tissue.tissue_modification)
     const site = form.envelope.value.document.sample.anatomical_site_coarse
     const siteReport = form.fields.value.anatomical_site_coarse
-    expect(siteReport?.state).toBe('review')
-    const reviewBefore = form.status.value.reviewCount
+    expect(siteReport?.state).toBe('migrated')
     const filledBefore = form.status.value.requiredFilled
 
     form.setSampleType('cell_culture')
@@ -254,7 +218,6 @@ describe('useMetadataV2Form', () => {
     expect(back.tissue_modification).toEqual(tissue.tissue_modification)
     expect(back.anatomical_site_coarse).toEqual(site)
     expect(form.fields.value.anatomical_site_coarse).toEqual(siteReport)
-    expect(form.status.value.reviewCount).toBe(reviewBefore)
     expect(form.status.value.requiredFilled).toBe(filledBefore)
     // the stash is not part of the envelope
     expect(form.serialize('x')).not.toContain('cell_line_id')
@@ -374,7 +337,7 @@ describe('useMetadataV2Form', () => {
     form.setSampleTypeOther('Organoid')
     expect(form.fields.value.sample_type).toBeUndefined()
     // other provenance stays: this is still a legacy edit
-    expect(form.fields.value.anatomical_site_coarse?.state).toBe('review')
+    expect(form.fields.value.anatomical_site_coarse?.state).toBe('migrated')
   })
 
   it('markSubmitAttempt flags the form until the next load', async () => {
@@ -397,8 +360,6 @@ describe('useMetadataV2Form', () => {
     expect(form.fields.value).toEqual({})
     expect(form.unmapped.value).toEqual([])
     expect(form.failedSlots.value).toEqual([])
-    expect(form.status.value.reviewCount).toBe(0)
-    expect(form.status.value.unmappedCount).toBe(0)
     expect(form.status.value.migratedCount).toBe(0)
     expect(form.hasLegacyRecord.value).toBe(false)
     expect(JSON.parse(form.serialize('copy')).unmodeled.legacy_record).toBeUndefined()
@@ -406,7 +367,99 @@ describe('useMetadataV2Form', () => {
     // editing the same legacy dataset keeps every provenance report
     const edit = useMetadataV2Form(resolver)
     await edit.loadDataset({ id: 'ds1', metadataJson: legacyJson })
-    expect(edit.fields.value.anatomical_site_coarse?.state).toBe('review')
-    expect(edit.status.value.reviewCount).toBeGreaterThan(0)
+    expect(edit.fields.value.anatomical_site_coarse?.state).toBe('migrated')
+    expect(edit.status.value.migratedCount).toBeGreaterThan(0)
+  })
+})
+
+describe('useMetadataV2Form sample-type stash', () => {
+  const sampleOf = (form: ReturnType<typeof useMetadataV2Form>) => form.envelope.value.document.sample
+  const hela = { value_ontology_id: 'EFO:0001185', value_label: 'HeLa', curation_state: 'controlled' }
+
+  it.each<SampleType>(['cell_culture', 'plant', 'environmental'])(
+    'tissue -> %s -> tissue restores every tissue value and report',
+    async (other) => {
+      const form = useMetadataV2Form(resolver)
+      await form.loadDataset({ id: 'ds1', metadataJson: legacyJson })
+      form.setField('sex', 'female')
+      form.setField('developmental_stage', { value_free_text: 'adult', curation_state: 'pending_curation' })
+      form.setField('anatomical_site_fine', { value_free_text: 'lobule', curation_state: 'pending_curation' })
+      const sample = sampleOf(form)
+      expect(form.fields.value.sample_type?.state).toBe('migrated')
+      const reports = { ...form.fields.value }
+      delete reports.sample_type
+      const status = form.status.value
+
+      form.setSampleType(other)
+      expect(sampleOf(form).sample_type).toBe(other)
+      expect(sampleOf(form).sex).toBeUndefined()
+      form.setSampleType('tissue')
+
+      expect(sampleOf(form)).toEqual(sample)
+      expect(form.fields.value).toEqual(reports)
+      // the only difference: switching away was a user edit of the sample type, so its migration report is gone
+      expect(status.migratedCount).toBeGreaterThan(0)
+      expect(form.status.value).toEqual({ ...status, migratedCount: status.migratedCount - 1 })
+    }
+  )
+
+  it('cell culture -> tissue -> cell culture restores the cell values', async () => {
+    const form = useMetadataV2Form(resolver)
+    await form.loadNew()
+    form.setSampleType('cell_culture')
+    form.setField('cell_line_id', hela)
+    form.setField('passage_number', 7)
+    form.setField('disease', { value_free_text: 'cervical cancer', curation_state: 'pending_curation' })
+    const sample = sampleOf(form)
+    form.setSampleType('tissue')
+    expect(sampleOf(form).cell_line_id).toBeUndefined()
+    expect(sampleOf(form).passage_number).toBeUndefined()
+    form.setSampleType('cell_culture')
+    expect(sampleOf(form)).toEqual(sample)
+  })
+
+  it('a value typed in an intermediate class for a field the target shows wins; nothing is silently lost', async () => {
+    const form = useMetadataV2Form(resolver)
+    await form.loadNew()
+    form.setSampleType('tissue')
+    const before = { value_free_text: 'healthy liver', curation_state: 'pending_curation' }
+    const after = { value_free_text: 'fibrosis', curation_state: 'pending_curation' }
+    form.setField('disease', before)
+    form.setField('sex', 'female')
+
+    // in cell culture the shared field is edited and a cell-only value is typed
+    form.setSampleType('cell_culture')
+    expect(sampleOf(form).disease).toEqual(before)
+    form.setField('disease', after)
+    form.setField('cell_line_id', hela)
+
+    // back in tissue: the shared field keeps the newer (intermediate) value, the tissue-only value comes back
+    form.setSampleType('tissue')
+    expect(sampleOf(form).disease).toEqual(after)
+    expect(sampleOf(form).sex).toBe('female')
+    // and the cell-only value is still there for cell culture
+    form.setSampleType('cell_culture')
+    expect(sampleOf(form).cell_line_id).toEqual(hela)
+    expect(sampleOf(form).disease).toEqual(after)
+  })
+
+  it('leaving a class again replaces its stash: the latest value wins over the one stashed earlier', async () => {
+    const form = useMetadataV2Form(resolver)
+    await form.loadNew()
+    form.setSampleType('tissue')
+    form.setField('sex', 'female')
+    form.setSampleType('cell_culture')
+    form.setSampleType('tissue')
+    expect(sampleOf(form).sex).toBe('female')
+    form.setField('sex', 'male')
+    form.setSampleType('plant')
+    form.setSampleType('cell_culture')
+    form.setSampleType('tissue')
+    expect(sampleOf(form).sex).toBe('male')
+    // a field cleared before leaving stays cleared: the old stash does not resurrect it
+    form.setField('sex', undefined)
+    form.setSampleType('environmental')
+    form.setSampleType('tissue')
+    expect(sampleOf(form).sex).toBeUndefined()
   })
 })

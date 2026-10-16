@@ -1,0 +1,30 @@
+/*
+ * Colour tokens for the metadata v2 editor (SectionCard, fields, V2Form, banner, legacy view).
+ * Declared once here and pulled into each component stylesheet with `@import './tokens'` (`@use` is ruled out:
+ * vite's scss additionalData prepends an @import). TSX inline styles use the same `var(--mv2-…)` names.
+ * Named by role, not by colour.
+ */
+:root {
+  /* text */
+  --mv2-text: #102a42;
+  --mv2-text-label: #324e67;
+  --mv2-text-muted: #617f98;
+  --mv2-text-subtle: #829bb0;
+  --mv2-text-inverse: #fff;
+  /* lines */
+  --mv2-border: #dae4ec;
+  /* surfaces */
+  --mv2-surface: #fff;
+  --mv2-surface-muted: #f1f5f8;
+  --mv2-surface-legacy: #fafbfc;
+  --mv2-surface-stripe: #e6ecf1;
+  --mv2-badge-legacy: #4f6b84;
+  /* states: migrated / accepted, pending curation / banner, required-empty, new in v2 */
+  --mv2-success: #2cba8f;
+  --mv2-success-bg: #eaf8f4;
+  --mv2-pending: #e6a23c;
+  --mv2-pending-bg: #fdf6ec;
+  --mv2-pending-border: #f3dcb3;
+  --mv2-danger: #f56c6c;
+  --mv2-accent: #1187ee;
+}

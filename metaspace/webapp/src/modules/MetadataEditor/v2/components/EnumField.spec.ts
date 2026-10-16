@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { ElSelect } from '../../../../lib/element-plus'
 import { EnumField } from './EnumField'
@@ -74,6 +74,79 @@ describe('EnumField', () => {
       select.props('filterMethod')('')
       await nextTick()
       expect(renderedOptions(w).map((v: any) => v.props.label)).toEqual(['Tissue', 'Cell culture'])
+    })
+
+    describe('driven through the real select (typing, Enter, clicks)', () => {
+      /** the real ElSelect with its dropdown (teleported to body by the real ElTooltip) */
+      const buildReal = () =>
+        mount(EnumField, {
+          props: { value: null, options: sampleTypes, allowCreate: true },
+          attachTo: document.body,
+          global: { stubs: { 'el-select': false, 'el-option': false, 'el-tooltip': false, ElTooltip: false } },
+        })
+      /** opens the list the way a pointer does, then types into the filter input */
+      const typeInto = async (w: ReturnType<typeof buildReal>, text: string) => {
+        await w.find('.el-select').trigger('mouseenter')
+        await w.find('.select-trigger').trigger('click')
+        await w.find('input').trigger('focus')
+        await w.find('input').setValue(text)
+        // ElSelect debounces the query by 0 ms (a timer), then filters
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        await flushPromises()
+      }
+      const shownRows = () =>
+        Array.from(document.body.querySelectorAll<HTMLElement>('.el-select-dropdown__item')).filter(
+          (li) => li.style.display !== 'none'
+        )
+
+      afterEach(() => {
+        document.body.innerHTML = ''
+      })
+
+      it('typing an option in another case shows that option and no "No match" row; Enter picks it', async () => {
+        const w = buildReal()
+        await typeInto(w, 'tissue')
+        expect(shownRows().map((li) => li.textContent)).toEqual(['Tissue'])
+        expect(document.body.querySelector('.v2-ac-empty')).toBeNull()
+        await w.find('input').trigger('keydown', { key: 'Enter' })
+        await flushPromises()
+        expect(w.emitted('input')).toEqual([['tissue']])
+        w.unmount()
+      })
+
+      it('typing unknown text shows only the "No match" row; Enter emits the typed text', async () => {
+        const w = buildReal()
+        await typeInto(w, ' Organoid ')
+        const rows = shownRows()
+        expect(rows).toHaveLength(1)
+        expect(rows[0].textContent).toBe('No match — Add “Organoid” (pending curation)')
+        await w.find('input').trigger('keydown', { key: 'Enter' })
+        await flushPromises()
+        expect(w.emitted('input')).toEqual([['Organoid']])
+        w.unmount()
+      })
+
+      it('clicking a filtered option emits its value', async () => {
+        const w = buildReal()
+        await typeInto(w, 'cult')
+        const row = shownRows().find((li) => li.textContent === 'Cell culture')
+        expect(row).toBeDefined()
+        row!.click()
+        await flushPromises()
+        expect(w.emitted('input')).toEqual([['cell_culture']])
+        w.unmount()
+      })
+
+      it('clicking the "No match" row emits the typed text', async () => {
+        const w = buildReal()
+        await typeInto(w, 'Organoid')
+        const row = shownRows().find((li) => li.querySelector('.v2-ac-empty'))
+        expect(row).toBeDefined()
+        row!.click()
+        await flushPromises()
+        expect(w.emitted('input')).toEqual([['Organoid']])
+        w.unmount()
+      })
     })
   })
 })

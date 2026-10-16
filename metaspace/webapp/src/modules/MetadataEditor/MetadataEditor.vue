@@ -225,9 +225,7 @@ export default defineComponent({
         Boolean
       ).length
     })
-    // no required gap and nothing left to review (unmapped legacy rows do not block a submit)
-    const v2Complete = computed(() => v2.status.value.missingRequired.length === 0 && v2.status.value.reviewCount === 0)
-    // Only missing required v2 fields lock Public; values pending review or unmapped legacy values do not
+    const v2Complete = computed(() => v2.status.value.missingRequired.length === 0)
     const publicDisabled = computed(() => v2.mode.value === 'legacy' && v2.status.value.missingRequired.length > 0)
     const publicDisabledReason = computed(() => {
       if (!publicDisabled.value) {
@@ -426,16 +424,6 @@ export default defineComponent({
       state.metaspaceOptions.databaseIds = []
     }
 
-    /** The first visible field whose migrated or copied value still waits for the user's review. */
-    const firstReviewKey = () => {
-      const reports = v2.fields.value
-      const def = v2.visibleFields.value.find((f) => {
-        const state = reports[f.key]?.state
-        return (state === 'review' || state === 'copied') && !v2.acknowledged.value.includes(f.key)
-      })
-      return def ? def.key : null
-    }
-
     const getFormValueForSubmit = () => {
       validate()
       const status = v2.status.value
@@ -465,8 +453,6 @@ export default defineComponent({
           : null,
         metadataDirty: v2.isDirty.value,
         missingRequired,
-        reviewPending: status.reviewCount,
-        firstReviewKey: firstReviewKey(),
         metaspaceOptions: state.metaspaceOptions,
         initialMetaspaceOptions: state.initialMetaspaceOptions,
       }

@@ -1,4 +1,3 @@
-// metaspace/webapp/src/modules/MetadataEditor/v2/termResolver.ts
 import { fetchAutocompleteSuggestionsQuery, fetchOntologyTermSuggestionsQuery } from '../../../api/metadata'
 import { CURATED_VALUES, MAX_VALUE_SUGGESTIONS, mergeOptionsFor, mergeValueSuggestions } from './curatedValues'
 import { fieldByKey } from './formDefinition'

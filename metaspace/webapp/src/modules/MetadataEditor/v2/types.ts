@@ -1,4 +1,3 @@
-// metaspace/webapp/src/modules/MetadataEditor/v2/types.ts
 /* eslint-disable camelcase */
 import { CurationState, OntologyTermValue } from '../formStructure'
 
@@ -136,7 +135,7 @@ export type FieldKey =
   | 'maldi_matrix_application'
   | 'solvent'
 
-export type FieldState = 'migrated' | 'review' | 'required-empty' | 'empty' | 'new' | 'copied'
+export type FieldState = 'migrated' | 'required-empty' | 'empty' | 'new'
 
 export interface Term {
   curie: string
@@ -155,17 +154,11 @@ export type ValueResolver = (fieldKey: FieldKey, query: string) => Promise<Value
 export interface FieldReport {
   state: FieldState
   source?: { legacyKey: string; raw: string }
-  suggestion?: Term
   note?: string
 }
 
 export interface UnmappedRow {
   legacyKey: string // dotted legacy path, e.g. 'Sample_Information.Condition'
-  label: string // 'Condition'
-  raw: string
-  hint: string
-  targets: FieldKey[] // ranked
-  safeToDismiss: boolean
 }
 
 export interface MigrationResult {
