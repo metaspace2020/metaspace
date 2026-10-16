@@ -123,7 +123,6 @@ describe('MetadataEditPage', () => {
     expect(requestFocus).toHaveBeenLastCalledWith('instrument_model')
   })
 
-
   it('header: title with the dataset name, Cancel and Submit', async () => {
     const w = mountPage(formValue({}))
     await flushPromises()
