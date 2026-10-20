@@ -16,7 +16,11 @@ sphinx:
 #formats:
 
 # Optionally set the version of Python and requirements required to build your docs
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "3.8"
+
 python:
-  version: 3.6
   install:
     - requirements: metaspace/python-client/docs/requirements.txt
