@@ -451,6 +451,8 @@ type MeanSpectrum {
   # Peak-clustering tolerance, distinct from the user's ion-image ppm.
   clusteringPpm: Float!
   instrument: String!
+  # Smallest number of pixels a merged peak had to be detected in to be kept.
+  minSupportPixels: Int!
 }
 
 type MeanSpectrumRegionAvailability {

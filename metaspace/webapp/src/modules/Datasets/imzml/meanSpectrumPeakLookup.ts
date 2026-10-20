@@ -1,6 +1,6 @@
 export type MeanSpectrumPeak = [number, number, number]
 
-const lowerBound = (peaks: MeanSpectrumPeak[], value: number): number => {
+export const lowerBound = (peaks: MeanSpectrumPeak[], value: number): number => {
   let lo = 0
   let hi = peaks.length
   while (lo < hi) {
