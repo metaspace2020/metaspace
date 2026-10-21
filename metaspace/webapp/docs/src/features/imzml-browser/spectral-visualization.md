@@ -20,7 +20,7 @@ Here's a short video showing how to use the imzml browser:
 
 The browser is divided into two panels.
 
-The **Spectrum Browser** on the left displays the full mass spectrum for the selected pixel. Peaks are color-coded: red diamonds for unannotated peaks and blue circles for peaks annotated at the chosen FDR threshold in the selected database. Filters above the spectrum let you toggle between showing all peaks or unannotated peaks only, and switch between a standard mass spectrum and a Kendrick plot view.
+The **Spectrum Browser** on the left displays the full mass spectrum for the selected pixel. Peaks are color-coded: red diamonds for unannotated peaks and blue circles for peaks annotated at the chosen FDR threshold in the selected database. Filters above the spectrum let you toggle between showing all peaks or unannotated peaks only, and switch between a standard mass spectrum, a Kendrick plot view and a [mean spectrum](/features/imzml-browser/mean-spectrum) of a whole region.
 
 ![Spectrum browser panel](/screenshots/imzml-spectral-browser.png)
 _Spectrum browser panel showing m/z peaks color-coded by annotation status — blue circles for annotated peaks, red diamonds for unannotated. Source: [dataset](https://metaspace2020.org/dataset/2023-06-27_22h57m11s/browser)_
