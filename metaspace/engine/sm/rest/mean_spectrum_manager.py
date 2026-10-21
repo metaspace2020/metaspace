@@ -57,20 +57,25 @@ MEAN_SPECTRUM_MAX_POINTS = 20_000
 # application of the strict-clustering method.
 MIN_SUPPORT_FRAC = 0.01
 MIN_SUPPORT_PIXELS = 3
+# ROIs also drop clusters seen in fewer than this share of the pixels that the region's most
+# intense clusters are seen in, so the cut follows each region's own detection rate. The whole
+# dataset is heterogeneous and uses only the floor above.
+ROI_RELATIVE_SUPPORT = 0.5
+ROI_REFERENCE_PEAKS = 100
 
 CACHE_TTL_S = 86_400
 CACHE_MAX_ENTRIES = 64
 # Bump to invalidate every cached result after an algorithm change.
-ALGO_VERSION = 1
+ALGO_VERSION = 3
 
 WHOLE_DATASET = 'whole'
 
 _cache: 'OrderedDict[str, Tuple[float, dict]]' = OrderedDict()
-_cache_lock = threading.Lock()
+_CACHE_LOCK = threading.Lock()
 
 
 def _cache_get(key: str) -> Optional[dict]:
-    with _cache_lock:
+    with _CACHE_LOCK:
         entry = _cache.get(key)
         if entry is None:
             return None
@@ -83,7 +88,7 @@ def _cache_get(key: str) -> Optional[dict]:
 
 
 def _cache_put(key: str, result: dict):
-    with _cache_lock:
+    with _CACHE_LOCK:
         _cache[key] = (time.monotonic() + CACHE_TTL_S, result)
         _cache.move_to_end(key)
         while len(_cache) > CACHE_MAX_ENTRIES:
@@ -188,7 +193,16 @@ def _cluster_bounds_strict(  # pylint: disable=too-many-locals
     return np.array(starts, dtype=np.int64)
 
 
-def build_reference_axis_strict(
+def reference_support(
+    summed_ints: np.ndarray, support: np.ndarray, n_reference_peaks: int = ROI_REFERENCE_PEAKS
+) -> float:
+    """Median support of the most intense clusters: how many pixels a real peak is seen in."""
+    n_top = min(n_reference_peaks, len(summed_ints))
+    top_idx = np.argpartition(summed_ints, -n_top)[-n_top:]
+    return float(np.median(support[top_idx]))
+
+
+def build_reference_axis_strict(  # pylint: disable=too-many-arguments
     mzs,
     ints,
     pix,
@@ -197,15 +211,17 @@ def build_reference_axis_strict(
     n_pixels: int,
     min_support_frac: float = MIN_SUPPORT_FRAC,
     min_support_pixels: int = MIN_SUPPORT_PIXELS,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    relative_support: Optional[float] = None,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, int]:
     """Cluster pooled region peaks onto a reference axis.
 
     ``mzs``/``ints``/``pix`` are the region's peaks, already sorted by m/z (the imzML
     browser arrays are globally m/z-sorted, so a boolean subset preserves the order).
 
-    Returns ``(ref_mzs, summed_ints, support)`` where ``ref_mzs`` is the
+    Returns ``(ref_mzs, summed_ints, support, min_support)`` where ``ref_mzs`` is the
     intensity-weighted centroid of each surviving cluster, ``summed_ints`` its total
-    intensity, and ``support`` the number of distinct pixels contributing to it.
+    intensity, ``support`` the number of distinct pixels contributing to it, and
+    ``min_support`` the smallest pixel count a cluster needed to survive.
 
     Intensities are returned summed, not averaged: mean and sum differ only by the
     ``n_pixels`` divisor, so the caller derives whichever the user asked for.
@@ -214,9 +230,9 @@ def build_reference_axis_strict(
     ints = np.asarray(ints, dtype=np.float64)
     pix = np.asarray(pix)
 
-    empty = np.array([]), np.array([]), np.array([], dtype=np.int64)
+    required_support = max(min_support_pixels, min_support_frac * n_pixels)
     if len(mzs) == 0:
-        return empty
+        return _empty_axis(required_support)
 
     starts = _cluster_bounds_strict(mzs, pix, instrument, ppm)
 
@@ -232,12 +248,29 @@ def build_reference_axis_strict(
     with np.errstate(invalid='ignore', divide='ignore'):
         ref_mzs = np.where(summed_ints > 0, weighted_mz / summed_ints, mzs[starts])
 
-    required_support = max(min_support_pixels, min_support_frac * n_pixels)
+    if relative_support is not None:
+        required_support = max(
+            required_support, relative_support * reference_support(summed_ints, support)
+        )
     keep = support >= required_support
     if not keep.any():
-        return empty
+        return _empty_axis(required_support)
 
-    return ref_mzs[keep], summed_ints[keep], support[keep].astype(np.int64)
+    return (
+        ref_mzs[keep],
+        summed_ints[keep],
+        support[keep].astype(np.int64),
+        _min_support(required_support),
+    )
+
+
+def _min_support(required_support: float) -> int:
+    """The smallest integer pixel count that passes ``support >= required_support``."""
+    return int(np.ceil(required_support))
+
+
+def _empty_axis(required_support: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray, int]:
+    return np.array([]), np.array([]), np.array([], dtype=np.int64), _min_support(required_support)
 
 
 def select_top_peaks(ref_mzs, summed_ints, support, max_points: int = MEAN_SPECTRUM_MAX_POINTS):
@@ -292,7 +325,7 @@ class MeanSpectrumManager:
         """Locate the .ibd and load the spectrum reader pickle; cached across requests and
         re-validated against ``input_path`` so a re-uploaded dataset is never served stale."""
         input_path = self._input_path(ds_id)
-        with _cache_lock:
+        with _CACHE_LOCK:
             cached = _files_cache.get(ds_id)
             if cached is not None and cached.input_path == input_path:
                 _files_cache.move_to_end(ds_id)
@@ -310,7 +343,7 @@ class MeanSpectrumManager:
         )['Body'].read()
         files = DatasetPeakFiles(uuid, upload_bucket, ibd_keys[-1], deserialize(body), input_path)
 
-        with _cache_lock:
+        with _CACHE_LOCK:
             _files_cache[ds_id] = files
             _files_cache.move_to_end(ds_id)
             while len(_files_cache) > FILES_CACHE_MAX_ENTRIES:
@@ -501,8 +534,14 @@ class MeanSpectrumManager:
         else:
             mzs, ints, pix = self._region_peaks(ds_id, roi_id, mask)
 
-        ref_mzs, summed_ints, support = build_reference_axis_strict(
-            mzs, ints, pix, instrument, ppm, n_pixels
+        ref_mzs, summed_ints, support, min_support = build_reference_axis_strict(
+            mzs,
+            ints,
+            pix,
+            instrument,
+            ppm,
+            n_pixels,
+            relative_support=None if roi_id is None else ROI_RELATIVE_SUPPORT,
         )
         total_peaks = len(ref_mzs)
         ref_mzs, summed_ints, support = select_top_peaks(ref_mzs, summed_ints, support)
@@ -518,6 +557,7 @@ class MeanSpectrumManager:
             'returned_peaks': len(ref_mzs),
             'instrument': instrument,
             'clustering_ppm': ppm,
+            'min_support_pixels': min_support,
         }
 
     def compute(self, ds_id: str, roi_id=None) -> dict:

@@ -397,6 +397,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       returnedPeaks: resp.returned_peaks,
       clusteringPpm: resp.clustering_ppm,
       instrument: resp.instrument,
+      minSupportPixels: resp.min_support_pixels,
     }
   },
   async pixelSpectrum(source, { datasetId, x, y }) {
