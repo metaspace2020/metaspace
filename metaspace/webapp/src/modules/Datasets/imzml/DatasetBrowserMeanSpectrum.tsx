@@ -1,34 +1,44 @@
-import { computed, defineComponent, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, defineComponent, nextTick, onMounted, onUnmounted, PropType, reactive, ref, watch } from 'vue'
 // @ts-ignore
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
+import type { EChartsType } from 'echarts/core'
+import type { DefaultLabelFormatterCallbackParams } from 'echarts'
+import type { ElementEvent } from 'zrender'
 import { SVGRenderer } from 'echarts/renderers'
 import { BarChart, LineChart, ScatterChart } from 'echarts/charts'
-import { GridComponent, TooltipComponent, ToolboxComponent, DataZoomComponent } from 'echarts/components'
+import { GridComponent, ToolboxComponent, DataZoomComponent } from 'echarts/components'
 import './DatasetBrowserMeanSpectrum.scss'
 import { ElIcon } from '../../../lib/element-plus'
 import { Loading } from '@element-plus/icons-vue'
-import { countPeaksInRange, findPeakIndex, formatPeakTooltip, MeanSpectrumPeak } from './meanSpectrumPeakLookup'
+import {
+  countPeaksInRange,
+  findPeakIndex,
+  formatPeakTooltip,
+  lowerBound,
+  MeanSpectrumPeak,
+} from './meanSpectrumPeakLookup'
 
 const HIT_TOLERANCE_PX = 5
 const MARKER_SIZE = 10
 const MAX_MARKED_PEAKS = 300
+const TOOLTIP_OFFSET_PX = 12
+// zrender fires two clicks before a dblclick, so a click only counts once no dblclick followed it.
+const DBLCLICK_GRACE_MS = 250
+// Stable empty array: assigning the same reference does not trigger vue-echarts' option watcher.
+const NO_MARKERS: number[][] = []
 
-use([
-  SVGRenderer,
-  BarChart,
-  LineChart,
-  ScatterChart,
-  GridComponent,
-  TooltipComponent,
-  ToolboxComponent,
-  DataZoomComponent,
-])
+use([SVGRenderer, BarChart, LineChart, ScatterChart, GridComponent, ToolboxComponent, DataZoomComponent])
+
+interface XAxisModel {
+  axis: { scale: { getExtent(): [number, number] } }
+}
 
 interface DatasetBrowserMeanSpectrumState {
   chartOptions: any
-  hover?: { left: number; top: number; html: string }
-  visiblePeaks?: number
+  hover?: { style: Record<string, string>; html: string }
+  // Index range of the peaks inside the current x zoom; undefined until the chart reports it.
+  visible?: [number, number]
 }
 
 export const DatasetBrowserMeanSpectrum = defineComponent({
@@ -44,7 +54,7 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
     },
     // [mz, intensity, support] triples, already sorted by m/z
     data: {
-      type: Array,
+      type: Array as PropType<MeanSpectrumPeak[]>,
       default: () => [],
     },
     stat: {
@@ -57,7 +67,7 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
     },
   },
   setup(props, { emit }) {
-    const meanSpectrumChart = ref(null)
+    const meanSpectrumChart = ref<{ chart?: EChartsType } | null>(null)
     const state = reactive<DatasetBrowserMeanSpectrumState>({
       chartOptions: {
         grid: {
@@ -67,9 +77,6 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
           right: '10%',
         },
         animation: false,
-        tooltip: {
-          show: false,
-        },
         toolbox: {
           right: 20,
           feature: {
@@ -136,7 +143,7 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
           },
           type: 'value',
           axisLabel: {
-            formatter: (value: any) => value.toExponential(2),
+            formatter: (value: number) => value.toExponential(2),
           },
           boundaryGap: [0, '30%'],
         },
@@ -173,7 +180,7 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
             label: {
               show: true,
               position: 'top',
-              formatter: (params: any) => params.value[0].toFixed(4),
+              formatter: (params: DefaultLabelFormatterCallbackParams) => (params.value as number[])[0].toFixed(4),
             },
             labelLayout: {
               hideOverlap: true,
@@ -185,23 +192,62 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
 
     const statLabel = computed(() => (props.stat === 'SUM' ? 'Summed intensity' : 'Mean intensity'))
 
-    const chartOptions = computed(() => {
-      const auxOptions = state.chartOptions
+    const points = computed(() => props.data.map(([mz, intensity]) => [mz, intensity]))
 
-      const points = props.data.map((d: any) => [d[0], d[1]])
-      const showMarkers = (state.visiblePeaks ?? points.length) <= MAX_MARKED_PEAKS
-
-      auxOptions.series[0].data = points
-      auxOptions.series[1].data = showMarkers ? points : []
-
-      auxOptions.yAxis.name = statLabel.value
-      return auxOptions
+    // Markers and labels only for a sparse view, and only for the peaks actually in view:
+    // laying out 20k labels on every zoom tick is what makes dense spectra freeze.
+    const markerPoints = computed(() => {
+      const [start, end] = state.visible ?? [0, props.data.length]
+      return end - start <= MAX_MARKED_PEAKS ? points.value.slice(start, end) : NO_MARKERS
     })
 
+    watch(
+      [points, markerPoints, statLabel],
+      ([bars, markers, name]) => {
+        state.chartOptions.series[0].data = bars
+        state.chartOptions.series[1].data = markers
+        state.chartOptions.yAxis.name = name
+      },
+      { immediate: true }
+    )
+
+    const getChart = (): EChartsType | undefined => meanSpectrumChart.value?.chart
+
     const handleChartResize = () => {
-      if (meanSpectrumChart.value) {
-        // @ts-ignore
-        meanSpectrumChart.value.chart.resize()
+      getChart()?.resize()
+    }
+
+    const updateVisibleRange = () => {
+      const chart = getChart()
+      if (!chart) {
+        return
+      }
+      const axisModel = chart.getModel().getComponent('xAxis', 0) as unknown as XAxisModel | undefined
+      if (!axisModel) {
+        return
+      }
+      const [low, high] = axisModel.axis.scale.getExtent()
+      const start = lowerBound(props.data, low)
+      const end = start + countPeaksInRange(props.data, low, high)
+      if (!state.visible || state.visible[0] !== start || state.visible[1] !== end) {
+        state.visible = [start, end]
+      }
+    }
+
+    watch(
+      () => props.data,
+      () => {
+        state.visible = undefined
+        nextTick(updateVisibleRange)
+      }
+    )
+
+    let pendingClick: ReturnType<typeof setTimeout> | undefined
+
+    const cancelPendingClick = () => {
+      if (pendingClick !== undefined) {
+        clearTimeout(pendingClick)
+        pendingClick = undefined
       }
     }
 
@@ -211,38 +257,19 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
 
     onUnmounted(() => {
       window.removeEventListener('resize', handleChartResize)
+      cancelPendingClick()
     })
 
     const handleZoomReset = () => {
-      if (meanSpectrumChart.value) {
-        // @ts-ignore
-        meanSpectrumChart.value.chart.dispatchAction({
-          type: 'dataZoom',
-          start: 0,
-          end: 100,
-        })
-      }
+      cancelPendingClick()
+      getChart()?.dispatchAction({
+        type: 'dataZoom',
+        start: 0,
+        end: 100,
+      })
     }
 
-    const getChart = (): any => (meanSpectrumChart.value as any)?.chart
-
-    const updateVisiblePeaks = () => {
-      const axis = getChart()?.getModel()?.getComponent('xAxis', 0)?.axis
-      if (axis) {
-        const [low, high] = axis.scale.getExtent()
-        state.visiblePeaks = countPeaksInRange(props.data as MeanSpectrumPeak[], low, high)
-      }
-    }
-
-    watch(
-      () => props.data,
-      () => {
-        state.visiblePeaks = undefined
-        nextTick(updateVisiblePeaks)
-      }
-    )
-
-    const peakAtPointer = (event: any): MeanSpectrumPeak | undefined => {
+    const peakAtPointer = (event: ElementEvent): MeanSpectrumPeak | undefined => {
       const chart = getChart()
       if (!chart) {
         return undefined
@@ -262,36 +289,47 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
           offsetY <= baselineY + HIT_TOLERANCE_PX
         )
       }
-      const peaks = props.data as MeanSpectrumPeak[]
-      const index = findPeakIndex(peaks, mz, Math.abs(mzNear - mz), isHit)
-      return index === -1 ? undefined : peaks[index]
+      const index = findPeakIndex(props.data, mz, Math.abs(mzNear - mz), isHit)
+      return index === -1 ? undefined : props.data[index]
     }
 
-    const handleChartClick = (event: any) => {
+    const handleChartClick = (event: ElementEvent) => {
+      cancelPendingClick()
       const peak = peakAtPointer(event)
       if (peak) {
-        // The intensity-weighted centroid, not the most intense raw peak. Goes into the
-        // existing manual m/z entry path, so the ion image uses the user's own ppm.
-        emit('itemSelected', peak[0])
+        pendingClick = setTimeout(() => {
+          pendingClick = undefined
+          // The intensity-weighted centroid, not the most intense raw peak. Goes into the
+          // existing manual m/z entry path, so the ion image uses the user's own ppm.
+          emit('itemSelected', peak[0])
+        }, DBLCLICK_GRACE_MS)
       }
     }
 
-    const handleChartMouseMove = (event: any) => {
+    // Anchor the tooltip away from the nearest edges so it never leaves the chart.
+    const tooltipStyle = (chart: EChartsType, x: number, y: number): Record<string, string> => {
+      const width = chart.getWidth()
+      const height = chart.getHeight()
+      return {
+        ...(x > width / 2 ? { right: `${width - x + TOOLTIP_OFFSET_PX}px` } : { left: `${x + TOOLTIP_OFFSET_PX}px` }),
+        ...(y > height / 2 ? { bottom: `${height - y + TOOLTIP_OFFSET_PX}px` } : { top: `${y + TOOLTIP_OFFSET_PX}px` }),
+      }
+    }
+
+    const handleChartMouseMove = (event: ElementEvent) => {
+      const chart = getChart()
+      if (!chart) {
+        return
+      }
       const peak = peakAtPointer(event)
-      getChart()
-        ?.getZr()
-        .setCursorStyle(peak ? 'pointer' : 'default')
+      chart.getZr().setCursorStyle(peak ? 'pointer' : 'default')
       state.hover = peak
-        ? { left: event.offsetX + 12, top: event.offsetY + 12, html: formatPeakTooltip(peak, statLabel.value) }
+        ? { style: tooltipStyle(chart, event.offsetX, event.offsetY), html: formatPeakTooltip(peak, statLabel.value) }
         : undefined
     }
 
     const handleChartMouseOut = () => {
       state.hover = undefined
-    }
-
-    const handleDataZoom = () => {
-      updateVisiblePeaks()
     }
 
     const renderSpectrum = () => {
@@ -312,22 +350,16 @@ export const DatasetBrowserMeanSpectrum = defineComponent({
             ref={meanSpectrumChart}
             class="chart"
             autoResize={true}
-            onDatazoom={handleDataZoom}
+            onDatazoom={updateVisibleRange}
             {...{
               'onZr:dblclick': handleZoomReset,
               'onZr:click': handleChartClick,
               'onZr:mousemove': handleChartMouseMove,
               'onZr:globalout': handleChartMouseOut,
             }}
-            option={chartOptions.value}
+            option={state.chartOptions}
           />
-          {state.hover && (
-            <div
-              class="mean-spectrum-tooltip"
-              style={{ left: `${state.hover.left}px`, top: `${state.hover.top}px` }}
-              innerHTML={state.hover.html}
-            />
-          )}
+          {state.hover && <div class="mean-spectrum-tooltip" style={state.hover.style} innerHTML={state.hover.html} />}
         </div>
       )
     }

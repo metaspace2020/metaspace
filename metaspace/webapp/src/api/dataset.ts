@@ -281,6 +281,7 @@ export const meanSpectrumQuery = gql`
       returnedPeaks
       clusteringPpm
       instrument
+      minSupportPixels
     }
   }
 `

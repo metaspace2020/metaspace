@@ -105,15 +105,16 @@ def test_matches_naive_reference(instrument, scatter_ppm):
 
 
 def test_empty_input():
-    ref_mzs, ints, support = build_reference_axis_strict(
+    ref_mzs, ints, support, min_support = build_reference_axis_strict(
         np.array([]), np.array([]), np.array([]), 'TOF', 3.0, n_pixels=10
     )
     assert len(ref_mzs) == 0 and len(ints) == 0 and len(support) == 0
+    assert min_support == mean_spectrum_manager.MIN_SUPPORT_PIXELS
 
 
 def test_single_peak_is_filtered_by_support_floor():
     """One peak means support=1, below the absolute floor of 3."""
-    ref_mzs, _, _ = build_reference_axis_strict(
+    ref_mzs, _, _, _ = build_reference_axis_strict(
         np.array([200.0]), np.array([5.0]), np.array([0]), 'TOF', 3.0, n_pixels=1
     )
     assert len(ref_mzs) == 0
@@ -126,7 +127,7 @@ def test_identical_mzs_collapse_to_one_cluster():
     ints = np.arange(1, n_pixels + 1, dtype=float)
     pix = np.arange(n_pixels)
 
-    ref_mzs, summed, support = build_reference_axis_strict(
+    ref_mzs, summed, support, _ = build_reference_axis_strict(
         mzs, ints, pix, 'TOF', 3.0, n_pixels=n_pixels
     )
 
@@ -145,7 +146,7 @@ def test_strict_rule_splits_duplicate_pixel():
 
     # A generous 100 ppm window comfortably spans all five peaks, so only the strict
     # duplicate-pixel rule can force a split here.
-    _, _, support = build_reference_axis_strict(
+    _, _, support, _ = build_reference_axis_strict(
         mzs, ints, pix, 'TOF', 100.0, n_pixels=4, min_support_pixels=1
     )
     assert len(support) >= 2
@@ -158,11 +159,17 @@ def test_support_filter_fraction_applies_on_large_region():
     ints = np.ones(5)
     pix = np.arange(5)
 
-    ref_mzs, _, _ = build_reference_axis_strict(mzs, ints, pix, 'TOF', 3.0, n_pixels=1000)
+    ref_mzs, _, _, min_support = build_reference_axis_strict(
+        mzs, ints, pix, 'TOF', 3.0, n_pixels=1000
+    )
     assert len(ref_mzs) == 0
+    assert min_support == 10
 
-    ref_mzs, _, _ = build_reference_axis_strict(mzs, ints, pix, 'TOF', 3.0, n_pixels=100)
+    ref_mzs, _, _, min_support = build_reference_axis_strict(
+        mzs, ints, pix, 'TOF', 3.0, n_pixels=100
+    )
     assert len(ref_mzs) == 1
+    assert min_support == 3
 
 
 def _cluster_with_support(base_mz, n_detected, intensity):
@@ -186,7 +193,7 @@ def test_relative_support_follows_the_regions_own_detection_rate(n_pixels):
     ints = np.concatenate([peaks[i][1] for i in order])
     pix = np.concatenate([peaks[i][2] for i in order])
 
-    _, _, support = build_reference_axis_strict(
+    _, _, support, min_support = build_reference_axis_strict(
         mzs,
         ints,
         pix,
@@ -198,6 +205,7 @@ def test_relative_support_follows_the_regions_own_detection_rate(n_pixels):
 
     assert noise_support not in support
     assert borderline_support not in support
+    assert min_support == int(np.ceil(mean_spectrum_manager.ROI_RELATIVE_SUPPORT * strong_support))
     assert (support == strong_support).sum() == mean_spectrum_manager.ROI_REFERENCE_PEAKS
 
 
@@ -214,7 +222,7 @@ def test_relative_support_keeps_more_in_a_low_sensitivity_region():
     ints = np.concatenate([peaks[i][1] for i in order])
     pix = np.concatenate([peaks[i][2] for i in order])
 
-    _, _, support = build_reference_axis_strict(
+    _, _, support, min_support = build_reference_axis_strict(
         mzs,
         ints,
         pix,
@@ -225,6 +233,7 @@ def test_relative_support_keeps_more_in_a_low_sensitivity_region():
     )
 
     assert 25 in support
+    assert min_support == 20
 
 
 def test_intensity_weighted_centroid():
@@ -233,7 +242,7 @@ def test_intensity_weighted_centroid():
     ints = np.array([1.0, 1.0, 2.0])
     pix = np.array([0, 1, 2])
 
-    ref_mzs, summed, _ = build_reference_axis_strict(
+    ref_mzs, summed, _, _ = build_reference_axis_strict(
         mzs, ints, pix, 'TOF', 10.0, n_pixels=3, min_support_pixels=1
     )
     assert len(ref_mzs) == 1
@@ -395,7 +404,7 @@ def test_compute_roi_reads_only_the_region_spectra(monkeypatch):
 
     def fake_build(*args, relative_support):  # pylint: disable=unused-argument
         thresholds.append(relative_support)
-        return np.array([100.0]), np.array([3.0]), np.array([1])
+        return np.array([100.0]), np.array([3.0]), np.array([1]), 7
 
     monkeypatch.setattr(mean_spectrum_manager, 'build_reference_axis_strict', fake_build)
 
@@ -405,6 +414,7 @@ def test_compute_roi_reads_only_the_region_spectra(monkeypatch):
     assert thresholds == [mean_spectrum_manager.ROI_RELATIVE_SUPPORT]
     assert result['n_pixels'] == 1
     assert result['returned_peaks'] == 1
+    assert result['min_support_pixels'] == 7
 
 
 def test_compute_whole_dataset_streams_and_keeps_acquired_pixels_only(monkeypatch):
@@ -423,7 +433,7 @@ def test_compute_whole_dataset_streams_and_keeps_acquired_pixels_only(monkeypatc
     ):
         seen['pix'] = pix.tolist()
         seen['relative_support'] = relative_support
-        return np.array([1.0]), np.array([1.0]), np.array([1])
+        return np.array([1.0]), np.array([1.0]), np.array([1]), 3
 
     monkeypatch.setattr(mean_spectrum_manager, 'build_reference_axis_strict', fake_build)
 

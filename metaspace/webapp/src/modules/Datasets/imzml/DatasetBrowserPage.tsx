@@ -137,9 +137,6 @@ const VIEWS = {
 // Sentinel for the "whole dataset" entry in the ROI dropdown; sent to the API as no roiId.
 const WHOLE_DATASET_REGION = '__whole__'
 
-// Mirrors MIN_SUPPORT_FRAC in mean_spectrum_manager.py, the only cut applied to the whole dataset.
-const WHOLE_DATASET_MIN_COVERAGE_PERCENT = 1
-
 export default defineComponent({
   name: 'DatasetBrowserPage',
   props: {
@@ -1498,11 +1495,11 @@ export default defineComponent({
                         tolerance count as the same peak. This is separate from the ion image ppm.
                       </p>
                       <p class="m-0">
-                        {resolvedRegion.value === WHOLE_DATASET_REGION
-                          ? `Only peaks detected in at least ${WHOLE_DATASET_MIN_COVERAGE_PERCENT}% of the ` +
-                            "region's pixels are shown."
-                          : "Peaks detected in fewer than half as many pixels as the region's strongest peaks " +
-                            'are hidden as noise.'}
+                        {`Peaks detected in fewer than ${spectrum.minSupportPixels.toLocaleString()} of the ` +
+                          "region's pixels are hidden as noise." +
+                          (resolvedRegion.value === WHOLE_DATASET_REGION
+                            ? ''
+                            : " The cut follows how often the region's strongest peaks are detected.")}
                       </p>
                       <p class="m-0">{`${spectrum.nPixels.toLocaleString()} pixels in the region`}</p>
                       {typeof regionPeaks === 'number' && (
