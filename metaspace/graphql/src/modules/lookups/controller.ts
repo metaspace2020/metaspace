@@ -6,6 +6,7 @@ import { Context, ContextUser } from '../../context'
 import { IResolvers } from 'graphql-tools'
 import * as _ from 'lodash'
 import { ScoringModel } from '../engine/model'
+import { UserError } from 'graphql-errors'
 
 // LinkML slot -> ontology root CURIE(s) its suggestions are scoped to. graphql owns this file; the
 // engine's import script reads a generated copy (`yarn gen-ontology-slots`, checked by CI), so the
@@ -13,6 +14,13 @@ import { ScoringModel } from '../engine/model'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ontologySlots: Record<string, { root: string }[]> = require('../../../metadataSchemas/ontology_slots.json')
 const SLOT_SUBTREES: Record<string, string[]> = _.mapValues(ontologySlots, bindings => bindings.map(b => b.root))
+
+// A metadata v2 field path under `ds_meta_v2` (the reconciled acquisition fields nest under `user_value`).
+// The pattern is the only thing standing between `field` and the painless script, so it stays strict.
+export const V2_FIELD_RE = /^(sample|acquisition)\.[a-z_]+(\.user_value)?$/
+// Joins CURIE and label in the aggregation key; cannot occur in either.
+export const V2_KEY_SEPARATOR = '\u0001'
+const MAX_V2_TERM_SUGGESTIONS = 200
 
 const MAX_ONTOLOGY_SUGGESTIONS = 50
 const MIN_ONTOLOGY_QUERY_LENGTH = 3
@@ -155,6 +163,51 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       const [id, name] = s.split('/')
       return { id, name }
     })
+  },
+
+  async metadataV2TermSuggestions(source, { field, query, limit }, ctx) {
+    if (!V2_FIELD_RE.test(field)) {
+      throw new UserError('Unknown metadata v2 field')
+    }
+    const base = `ds_meta_v2.${field}`
+    const idField = `${base}.value_ontology_id`
+    const labelField = `${base}.value_label`
+    const filters: any[] = [{ exists: { field: idField } }]
+    if (query) {
+      filters.push({
+        bool: {
+          minimum_should_match: 1,
+          should: [
+            { wildcard: { [idField]: { value: `*${query}*`, case_insensitive: true } } },
+            { wildcard: { [labelField]: { value: `*${query}*`, case_insensitive: true } } },
+          ],
+        },
+      })
+    }
+    const itemCounts = await esFilterValueCountResults({
+      aggsTerms: {
+        terms: {
+          script: {
+            inline: `doc['${idField}.raw'].value + '${V2_KEY_SEPARATOR}' + `
+              + `(doc.containsKey('${labelField}.raw') && doc['${labelField}.raw'].size() > 0 `
+              + `? doc['${labelField}.raw'].value : '')`,
+            lang: 'painless',
+          },
+          size: Math.min(Math.max(limit || 20, 1), MAX_V2_TERM_SUGGESTIONS),
+          order: { _count: 'desc' },
+        },
+      },
+      filters,
+      docType: 'dataset',
+      user: ctx.user,
+    })
+    return Object.entries(itemCounts as { [key: string]: number })
+      .map(([key, count]) => {
+        const [curie, label = ''] = key.split(V2_KEY_SEPARATOR)
+        return { curie, label, count }
+      })
+      .filter(({ curie }) => curie !== '')
+      .sort((a, b) => b.count - a.count)
   },
 
   colocalizationAlgos() {

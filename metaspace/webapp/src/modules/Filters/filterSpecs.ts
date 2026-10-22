@@ -26,6 +26,26 @@ function formatPValue(pValue: number) {
   return pValue ? pValue.toFixed(2) : ''
 }
 
+const METADATA_V2_ENUM_LABELS: Record<string, string> = {
+  tissue: 'Tissue',
+  cell_culture: 'Cell culture',
+  plant: 'Plant',
+  environmental: 'Environmental',
+  control: 'Control',
+  disease: 'Disease',
+  disease_model: 'Disease model',
+  treated: 'Treated',
+  other: 'Other',
+  female: 'Female',
+  male: 'Male',
+  mixed: 'Mixed',
+  unknown: 'Unknown',
+}
+
+function formatMetadataV2Enum(value: string) {
+  return METADATA_V2_ENUM_LABELS[value] || value
+}
+
 export type Level =
   | 'annotation'
   | 'dataset'
@@ -53,6 +73,10 @@ export type FilterKey =
   | 'organism'
   | 'organismPart'
   | 'condition'
+  | 'disease'
+  | 'sampleType'
+  | 'healthStatus'
+  | 'sex'
   | 'growthConditions'
   | 'ionisationSource'
   | 'maldiMatrix'
@@ -355,8 +379,8 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
 
   organismPart: {
     type: SingleSelectFilter,
-    name: 'Organism part',
-    description: 'Select organism part',
+    name: 'Anatomical site',
+    description: 'Select anatomical site',
     levels: ['annotation', 'dataset'],
     initialValue: undefined,
 
@@ -371,6 +395,50 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     initialValue: undefined,
 
     options: 'conditions',
+  },
+
+  disease: {
+    type: SearchableFilter,
+    name: 'Disease',
+    description: 'Select disease',
+    levels: ['annotation', 'dataset'],
+    initialValue: undefined,
+  },
+
+  sampleType: {
+    type: SingleSelectFilter,
+    name: 'Sample type',
+    description: 'Select sample type',
+    levels: ['annotation', 'dataset'],
+    initialValue: undefined,
+
+    options: ['tissue', 'cell_culture', 'plant', 'environmental'],
+    optionFormatter: formatMetadataV2Enum,
+    filterable: false,
+  },
+
+  healthStatus: {
+    type: SingleSelectFilter,
+    name: 'Health status',
+    description: 'Select health status',
+    levels: ['annotation', 'dataset'],
+    initialValue: undefined,
+
+    options: ['control', 'disease', 'disease_model', 'treated', 'other'],
+    optionFormatter: formatMetadataV2Enum,
+    filterable: false,
+  },
+
+  sex: {
+    type: SingleSelectFilter,
+    name: 'Sex',
+    description: 'Select sex',
+    levels: ['annotation', 'dataset'],
+    initialValue: undefined,
+
+    options: ['female', 'male', 'mixed', 'unknown'],
+    optionFormatter: formatMetadataV2Enum,
+    filterable: false,
   },
 
   growthConditions: {
@@ -565,6 +633,10 @@ export const DATASET_FILTERS: FilterKey[] = [
   'organism',
   'organismPart',
   'condition',
+  'disease',
+  'sampleType',
+  'healthStatus',
+  'sex',
   'growthConditions',
   'ionisationSource',
   'maldiMatrix',

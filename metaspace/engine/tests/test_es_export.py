@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -53,6 +54,52 @@ NON_METRIC_STATS = [
     'mz_mean',
     'mz_stddev',
 ]
+V2_DOCUMENT = {
+    'schema_version': '0.2.0',
+    'data_type': 'Imaging MS',
+    'sample': {
+        'sample_class': 'TissueSample',
+        'sample_type': 'tissue',
+        'organism': {
+            'value_ontology_id': 'NCBITaxon:10090',
+            'value_label': 'Mus musculus',
+            'curation_state': 'controlled',
+        },
+        'disease': {
+            'value_ontology_id': 'MONDO:0005070',
+            'value_label': 'glioma',
+            'curation_state': 'controlled',
+        },
+        'anatomical_site_coarse': {
+            'value_ontology_id': 'UBERON:0000955',
+            'value_label': 'brain',
+            'curation_state': 'controlled',
+        },
+    },
+    'acquisition': {
+        'polarity': {
+            'user_value': {
+                'value_ontology_id': 'MS:1000130',
+                'value_label': 'positive scan',
+                'curation_state': 'controlled',
+            },
+            'reconciliation_state': 'not_checked',
+        },
+        'ionization_source': {
+            'user_value': {'value_free_text': 'MALDI', 'curation_state': 'pending_curation'},
+            'reconciliation_state': 'not_checked',
+        },
+        'instrument_model': {
+            'user_value': {
+                'value_ontology_id': 'MS:1001911',
+                'value_label': 'Q Exactive',
+                'curation_state': 'controlled',
+            },
+            'reconciliation_state': 'not_checked',
+        },
+    },
+}
+V2_ENVELOPE = {'document': V2_DOCUMENT, 'unmodeled': {'Supplementary': 'not indexed'}}
 
 
 def wait_for_es(es, index):
@@ -71,10 +118,21 @@ def test_index_ds_works(sm_config, test_db, es, sm_index, ds_config, metadata, a
 
     db = DB()
     db.insert(
-        "INSERT INTO dataset(id, name, input_path, config, metadata, upload_dt, status, "
-        "status_update_dt, is_public, acq_geometry, ion_thumbnail, size_hash) "
-        "VALUES (%s, 'ds_name', 'ds_input_path', %s, %s, %s, 'ds_status', %s, true, '{}', %s, '{}')",
-        [[ds_id, json.dumps(ds_config), json.dumps(metadata), upload_dt, upload_dt, 'thumb-id']],
+        "INSERT INTO dataset(id, name, input_path, config, metadata, metadata_v2, upload_dt, "
+        "status, status_update_dt, is_public, acq_geometry, ion_thumbnail, size_hash) "
+        "VALUES (%s, 'ds_name', 'ds_input_path', %s, %s, %s, %s, 'ds_status', %s, true, '{}', "
+        "%s, '{}')",
+        [
+            [
+                ds_id,
+                json.dumps(ds_config),
+                json.dumps(metadata),
+                json.dumps(V2_ENVELOPE),
+                upload_dt,
+                upload_dt,
+                'thumb-id',
+            ]
+        ],
     )
     moldb = create_test_molecular_db()
     (job_id,) = db.insert_return(
@@ -131,6 +189,17 @@ def test_index_ds_works(sm_config, test_db, es, sm_index, ds_config, metadata, a
     ):
         es_exp = ESExporter(db, sm_config)
         es_exp.delete_ds(ds_id)
+        # Seed the ES copy with a stale v2 leaf so index_ds takes the ES-copy path
+        es.create(
+            index=dataset_index,
+            id=ds_id,
+            document={
+                **es_exp._select_ds_by_id(ds_id),  # pylint: disable=protected-access
+                'ds_meta_v2': _stale_v2_document(),
+                'annotation_counts': [],
+            },
+        )
+        wait_for_es(es, dataset_index)
         es_exp.index_ds(
             ds_id=ds_id,
             moldb=moldb,
@@ -141,6 +210,11 @@ def test_index_ds_works(sm_config, test_db, es, sm_index, ds_config, metadata, a
     wait_for_es(es, sm_config['elasticsearch']['annotation_index'])
 
     ds_d = es.search(index=dataset_index)['hits']['hits'][0]['_source']
+    assert ds_d['ds_meta_v2'] == V2_DOCUMENT
+    assert 'tissue_modification' not in ds_d['ds_meta_v2']['sample']
+    assert 'unmodeled' not in ds_d['ds_meta_v2']
+    for ann_hit in es.search(index=annotation_index)['hits']['hits']:
+        assert ann_hit['_source']['ds_meta_v2'] == V2_DOCUMENT
     expected_ds_fields = {
         'ds_last_finished': last_finished,
         'ds_config': ds_config,
@@ -151,6 +225,7 @@ def test_index_ds_works(sm_config, test_db, es, sm_index, ds_config, metadata, a
         'ds_project_ids': [],
         'ds_project_names': [],
         'ds_meta': metadata,
+        'ds_meta_v2': V2_DOCUMENT,
         'ds_status': 'ds_status',
         'ds_status_update_dt': upload_dt,
         'ds_name': 'ds_name',
@@ -564,6 +639,71 @@ def test_update_ds_works_for_all_fields(sm_config, test_db, es, sm_index):
     ann_doc = es.search(index=annotation_index)['hits']['hits'][0]['_source']
     for k, v in update.items():
         assert v == ann_doc[f'ds_{k}']
+
+
+def _stale_v2_document():
+    stale = deepcopy(V2_DOCUMENT)
+    stale['sample']['tissue_modification'] = {
+        'value_free_text': 'stale',
+        'curation_state': 'pending_curation',
+    }
+    return stale
+
+
+def _seed_ds_and_ann_docs(es, dataset_index, annotation_index, extra_fields):
+    es.create(
+        index=dataset_index,
+        id='dataset1',
+        document={'ds_id': 'dataset1', 'ds_name': 'ds_name', **extra_fields},
+    )
+    es.create(
+        index=annotation_index,
+        id='id1',
+        document={'ds_id': 'dataset1', 'ds_name': 'ds_name', **extra_fields},
+    )
+    wait_for_es(es, dataset_index)
+    wait_for_es(es, annotation_index)
+
+
+def test_update_ds_metadata_v2_replaces_object(sm_config, test_db, es, sm_index):
+    dataset_index = sm_config['elasticsearch']['dataset_index']
+    annotation_index = sm_config['elasticsearch']['annotation_index']
+    _seed_ds_and_ann_docs(es, dataset_index, annotation_index, {'ds_meta_v2': _stale_v2_document()})
+
+    db_mock = MagicMock(spec=DB)
+    db_mock.select_with_fields.return_value = [{'ds_id': 'dataset1', 'ds_meta_v2': V2_DOCUMENT}]
+    es_exporter = ESExporter(db_mock, sm_config)
+    es_exporter.update_ds('dataset1', fields=['metadata_v2'])
+    wait_for_es(es, dataset_index)
+    wait_for_es(es, annotation_index)
+
+    for index, doc_id in [(dataset_index, 'dataset1'), (annotation_index, 'id1')]:
+        doc = es.get_source(index=index, id=doc_id)
+        assert doc['ds_meta_v2'] == V2_DOCUMENT
+        assert 'tissue_modification' not in doc['ds_meta_v2']['sample']
+        assert doc['ds_name'] == 'ds_name'
+
+
+def test_update_ds_metadata_v2_null_is_skipped(sm_config, test_db, es, sm_index):
+    dataset_index = sm_config['elasticsearch']['dataset_index']
+    annotation_index = sm_config['elasticsearch']['annotation_index']
+    _seed_ds_and_ann_docs(es, dataset_index, annotation_index, {})
+
+    db_mock = MagicMock(spec=DB)
+    db_mock.select_with_fields.return_value = [
+        {'ds_id': 'dataset1', 'ds_meta_v2': None, 'ds_name': 'new_ds_name'}
+    ]
+    es_exporter = ESExporter(db_mock, sm_config)
+    es_exporter.update_ds('dataset1', fields=['metadata_v2', 'name'])
+    wait_for_es(es, dataset_index)
+    wait_for_es(es, annotation_index)
+
+    for index, doc_id in [(dataset_index, 'dataset1'), (annotation_index, 'id1')]:
+        doc = es.get_source(index=index, id=doc_id)
+        assert 'ds_meta_v2' not in doc
+        assert doc['ds_name'] == 'new_ds_name'
+
+    es_exporter.update_ds('dataset1', fields=['metadata_v2'])  # empty pipeline must not raise
 
 
 def test_rename_index_works(sm_config, test_db):

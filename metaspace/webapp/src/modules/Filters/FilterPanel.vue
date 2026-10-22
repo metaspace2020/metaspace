@@ -35,7 +35,7 @@ import { ElSelect, ElOption } from '../../lib/element-plus'
 import { inject } from 'vue'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 
-const orderedFilterKeys = [
+const pinnedFilterKeys = [
   'ontology',
   'database',
   'fdrLevel',
@@ -47,10 +47,17 @@ const orderedFilterKeys = [
   'mz',
   'offSample',
   'polarity',
+]
+const lastFilterKeys = ['opticalImage']
+const sortedFilterKeys = [
   'adduct',
   'organism',
   'organismPart',
   'condition',
+  'disease',
+  'sampleType',
+  'healthStatus',
+  'sex',
   'growthConditions',
   'analyzerType',
   'ionisationSource',
@@ -62,12 +69,12 @@ const orderedFilterKeys = [
   'visibility',
   'metadataType',
   'molClass',
-  'opticalImage',
   'pValue',
   'roiId',
   'minAuc',
   'absLfc',
-]
+].sort((a, b) => FILTER_SPECIFICATIONS[a].description.localeCompare(FILTER_SPECIFICATIONS[b].description))
+const orderedFilterKeys = [...pinnedFilterKeys, ...sortedFilterKeys, ...lastFilterKeys]
 
 const dsAnnotationHiddenFilters = [] // ['datasetIds']
 

@@ -162,8 +162,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return JSON.stringify(ds._source.ds_meta)
   },
 
-  // Unlike metadataJson, read directly from Postgres (roiJson's pattern) rather than the ES
-  // index - metadata_v2 is deliberately excluded from ES during coexistence.
+  // Read from Postgres, not ES: the envelope's `unmodeled` block is not indexed (only `document` is, as ds_meta_v2).
   async metadataV2Json(ds, args, ctx) {
     const result = await getDbDatasetById(ctx, ds._source.ds_id)
     return result?.metadata_v2 ? JSON.stringify(result.metadata_v2) : null

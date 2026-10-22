@@ -11,7 +11,7 @@ export interface FilterQueries {
   getById($apollo: any, ids: string[]): Promise<Option[]>
 }
 
-export type SearchableFilterKey = 'datasetIds' | 'group' | 'project' | 'submitter' | 'annotationIds'
+export type SearchableFilterKey = 'datasetIds' | 'group' | 'project' | 'submitter' | 'annotationIds' | 'disease'
 
 const datasetQueries: FilterQueries = {
   async search($apollo, $store, query) {
@@ -299,12 +299,63 @@ const submitterQueries: FilterQueries = {
   },
 }
 
+interface MetadataV2TermSuggestion {
+  curie: string
+  label: string
+  count: number
+}
+
+const toOption = (term: MetadataV2TermSuggestion): Option => ({ value: term.curie, label: term.label })
+
+const metadataV2TermQueries = (field: string): FilterQueries => ({
+  async search($apollo, $store, query) {
+    const { data } = await $apollo.query({
+      query: gql`
+        query MetadataV2TermOptions($field: String!, $query: String!) {
+          options: metadataV2TermSuggestions(field: $field, query: $query) {
+            curie
+            label
+            count
+          }
+        }
+      `,
+      fetchPolicy: 'cache-first',
+      variables: { field, query },
+    })
+    return (data.options as MetadataV2TermSuggestion[]).map(toOption)
+  },
+  async getById($apollo, ids) {
+    const promises = ids.map((id) =>
+      $apollo.query({
+        query: gql`
+          query MetadataV2TermOptionById($field: String!, $query: String!) {
+            options: metadataV2TermSuggestions(field: $field, query: $query) {
+              curie
+              label
+              count
+            }
+          }
+        `,
+        fetchPolicy: 'cache-first',
+        variables: { field, query: id },
+      })
+    )
+    const results = await Promise.all(promises)
+    return results.flatMap((result: any, i: number) =>
+      (result.data.options as MetadataV2TermSuggestion[])
+        .filter((term) => term.curie.toLowerCase() === ids[i].toLowerCase())
+        .map(toOption)
+    )
+  },
+})
+
 const searchableFilterQueries: Record<SearchableFilterKey, FilterQueries> = {
   datasetIds: datasetQueries,
   annotationIds: annotationQueries,
   group: groupQueries,
   project: projectQueries,
   submitter: submitterQueries,
+  disease: metadataV2TermQueries('sample.disease'),
 }
 
 export default searchableFilterQueries

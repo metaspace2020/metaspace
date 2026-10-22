@@ -129,13 +129,11 @@ class SMapiDatasetManager:
         ds.is_public = doc.get('is_public', ds.is_public)
         ds.save(self._db, None if async_es_update else self._es)
 
-        # metadata_v2 must never flow into ES during coexistence (integration spec) - excluded
-        # explicitly rather than relying on the ES updater's fallthrough handling being harmless.
         self._post_sm_msg(
             ds=ds,
             queue=self._update_queue,
             action=DaemonAction.UPDATE,
-            fields=[f for f in doc.keys() if f != 'metadata_v2'],
+            fields=list(doc.keys()),
             **kwargs,
         )
 

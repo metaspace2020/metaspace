@@ -3,6 +3,12 @@ type SubmitterSearchResult {
   name: String!
 }
 
+type MetadataV2TermSuggestion {
+  curie: String!
+  label: String!
+  count: Int!
+}
+
 enum SortingOrder {
   ASCENDING,
   DESCENDING
@@ -60,11 +66,9 @@ type Query {
 
   scoringModels: [ScoringModel!]!
 
-  # Autocomplete against the ontology term store, scoped to the slot's bound subtree(s)
-  # (metadata schema v2 - see docs/integration_metaspace.md SS6-7). Trigram-ranked, label then
-  # synonyms. `slot` is the LinkML slot name (e.g. "disease", "organism"), not a raw subtree CURIE -
-  # the mapping between the two is intentionally not exposed to the client.
   ontologyTermSuggestions(slot: String!, query: String!, limit: Int = 10): [OntologyTerm!]!
+
+  metadataV2TermSuggestions(field: String!, query: String!, limit: Int = 20): [MetadataV2TermSuggestion!]!
 }
 
 schema {

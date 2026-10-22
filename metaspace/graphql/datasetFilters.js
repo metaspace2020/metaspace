@@ -198,12 +198,71 @@ class GroupMatchFilter extends AbstractDatasetFilter {
   }
 }
 
+class OntologyTermFilter extends AbstractDatasetFilter {
+  constructor(v2Path) {
+    super('', {
+      esField: 'ds_meta_v2.' + v2Path,
+      pgField: "metadata_v2#>>'{document," + v2Path.replace(/\./g, ',') + ",value_ontology_id}'",
+    })
+  }
+
+  esFilter(curie) {
+    return { term: { [this.esField + '.value_ontology_id']: curie } }
+  }
+
+  pgFilter(q, curie) {
+    return q.whereRaw(this.pgField + ' = ?', [curie])
+  }
+}
+
+class MergedMetadataFilter extends ExactMatchFilter {
+  // Keeps the legacy schemaPath/esField/pgField (read by dsField() and the Dataset resolvers);
+  // only the filters are widened to also match the v2 label.
+  constructor(legacyPath, v2Path) {
+    super(legacyPath, {})
+    this.v2EsField = 'ds_meta_v2.' + v2Path + '.value_label'
+    this.v2PgField = "metadata_v2#>>'{document," + v2Path.replace(/\./g, ',') + ",value_label}'"
+  }
+
+  esFilter(value) {
+    const v = this.preprocess(value)
+    return {
+      bool: {
+        should: [{ term: { [this.esField]: v } }, { term: { [this.v2EsField]: v } }],
+        minimum_should_match: 1,
+      },
+    }
+  }
+
+  pgFilter(q, value) {
+    const v = this.preprocess(value)
+    return q.whereRaw('(' + this.pgField + ' = ? OR ' + this.v2PgField + ' = ?)', [v, v])
+  }
+}
+
+class V2EnumFilter extends AbstractDatasetFilter {
+  constructor(v2Path) {
+    super('', {
+      esField: 'ds_meta_v2.' + v2Path,
+      pgField: "metadata_v2#>>'{document," + v2Path.replace(/\./g, ',') + "}'",
+    })
+  }
+
+  esFilter(value) {
+    return { term: { [this.esField]: value } }
+  }
+
+  pgFilter(q, value) {
+    return q.whereRaw(this.pgField + ' = ?', [value])
+  }
+}
+
 export const datasetFilters = {
   polarity: new PhraseMatchFilter('MS_Analysis.Polarity', { preprocess: capitalize }),
   ionisationSource: new ExactMatchFilter('MS_Analysis.Ionisation_Source', {}),
   analyzerType: new PhraseMatchFilter('MS_Analysis.Analyzer', {}),
-  organism: new ExactMatchFilter('Sample_Information.Organism', {}),
-  organismPart: new ExactMatchFilter('Sample_Information.Organism_Part', {}),
+  organism: new MergedMetadataFilter('Sample_Information.Organism', 'sample.organism'),
+  organismPart: new MergedMetadataFilter('Sample_Information.Organism_Part', 'sample.anatomical_site_coarse'),
   condition: new ExactMatchFilter('Sample_Information.Condition', {}),
   growthConditions: new ExactMatchFilter('Sample_Information.Sample_Growth_Conditions', {}),
   maldiMatrix: new ExactMatchFilter('Sample_Preparation.MALDI_Matrix', {}),
@@ -215,6 +274,10 @@ export const datasetFilters = {
   group: new GroupMatchFilter('', { esField: 'ds_group_id' }),
   project: new ExactMatchFilter('', { esField: 'ds_project_ids' }),
   metadataType: new ExactMatchFilter('Data_Type', {}),
+  disease: new OntologyTermFilter('sample.disease'),
+  sampleType: new V2EnumFilter('sample.sample_type'),
+  healthStatus: new V2EnumFilter('sample.health_status'),
+  sex: new V2EnumFilter('sample.sex'),
   hasAnnotationMatching: null,
   opticalImage: new OpticalImageFilter(),
   visibility: new VisibilityFilter(),
