@@ -1,5 +1,5 @@
 import { FieldResolversFor } from '../../bindingTypes'
-import { Query } from '../../binding'
+import { OntologyTerm, Query } from '../../binding'
 import { esFilterValueCountResults } from '../../../esConnector'
 import config from '../../utils/config'
 import { Context, ContextUser } from '../../context'
@@ -7,13 +7,14 @@ import { IResolvers } from 'graphql-tools'
 import * as _ from 'lodash'
 import { ScoringModel } from '../engine/model'
 import { UserError } from 'graphql-errors'
+import { EntityManager } from 'typeorm'
 
 // LinkML slot -> ontology root CURIE(s) its suggestions are scoped to. graphql owns this file; the
 // engine's import script reads a generated copy (`yarn gen-ontology-slots`, checked by CI), so the
 // suggestion scope and the imported subtrees cannot drift.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ontologySlots: Record<string, { root: string }[]> = require('../../../metadataSchemas/ontology_slots.json')
-const SLOT_SUBTREES: Record<string, string[]> = _.mapValues(ontologySlots, bindings => bindings.map(b => b.root))
+export const SLOT_SUBTREES: Record<string, string[]> = _.mapValues(ontologySlots, bindings => bindings.map(b => b.root))
 
 // A metadata v2 field path under `ds_meta_v2` (the reconciled acquisition fields nest under `user_value`).
 // The pattern is the only thing standing between `field` and the painless script, so it stays strict.
@@ -86,6 +87,111 @@ const cachedOntologySuggestions = async(key: string, compute: () => Promise<Sugg
     ontologySuggestionCache.set(key, { expires: Date.now() + ONTOLOGY_CACHE_TTL_MS, rows })
   }
   return rows
+}
+
+export async function suggestOntologyTerms(entityManager: EntityManager, slot: string, query: string,
+  limit?: number): Promise<OntologyTerm[]> {
+  const subtrees = SLOT_SUBTREES[slot]
+  const trimmedQuery = (query || '').trim()
+  // Unknown or free-text-only slot: the webapp always accepts free text anyway. Short queries
+  // (the webapp fires one on focus) would rank the whole subtree, millions of rows for organism.
+  if (!subtrees || trimmedQuery.length < MIN_ONTOLOGY_QUERY_LENGTH) {
+    return []
+  }
+  // Escape ILIKE metacharacters so a literal '%' or '_' can't match the whole subtree.
+  const escaped = trimmedQuery.replace(/[\\%_]/g, '\\$&')
+  const rowLimit = Math.min(Math.max(limit || 10, 1), MAX_ONTOLOGY_SUGGESTIONS)
+  // Stage 1: label prefixes via the btree on lower(label), cheap at any table size. If no exact label
+  // came back, a probe finds exact synonyms (e.g. "hippocampus" on hippocampal formation), which a page
+  // of prefix matches would otherwise hide. Stage 2, only while the limit is unfilled: label or synonym
+  // substrings. Probe and stage 2 use the trigram GIN indexes. Every query sorts at most
+  // ONTOLOGY_CANDIDATE_LIMIT rows ("sp." matches 1.4M NCBITaxon rows; sorting them all costs seconds).
+  const lowerQuery = trimmedQuery.toLowerCase()
+  const prefixPattern = `${escaped.toLowerCase()}%`
+  const substringPattern = `%${escaped}%`
+  return await cachedOntologySuggestions(`${slot}\0${lowerQuery}\0${rowLimit}`, async() => {
+    const prefixRows: any[] = await entityManager.query(`
+      SELECT curie, label, synonyms, ontology, subtree, obsolete, ${ontologyMatchRank('$4', '$2')} AS rank FROM (
+        SELECT curie, label, synonyms, ontology, subtree, obsolete
+        FROM public.ontology_term
+        WHERE subtree = ANY($1) AND obsolete = false AND lower(label) LIKE $2
+        LIMIT ${ONTOLOGY_CANDIDATE_LIMIT}
+      ) candidates
+      ORDER BY rank ASC, length(label) ASC, label ASC
+      LIMIT $3`,
+    [subtrees, prefixPattern, rowLimit, lowerQuery])
+    let rows = prefixRows
+    if (!prefixRows.some(row => row.rank === 1)) {
+      const exactSynonymRows: any[] = await entityManager.query(`
+        SELECT curie, label, synonyms, ontology, subtree, obsolete, 2 AS rank FROM (
+          SELECT curie, label, synonyms, ontology, subtree, obsolete
+          FROM public.ontology_term
+          WHERE subtree = ANY($1) AND obsolete = false AND ontology_term_synonym_text(synonyms) ILIKE $2
+          LIMIT ${ONTOLOGY_CANDIDATE_LIMIT}
+        ) candidates
+        WHERE EXISTS (SELECT 1 FROM unnest(synonyms) AS synonym WHERE lower(synonym) = $3)
+        ORDER BY length(label) ASC, label ASC
+        LIMIT $4`,
+      [subtrees, substringPattern, lowerQuery, rowLimit])
+      rows = mergeRankedSuggestions(rows, exactSynonymRows, rowLimit)
+    }
+    if (rows.length >= rowLimit) {
+      return rows.map(withoutRank)
+    }
+    // The rank's prefix branch never fires here: the WHERE excludes label prefixes.
+    const substringRows: any[] = await entityManager.query(`
+      SELECT curie, label, synonyms, ontology, subtree, obsolete, ${ontologyMatchRank('$5', '$2')} AS rank FROM (
+        SELECT curie, label, synonyms, ontology, subtree, obsolete
+        FROM public.ontology_term
+        WHERE subtree = ANY($1) AND obsolete = false
+          AND NOT (lower(label) LIKE $2)
+          AND (label ILIKE $3 OR ontology_term_synonym_text(synonyms) ILIKE $3)
+        LIMIT ${ONTOLOGY_CANDIDATE_LIMIT}
+      ) candidates
+      ORDER BY rank ASC, length(label) ASC, label ASC
+      LIMIT $4`,
+    [subtrees, prefixPattern, substringPattern, rowLimit, lowerQuery])
+    rows = mergeRankedSuggestions(rows, substringRows, rowLimit)
+    if (rows.length > 0) {
+      return rows.map(withoutRank)
+    }
+    // Stage 3, typos: nothing contains the text, so fall back to trigram similarity (`%` uses
+    // pg_trgm.similarity_threshold, 0.3 by default) - "melanona" -> melanoma. Useful typos cost
+    // 40 ms to 1.4 s cold on the organism slot; junk made of common trigrams ("sp. str bact") would
+    // cost 5 s, so the statement is capped and a timeout simply yields no suggestions.
+    if (fuzzyInFlight >= ONTOLOGY_FUZZY_MAX_IN_FLIGHT) {
+      return { rows: [], cacheable: false }
+    }
+    fuzzyInFlight++
+    // Run on a raw pg client rather than through TypeORM: a timeout here is an expected outcome,
+    // and TypeORM would log every one at error level with a stack trace before we could catch it.
+    const [client, release] = await (entityManager.connection.driver as any).obtainMasterConnection()
+    try {
+      await client.query('BEGIN')
+      await client.query(`SET LOCAL statement_timeout = ${ONTOLOGY_FUZZY_TIMEOUT_MS}`)
+      const { rows } = await client.query(`
+        SELECT curie, label, synonyms, ontology, subtree, obsolete FROM (
+          SELECT curie, label, synonyms, ontology, subtree, obsolete, similarity(label, $2) AS score
+          FROM public.ontology_term
+          WHERE subtree = ANY($1) AND obsolete = false AND label % $2
+          LIMIT ${ONTOLOGY_CANDIDATE_LIMIT}
+        ) candidates
+        ORDER BY score DESC, length(label) ASC, label ASC
+        LIMIT $3`,
+      [subtrees, trimmedQuery, rowLimit])
+      await client.query('COMMIT')
+      return rows
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined)
+      if (err?.code === '57014') { // query_canceled: statement_timeout
+        return { rows: [], cacheable: false } // may succeed when the DB is less busy
+      }
+      throw err
+    } finally {
+      release()
+      fuzzyInFlight--
+    }
+  })
 }
 
 const getTopFieldValues = async(docType: 'dataset' | 'annotation',
@@ -220,107 +326,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
   },
 
   async ontologyTermSuggestions(source, { slot, query, limit }, ctx: Context) {
-    const subtrees = SLOT_SUBTREES[slot]
-    const trimmedQuery = (query || '').trim()
-    // Unknown or free-text-only slot: the webapp always accepts free text anyway. Short queries
-    // (the webapp fires one on focus) would rank the whole subtree, millions of rows for organism.
-    if (!subtrees || trimmedQuery.length < MIN_ONTOLOGY_QUERY_LENGTH) {
-      return []
-    }
-    // Escape ILIKE metacharacters so a literal '%' or '_' can't match the whole subtree.
-    const escaped = trimmedQuery.replace(/[\\%_]/g, '\\$&')
-    const rowLimit = Math.min(Math.max(limit || 10, 1), MAX_ONTOLOGY_SUGGESTIONS)
-    // Stage 1: label prefixes via the btree on lower(label), cheap at any table size. If no exact label
-    // came back, a probe finds exact synonyms (e.g. "hippocampus" on hippocampal formation), which a page
-    // of prefix matches would otherwise hide. Stage 2, only while the limit is unfilled: label or synonym
-    // substrings. Probe and stage 2 use the trigram GIN indexes. Every query sorts at most
-    // ONTOLOGY_CANDIDATE_LIMIT rows ("sp." matches 1.4M NCBITaxon rows; sorting them all costs seconds).
-    const lowerQuery = trimmedQuery.toLowerCase()
-    const prefixPattern = `${escaped.toLowerCase()}%`
-    const substringPattern = `%${escaped}%`
-    return await cachedOntologySuggestions(`${slot}\0${lowerQuery}\0${rowLimit}`, async() => {
-      const prefixRows: any[] = await ctx.entityManager.query(`
-        SELECT curie, label, synonyms, ontology, subtree, obsolete, ${ontologyMatchRank('$4', '$2')} AS rank FROM (
-          SELECT curie, label, synonyms, ontology, subtree, obsolete
-          FROM public.ontology_term
-          WHERE subtree = ANY($1) AND obsolete = false AND lower(label) LIKE $2
-          LIMIT ${ONTOLOGY_CANDIDATE_LIMIT}
-        ) candidates
-        ORDER BY rank ASC, length(label) ASC, label ASC
-        LIMIT $3`,
-      [subtrees, prefixPattern, rowLimit, lowerQuery])
-      let rows = prefixRows
-      if (!prefixRows.some(row => row.rank === 1)) {
-        const exactSynonymRows: any[] = await ctx.entityManager.query(`
-          SELECT curie, label, synonyms, ontology, subtree, obsolete, 2 AS rank FROM (
-            SELECT curie, label, synonyms, ontology, subtree, obsolete
-            FROM public.ontology_term
-            WHERE subtree = ANY($1) AND obsolete = false AND ontology_term_synonym_text(synonyms) ILIKE $2
-            LIMIT ${ONTOLOGY_CANDIDATE_LIMIT}
-          ) candidates
-          WHERE EXISTS (SELECT 1 FROM unnest(synonyms) AS synonym WHERE lower(synonym) = $3)
-          ORDER BY length(label) ASC, label ASC
-          LIMIT $4`,
-        [subtrees, substringPattern, lowerQuery, rowLimit])
-        rows = mergeRankedSuggestions(rows, exactSynonymRows, rowLimit)
-      }
-      if (rows.length >= rowLimit) {
-        return rows.map(withoutRank)
-      }
-      // The rank's prefix branch never fires here: the WHERE excludes label prefixes.
-      const substringRows: any[] = await ctx.entityManager.query(`
-        SELECT curie, label, synonyms, ontology, subtree, obsolete, ${ontologyMatchRank('$5', '$2')} AS rank FROM (
-          SELECT curie, label, synonyms, ontology, subtree, obsolete
-          FROM public.ontology_term
-          WHERE subtree = ANY($1) AND obsolete = false
-            AND NOT (lower(label) LIKE $2)
-            AND (label ILIKE $3 OR ontology_term_synonym_text(synonyms) ILIKE $3)
-          LIMIT ${ONTOLOGY_CANDIDATE_LIMIT}
-        ) candidates
-        ORDER BY rank ASC, length(label) ASC, label ASC
-        LIMIT $4`,
-      [subtrees, prefixPattern, substringPattern, rowLimit, lowerQuery])
-      rows = mergeRankedSuggestions(rows, substringRows, rowLimit)
-      if (rows.length > 0) {
-        return rows.map(withoutRank)
-      }
-      // Stage 3, typos: nothing contains the text, so fall back to trigram similarity (`%` uses
-      // pg_trgm.similarity_threshold, 0.3 by default) - "melanona" -> melanoma. Useful typos cost
-      // 40 ms to 1.4 s cold on the organism slot; junk made of common trigrams ("sp. str bact") would
-      // cost 5 s, so the statement is capped and a timeout simply yields no suggestions.
-      if (fuzzyInFlight >= ONTOLOGY_FUZZY_MAX_IN_FLIGHT) {
-        return { rows: [], cacheable: false }
-      }
-      fuzzyInFlight++
-      // Run on a raw pg client rather than through TypeORM: a timeout here is an expected outcome,
-      // and TypeORM would log every one at error level with a stack trace before we could catch it.
-      const [client, release] = await (ctx.entityManager.connection.driver as any).obtainMasterConnection()
-      try {
-        await client.query('BEGIN')
-        await client.query(`SET LOCAL statement_timeout = ${ONTOLOGY_FUZZY_TIMEOUT_MS}`)
-        const { rows } = await client.query(`
-          SELECT curie, label, synonyms, ontology, subtree, obsolete FROM (
-            SELECT curie, label, synonyms, ontology, subtree, obsolete, similarity(label, $2) AS score
-            FROM public.ontology_term
-            WHERE subtree = ANY($1) AND obsolete = false AND label % $2
-            LIMIT ${ONTOLOGY_CANDIDATE_LIMIT}
-          ) candidates
-          ORDER BY score DESC, length(label) ASC, label ASC
-          LIMIT $3`,
-        [subtrees, trimmedQuery, rowLimit])
-        await client.query('COMMIT')
-        return rows
-      } catch (err) {
-        await client.query('ROLLBACK').catch(() => undefined)
-        if (err?.code === '57014') { // query_canceled: statement_timeout
-          return { rows: [], cacheable: false } // may succeed when the DB is less busy
-        }
-        throw err
-      } finally {
-        release()
-        fuzzyInFlight--
-      }
-    })
+    return await suggestOntologyTerms(ctx.entityManager, slot, query, limit)
   },
 
 }

@@ -201,14 +201,13 @@ export const V2Form = defineComponent({
               inputId={id}
               value={value ?? null}
               slot={def.editor === 'ontology' ? def.slot : undefined}
-              fetchValues={
-                def.valueSource === 'community' ? (query: string) => form.valueResolver(def.key, query) : undefined
-              }
+              fetchValues={(query: string) => form.valueResolver(def.key, query)}
               // the curated / community value lists are short, so they are worth showing from the first character
               minQueryLength={def.valueSource === 'community' ? 1 : undefined}
               knownValues={(def.valueSource === 'community' && CURATED_VALUES[def.key]) || []}
               placeholder={def.placeholder}
               fetchTerms={form.resolver}
+              curationStatus={form.curationStatus.value[def.key]}
               onInput={(v: any) => form.setField(def.key, v)}
             />
           )

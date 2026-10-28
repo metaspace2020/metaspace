@@ -64,6 +64,9 @@
 .v2-hint--danger {
   color: var(--el-color-danger);
 }
+.v2-hint--rejected {
+  color: var(--mv2-danger);
+}
 .v2-chip {
   display: inline-flex;
   align-items: center;
@@ -136,6 +139,16 @@
   &--pending {
     border-color: var(--mv2-pending);
     background: var(--mv2-pending-bg);
+  }
+  &--rejected {
+    border-color: var(--mv2-danger);
+    background: var(--mv2-danger-bg);
+    .v2-chip__dot {
+      background: var(--mv2-danger);
+    }
+    .v2-chip__mark {
+      color: var(--mv2-danger);
+    }
   }
   &__id {
     font-size: 10px;

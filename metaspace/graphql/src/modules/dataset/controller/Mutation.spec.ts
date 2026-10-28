@@ -197,8 +197,11 @@ describe('Dataset mutations: molecular databases permissions', () => {
       updateDatasetQuery, { datasetId: dataset.id, databaseIds }, { context: userContext }
     )
 
-    await expect(createPromise).rejects.toThrowError(/Unauthorized/)
-    await expect(updatePromise).rejects.toThrowError(/Unauthorized/)
+    // Awaited together: either may settle first, and a rejection without a handler fails the test
+    await Promise.all([
+      expect(createPromise).rejects.toThrowError(/Unauthorized/),
+      expect(updatePromise).rejects.toThrowError(/Unauthorized/),
+    ])
   })
 
   test('Admin allowed to use Metaspace public and group databases', async() => {

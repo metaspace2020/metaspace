@@ -1,56 +1,16 @@
 import { isPlaceholder } from './legacyLookups'
 import { FieldKey, ValueResolver, ValueSuggestion } from './types'
+import curatedValues from '../../../lib/metadataSchemas/curated_values.generated.json'
 
 /** most suggestions a value-backed free-text field shows */
 export const MAX_VALUE_SUGGESTIONS = 8
 
 /**
  * Seed suggestions for the free-text fields that have no ontology. They come first in the list; values other
- * users entered (metadataSuggestions) fill the rest.
+ * users entered (metadataSuggestions) fill the rest. Generated from graphql's metadataSchemas/curated_values.json
+ * by the generate-curated-values script.
  */
-export const CURATED_VALUES: Partial<Record<FieldKey, string[]>> = {
-  sample_stabilisation: [
-    'Fresh frozen',
-    'Flash frozen (liquid nitrogen)',
-    'Snap frozen',
-    'Formalin-fixed paraffin-embedded (FFPE)',
-    'Fixed',
-    'OCT embedded',
-    'Dried',
-    'Lyophilised',
-  ],
-  tissue_modification: [
-    'None',
-    'Washed',
-    'Fixed',
-    'Derivatised',
-    'Enzymatically digested',
-    'Delipidated',
-    'Dried',
-    'Coated',
-  ],
-  genetic_background: [
-    'Wild type',
-    'C57BL/6J',
-    'C57BL/6N',
-    'BALB/c',
-    'Sprague Dawley',
-    'Wistar',
-    'NSG',
-    'Knockout',
-    'Transgenic',
-  ],
-  maldi_matrix_application: [
-    'Spraying',
-    'Sprayer robot (TM-Sprayer / HTX)',
-    'Sublimation',
-    'Airbrush',
-    'Dried droplet',
-    'Spotting',
-    'Electrospray deposition',
-    'None',
-  ],
-}
+export const CURATED_VALUES: Partial<Record<FieldKey, string[]>> = curatedValues
 
 /** fields where "None" is a real answer (no modification, no matrix), so a community "None" is kept */
 const NONE_IS_MEANINGFUL: FieldKey[] = ['tissue_modification', 'maldi_matrix_application']

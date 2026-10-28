@@ -188,6 +188,68 @@ function renderOrganismPart(sample: Sample): string {
   }
 }
 
+interface LegacyField {
+  path: [string, string]
+  render: (doc: MetadataV2Document) => string
+}
+
+// tissue-only slots: other sample types get 'N/A' so the required legacy fields still validate
+const nonTissueFallback = (sample: Sample) => sample.sample_type === 'tissue' ? '' : 'N/A'
+
+const legacyField = (path: [string, string], render: (doc: MetadataV2Document) => string): LegacyField =>
+  ({ path, render })
+
+/** The legacy fields a curated slot feeds, read by both `projectToLegacyMetadata` and `projectLegacyField`. */
+const LEGACY_FIELDS = {
+  organism: legacyField(['Sample_Information', 'Organism'],
+    ({ sample }) => renderScalar(sample.organism)),
+  organismPart: legacyField(['Sample_Information', 'Organism_Part'],
+    ({ sample }) => renderOrganismPart(sample)),
+  condition: legacyField(['Sample_Information', 'Condition'],
+    ({ sample }) => renderCondition(sample)),
+  sampleStabilisation: legacyField(['Sample_Preparation', 'Sample_Stabilisation'],
+    ({ sample }) => renderScalar(sample.sample_stabilisation, nonTissueFallback(sample))),
+  tissueModification: legacyField(['Sample_Preparation', 'Tissue_Modification'],
+    ({ sample }) => renderScalar(sample.tissue_modification, nonTissueFallback(sample))),
+  maldiMatrix: legacyField(['Sample_Preparation', 'MALDI_Matrix'],
+    ({ acquisition }) => renderScalar(acquisition.maldi_matrix, 'none')),
+  maldiMatrixApplication: legacyField(['Sample_Preparation', 'MALDI_Matrix_Application'],
+    ({ acquisition }) => renderScalar(acquisition.maldi_matrix_application, 'none')),
+  solvent: legacyField(['Sample_Preparation', 'Solvent'],
+    ({ acquisition }) => renderScalar(acquisition.solvent, 'none')),
+  ionisationSource: legacyField(['MS_Analysis', 'Ionisation_Source'],
+    ({ acquisition }) => renderScalar(acquisition.ionization_source.user_value)),
+}
+
+const LEGACY_FIELD_BY_SLOT: Record<string, LegacyField | null> = {
+  organism: LEGACY_FIELDS.organism,
+  anatomical_site_coarse: LEGACY_FIELDS.organismPart,
+  cell_line_id: LEGACY_FIELDS.organismPart,
+  disease: LEGACY_FIELDS.condition,
+  genetic_background: LEGACY_FIELDS.condition,
+  sample_stabilisation: LEGACY_FIELDS.sampleStabilisation,
+  tissue_modification: LEGACY_FIELDS.tissueModification,
+  maldi_matrix: LEGACY_FIELDS.maldiMatrix,
+  maldi_matrix_application: LEGACY_FIELDS.maldiMatrixApplication,
+  solvent: LEGACY_FIELDS.solvent,
+  ionization_source: LEGACY_FIELDS.ionisationSource,
+  anatomical_site_fine: null,
+  developmental_stage: null,
+}
+
+/**
+ * The legacy key and value `projectToLegacyMetadata` writes for a curated slot's value, or null when the
+ * slot (or an unknown slot name) has no legacy field.
+ */
+export function projectLegacyField(envelope: MetadataV2Envelope, slot: string):
+  { path: [string, string], value: string } | null {
+  const field = Object.prototype.hasOwnProperty.call(LEGACY_FIELD_BY_SLOT, slot) ? LEGACY_FIELD_BY_SLOT[slot] : null
+  if (!field) {
+    return null
+  }
+  return { path: [...field.path] as [string, string], value: field.render(envelope.document) }
+}
+
 /**
  * metadata_v2 -> legacy metadata. It is a pure mapping, not a validator: unresolved polarity or a
  * missing `unmodeled` value is left undefined so the ims.json validation that follows reports it,
@@ -196,27 +258,25 @@ function renderOrganismPart(sample: Sample): string {
 export function projectToLegacyMetadata(envelope: MetadataV2Envelope): LegacyMetadata {
   const { document: doc, unmodeled } = envelope
   const { sample, acquisition } = doc
-  const nonTissueFallback = sample.sample_type === 'tissue' ? '' : 'N/A'
 
   return {
     Data_Type: doc.data_type,
     Sample_Information: {
-      Organism: renderScalar(sample.organism),
-      Organism_Part: renderOrganismPart(sample),
-      Condition: renderCondition(sample),
+      Organism: LEGACY_FIELDS.organism.render(doc),
+      Organism_Part: LEGACY_FIELDS.organismPart.render(doc),
+      Condition: LEGACY_FIELDS.condition.render(doc),
       Sample_Growth_Conditions: sample.protocol_description || undefined,
     },
     Sample_Preparation: {
-      // tissue-only slots: other sample types get 'N/A' so the required legacy fields still validate
-      Sample_Stabilisation: renderScalar(sample.sample_stabilisation, nonTissueFallback),
-      Tissue_Modification: renderScalar(sample.tissue_modification, nonTissueFallback),
-      MALDI_Matrix: renderScalar(acquisition.maldi_matrix, 'none'),
-      MALDI_Matrix_Application: renderScalar(acquisition.maldi_matrix_application, 'none'),
-      Solvent: renderScalar(acquisition.solvent, 'none'),
+      Sample_Stabilisation: LEGACY_FIELDS.sampleStabilisation.render(doc),
+      Tissue_Modification: LEGACY_FIELDS.tissueModification.render(doc),
+      MALDI_Matrix: LEGACY_FIELDS.maldiMatrix.render(doc),
+      MALDI_Matrix_Application: LEGACY_FIELDS.maldiMatrixApplication.render(doc),
+      Solvent: LEGACY_FIELDS.solvent.render(doc),
     },
     MS_Analysis: {
       Polarity: renderPolarity(acquisition.polarity),
-      Ionisation_Source: renderScalar(acquisition.ionization_source.user_value),
+      Ionisation_Source: LEGACY_FIELDS.ionisationSource.render(doc),
       Analyzer: renderScalar(acquisition.instrument_model.user_value),
       Detector_Resolving_Power: unmodeled.Detector_Resolving_Power || undefined,
       Pixel_Size: unmodeled.Pixel_Size || undefined,

@@ -13,6 +13,7 @@ import { IMAGE_VIEWER_SNAPSHOT_ENTITIES } from '../modules/imageViewerSnapshot/m
 import { NEWS_ENTITIES } from '../modules/news/model'
 import { EXPERIMENT_ENTITIES } from '../modules/experiment/model'
 import { ONTOLOGY_ENTITIES } from '../modules/ontology/model'
+import { METADATA_CURATION_ENTITIES } from '../modules/metadataCuration/model'
 import { SnakeCaseNamingStrategy } from './SnakeCaseNamingStrategy'
 
 export const DbSchemaName = 'graphql'
@@ -38,6 +39,7 @@ const typeOrmConfig: ConnectionOptions = {
     ...NEWS_ENTITIES,
     ...EXPERIMENT_ENTITIES,
     ...ONTOLOGY_ENTITIES,
+    ...METADATA_CURATION_ENTITIES,
   ],
   namingStrategy: new SnakeCaseNamingStrategy(),
   synchronize: false,

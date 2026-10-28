@@ -5,6 +5,9 @@ db.sqlite
 # Dereferenced metadata files
 /src/lib/metadataSchemas
 
+# Copy of graphql's metadataSchemas/curated_values.json (yarn run generate-curated-values)
+src/lib/metadataSchemas/curated_values.generated.json
+
 # Copy of graphql schema for tests
 tests/utils/graphql-schema.json
 

@@ -1,4 +1,4 @@
-import { projectToLegacyMetadata, upProjectToV2, LegacyMetadata } from './projection'
+import { projectLegacyField, projectToLegacyMetadata, upProjectToV2, LegacyMetadata, MetadataV2Envelope } from './projection'
 
 const fixtures: LegacyMetadata[] = [
   {
@@ -172,5 +172,75 @@ describe('projectToLegacyMetadata: Condition composition priority', () => {
   it('falls back to "unspecified" when nothing is set', () => {
     const v2 = withSample({ disease: undefined, health_status: undefined, genetic_background: undefined })
     expect(projectToLegacyMetadata(v2).Sample_Information.Condition).toBe('unspecified')
+  })
+})
+
+describe('projectLegacyField', () => {
+  const term = (label: string) => ({ value_label: label, curation_state: 'controlled' as const })
+  const fullTissue: MetadataV2Envelope = {
+    ...baseV2,
+    document: {
+      ...baseV2.document,
+      sample: {
+        ...baseV2.document.sample,
+        genetic_background: term('C57BL/6'),
+        anatomical_site_fine: term('hepatic lobule'),
+        developmental_stage: term('adult'),
+        cell_line_id: term('HeLa'),
+      },
+      acquisition: { ...baseV2.document.acquisition, solvent: term('methanol') },
+    },
+  }
+  const cellCulture: MetadataV2Envelope = {
+    ...fullTissue,
+    document: {
+      ...fullTissue.document,
+      sample: {
+        organism: fullTissue.document.sample.organism,
+        sample_class: 'CellCultureSample',
+        sample_type: 'cell_culture',
+        health_status: 'other',
+        genetic_background: term('KRAS G12D'),
+        cell_line_id: term('HeLa'),
+      },
+      acquisition: { ...fullTissue.document.acquisition, maldi_matrix: undefined, solvent: undefined },
+    },
+  }
+  const slots = ['organism', 'disease', 'anatomical_site_coarse', 'anatomical_site_fine', 'developmental_stage',
+    'cell_line_id', 'ionization_source', 'maldi_matrix', 'solvent', 'sample_stabilisation', 'tissue_modification',
+    'genetic_background', 'maldi_matrix_application']
+  const nullSlots = ['anatomical_site_fine', 'developmental_stage']
+
+  it.each([['tissue', fullTissue], ['cell culture', cellCulture]] as [string, MetadataV2Envelope][])(
+    'agrees with projectToLegacyMetadata for every curated slot (%s)', (_name, envelope) => {
+      const legacy = projectToLegacyMetadata(envelope) as any
+      for (const slot of slots) {
+        const field = projectLegacyField(envelope, slot)
+        if (nullSlots.includes(slot)) {
+          expect(field).toBeNull()
+        } else {
+          expect(field).not.toBeNull()
+          expect(legacy[field!.path[0]][field!.path[1]]).toEqual(field!.value)
+        }
+      }
+    })
+
+  it('maps each slot to its legacy key', () => {
+    const paths = Object.fromEntries(slots.map(slot => [slot, projectLegacyField(fullTissue, slot)?.path ?? null]))
+    expect(paths).toEqual({
+      organism: ['Sample_Information', 'Organism'],
+      disease: ['Sample_Information', 'Condition'],
+      anatomical_site_coarse: ['Sample_Information', 'Organism_Part'],
+      anatomical_site_fine: null,
+      developmental_stage: null,
+      cell_line_id: ['Sample_Information', 'Organism_Part'],
+      ionization_source: ['MS_Analysis', 'Ionisation_Source'],
+      maldi_matrix: ['Sample_Preparation', 'MALDI_Matrix'],
+      solvent: ['Sample_Preparation', 'Solvent'],
+      sample_stabilisation: ['Sample_Preparation', 'Sample_Stabilisation'],
+      tissue_modification: ['Sample_Preparation', 'Tissue_Modification'],
+      genetic_background: ['Sample_Information', 'Condition'],
+      maldi_matrix_application: ['Sample_Preparation', 'MALDI_Matrix_Application'],
+    })
   })
 })

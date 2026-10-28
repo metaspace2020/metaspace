@@ -169,3 +169,15 @@ export interface MigrationResult {
 }
 
 export type EditorMode = 'new' | 'v2' | 'legacy'
+
+/** a curator's decision on the free text a dataset stores for one curated slot (datasetCurationStatus) */
+export interface CurationStatus {
+  text: string
+  status: 'PENDING' | 'APPROVED' | 'MAPPED' | 'REJECTED' | string
+  note?: string | null
+}
+export interface CurationStatusRow extends CurationStatus {
+  slot: string
+}
+/** loads the curation rows of a dataset; the form treats a failure as "no rows" */
+export type CurationStatusLoader = (datasetId: string) => Promise<CurationStatusRow[]>

@@ -20,16 +20,20 @@ exports[`DatasetTable > should match snapshot 1`] = `
       <div class=\\"mock-el-option\\" label=\\"Select dataset\\" value=\\"datasetIds\\"></div>
       <div class=\\"mock-el-option\\" label=\\"Search molecule\\" value=\\"compoundName\\"></div>
       <div class=\\"mock-el-option\\" label=\\"Select polarity\\" value=\\"polarity\\"></div>
-      <div class=\\"mock-el-option\\" label=\\"Select organism\\" value=\\"organism\\"></div>
-      <div class=\\"mock-el-option\\" label=\\"Select organism part\\" value=\\"organismPart\\"></div>
-      <div class=\\"mock-el-option\\" label=\\"Select organism condition\\" value=\\"condition\\"></div>
-      <div class=\\"mock-el-option\\" label=\\"Select sample growth conditions\\" value=\\"growthConditions\\"></div>
-      <div class=\\"mock-el-option\\" label=\\"Select analyzer\\" value=\\"analyzerType\\"></div>
-      <div class=\\"mock-el-option\\" label=\\"Select ionisation source\\" value=\\"ionisationSource\\"></div>
-      <div class=\\"mock-el-option\\" label=\\"Select MALDI matrix\\" value=\\"maldiMatrix\\"></div>
       <div class=\\"mock-el-option\\" label=\\"Search anything\\" value=\\"simpleQuery\\"></div>
+      <div class=\\"mock-el-option\\" label=\\"Select analyzer\\" value=\\"analyzerType\\"></div>
+      <div class=\\"mock-el-option\\" label=\\"Select anatomical site\\" value=\\"organismPart\\"></div>
       <div class=\\"mock-el-option\\" label=\\"Select data type\\" value=\\"datasetOwner\\"></div>
       <div class=\\"mock-el-option\\" label=\\"Select data type\\" value=\\"metadataType\\"></div>
+      <div class=\\"mock-el-option\\" label=\\"Select disease\\" value=\\"disease\\"></div>
+      <div class=\\"mock-el-option\\" label=\\"Select health status\\" value=\\"healthStatus\\"></div>
+      <div class=\\"mock-el-option\\" label=\\"Select ionisation source\\" value=\\"ionisationSource\\"></div>
+      <div class=\\"mock-el-option\\" label=\\"Select MALDI matrix\\" value=\\"maldiMatrix\\"></div>
+      <div class=\\"mock-el-option\\" label=\\"Select organism\\" value=\\"organism\\"></div>
+      <div class=\\"mock-el-option\\" label=\\"Select organism condition\\" value=\\"condition\\"></div>
+      <div class=\\"mock-el-option\\" label=\\"Select sample growth conditions\\" value=\\"growthConditions\\"></div>
+      <div class=\\"mock-el-option\\" label=\\"Select sample type\\" value=\\"sampleType\\"></div>
+      <div class=\\"mock-el-option\\" label=\\"Select sex\\" value=\\"sex\\"></div>
       <div class=\\"mock-el-option\\" label=\\"Show/hide datasets with optical images\\" value=\\"opticalImage\\"></div>
     </div>
   </div>

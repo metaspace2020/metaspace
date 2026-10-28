@@ -133,7 +133,7 @@ import { MigrationBanner } from './v2/components/MigrationBanner'
 import { RequiredCounter, SectionCard } from './v2/components/SectionCard'
 import { useMetadataV2Form } from './v2/useMetadataV2Form'
 import { setAtPath } from './v2/envelope'
-import { createTermResolver, createValueResolver } from './v2/termResolver'
+import { createCurationStatusLoader, createTermResolver, createValueResolver } from './v2/termResolver'
 import { tiptapToPlainText } from './v2/descriptionText'
 
 const defaultMetaspaceOptions = {
@@ -174,7 +174,11 @@ export default defineComponent({
   setup(props) {
     const store = useStore()
     const apolloClient = inject(DefaultApolloClient)
-    const v2 = useMetadataV2Form(createTermResolver(apolloClient), createValueResolver(apolloClient))
+    const v2 = useMetadataV2Form(
+      createTermResolver(apolloClient),
+      createValueResolver(apolloClient),
+      createCurationStatusLoader(apolloClient)
+    )
 
     const state = reactive({
       loaded: false,

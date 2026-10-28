@@ -174,7 +174,7 @@ describe('OntologyField', () => {
       })
       await openAndBlur(pending)
       expect(pending.emitted('input')).toEqual([
-        [{ value_free_text: 'Fresh frozen', curation_state: 'free_text_accepted' }],
+        [{ value_label: 'Fresh frozen', value_free_text: 'Fresh frozen', curation_state: 'free_text_accepted' }],
       ])
     })
   })
@@ -461,7 +461,39 @@ describe('OntologyField', () => {
       expect(rows().map((li) => li.textContent)).toEqual(['Tissue'])
       expect(document.body.querySelector('.v2-ac-empty')).toBeNull()
       await w.find('input').trigger('keydown', { key: 'Enter' })
-      expect(w.emitted('input')).toEqual([[{ value_free_text: 'Tissue', curation_state: 'free_text_accepted' }]])
+      expect(w.emitted('input')).toEqual([
+        [{ value_label: 'Tissue', value_free_text: 'Tissue', curation_state: 'free_text_accepted' }],
+      ])
+    })
+
+    it('a bound field lists ontology terms before approved values', async () => {
+      const values = vi.fn(async () => [{ label: 'Mouse (approved)' }])
+      const w = mountWithList({ fetchValues: values })
+      await w.find('input').setValue('mouse')
+      await waitForLookup()
+      expect(fetchTerms).toHaveBeenCalledWith('organism', 'mouse')
+      expect(values).toHaveBeenCalledWith('mouse')
+      expect(rows().map((li) => li.textContent)).toEqual(['Mus musculus (NCBITaxon:10090)', 'Mouse (approved)'])
+    })
+
+    it('selecting a value row stores label and free text', async () => {
+      const values = vi.fn(async () => [{ label: 'Mouse (approved)' }])
+      const w = mountWithList({ fetchValues: values })
+      await w.find('input').setValue('mouse')
+      await waitForLookup()
+      rows()
+        .find((li) => li.textContent === 'Mouse (approved)')!
+        .click()
+      await nextTick()
+      expect(w.emitted('input')).toEqual([
+        [
+          {
+            value_label: 'Mouse (approved)',
+            value_free_text: 'Mouse (approved)',
+            curation_state: 'free_text_accepted',
+          },
+        ],
+      ])
     })
 
     describe('a failing resolver', () => {
@@ -509,9 +541,19 @@ describe('OntologyField', () => {
         // a curated value is still offered; unknown text gets the "No match" row
         expect(await typeAndList(w, 'oct')).toEqual(['OCT embedded'])
         expect(await typeAndList(w, 'zzqx')).toEqual(['No match — Add “zzqx” (pending curation)'])
-        expect(query).toHaveBeenCalledTimes(2)
+        // each lookup asks for the approved terms and the community values
+        expect(query).toHaveBeenCalledTimes(4)
         await w.find('input').trigger('keydown', { key: 'Enter' })
         expect(w.emitted('input')).toEqual([pending('zzqx')])
+      })
+
+      it('a term lookup whose fetch rejects still lists the approved values', async () => {
+        const down = vi.fn(async () => Promise.reject(new TypeError('Failed to fetch')))
+        const values = vi.fn(async () => [{ label: 'Mouse (approved)' }])
+        const w = mountWithList({ fetchTerms: down, fetchValues: values })
+        expect(await typeAndList(w, 'mouse')).toEqual(['Mouse (approved)'])
+        expect(down).toHaveBeenCalledWith('organism', 'mouse')
+        expect(values).toHaveBeenCalledWith('mouse')
       })
 
       it('a term lookup whose fetch rejects still shows the "No match" row', async () => {
@@ -570,7 +612,9 @@ describe('OntologyField', () => {
       await nextTick()
       ac.vm.$emit('blur', new FocusEvent('blur'))
       await nextTick()
-      expect(w.emitted('input')).toEqual([[{ value_free_text: 'Fresh frozen', curation_state: 'free_text_accepted' }]])
+      expect(w.emitted('input')).toEqual([
+        [{ value_label: 'Fresh frozen', value_free_text: 'Fresh frozen', curation_state: 'free_text_accepted' }],
+      ])
       await w.setProps({ value: { value_free_text: 'Fresh frozen', curation_state: 'free_text_accepted' } })
       expect(w.find('.v2-chip').classes()).toContain('v2-chip--accepted')
       expect(w.find('.v2-chip').text()).toContain('accepted ✓')
@@ -601,7 +645,9 @@ describe('OntologyField', () => {
       await ac.props('fetchSuggestions')('fresh', vi.fn())
       ac.vm.$emit('input', 'fresh FROZEN')
       await w.find('input').trigger('keydown', { key: 'Enter' })
-      expect(w.emitted('input')).toEqual([[{ value_free_text: 'Fresh frozen', curation_state: 'free_text_accepted' }]])
+      expect(w.emitted('input')).toEqual([
+        [{ value_label: 'Fresh frozen', value_free_text: 'Fresh frozen', curation_state: 'free_text_accepted' }],
+      ])
     })
 
     it('Enter on text equal to a curated value (any case, padded) stores it accepted before any lookup', async () => {
@@ -614,7 +660,9 @@ describe('OntologyField', () => {
       ac.vm.$emit('input', '  oct EMBEDDED ')
       await w.find('input').trigger('keydown', { key: 'Enter' })
       expect(values).not.toHaveBeenCalled()
-      expect(w.emitted('input')).toEqual([[{ value_free_text: 'OCT embedded', curation_state: 'free_text_accepted' }]])
+      expect(w.emitted('input')).toEqual([
+        [{ value_label: 'OCT embedded', value_free_text: 'OCT embedded', curation_state: 'free_text_accepted' }],
+      ])
     })
 
     it('Enter on unknown text stays pending curation even with a curated list and shown values', async () => {
@@ -638,7 +686,9 @@ describe('OntologyField', () => {
       ;(w.vm as unknown as FieldVm).open()
       await nextTick()
       await w.find('input').trigger('keydown', { key: 'Enter' })
-      expect(w.emitted('input')).toEqual([[{ value_free_text: 'Fresh frozen', curation_state: 'free_text_accepted' }]])
+      expect(w.emitted('input')).toEqual([
+        [{ value_label: 'Fresh frozen', value_free_text: 'Fresh frozen', curation_state: 'free_text_accepted' }],
+      ])
       // the same text that is already accepted commits nothing
       const same = mountField({
         slot: undefined,
@@ -682,6 +732,78 @@ describe('OntologyField', () => {
       expect(chip.find('.v2-chip__id').exists()).toBe(false)
       expect(chip.text()).toContain('Tissue')
       expect(chip.text()).toContain('✓')
+    })
+  })
+
+  describe('curation status', () => {
+    const pending = { value_free_text: 'Intestine', curation_state: 'pending_curation' }
+
+    it('shows a rejected chip and note when the row is rejected for the same text', () => {
+      const w = mountField({
+        value: pending,
+        curationStatus: { text: '  intestine ', status: 'REJECTED', note: 'Use the UBERON term' },
+      })
+      const chip = w.find('.v2-chip')
+      expect(chip.classes()).toContain('v2-chip--rejected')
+      expect(chip.classes()).not.toContain('v2-chip--pending')
+      // label, state and mark sit side by side in the pill (flex gap): "Intestine · rejected ✕"
+      expect(chip.find('.v2-chip__label').text()).toBe('Intestine')
+      expect(chip.find('.v2-chip__id').text()).toBe('· rejected')
+      expect(chip.find('.v2-chip__mark').text()).toBe('✕')
+      expect(chip.text()).not.toContain('pending curation')
+      expect(w.find('.v2-hint--rejected').text()).toBe('Rejected by a curator: Use the UBERON term')
+      expect(w.emitted('input')).toBeUndefined()
+    })
+
+    it('compares the rejected text the way the server normalises it', () => {
+      const w = mountField({
+        value: { value_free_text: 'wild  type (strain)', curation_state: 'pending_curation' },
+        curationStatus: { text: 'wild type', status: 'REJECTED', note: 'n' },
+      })
+      expect(w.find('.v2-chip').classes()).toContain('v2-chip--rejected')
+      expect(w.find('.v2-hint--rejected').text()).toBe('Rejected by a curator: n')
+    })
+
+    it('chip returns to normal when the text differs from the row', () => {
+      const w = mountField({
+        value: pending,
+        curationStatus: { text: 'Colon', status: 'REJECTED', note: 'no' },
+      })
+      const chip = w.find('.v2-chip')
+      expect(chip.classes()).toContain('v2-chip--pending')
+      expect(chip.classes()).not.toContain('v2-chip--rejected')
+      expect(chip.text()).toContain('pending curation')
+      expect(chip.text()).toContain('✎')
+      expect(w.find('.v2-hint--rejected').exists()).toBe(false)
+    })
+
+    it('pending row keeps the pending chip', () => {
+      for (const status of ['PENDING', 'APPROVED', 'MAPPED']) {
+        const w = mountField({ value: pending, curationStatus: { text: 'Intestine', status, note: 'n' } })
+        const chip = w.find('.v2-chip')
+        expect(chip.classes()).toContain('v2-chip--pending')
+        expect(chip.text()).toContain('pending curation')
+        expect(w.find('.v2-hint--rejected').exists()).toBe(false)
+        w.unmount()
+      }
+    })
+
+    it('a rejected row does not mark a controlled or accepted value', () => {
+      const w = mountField({
+        value: { value_free_text: 'Intestine', curation_state: 'free_text_accepted' },
+        curationStatus: { text: 'Intestine', status: 'REJECTED', note: 'n' },
+      })
+      expect(w.find('.v2-chip').classes()).toContain('v2-chip--accepted')
+      expect(w.find('.v2-hint--rejected').exists()).toBe(false)
+    })
+
+    it('rejected without a note shows the plain line', () => {
+      for (const note of [null, '', undefined]) {
+        const w = mountField({ value: pending, curationStatus: { text: 'Intestine', status: 'REJECTED', note } })
+        expect(w.find('.v2-chip').classes()).toContain('v2-chip--rejected')
+        expect(w.find('.v2-hint--rejected').text()).toBe('Rejected by a curator.')
+        w.unmount()
+      }
     })
   })
 })

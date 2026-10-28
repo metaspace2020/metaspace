@@ -118,17 +118,18 @@ describe('Query.ontologyTermSuggestions', () => {
 
   it('falls back to trigram similarity for typos when nothing contains the text', async() => {
     // The similarity stage runs on its own pooled connection (so its timeouts are not logged as
-    // query failures), which cannot see this test's uncommitted rows: commit them and clean up.
+    // query failures), which cannot see this test's uncommitted rows: commit them and clean up. The
+    // curies and labels are unique to this file, so a parallel spec can neither collide with nor match them.
     const committed = testEntityManager.connection
     await committed.query(
       'INSERT INTO public.ontology_term (curie, subtree, label, synonyms, ontology) VALUES ($1, $2, $3, $4, $5), ($6, $2, $7, $4, $5)',
-      ['MS:1000484', SUBTREE, 'orbitrap', [], 'ms', 'MS:1001911', 'Q Exactive']
+      ['MS:9003', SUBTREE, 'zorblatron', [], 'ms', 'MS:9004', 'Q Quuxactive']
     )
     try {
-      expect((await suggest('orbitrpa')).map(r => r.label)).toEqual(['orbitrap'])
+      expect((await suggest('zorbaltron')).map(r => r.label)).toEqual(['zorblatron'])
       expect(await suggest('zzqqxx')).toEqual([])
     } finally {
-      await committed.query('DELETE FROM public.ontology_term WHERE curie IN ($1, $2)', ['MS:1000484', 'MS:1001911'])
+      await committed.query('DELETE FROM public.ontology_term WHERE curie IN ($1, $2)', ['MS:9003', 'MS:9004'])
     }
   })
 

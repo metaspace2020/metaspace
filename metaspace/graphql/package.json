@@ -24,7 +24,8 @@
     "deref-schema": "node ./bin/deref_schema.js ./metadataSchemas/",
     "gen-sql-schema": "TS_NODE_TRANSPILE_ONLY=true node ./bin/dump-sql-schema.js ../engine/scripts/db_schema.sql",
     "gen-graphql-schema": "node ./bin/generate-json-graphql-schema.js ../webapp/tests/utils/graphql-schema.json",
-    "gen-ontology-slots": "node ./bin/copy-ontology-slots.js ../engine/sm/engine/ontology_slots.json"
+    "gen-ontology-slots": "node ./bin/copy-ontology-slots.js ../engine/sm/engine/ontology_slots.json",
+    "gen-curated-values": "node ./bin/copy-curated-values.js ../webapp/src/lib/metadataSchemas/curated_values.generated.json"
   },
   "license": "ISC",
   "dependencies": {

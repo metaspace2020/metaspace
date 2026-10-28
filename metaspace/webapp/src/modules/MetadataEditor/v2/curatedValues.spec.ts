@@ -1,5 +1,8 @@
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
 import { CURATED_VALUES, curatedValueResolver, MAX_VALUE_SUGGESTIONS, mergeValueSuggestions } from './curatedValues'
 import { createValueResolver } from './termResolver'
+import { fetchApprovedCurationValuesQuery, fetchAutocompleteSuggestionsQuery } from '../../../api/metadata'
 
 describe('mergeValueSuggestions', () => {
   it('filters by substring, curated first, deduped case-insensitively keeping the curated spelling', () => {
@@ -77,9 +80,70 @@ describe('createValueResolver', () => {
     expect(query).not.toHaveBeenCalled()
   })
 
-  it('never queries for fields without a community source', async () => {
+  it('never queries for fields outside the curated slots without a community source', async () => {
     const query = vi.fn()
-    expect(await createValueResolver({ query })('organism', 'mus')).toEqual([])
+    expect(await createValueResolver({ query })('instrument_model', 'orb')).toEqual([])
     expect(query).not.toHaveBeenCalled()
+  })
+
+  describe('approved curation values', () => {
+    const answer = (approved: string[] | Error, community: string[]) =>
+      vi.fn(async (opts: any) => {
+        if (opts.query === fetchApprovedCurationValuesQuery) {
+          if (approved instanceof Error) throw approved
+          return { data: { approvedCurationValues: approved } }
+        }
+        expect(opts.query).toBe(fetchAutocompleteSuggestionsQuery)
+        return { data: { metadataSuggestions: community } }
+      })
+
+    it('merges approved values after curated and before community', async () => {
+      const query = answer(['Fresh frozen', 'Flash frozen'], ['frozen at -80'])
+      const out = await createValueResolver({ query })('sample_stabilisation', 'froz')
+      expect(out.map((v) => v.label)).toEqual([
+        'Fresh frozen',
+        'Flash frozen (liquid nitrogen)',
+        'Snap frozen',
+        'Flash frozen',
+        'frozen at -80',
+      ])
+      expect(query).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: fetchApprovedCurationValuesQuery,
+          variables: { slot: 'sample_stabilisation', query: 'froz' },
+        })
+      )
+    })
+
+    it('bound slot gets approved values only', async () => {
+      const query = answer(['Melanoma (community)'], ['should not be used'])
+      expect(await createValueResolver({ query })('disease', 'mel')).toEqual([{ label: 'Melanoma (community)' }])
+      expect(query.mock.calls.some(([o]) => o.query === fetchAutocompleteSuggestionsQuery)).toBe(false)
+    })
+
+    it('a failed approved query is ignored', async () => {
+      const query = answer(new Error('down'), ['frozen at -80'])
+      const out = await createValueResolver({ query })('sample_stabilisation', 'froz')
+      expect(out.map((v) => v.label)).toEqual([
+        'Fresh frozen',
+        'Flash frozen (liquid nitrogen)',
+        'Snap frozen',
+        'frozen at -80',
+      ])
+    })
+
+    it('skips the approved query for an empty query', async () => {
+      const query = answer(['x'], [])
+      await createValueResolver({ query })('disease', '  ')
+      expect(query).not.toHaveBeenCalled()
+    })
+  })
+})
+
+describe('CURATED_VALUES', () => {
+  it("the generated seed lists equal graphql's source", () => {
+    // curated_values.json lives in the graphql project; the webapp bundles a generated copy of it.
+    const sourcePath = resolve(__dirname, '../../../../../graphql/metadataSchemas/curated_values.json')
+    expect(JSON.parse(readFileSync(sourcePath, 'utf8'))).toEqual(CURATED_VALUES)
   })
 })

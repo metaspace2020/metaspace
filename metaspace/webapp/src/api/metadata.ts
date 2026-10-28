@@ -95,6 +95,24 @@ export const fetchAutocompleteSuggestionsQuery = gql`
   }
 `
 
+export const fetchApprovedCurationValuesQuery = gql`
+  query approvedCurationValues($slot: String!, $query: String!) {
+    approvedCurationValues(slot: $slot, query: $query, limit: 8)
+  }
+`
+
+// one row per curated slot of the dataset (only for users who can edit it)
+export const datasetCurationStatusQuery = gql`
+  query datasetCurationStatus($datasetId: ID!) {
+    datasetCurationStatus(datasetId: $datasetId) {
+      slot
+      text
+      status
+      note
+    }
+  }
+`
+
 // `slot` is the LinkML slot name (e.g. "disease"), not an ontology CURIE.
 export const fetchOntologyTermSuggestionsQuery = gql`
   query ontologyTermSuggestions($slot: String!, $query: String!) {

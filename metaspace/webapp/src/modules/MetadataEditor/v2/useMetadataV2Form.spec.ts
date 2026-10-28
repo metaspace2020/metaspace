@@ -1,6 +1,8 @@
 /* eslint-disable camelcase */
 import { nextTick } from 'vue'
 import { useMetadataV2Form } from './useMetadataV2Form'
+import { createCurationStatusLoader } from './termResolver'
+import { datasetCurationStatusQuery } from '../../../api/metadata'
 import { createEmptyEnvelope } from './envelope'
 import { SampleType, Term, TermResolver } from './types'
 
@@ -461,5 +463,68 @@ describe('useMetadataV2Form sample-type stash', () => {
     form.setSampleType('environmental')
     form.setSampleType('tissue')
     expect(sampleOf(form).sex).toBeUndefined()
+  })
+})
+
+describe('useMetadataV2Form curation status', () => {
+  it('fetches the statuses once per dataset id, keyed by slot', async () => {
+    const loader = vi.fn(async () => [
+      { slot: 'organism', text: 'Mouse-ish', status: 'REJECTED', note: 'Use NCBITaxon' },
+      { slot: 'disease', text: 'Flu', status: 'PENDING', note: null },
+    ])
+    const form = useMetadataV2Form(resolver, undefined, loader)
+    await form.loadDataset({ id: 'ds1', metadataJson: legacyJson })
+    expect(loader).toHaveBeenCalledTimes(1)
+    expect(loader).toHaveBeenCalledWith('ds1')
+    expect(form.curationStatus.value).toEqual({
+      organism: { text: 'Mouse-ish', status: 'REJECTED', note: 'Use NCBITaxon' },
+      disease: { text: 'Flu', status: 'PENDING', note: null },
+    })
+    // reloading the same dataset (e.g. after a save) keeps the statuses without another fetch
+    await form.loadDataset({ id: 'ds1', metadataJson: legacyJson })
+    expect(loader).toHaveBeenCalledTimes(1)
+    expect(form.curationStatus.value.organism?.status).toBe('REJECTED')
+    // another dataset fetches its own
+    await form.loadDataset({ id: 'ds2', metadataJson: legacyJson })
+    expect(loader).toHaveBeenCalledTimes(2)
+    expect(loader).toHaveBeenLastCalledWith('ds2')
+  })
+
+  it('a failing loader yields an empty map', async () => {
+    const loader = vi.fn(async () => {
+      throw new Error('forbidden')
+    })
+    const form = useMetadataV2Form(resolver, undefined, loader)
+    await form.loadDataset({ id: 'ds1', metadataJson: legacyJson })
+    expect(loader).toHaveBeenCalledTimes(1)
+    expect(form.curationStatus.value).toEqual({})
+    expect(form.mode.value).toBe('legacy')
+  })
+
+  it('a new form has no statuses and does not call the loader', async () => {
+    const loader = vi.fn(async () => [{ slot: 'organism', text: 'x', status: 'REJECTED', note: null }])
+    const form = useMetadataV2Form(resolver, undefined, loader)
+    await form.loadNew()
+    expect(loader).not.toHaveBeenCalled()
+    expect(form.curationStatus.value).toEqual({})
+  })
+
+  it('the apollo loader queries datasetCurationStatus with { datasetId } and maps the rows', async () => {
+    const query = vi.fn(async () => ({
+      data: {
+        datasetCurationStatus: [
+          { __typename: 'DatasetCurationStatus', slot: 'organism', text: 'x', status: 'REJECTED', note: 'n' },
+        ],
+      },
+    }))
+    const rows = await createCurationStatusLoader({ query })('ds1')
+    expect(query).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: datasetCurationStatusQuery,
+        variables: { datasetId: 'ds1' },
+        fetchPolicy: 'network-only',
+      })
+    )
+    expect(rows).toEqual([{ slot: 'organism', text: 'x', status: 'REJECTED', note: 'n' }])
   })
 })

@@ -18,6 +18,9 @@ import { ENUM_VALUES, FieldDef, fieldByKey, fieldsFor, requiredFor } from './for
 import { migrateLegacy } from './legacyMigration'
 import { computeStatus, StatusSummary } from './status'
 import {
+  CurationStatus,
+  CurationStatusLoader,
+  CurationStatusRow,
   EditorMode,
   FieldKey,
   FieldReport,
@@ -54,6 +57,8 @@ export interface MetadataV2Form {
   submitAttempted: Ref<boolean>
   view: Ref<'v2' | 'legacy'>
   focusRequest: Ref<{ key: FieldKey; prefill?: string; seq: number } | null>
+  /** the curators' decisions on this dataset's typed values, by slot (empty for a new dataset or a failed load) */
+  curationStatus: Ref<Record<string, CurationStatus>>
   /** the sample type that drives the layout: the chosen one, or the last chosen while the select is cleared */
   sampleType: ComputedRef<SampleType>
   visibleFields: ComputedRef<FieldDef[]>
@@ -112,7 +117,8 @@ const stripForTemplate = (env: MetadataV2Envelope): MetadataV2Envelope => {
 
 export function useMetadataV2Form(
   resolver: TermResolver,
-  valueResolver: ValueResolver = curatedValueResolver
+  valueResolver: ValueResolver = curatedValueResolver,
+  statusLoader?: CurationStatusLoader
 ): MetadataV2Form {
   const mode = ref<EditorMode>('new')
   const datasetId = ref<string | null>(null)
@@ -129,6 +135,9 @@ export function useMetadataV2Form(
   const view = ref<'v2' | 'legacy'>('v2')
   const focusRequest = ref<{ key: FieldKey; prefill?: string; seq: number } | null>(null)
   const lastSampleType = ref<SampleType>('tissue')
+  const curationStatus = ref<Record<string, CurationStatus>>({})
+  // the dataset whose statuses are loaded (or loading), so reloading it after a save does not fetch again
+  let statusDatasetId: string | null = null
   // the sample_type report as it was before the select was cleared, restored when a type is picked again
   let clearedSampleTypeReport: FieldReport | undefined
   // values (and their reports) a sample-type switch hid, per class they belong to; in memory only, never serialized
@@ -168,6 +177,8 @@ export function useMetadataV2Form(
     reset()
     mode.value = 'new'
     datasetId.value = null
+    curationStatus.value = {}
+    statusDatasetId = null
     const fromV2 = parseEnvelope(seed.metadataV2Json)
     if (fromV2) {
       envelope.value = stripForTemplate(fromV2)
@@ -188,9 +199,31 @@ export function useMetadataV2Form(
     initialEnvelope.value = cloneDeep(envelope.value)
   }
 
+  /** fetches the dataset's curation rows once per dataset id; a failure leaves the map empty */
+  const loadCurationStatus = async (id: string): Promise<void> => {
+    if (!statusLoader || id === statusDatasetId) return
+    statusDatasetId = id
+    curationStatus.value = {}
+    let rows: CurationStatusRow[] = []
+    try {
+      rows = (await statusLoader(id)) || []
+    } catch (err) {
+      rows = []
+    }
+    // a later load of another dataset owns the map
+    if (statusDatasetId !== id) return
+    const bySlot: Record<string, CurationStatus> = {}
+    rows.forEach(({ slot, text, status, note }) => {
+      bySlot[slot] = { text, status, note }
+    })
+    curationStatus.value = bySlot
+  }
+
   const loadDataset: MetadataV2Form['loadDataset'] = async (dataset) => {
     reset()
     datasetId.value = dataset.id
+    // runs alongside the migration below
+    const statusLoad = loadCurationStatus(dataset.id)
     legacyMeta.value = { uploadDT: dataset.uploadDT || null, submitterName: dataset.submitter?.name || null }
     const fromV2 = parseEnvelope(dataset.metadataV2Json)
     if (fromV2) {
@@ -208,6 +241,7 @@ export function useMetadataV2Form(
       failedSlots.value = result.failedSlots
     }
     initialEnvelope.value = cloneDeep(envelope.value)
+    await statusLoad
   }
 
   const markSubmitAttempt: MetadataV2Form['markSubmitAttempt'] = () => {
@@ -396,6 +430,7 @@ export function useMetadataV2Form(
     submitAttempted,
     view,
     focusRequest,
+    curationStatus,
     sampleType,
     visibleFields,
     status,

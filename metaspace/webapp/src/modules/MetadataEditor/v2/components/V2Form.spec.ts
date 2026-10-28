@@ -303,7 +303,7 @@ describe('V2Form', () => {
       expect(field(key).props('knownValues')).toEqual(CURATED_VALUES[key as FieldKey])
       expect(field(key).props('knownValues').length).toBeGreaterThan(0)
     }
-    expect(field('organism').props('fetchValues')).toBeUndefined()
+    expect(typeof field('organism').props('fetchValues')).toBe('function')
     expect(field('organism').props('knownValues')).toEqual([])
     expect(field('organism').props('minQueryLength')).toBe(3)
     // an ontology field does not look anything up for a 1-character query
@@ -312,5 +312,44 @@ describe('V2Form', () => {
     expect(cb).toHaveBeenLastCalledWith([])
     expect(resolver).not.toHaveBeenCalled()
     expect(valueResolver).not.toHaveBeenCalledWith('organism', expect.anything())
+  })
+
+  it('every ontology field receives fetchValues', async () => {
+    const valueResolver = vi.fn(async (_key: string, q: string) => [{ label: `${q} value` }])
+    const form = useMetadataV2Form(async () => [], valueResolver)
+    await form.loadNew()
+    const w = mount(V2Form, { props: { form } })
+    const fields = w.findAllComponents({ name: 'OntologyField' })
+    expect(fields.length).toBeGreaterThan(0)
+    for (const f of fields) {
+      expect(typeof f.props('fetchValues')).toBe('function')
+    }
+    const organism = fields.find((c) => c.props('inputId') === 'v2-field-organism')!
+    expect(await organism.props('fetchValues')('mus')).toEqual([{ label: 'mus value' }])
+    expect(valueResolver).toHaveBeenLastCalledWith('organism', 'mus')
+    expect(organism.props('minQueryLength')).toBe(3)
+  })
+
+  it("every ontology field receives its slot's curation status", async () => {
+    const rows = [
+      { slot: 'organism', text: 'Mouse-ish', status: 'REJECTED', note: 'no' },
+      { slot: 'maldi_matrix', text: 'XYZ', status: 'PENDING', note: null },
+    ]
+    const form = useMetadataV2Form(
+      async () => [],
+      undefined,
+      async () => rows
+    )
+    await form.loadDataset({ id: 'ds1', metadataJson: legacyJson })
+    const w = mount(V2Form, { props: { form } })
+    const fields = w.findAllComponents({ name: 'OntologyField' })
+    expect(fields.length).toBeGreaterThan(2)
+    fields.forEach((field) => {
+      const key = field.props('inputId').replace('v2-field-', '')
+      const row = rows.find((r) => r.slot === key)
+      expect(field.props('curationStatus')).toEqual(
+        row ? { text: row.text, status: row.status, note: row.note } : undefined
+      )
+    })
   })
 })

@@ -1,0 +1,52 @@
+enum CurationTermStatus { PENDING APPROVED MAPPED REJECTED }
+enum CurationApplyState { IDLE RUNNING DONE FAILED }
+
+type CurationTerm {
+  id: ID!
+  slot: String!            # v2 field key
+  text: String!            # as typed for this dataset
+  normalizedText: String!
+  status: CurationTermStatus!
+  canonicalLabel: String
+  ontologyId: String
+  aliases: [String!]!
+  suggestedOntologyId: String
+  suggestedLabel: String
+  suggestedScore: Float
+  note: String
+  datasetId: ID!
+  datasetName: String
+  submitter: User
+  submittedAt: String
+  createdAt: String!
+  decidedBy: User
+  decidedAt: String
+  applyState: CurationApplyState!
+  appliedCount: Int!
+}
+
+type DatasetCurationStatus { slot: String!, text: String!, status: CurationTermStatus!, note: String }
+type CurationTermPage { terms: [CurationTerm!]!, total: Int!, statusCounts: CurationStatusCounts! }
+type CurationStatusCounts { pending: Int!, approved: Int!, rejected: Int! }
+enum CurationTermOrderBy { TEXT, FIRST_SUBMITTED }
+
+type Query {
+  curationTerms(status: CurationTermStatus = PENDING, slot: String, submitterId: ID, query: String,
+                orderBy: CurationTermOrderBy = FIRST_SUBMITTED, offset: Int = 0, limit: Int = 50): CurationTermPage!
+  curationTerm(id: ID!): CurationTerm
+  approvedCurationValues(slot: String!, query: String!, limit: Int = 8): [String!]!
+  datasetCurationStatus(datasetId: ID!): [DatasetCurationStatus!]!
+}
+
+input ApproveCurationTermInput { ids: [ID!]!, canonicalLabel: String, aliases: [String!], note: String }
+input MapCurationTermInput { ids: [ID!]!, ontologyId: String, targetTermId: ID, useSuggested: Boolean, note: String }
+input RejectCurationTermInput { ids: [ID!]!, note: String! }
+
+type CurationDecisionResult { terms: [CurationTerm!]!, skipped: Int! }
+
+type Mutation {
+  approveCurationTerms(input: ApproveCurationTermInput!): CurationDecisionResult!
+  mapCurationTerms(input: MapCurationTermInput!): CurationDecisionResult!
+  rejectCurationTerms(input: RejectCurationTermInput!): CurationDecisionResult!
+  retryCurationApply(id: ID!): CurationTerm!
+}

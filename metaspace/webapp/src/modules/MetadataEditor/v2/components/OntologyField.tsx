@@ -2,8 +2,9 @@
 import { computed, defineComponent, nextTick, PropType, ref } from 'vue'
 import { ElAutocomplete } from '../../../../lib/element-plus'
 import { isTermEmpty, termText } from '../envelope'
+import { normaliseText } from '../legacyLookups'
 import { MIN_QUERY_LENGTH } from '../termResolver'
-import { OntologyTermValue, Term, TermResolver, ValueSuggestion } from '../types'
+import { CurationStatus, OntologyTermValue, Term, TermResolver, ValueSuggestion } from '../types'
 import './fields.scss'
 
 interface TermSuggestion {
@@ -40,8 +41,8 @@ export const OntologyField = defineComponent({
     inputId: { type: String, default: undefined },
     fetchTerms: { type: Function as PropType<TermResolver>, required: true },
     /**
-     * plain-text suggestions for fields without an ontology slot; when set it replaces the term lookup and a
-     * selected value is stored as accepted free text
+     * plain-text suggestions; they follow the ontology terms of a bound field and are the only rows of a field
+     * without a slot. A selected value is stored as accepted free text
      */
     fetchValues: {
       type: Function as PropType<(query: string) => Promise<ValueSuggestion[]>>,
@@ -58,6 +59,11 @@ export const OntologyField = defineComponent({
      */
     knownValues: { type: Array as PropType<string[]>, default: () => [] },
     disabled: { type: Boolean, default: false },
+    /**
+     * the curator's decision on the free text this dataset stores for the field (datasetCurationStatus). Display
+     * only: a rejection of the text the field still holds turns the pending chip red and shows the note
+     */
+    curationStatus: { type: Object as PropType<CurationStatus | undefined>, default: undefined },
   },
   emits: ['input'],
   setup(props, { emit, expose }) {
@@ -73,7 +79,22 @@ export const OntologyField = defineComponent({
 
     const hasValue = computed(() => !isTermEmpty(props.value))
     const showChip = computed(() => hasValue.value && !editing.value)
+    /** the stored value is pending free text that a curator rejected (same text, normalised as the server does) */
+    const rejected = computed(() => {
+      const v = props.value
+      const row = props.curationStatus
+      return (
+        !!v &&
+        !!row &&
+        row.status === 'REJECTED' &&
+        v.curation_state === 'pending_curation' &&
+        !v.value_ontology_id &&
+        !!v.value_free_text &&
+        normaliseText(v.value_free_text) === normaliseText(row.text)
+      )
+    })
     const chipClass = computed(() => {
+      if (rejected.value) return 'v2-chip--rejected'
       const state = props.value?.curation_state
       if (state === 'controlled') return 'v2-chip--controlled'
       if (state === 'free_text_accepted') return 'v2-chip--accepted'
@@ -100,7 +121,7 @@ export const OntologyField = defineComponent({
     const valueOf = (row: TermSuggestion | ValueRow): OntologyTermValue =>
       row.term
         ? { value_ontology_id: row.term.curie, value_label: row.term.label, curation_state: 'controlled' }
-        : { value_free_text: row.value, curation_state: 'free_text_accepted' }
+        : { value_label: row.value, value_free_text: row.value, curation_state: 'free_text_accepted' }
 
     /**
      * the known value the typed text names: a row of the last lookup (a term by its label or by its row text) or
@@ -150,19 +171,26 @@ export const OntologyField = defineComponent({
     }
 
     const lookup = async (q: string): Promise<(TermSuggestion | ValueRow)[]> => {
-      try {
-        if (props.fetchValues) {
-          const values: ValueSuggestion[] = await props.fetchValues(q)
-          return values.map((v) => ({ value: v.label }))
-        }
-        if (props.slot) {
+      // terms then values, each fetched on its own: one failing source still lists the other's rows, and when
+      // both fail only the "No match" row is offered
+      const rows: (TermSuggestion | ValueRow)[] = []
+      if (props.slot) {
+        try {
           const terms = await props.fetchTerms(props.slot, q)
-          return terms.map((term) => ({ value: `${term.label} (${term.curie})`, term }))
+          rows.push(...terms.map((term) => ({ value: `${term.label} (${term.curie})`, term })))
+        } catch (err) {
+          // no term rows
         }
-      } catch (err) {
-        // a failed lookup offers only the "No match" row
       }
-      return []
+      if (props.fetchValues) {
+        try {
+          const values: ValueSuggestion[] = await props.fetchValues(q)
+          rows.push(...values.map((v) => ({ value: v.label })))
+        } catch (err) {
+          // no value rows
+        }
+      }
+      return rows
     }
 
     const fetchSuggestions = async (query: string, cb: (items: Suggestion[]) => void) => {
@@ -219,14 +247,15 @@ export const OntologyField = defineComponent({
                 <i class="v2-chip__dot" aria-hidden="true" />
                 <span class="v2-chip__label">{label}</span>
                 {v.value_ontology_id && <span class="v2-chip__id">{v.value_ontology_id}</span>}
-                {!v.value_ontology_id && v.curation_state === 'pending_curation' && (
+                {rejected.value && <span class="v2-chip__id">· rejected</span>}
+                {!rejected.value && !v.value_ontology_id && v.curation_state === 'pending_curation' && (
                   <span class="v2-chip__id">pending curation</span>
                 )}
                 {!v.value_ontology_id && v.curation_state === 'free_text_accepted' && (
                   <span class="v2-chip__id">accepted</span>
                 )}{' '}
                 <span class="v2-chip__mark" aria-hidden="true">
-                  {chipClass.value === 'v2-chip--pending' ? '✎' : '✓'}
+                  {rejected.value ? '✕' : chipClass.value === 'v2-chip--pending' ? '✎' : '✓'}
                 </span>
               </button>
               {!props.disabled && (
@@ -236,6 +265,13 @@ export const OntologyField = defineComponent({
                 </button>
               )}
             </span>
+            {rejected.value && (
+              <div class="v2-hint v2-hint--rejected w-full">
+                {props.curationStatus?.note
+                  ? `Rejected by a curator: ${props.curationStatus.note}`
+                  : 'Rejected by a curator.'}
+              </div>
+            )}
           </div>
         )
       }

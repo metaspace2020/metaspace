@@ -44,6 +44,8 @@ import { hasBetaFeature } from '../../plan/util/betaTesterApi'
 import { cleanEmptyStrings } from '../../../utils/regexSanitizer'
 import canEditEsDataset from '../operation/canEditEsDataset'
 import parseRoiGeoJson, { getDatasetImageBounds } from '../operation/roiGeoJson'
+import { resolveCurationStates } from '../../metadataCuration/resolve'
+import { prunePendingRows } from '../../metadataCuration/queue'
 
 // Plain `require`s: ajv@8's type declarations use TS 4.1+ syntax that this project's TypeScript 3.9
 // cannot parse, so these modules are kept out of type resolution entirely.
@@ -111,7 +113,7 @@ function translateAjvError(err: { instancePath?: string, [key: string]: any }, p
   return { ...rest, dataPath: prefix + (instancePath || '').replace(/\//g, '.') }
 }
 
-const failedValidation = (validationErrors: any[]) => new UserError(JSON.stringify({
+export const failedValidation = (validationErrors: any[]) => new UserError(JSON.stringify({
   type: 'failed_validation',
   validation_errors: validationErrors,
 }))
@@ -429,9 +431,10 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
   if (!input.metadataJson && !input.metadataV2Json) {
     throw failedValidation([{ dataPath: '.metadataV2', message: 'metadataJson or metadataV2Json is required' }])
   }
-  const { metadata, metadataV2 } = resolveMetadataInput(input.metadataJson, input.metadataV2Json)
+  const resolved = resolveMetadataInput(input.metadataJson, input.metadataV2Json)
+  let metadata = resolved.metadata
   if (!skipValidation || !ctx.isAdmin) {
-    validateMetadata(metadata, metadataV2)
+    validateMetadata(metadata, resolved.metadataV2)
   }
 
   let description
@@ -449,6 +452,21 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
 
   // Only admins can specify the submitterId
   const submitterId = (ctx.isAdmin && input.submitterId) || (dataset && dataset.userId) || ctx.user.id
+  const metadataV2 = resolved.metadataV2 as MetadataV2Envelope
+
+  const resolveCuration = async() => {
+    const { errors } = await resolveCurationStates(metadataV2, ctx.entityManager, datasetId, submitterId as string)
+    if (errors.length && (!skipValidation || !ctx.isAdmin)) {
+      throw failedValidation(errors)
+    }
+    if (input.metadataV2Json) {
+      // v2 input is the source of truth, so a promoted value must reach the legacy document as well
+      metadata = projectToLegacyMetadata(metadataV2)
+    }
+  }
+  if (dataset) {
+    await resolveCuration()
+  }
   const saveDsArgs = {
     datasetId,
     submitterId: submitterId as string,
@@ -458,6 +476,9 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     principalInvestigator: input.principalInvestigator,
   }
   await saveDataset(ctx.entityManager, saveDsArgs, !datasetIdWasSpecified)
+  if (!dataset) {
+    await resolveCuration()
+  }
 
   const url = `/v1/datasets/${datasetId}/add`
 
@@ -487,6 +508,7 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     del_first: delFirst,
     email: ctx.user.email,
   })
+  await prunePendingRows(ctx.entityManager, datasetId, metadataV2)
 
   await performAction(ctx, action)
 
@@ -536,7 +558,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     // Legacy-only edits are up-projected below, once we know the dataset has no v2 record yet
     const resolved = resolveMetadataInput(update.metadataJson, update.metadataV2Json, false)
-    const metadata = resolved.metadata
+    let metadata = resolved.metadata
     let metadataV2 = resolved.metadataV2
     if (metadata && (!skipValidation || !ctx.isAdmin)) {
       validateMetadata(metadata, metadataV2)
@@ -625,6 +647,26 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       principalInvestigator: update.principalInvestigator,
     }
 
+    if (!reprocess && reprocessingNeeded) {
+      throw new UserError(JSON.stringify({
+        type: 'reprocessing_needed',
+        message: 'Reprocessing needed. Provide \'reprocess\' flag.',
+      }))
+    }
+
+    // Resolved only once every check has passed, so a refused request leaves no queue rows behind
+    if (metadataV2) {
+      const { envelope, errors } = await resolveCurationStates(metadataV2, ctx.entityManager, datasetId,
+        dataset.userId ?? null)
+      if (errors.length && (!skipValidation || !ctx.isAdmin)) {
+        throw failedValidation(errors)
+      }
+      metadataV2 = envelope
+      if (update.metadataV2Json) {
+        metadata = projectToLegacyMetadata(envelope)
+      }
+    }
+
     if (reprocess) {
       await saveDataset(ctx.entityManager, saveDatasetArgs)
       await smApiDatasetRequest(`/v1/datasets/${datasetId}/add`, {
@@ -642,25 +684,20 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         email: ctx.user.email,
       })
     } else {
-      if (reprocessingNeeded) {
-        throw new UserError(JSON.stringify({
-          type: 'reprocessing_needed',
-          message: 'Reprocessing needed. Provide \'reprocess\' flag.',
-        }))
-      } else {
-        await saveDataset(ctx.entityManager, saveDatasetArgs)
-        await smApiUpdateDataset(datasetId, {
-          // Unfortunately `update` has bad generated types, so `as any` is needed here
-          ..._.omit(update, ['metadataJson', 'metadataV2Json']) as any,
-          ...(metadata ? { metadata } : {}),
-          ...(metadataV2 ? { metadataV2 } : {}),
-        }, {
-          priority,
-          useLithops,
-          performEnrichment,
-          force,
-        })
-      }
+      await saveDataset(ctx.entityManager, saveDatasetArgs)
+      await smApiUpdateDataset(datasetId, {
+        ..._.omit(update, ['metadataJson', 'metadataV2Json']) as any,
+        ...(metadata ? { metadata } : {}),
+        ...(metadataV2 ? { metadataV2 } : {}),
+      }, {
+        priority,
+        useLithops,
+        performEnrichment,
+        force,
+      })
+    }
+    if (metadataV2) {
+      await prunePendingRows(ctx.entityManager, datasetId, metadataV2)
     }
     await performAction(ctx, action)
 
