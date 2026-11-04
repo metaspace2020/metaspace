@@ -29,6 +29,9 @@ export default defineConfig({
     },
     environment: 'jsdom',
     testTimeout: 300000,
+    ...(process.env.VITEST_MAX_THREADS
+      ? { maxThreads: Number(process.env.VITEST_MAX_THREADS), minThreads: Number(process.env.VITEST_MAX_THREADS) }
+      : {}),
   },
   resolve: {
     alias: {
