@@ -8,6 +8,7 @@ import * as _ionImageRendering from '../../lib/ionImageRendering'
 import router from '../../router'
 import { useIonImageMenu } from './ionImageState'
 import { createStore } from 'vuex'
+import IonImageViewer from '../../components/IonImageViewer'
 
 // Mocking ionImageRendering
 vi.mock('../../lib/ionImageRendering')
@@ -50,6 +51,7 @@ describe('ImageViewer', () => {
     store = createStore({
       state: {
         datasetIds: ['1'],
+        roiInfo: { visible: false },
       },
       getters: {
         filter: (state) => ({
@@ -59,6 +61,9 @@ describe('ImageViewer', () => {
       mutations: {
         updateFilter: (state, filter) => {
           state.datasetIds = filter.datasetIds
+        },
+        toggleRoiVisibility: (state, visible) => {
+          state.roiInfo.visible = visible
         },
       },
     })
@@ -270,5 +275,28 @@ describe('ImageViewer', () => {
 
     expect(wrapper.vm.ionImageMenuItems.length).toBe(1)
     expect(wrapper.vm.ionImageMenuItems[0].id).toBe(annotation2.id)
+  })
+
+  it('should hide the pixel intensity popup while the ROI settings popover is open', async () => {
+    const wrapper: any = mount(ImageViewer, {
+      global: {
+        plugins: [store, router],
+      },
+      props: propsData,
+    })
+
+    await flushPromises()
+    await nextTick()
+
+    const viewer = wrapper.findComponent(IonImageViewer)
+    expect(viewer.props('showPixelIntensity')).toBe(true)
+
+    store.commit('toggleRoiVisibility', true)
+    await nextTick()
+    expect(viewer.props('showPixelIntensity')).toBe(false)
+
+    store.commit('toggleRoiVisibility', false)
+    await nextTick()
+    expect(viewer.props('showPixelIntensity')).toBe(true)
   })
 })

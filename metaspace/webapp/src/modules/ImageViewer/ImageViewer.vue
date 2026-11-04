@@ -21,7 +21,7 @@
         :y-offset="imageLoaderSettings?.imagePosition?.yOffset"
         :zoom="imageLoaderSettings?.imagePosition?.zoom * imageFit?.imageZoom"
         scroll-block
-        show-pixel-intensity
+        :show-pixel-intensity="!isRoiSettingsOpen"
         v-bind="imageLoaderSettings"
         :keep-pixel-selected="keepPixelSelected"
         @move="handleImageMove"
@@ -249,6 +249,8 @@ export default defineComponent({
       return []
     })
 
+    const isRoiSettingsOpen = computed(() => !!store.state?.roiInfo?.visible)
+
     return {
       imageArea,
       imageFileName,
@@ -291,6 +293,7 @@ export default defineComponent({
       ),
       showNormalizedIntensity: computed(() => !!store.getters?.settings?.annotationView?.normalization),
       roiInfo,
+      isRoiSettingsOpen,
       normalizationData: computed(() => store.state.normalization),
       hasOpticalImage: computed(() => !!props.imageLoaderSettings.opticalSrc),
       lockIntensityEnabled: config.features.lock_intensity,

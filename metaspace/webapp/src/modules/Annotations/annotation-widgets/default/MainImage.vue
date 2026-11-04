@@ -19,7 +19,7 @@
         :y-offset="imageLoaderSettings.imagePosition.yOffset"
         :roi-info="roiInfo"
         scroll-block
-        show-pixel-intensity
+        :show-pixel-intensity="!isRoiSettingsOpen"
         v-bind="imageLoaderSettings"
         @move="handleImageMove"
         @pixel-select="handlePixelSelect"
@@ -87,6 +87,7 @@
 
 <script lang="ts">
 import { defineComponent, onMounted, ref, watch, computed } from 'vue'
+import { useStore } from 'vuex'
 import { ElMessageBox, ElSlider, ElTooltip } from '../../../../lib/element-plus'
 import IonImageViewer from '../../../../components/IonImageViewer'
 import Colorbar from './Colorbar.vue'
@@ -132,6 +133,7 @@ export default defineComponent({
     maxHeight: { type: Number, default: 1000 },
   },
   setup(props, { emit }) {
+    const store = useStore()
     const container = ref(null)
     const imageViewerContainer = ref(null)
     const imageLoader = ref(null)
@@ -265,6 +267,8 @@ export default defineComponent({
       emit('pixel-select', { x, y })
     }
 
+    const isRoiSettingsOpen = computed(() => !!store?.state?.roiInfo?.visible)
+
     return {
       container,
       imageViewerContainer,
@@ -284,6 +288,7 @@ export default defineComponent({
       handleImageMove,
       handlePixelSelect,
       onResize,
+      isRoiSettingsOpen,
     }
   },
 })
