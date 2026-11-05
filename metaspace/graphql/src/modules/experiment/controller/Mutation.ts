@@ -10,6 +10,7 @@ import { Experiment } from '../model'
 import { smApiDatasetRequest } from '../../../utils'
 import { assertCanPerformAction, performAction } from '../../plan/util/canPerformAction'
 import { hasBetaFeature } from '../../plan/util/betaTesterApi'
+import { memberProjectIds } from '../../plan/util/memberProjectIds'
 import { UserGroup, UserGroupRoleOptions as UGRO } from '../../group/model'
 
 function loadFullExperiment(ctx: Context, id: string) {
@@ -65,6 +66,7 @@ const MutationResolvers: FieldResolversFor<Mutation, any> = {
       actionType: 'experiments',
       userId: ctx.user.id,
       projectId,
+      projectIds: await memberProjectIds(ctx, [projectId]),
       groupId: userGroup?.groupId,
       type: 'experiment',
       actionDt: moment.utc(moment.utc().toDate()),

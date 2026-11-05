@@ -81,6 +81,7 @@ describe('ViewProjectPage', () => {
       template: '<div class="mock-el-table-column"><slot></slot></div>',
       props: ['data', 'columns', 'tableId'], // include other props as necessary
     },
+    ProjectProSettings: { template: '<div class="mock-pro-settings"></div>' },
   }
   const stubsWithMembersList = {
     ...stubs,
@@ -428,6 +429,43 @@ describe('ViewProjectPage', () => {
       await nextTick()
 
       expect(wrapper.html()).toMatchSnapshot()
+    })
+
+    const mountSettings = async (currentUserRole: string, currentUser: () => object) => {
+      const customValue = { ...mockProject, currentUserRole }
+      await mockGraphql({
+        ...defaultParams,
+        currentUser,
+        project: () => customValue,
+        projectByUrlSlug: () => customValue,
+      })
+      const wrapper = mount(ViewProjectPage, {
+        props: { showLoading: false },
+        global: {
+          directives: { loading: vLoadingStub },
+          plugins: [store, router],
+          provide: { [DefaultApolloClient]: graphqlMocks },
+          stubs,
+        },
+      })
+      await flushPromises()
+      await nextTick()
+      return wrapper
+    }
+
+    it('should show Pro settings to project managers', async () => {
+      const wrapper = await mountSettings('MANAGER', defaultParams.currentUser)
+
+      expect(wrapper.text()).toContain('Delete project')
+      expect(wrapper.find('.mock-pro-settings').exists()).toBe(true)
+    })
+
+    it('should hide Pro settings from project members', async () => {
+      // Only admins see the settings tab without being a manager, so use an admin who is a plain member.
+      const wrapper = await mountSettings('MEMBER', () => ({ id: 'userid', role: 'admin' }))
+
+      expect(wrapper.text()).toContain('Delete project')
+      expect(wrapper.find('.mock-pro-settings').exists()).toBe(false)
     })
   })
 

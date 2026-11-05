@@ -41,6 +41,7 @@ import { getS3Client } from '../../../utils/awsClient'
 import config from '../../../utils/config'
 import { assertCanPerformAction, getDeviceInfo, hashIp, performAction } from '../../plan/util/canPerformAction'
 import { hasBetaFeature } from '../../plan/util/betaTesterApi'
+import { memberProjectIds } from '../../plan/util/memberProjectIds'
 import { cleanEmptyStrings } from '../../../utils/regexSanitizer'
 import canEditEsDataset from '../operation/canEditEsDataset'
 import parseRoiGeoJson, { getDatasetImageBounds } from '../operation/roiGeoJson'
@@ -280,6 +281,16 @@ const assertValidScoringModel = async(ctx: Context, scoringModel?: string | null
   }
 }
 
+/**
+ * Ids of the projects a dataset is currently linked to (approved or not).
+ *
+ * @param entityManager Entity manager to query with.
+ * @param datasetId Dataset id.
+ * @returns Project ids from the dataset's `DatasetProject` rows.
+ */
+const currentDatasetProjectIds = async(entityManager: EntityManager, datasetId: string): Promise<string[]> =>
+  (await entityManager.find(DatasetProjectModel, { datasetId })).map(dp => dp.projectId)
+
 const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
   const { input, priority, force, delFirst, skipValidation, useLithops, performEnrichment } = args
   const datasetId = args.id || newDatasetId()
@@ -289,6 +300,9 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     userId: ctx.user.id,
     datasetId: datasetId,
     groupId: input.groupId,
+    projectIds: await memberProjectIds(ctx, datasetIdWasSpecified && input.projectIds == null
+      ? await currentDatasetProjectIds(ctx.entityManager, datasetId)
+      : input.projectIds as string[] | null | undefined),
     type: 'dataset',
     visibility: input.isPublic ? 'public' : 'private',
     actionDt: moment.utc(moment.utc().toDate()),
@@ -465,6 +479,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       datasetId: datasetId,
       type: 'dataset',
       groupId: update.groupId || dataset.groupId,
+      projectIds: await memberProjectIds(ctx, update.projectIds != null
+        ? update.projectIds as string[]
+        : await currentDatasetProjectIds(ctx.entityManager, datasetId)),
       visibility: (update.isPublic === undefined ? engineDataset.isPublic : update.isPublic) ? 'public' : 'private',
       actionDt: moment.utc(moment.utc().toDate()),
       source: (ctx as any).getSource(),
@@ -692,6 +709,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         type: 'dataset',
         visibility: dataset._source?.ds_is_public ? 'public' : 'private',
         groupId: dataset._source?.ds_group_id,
+        projectIds: await memberProjectIds(ctx, dataset._source?.ds_project_ids),
         actionDt: moment.utc(moment.utc().toDate()),
         source: (ctx as any).getSource(),
         deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),
@@ -996,6 +1014,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       type: 'dataset',
       visibility: dataset._source?.ds_is_public ? 'public' : 'private',
       groupId: dataset._source?.ds_group_id,
+      projectIds: await memberProjectIds(ctx, dataset._source?.ds_project_ids),
       actionDt: moment.utc(moment.utc().toDate()),
       source: (ctx as any).getSource(),
       deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),

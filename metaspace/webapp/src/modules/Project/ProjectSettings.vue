@@ -34,6 +34,7 @@
           <span> Update details </span>
         </button>
       </sm-form>
+      <project-pro-settings v-if="isManager" :project-id="projectId" :current-user-id="currentUser?.id" />
       <div class="mt-12">
         <h2>Delete project</h2>
         <p v-if="isPublished">
@@ -66,6 +67,7 @@ import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
 import EditProjectForm from './EditProjectForm.vue'
 import DoiField from './DoiField'
 import ShortLinkField from './ShortLinkField'
+import ProjectProSettings from './ProjectProSettings'
 import { SmForm } from '../../components/Form'
 import {
   deleteProjectMutation,
@@ -86,6 +88,7 @@ export default defineComponent({
     EditProjectForm,
     DoiField,
     ShortLinkField,
+    ProjectProSettings,
     SmForm,
     ElButton,
     Loading,
@@ -132,6 +135,7 @@ export default defineComponent({
       return location.origin + href.replace('REMOVE', '')
     })
     const isPublished = computed(() => project.value?.publicationStatus === 'PUBLISHED')
+    const isManager = computed(() => project.value?.currentUserRole === 'MANAGER')
     const isUnderReview = computed(() => project.value?.publicationStatus === 'UNDER_REVIEW')
     const userisAdmin = computed(() => currentUser.value?.role === 'admin')
     const publicationDOI = computed(() => {
@@ -255,6 +259,8 @@ export default defineComponent({
       isUnderReview,
       userisAdmin,
       project,
+      currentUser,
+      isManager,
       handleUpdate,
     }
   },

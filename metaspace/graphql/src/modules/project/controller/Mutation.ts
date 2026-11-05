@@ -28,6 +28,7 @@ import { utc } from 'moment'
 import generateRandomToken from '../../../utils/generateRandomToken'
 import { addExternalLink, removeExternalLink, ExternalLinkProviderOptions as ELPO } from '../ExternalLink'
 import { validateUrlSlugChange } from '../../groupOrProject/urlSlug'
+import { deleteProjectSponsorship } from '../../projectSponsorship/managerApi'
 import { validateTiptapJson } from '../../../utils/tiptap'
 import { getDatasetForEditing } from '../../dataset/operation/getDatasetForEditing'
 import { EngineDataset } from '../../engine/model'
@@ -166,6 +167,14 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
         await ctx.entityManager.delete(UserProjectModel, { projectId })
         await projectRepository.delete({ id: projectId })
+        // The project is already gone; a failed sponsorship cleanup must not fail the mutation.
+        if (config.manager_api_url) {
+          try {
+            await deleteProjectSponsorship(ctx, projectId)
+          } catch (err) {
+            logger.warn(`Removing sponsorship of deleted project ${projectId} failed: ${err}`)
+          }
+        }
       } else {
         throw new UserError(JSON.stringify({
           type: 'under_review_or_published',

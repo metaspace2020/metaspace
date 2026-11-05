@@ -7,7 +7,9 @@ import {
   createTestDataset,
   createTestGroup,
   createTestMolecularDB,
+  createTestProject,
   createTestUserGroup,
+  createTestUserProject,
 } from '../../../tests/testDataCreation'
 import {
   adminContext,
@@ -17,6 +19,8 @@ import {
   userContext,
 } from '../../../tests/graphqlTestEnvironment'
 import { Group, UserGroupRoleOptions as UGRO } from '../../group/model'
+import { UserProjectRoleOptions as UPRO } from '../../project/model'
+import * as planActions from '../../plan/util/canPerformAction'
 import { Dataset } from '../model'
 import { getContextForTest } from '../../../getContext'
 
@@ -204,5 +208,47 @@ describe('Dataset mutations: molecular databases permissions', () => {
   test('Admin allowed to use Metaspace public and group databases', async() => {
     await doQuery(createDatasetQuery, { databaseIds }, { context: adminContext })
     await doQuery(updateDatasetQuery, { datasetId: dataset.id, databaseIds }, { context: adminContext })
+  })
+})
+
+describe('Dataset mutations: createDataset plan action projectIds', () => {
+  beforeAll(onBeforeAll)
+  afterAll(onAfterAll)
+  beforeEach(async() => {
+    await onBeforeEach()
+    await setupTestUsers()
+    jest.spyOn(planActions, 'assertCanPerformAction').mockResolvedValue(undefined)
+    jest.spyOn(planActions, 'performAction').mockResolvedValue(null)
+  })
+  afterEach(async() => {
+    jest.restoreAllMocks()
+    await onAfterEach()
+  })
+
+  const createDatasetWithProjectsQuery = `mutation createDataset($projectIds: [ID!]) {
+      createDataset(
+        input: {
+          name: "ds-name"
+          inputPath: "input-path"
+          metadataJson: ${JSON.stringify(JSON.stringify(sampleMetadata))}
+          adducts: ["+H"]
+          isPublic: true
+          submitterId: ""
+          projectIds: $projectIds
+        }
+      )
+    }`
+
+  test('only projects where the user is a member are sent as projectIds', async() => {
+    const memberProject = await createTestProject({ name: 'member', isPublic: false })
+    const strangerProject = await createTestProject({ name: 'stranger', isPublic: false })
+    await createTestUserProject(testUser.id, memberProject.id, UPRO.MEMBER)
+
+    await doQuery(createDatasetWithProjectsQuery,
+      { projectIds: [memberProject.id, strangerProject.id] }, { context: userContext })
+
+    const expected = expect.objectContaining({ actionType: 'create', projectIds: [memberProject.id] })
+    expect(planActions.assertCanPerformAction).toHaveBeenCalledWith(expect.anything(), expected)
+    expect(planActions.performAction).toHaveBeenCalledWith(expect.anything(), expected)
   })
 })

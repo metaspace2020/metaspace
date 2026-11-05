@@ -122,10 +122,21 @@ describe('createExperiment', () => {
     setEsPolarity({ [ds.id]: '+' })
     await doQuery<any>(createMutation, { projectId: p.id, input: buildInput([ds.id]) })
 
-    expect(mockPlanActions.assertCanPerformAction).toHaveBeenCalledWith(
-      expect.anything(), expect.objectContaining({ actionType: 'experiments', userId: testUser.id }))
-    expect(mockPlanActions.performAction).toHaveBeenCalledWith(
-      expect.anything(), expect.objectContaining({ actionType: 'experiments' }))
+    const expected = expect.objectContaining({ actionType: 'experiments', userId: testUser.id, projectIds: [p.id] })
+    expect(mockPlanActions.assertCanPerformAction).toHaveBeenCalledWith(expect.anything(), expected)
+    expect(mockPlanActions.performAction).toHaveBeenCalledWith(expect.anything(), expected)
+  })
+
+  it('includes the project in projectIds when the user is a MANAGER of it', async() => {
+    mockBetaTesterApi.hasBetaFeature.mockResolvedValue(false)
+    const p = await makeProjectWithMember(UPRO.MANAGER)
+    const ds = await createTestDataset()
+    setEsPolarity({ [ds.id]: '+' })
+    await doQuery<any>(createMutation, { projectId: p.id, input: buildInput([ds.id]) })
+
+    const expected = expect.objectContaining({ actionType: 'experiments', userId: testUser.id, projectIds: [p.id] })
+    expect(mockPlanActions.assertCanPerformAction).toHaveBeenCalledWith(expect.anything(), expected)
+    expect(mockPlanActions.performAction).toHaveBeenCalledWith(expect.anything(), expected)
   })
 
   it('rejects and persists nothing when the usage limit is reached', async() => {
