@@ -12,8 +12,8 @@ logger = logging.getLogger('engine')
 
 DECOY_ADDUCTS = [
     # fmt: off
-    '+He', '+Li', '+Be', '+B', '+C', '+N', '+O', '+F', '+Ne', '+Mg',
-    '+Al', '+Si', '+P', '+S', '+Cl', '+Ar', '+Ca', '+Sc', '+Ti', '+V',
+    '+He', '+Li', '+Be', '+B', '+F', '+Ne', '+Mg',
+    '+Al', '+Si', '+Ar', '+Ca', '+Sc', '+Ti', '+V',
     '+Cr', '+Mn', '+Fe', '+Co', '+Ni', '+Cu', '+Zn', '+Ga', '+Ge', '+As',
     '+Se', '+Br', '+Kr', '+Rb', '+Sr', '+Y', '+Zr', '+Nb', '+Mo', '+Ru',
     '+Rh', '+Pd', '+Ag', '+Cd', '+In', '+Sn', '+Sb', '+Te', '+I', '+Xe',
