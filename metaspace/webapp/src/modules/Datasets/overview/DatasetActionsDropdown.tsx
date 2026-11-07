@@ -5,6 +5,7 @@ import {
   deleteDatasetQuery,
   getSegmentationJobsQuery,
   reprocessDatasetQuery,
+  segmentationJobQuery,
 } from '../../../api/dataset'
 import { CurrentUserRoleResult } from '../../../api/user'
 import {
@@ -44,6 +45,23 @@ interface DatasetActionsDropdownProps {
   currentUser: CurrentUserRoleResult
   isPublishedOrUnderReview: boolean
 }
+
+/** Fields of a segmentation job the dropdown needs to decide what the segmentation action does. */
+interface SegmentationJobSummary {
+  status: string
+  isDefault: boolean
+  isMine: boolean
+}
+
+interface SegmentationJobsResult {
+  segmentationJobs: SegmentationJobSummary[] | null
+}
+
+interface SegmentationJobResult {
+  segmentationJob: SegmentationJobSummary | null
+}
+
+const RUNNING_SEGMENTATION_STATUSES = ['QUEUED', 'STARTED']
 
 interface DatasetActionsDropdownState {
   disabled: boolean
@@ -96,13 +114,22 @@ export const DatasetActionsDropdown = defineComponent({
       enrichmentResult.value != null ? enrichmentResult.value.enrichmentRequested : null
     )
 
-    const { result: segmentationJobsResult, refetch: segmentationJobsRefetch } = useQuery<any>(
+    const { result: segmentationJobsResult, refetch: segmentationJobsRefetch } = useQuery<SegmentationJobsResult>(
       getSegmentationJobsQuery,
       { datasetId: props.dataset?.id },
       { fetchPolicy: 'no-cache' }
     )
-    const segmentationJobs = computed(() =>
-      segmentationJobsResult.value != null ? segmentationJobsResult.value.segmentationJobs : null
+    const segmentationJobs = computed<SegmentationJobSummary[]>(
+      () => segmentationJobsResult.value?.segmentationJobs ?? []
+    )
+
+    const { result: segmentationJobResult, refetch: segmentationJobRefetch } = useQuery<SegmentationJobResult>(
+      segmentationJobQuery,
+      { datasetId: props.dataset?.id },
+      { fetchPolicy: 'no-cache' }
+    )
+    const visibleSegmentationJob = computed<SegmentationJobSummary | null>(
+      () => segmentationJobResult.value?.segmentationJob ?? null
     )
 
     const confirmReprocessEnrichment = async () => {
@@ -184,9 +211,18 @@ export const DatasetActionsDropdown = defineComponent({
       state.showCompareDialog = false
     }
 
+    /**
+     * Decides what the segmentation action does for the current user: warn if one of their runs (or, for an
+     * editor, the dataset's default run) is still in progress; offer to open a finished result they can see;
+     * otherwise open the parameters dialog. Plan limits and ownership are enforced server-side on submit.
+     */
     const openSegmentationDialog = async () => {
-      const hasSegementation = segmentationJobs.value.find((job: any) => job.status === 'FINISHED')
-      const jobRunning = segmentationJobs.value.find((job: any) => job.status === 'STARTED')
+      const jobRunning = segmentationJobs.value.some(
+        (job) =>
+          RUNNING_SEGMENTATION_STATUSES.includes(job.status) &&
+          (job.isMine || (job.isDefault && props.dataset?.canEdit))
+      )
+      const hasSegementation = visibleSegmentationJob.value?.status === 'FINISHED'
 
       if (jobRunning) {
         await ElNotification.warning(
@@ -333,25 +369,9 @@ export const DatasetActionsDropdown = defineComponent({
           openCompareDialog()
           break
         case 'segmentation':
-          await segmentationJobsRefetch()
+          await Promise.all([segmentationJobsRefetch(), segmentationJobRefetch()])
           hideFeatureBadge('imageSegmentation')
-          if (props.dataset?.canEdit) {
-            openSegmentationDialog()
-          } else {
-            // Users who can view but not edit may only open an existing
-            // segmentation result — they cannot run a new one.
-            const hasSegmentation = segmentationJobs.value?.find((job: any) => job.status === 'FINISHED')
-            if (props.dataset?.canDownload && hasSegmentation) {
-              router.push({
-                name: 'dataset-segmentation',
-                params: { dataset_id: props.dataset?.id },
-              })
-            } else {
-              ElNotification.warning(
-                'You need to be the dataset owner or a member of its group to run image segmentation.'
-              )
-            }
-          }
+          openSegmentationDialog()
           break
         case 'download':
           if (!props.currentUser?.id || (await confirmDownload())) {
@@ -405,7 +425,7 @@ export const DatasetActionsDropdown = defineComponent({
               </div>
             </ElDropdownItem>
           )}
-          {config.features.segmentation && canDownload && (
+          {config.features.segmentation && currentUser?.id && (
             <ElDropdownItem command="segmentation">
               <div class="relative actionBadge">
                 <NewFeatureBadge featureKey="imageSegmentation">{segmentationActionLabel}</NewFeatureBadge>

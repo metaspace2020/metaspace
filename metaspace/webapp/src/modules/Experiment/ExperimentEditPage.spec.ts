@@ -9,6 +9,7 @@ import ExperimentEditPage from './ExperimentEditPage'
 import { ElNotification } from '../../lib/element-plus'
 import { serializeDraft } from './api'
 import type { ExperimentDraft } from './api'
+import { buildSegmentationMasks } from './composables/useSegmentationMasks'
 
 vi.mock('@vue/apollo-composable', () => ({
   useQuery: vi.fn(),
@@ -22,6 +23,11 @@ vi.mock('vue-router', async () => {
     useRoute: () => mockRoute,
     useRouter: () => ({ push: routerPush }),
   }
+})
+
+vi.mock('./composables/useSegmentationMasks', async () => {
+  const actual: any = await vi.importActual('./composables/useSegmentationMasks')
+  return { ...actual, buildSegmentationMasks: vi.fn().mockResolvedValue({}) }
 })
 
 let mockRoute: any
@@ -210,6 +216,73 @@ describe('ExperimentEditPage', () => {
     expect(wrapper.html()).toContain('Edit experiment')
     expect((wrapper.vm as any).draft.name).toBe('Existing experiment')
     expect(wrapper.find('[data-test-key="dataset-card-d1"]').exists()).toBe(true)
+  })
+
+  it("builds segmentation masks from the caller's segmentationJob labelMapUrl, not diagnostics", async () => {
+    mockRoute = { params: { projectId: 'p1', id: 'e1' } }
+    const segExperiment = {
+      experiment: {
+        ...sampleExperiment.experiment,
+        datasets: [{ ...sampleExperiment.experiment.datasets[0], regionSource: 'SEGMENTATION', regions: [] }],
+      },
+    }
+    setupQueries({ experiment: segExperiment })
+    const queriedDocs: string[] = []
+    mockClient.query = vi.fn().mockImplementation(({ query }: any) => {
+      const docName = query?.definitions?.[0]?.name?.value ?? ''
+      queriedDocs.push(docName)
+      if (docName === 'datasetSegmentations') {
+        return Promise.resolve({ data: { segmentations: [{ id: 's1', segmentIndex: 0, name: 'Segment 0' }] } })
+      }
+      if (docName === 'segmentationJobQuery') {
+        return Promise.resolve({ data: { segmentationJob: { labelMapUrl: 'http://x/lm' } } })
+      }
+      return Promise.resolve({ data: { rois: [], segmentations: [] } })
+    })
+    vi.mocked(buildSegmentationMasks).mockClear()
+
+    mountPage()
+    await flushPromises()
+    await nextTick()
+    await flushPromises()
+
+    expect(buildSegmentationMasks).toHaveBeenCalledWith(
+      expect.objectContaining({
+        labelMapUrl: 'http://x/lm',
+        segmentations: [{ id: 's1', segmentIndex: 0 }],
+      })
+    )
+    expect(mockClient.query).toHaveBeenCalledWith(
+      expect.objectContaining({ variables: { datasetId: 'd1' }, fetchPolicy: 'network-only' })
+    )
+    expect(queriedDocs).not.toContain('getDatasetDiagnosticsQuery')
+  })
+
+  it('skips building segmentation masks when the caller has no visible segmentationJob', async () => {
+    mockRoute = { params: { projectId: 'p1', id: 'e1' } }
+    const segExperiment = {
+      experiment: {
+        ...sampleExperiment.experiment,
+        datasets: [{ ...sampleExperiment.experiment.datasets[0], regionSource: 'SEGMENTATION', regions: [] }],
+      },
+    }
+    setupQueries({ experiment: segExperiment })
+    mockClient.query = vi.fn().mockImplementation(({ query }: any) => {
+      const docName = query?.definitions?.[0]?.name?.value ?? ''
+      if (docName === 'datasetSegmentations') {
+        return Promise.resolve({ data: { segmentations: [{ id: 's1', segmentIndex: 0, name: 'Segment 0' }] } })
+      }
+      if (docName === 'segmentationJobQuery') return Promise.resolve({ data: { segmentationJob: null } })
+      return Promise.resolve({ data: { rois: [], segmentations: [] } })
+    })
+    vi.mocked(buildSegmentationMasks).mockClear()
+
+    mountPage()
+    await flushPromises()
+    await nextTick()
+    await flushPromises()
+
+    expect(buildSegmentationMasks).not.toHaveBeenCalled()
   })
 
   it('seeds variable options from the hydrated experiment', async () => {

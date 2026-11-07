@@ -1,4 +1,4 @@
-import { computed, defineComponent, reactive, inject } from 'vue'
+import { computed, defineComponent, reactive, inject, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { FilterPanel } from '../../Filters/index'
@@ -13,12 +13,22 @@ import {
   ElSelect,
   ElOption,
   ElPopover,
+  ElMessageBox,
+  ElNotification,
+  ElDropdown,
+  ElDropdownMenu,
+  ElDropdownItem,
+  ElDivider,
 } from '../../../lib/element-plus'
-import { Loading, ArrowLeft, QuestionFilled } from '@element-plus/icons-vue'
+import reportError from '../../../lib/reportError'
+import { Loading, ArrowLeft, ArrowDown, QuestionFilled, InfoFilled } from '@element-plus/icons-vue'
+import { format as formatDate } from 'date-fns'
 import './SegmentationPage.scss'
 import {
   getDatasetByIdQuery,
-  getDatasetDiagnosticsQuery,
+  segmentationJobQuery,
+  getSegmentationJobsQuery,
+  deleteSegmentationJobMutation,
   getSegmentationsQuery,
   opticalImagesQuery,
   getSegmentationIonProfilesWithImagesQuery,
@@ -32,6 +42,100 @@ import AspectRatioIcon from '../../../assets/inline/material/aspect-ratio.svg'
 import { MonitorSvg } from '@/design/refactoringUIIcons'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
 import { Setting } from '@element-plus/icons-vue'
+
+import OpticalImage from '../../../assets/microscope-icon.png'
+
+/** The caller's visible segmentation job, as returned by `segmentationJobQuery`. */
+interface SegmentationJob {
+  id: number
+  datasetId: string
+  status: string
+  error: string | null
+  userId: string | null
+  isDefault: boolean
+  isMine: boolean
+  resultData: string | null
+  labelMapUrl: string | null
+  updatedAt: string | null
+}
+
+interface SegmentationJobQueryResult {
+  segmentationJob: SegmentationJob | null
+}
+
+/** A row of `getSegmentationJobsQuery`: the default runs plus the caller's own runs, newest first. */
+interface SegmentationJobListItem {
+  id: number
+  status: string
+  isDefault: boolean
+  isMine: boolean
+}
+
+interface SegmentationJobsQueryResult {
+  segmentationJobs: SegmentationJobListItem[]
+}
+
+/** One of the (at most two) finished runs a viewer can switch between. */
+interface SegmentationRun {
+  id: number
+  isDefault: boolean
+}
+
+/** The fields of a job's `resultData` the header reads. */
+interface SegmentationResultSummary {
+  algorithm?: string
+  n_segments?: number
+  parameters_used?: Record<string, unknown>
+}
+
+/** One label/value row of the info popover. */
+interface InfoRow {
+  label: string
+  value: string
+}
+
+const SUBMITTER_RUN_LABEL = 'Submitter segmentation'
+const PRIVATE_RUN_LABEL = 'My segmentation'
+
+/**
+ * Names a run the way the page header does.
+ *
+ * @param run - The run, default (submitter's) or private
+ * @returns `Submitter segmentation` for the default run, `My segmentation` otherwise
+ */
+const runLabel = (run: { isDefault: boolean }): string => (run.isDefault ? SUBMITTER_RUN_LABEL : PRIVATE_RUN_LABEL)
+
+/**
+ * Formats a job timestamp as a date. graphql serialises job dates as epoch milliseconds; ISO strings work too.
+ *
+ * @param value - Timestamp from the job
+ * @returns `yyyy-MM-dd`, or null when the value is missing or unparseable
+ */
+const formatJobDate = (value: string | null): string | null => {
+  if (!value) return null
+  const date = new Date(/^\d+$/.test(value) ? Number(value) : value)
+  return Number.isNaN(date.getTime()) ? null : formatDate(date, 'yyyy-MM-dd')
+}
+
+/**
+ * Lists the scalar entries of `parameters_used` as popover rows, skipping empty values and lists such as `k_range`.
+ *
+ * @param parameters - The `parameters_used` object of a job result
+ * @returns One row per non-null scalar parameter
+ */
+const parameterRows = (parameters: Record<string, unknown> | undefined): InfoRow[] =>
+  Object.entries(parameters ?? {})
+    .filter(([, value]) => value != null && typeof value !== 'object')
+    .map(([label, value]) => ({ label, value: String(value) }))
+
+/** The diagnostic-shaped object `SegmentationVisualization` reads its label map from. */
+interface SegmentationDiagnosticData {
+  id: string
+  type: 'SEGMENTATION'
+  updatedDT: string | null
+  data: string
+  images: { key: string; index: number | null; url: string; format: string }[]
+}
 
 export default defineComponent({
   name: 'DatasetSegmentationPage',
@@ -75,6 +179,13 @@ export default defineComponent({
     })
 
     const datasetId = computed(() => route.params.dataset_id)
+    // The run picked in the header switcher; null lets the server choose (own private run, else the submitter's)
+    const selectedJobId = ref<number | null>(null)
+    // Bumped whenever the shown run changes, so an in-flight profile load of the previous run is discarded
+    let profileLoadToken = 0
+    // The two run queries always go to the server: a cached result for the same variables can belong to a run
+    // that was deleted since, and would otherwise feed its segments to the profile loader before the refetch lands
+    const runQueryOptions = { fetchPolicy: 'network-only' } as const
 
     const { result: datasetResult } = useQuery<any>(getDatasetByIdQuery, {
       id: datasetId.value,
@@ -85,14 +196,21 @@ export default defineComponent({
       result: segmentationsResult,
       loading: segmentationsLoading,
       onResult: handleSegmentationsLoad,
-    } = useQuery<any>(getSegmentationsQuery, {
-      datasetId: datasetId.value,
-    })
+      refetch: refetchSegmentations,
+    } = useQuery<any>(
+      getSegmentationsQuery,
+      () => ({
+        datasetId: datasetId.value,
+        jobId: selectedJobId.value,
+      }),
+      runQueryOptions
+    )
     const segmentations = computed(() => segmentationsResult.value?.segmentations)
 
     handleSegmentationsLoad(async (result) => {
       if (result.data?.segmentations?.length > 0 && !state.selectedSegmentMarkersSegmentationId) {
         state.isLoading = true
+        const token = profileLoadToken
         try {
           state.selectedSegmentMarkersSegmentationId = result.data?.segmentations?.[0]?.id
           const aggAnnotations = []
@@ -113,32 +231,63 @@ export default defineComponent({
             })
             aggAnnotations.push(...annotations)
           }
+          if (token !== profileLoadToken) return
           state.annotations = aggAnnotations
         } catch (error) {
           // pass
         }
+        if (token !== profileLoadToken) return
         state.isLoading = false
       }
     })
 
     const {
-      result: diagnosticDataResult,
+      result: segmentationJobResult,
       loading,
       error,
-    } = useQuery<any>(getDatasetDiagnosticsQuery, {
-      id: route.params.dataset_id,
+      refetch: refetchSegmentationJob,
+    } = useQuery<SegmentationJobQueryResult>(
+      segmentationJobQuery,
+      () => ({
+        datasetId: datasetId.value,
+        jobId: selectedJobId.value,
+      }),
+      runQueryOptions
+    )
+    const segmentationJob = computed(() => segmentationJobResult.value?.segmentationJob ?? null)
+
+    const { result: segmentationJobsResult, refetch: refetchSegmentationJobs } = useQuery<SegmentationJobsQueryResult>(
+      getSegmentationJobsQuery,
+      () => ({ datasetId: datasetId.value })
+    )
+
+    // The viewer's latest finished private run first, then the latest finished submitter run
+    const availableRuns = computed<SegmentationRun[]>(() => {
+      const finished = (segmentationJobsResult.value?.segmentationJobs ?? []).filter((j) => j.status === 'FINISHED')
+      const own = finished.find((j) => !j.isDefault && j.isMine)
+      const submitter = finished.find((j) => j.isDefault)
+      return [own, submitter]
+        .filter((j): j is SegmentationJobListItem => j != null)
+        .map((j) => ({ id: j.id, isDefault: j.isDefault }))
     })
 
     const { result: opticalImagesResult } = useQuery(opticalImagesQuery, {
       datasetId: datasetId.value,
     })
 
-    const diagnosticData = computed(
-      () =>
-        diagnosticDataResult.value?.dataset?.diagnostics
-          .filter((diagnostic: any) => diagnostic.type === 'SEGMENTATION')
-          ?.at(0)
-    )
+    // Rebuilt from the job in the shape of the old SEGMENTATION diagnostic, so
+    // SegmentationVisualization keeps reading the LABEL_MAP image the same way.
+    const diagnosticData = computed<SegmentationDiagnosticData | null>(() => {
+      const job = segmentationJob.value
+      if (!job || job.resultData == null) return null
+      return {
+        id: String(job.id),
+        type: 'SEGMENTATION',
+        updatedDT: job.updatedAt,
+        data: job.resultData,
+        images: job.labelMapUrl ? [{ key: 'LABEL_MAP', index: null, url: job.labelMapUrl, format: 'NPY' }] : [],
+      }
+    })
 
     const opticalImage = computed(() => {
       return (opticalImagesResult.value as any)?.dataset?.opticalImages?.[0]
@@ -152,6 +301,18 @@ export default defineComponent({
         console.error('Failed to parse segmentation data:', error)
         return null
       }
+    })
+
+    const resultSummary = computed<SegmentationResultSummary>(() => segmentationData.value ?? {})
+    const clusterCount = computed<number>(
+      () => resultSummary.value.n_segments ?? (segmentations.value as unknown[] | undefined)?.length ?? 0
+    )
+
+    // Owners delete their private run; dataset editors (incl. admins) delete the submitter run
+    const canDeleteJob = computed<boolean>(() => {
+      const job = segmentationJob.value
+      if (!job) return false
+      return job.isDefault ? currentDataset.value?.canEdit === true : job.isMine
     })
 
     // const { result } = useQuery(getSegmentationIonProfilesWithImagesQuery, queryVariables, {
@@ -173,6 +334,209 @@ export default defineComponent({
 
     const goBack = () => {
       router.push(`/dataset/${datasetId.value}`)
+    }
+
+    const deleting = ref(false)
+
+    /** Drops the shown run's cluster profiles so `handleSegmentationsLoad` reloads them for the next run. */
+    const resetProfiles = () => {
+      profileLoadToken++
+      state.selectedSegmentMarkersSegmentationId = null
+      state.annotations = []
+      state.isLoading = false
+    }
+    // A new run is about to load: discard the previous run's profiles and any load still in flight
+    watch(selectedJobId, resetProfiles, { flush: 'sync' })
+
+    /**
+     * Loads the run picked in the header switcher (clusters, map, markers, table and diagnostics).
+     *
+     * @param jobId - Id of the picked run
+     */
+    const handleSwitchRun = (jobId: number) => {
+      if (jobId === segmentationJob.value?.id) return
+      selectedJobId.value = jobId
+    }
+
+    /**
+     * Builds the confirm message for deleting the shown run. Only fixed copy and a number are interpolated.
+     *
+     * @param job - The run on screen
+     * @returns HTML message with the run name in bold
+     */
+    const deleteConfirmMessage = (job: SegmentationJob): string => {
+      const clusters = `Its ${clusterCount.value} clusters, markers and diagnostics will be removed`
+      if (job.isDefault) {
+        return `Delete <b>${SUBMITTER_RUN_LABEL}</b>? ${clusters} for everyone who can see this dataset.`
+      }
+      const fallback = availableRuns.value.some((run) => run.isDefault)
+        ? 'The submitter segmentation will be shown instead.'
+        : 'No segmentation will be shown for this dataset.'
+      return `Delete <b>${PRIVATE_RUN_LABEL}</b>? ${clusters}. ${fallback}`
+    }
+
+    /**
+     * Deletes the run on screen after confirmation, then reloads the run list and shows the remaining run
+     * (the server's default choice) or the empty state.
+     */
+    const handleDeleteSegmentation = async () => {
+      const job = segmentationJob.value
+      if (!job || deleting.value) return
+      try {
+        await ElMessageBox.confirm(deleteConfirmMessage(job), 'Delete segmentation', {
+          type: 'warning',
+          confirmButtonText: 'Delete',
+          cancelButtonText: 'Keep it',
+          confirmButtonClass: 'el-button--danger',
+          dangerouslyUseHTMLString: true,
+        })
+      } catch (cancel) {
+        return
+      }
+      deleting.value = true
+      try {
+        await apolloClient.mutate({ mutation: deleteSegmentationJobMutation, variables: { id: job.id } })
+        ElNotification.success('Segmentation deleted')
+        resetProfiles()
+        const refetches: Promise<unknown>[] = [refetchSegmentationJobs() ?? Promise.resolve()]
+        if (selectedJobId.value != null) {
+          // Changing the variables already refetches the job and its segments (network-only)
+          selectedJobId.value = null
+        } else {
+          refetches.push(refetchSegmentationJob() ?? Promise.resolve(), refetchSegmentations() ?? Promise.resolve())
+        }
+        await Promise.all(refetches)
+      } catch (err) {
+        reportError(err)
+      } finally {
+        deleting.value = false
+      }
+    }
+
+    /** Rows of the info popover: clusters, creation, method and the scalar parameters of the run. */
+    const infoRows = computed<InfoRow[]>(() => {
+      const job = segmentationJob.value
+      if (!job) return []
+      const created = formatJobDate(job.updatedAt)
+      // Never an email: the viewer's own run, else the dataset submitter by name
+      const creator = job.isMine ? 'you' : currentDataset.value?.submitter?.name || 'the submitter'
+      const rows: InfoRow[] = [{ label: 'Clusters', value: String(clusterCount.value) }]
+      if (created) {
+        rows.push({ label: 'Created', value: `${created} by ${creator}` })
+      }
+      if (resultSummary.value.algorithm) {
+        rows.push({ label: 'Method', value: resultSummary.value.algorithm })
+      }
+      return [...rows, ...parameterRows(resultSummary.value.parameters_used)]
+    })
+
+    const renderRunTitle = (job: SegmentationJob) => {
+      const title = <span class="segmentation-title text-base font-medium text-gray-900">{runLabel(job)}</span>
+      if (availableRuns.value.length < 2) return title
+      return (
+        <ElDropdown
+          class="segmentation-switcher"
+          trigger="click"
+          onCommand={handleSwitchRun}
+          v-slots={{
+            default: () => (
+              <span class="flex items-center gap-1 cursor-pointer">
+                {title}
+                <ElIcon>
+                  <ArrowDown />
+                </ElIcon>
+              </span>
+            ),
+            dropdown: () => (
+              <ElDropdownMenu>
+                {availableRuns.value.map((run) => (
+                  <ElDropdownItem key={run.id} command={run.id} class={run.id === job.id ? 'font-semibold' : undefined}>
+                    {runLabel(run)}
+                  </ElDropdownItem>
+                ))}
+              </ElDropdownMenu>
+            ),
+          }}
+        />
+      )
+    }
+
+    const renderRunInfo = (job: SegmentationJob) => (
+      <ElPopover
+        trigger="hover"
+        placement="bottom"
+        v-slots={{
+          reference: () => (
+            <ElIcon class="segmentation-info-icon text-gray-500 cursor-pointer" aria-label="About this segmentation">
+              <InfoFilled />
+            </ElIcon>
+          ),
+          default: () => (
+            <div class="segmentation-info text-sm w-72">
+              {infoRows.value.map((row) => (
+                <div key={row.label} data-row={row.label} class="flex justify-between gap-4 py-0.5">
+                  <span class="text-gray-600">{row.label}</span>
+                  <span class="text-gray-900 text-right break-words">{row.value}</span>
+                </div>
+              ))}
+              <ElDivider class="!my-2" />
+              <p class="text-gray-600 break-normal">
+                {job.isDefault
+                  ? 'Shown to everyone who opens this dataset and has access to it. ' +
+                    'Only dataset editors can replace or delete it.'
+                  : 'Only you can see this segmentation.'}
+              </p>
+            </div>
+          ),
+        }}
+      />
+    )
+
+    /** Gear menu at the right end of the "Segmentation map" bar, before the ion-image controls icon. */
+    const renderRunSettings = () => {
+      if (!canDeleteJob.value) return null
+      return (
+        <ElDropdown
+          class="segmentation-settings"
+          trigger="click"
+          onCommand={(command: string) => {
+            if (command === 'delete') handleDeleteSegmentation()
+          }}
+          v-slots={{
+            default: () => (
+              <ElButton
+                link
+                title="Segmentation settings"
+                aria-label="Segmentation settings"
+                onClick={(e: MouseEvent) => e.stopPropagation()}
+              >
+                <ElIcon class="text-2xl text-gray-900">
+                  <Setting />
+                </ElIcon>
+              </ElButton>
+            ),
+            dropdown: () => (
+              <ElDropdownMenu>
+                <ElDropdownItem command="delete" class="segmentation-delete text-red-500" disabled={deleting.value}>
+                  Delete segmentation…
+                </ElDropdownItem>
+              </ElDropdownMenu>
+            ),
+          }}
+        />
+      )
+    }
+
+    /** Right side of the header: run title (switcher with two runs), badge, info popover and gear menu. */
+    const renderRunHeader = () => {
+      const job = segmentationJob.value
+      if (!job) return null
+      return (
+        <div class="segmentation-run-header flex items-center gap-2">
+          {renderRunTitle(job)}
+          {renderRunInfo(job)}
+        </div>
+      )
     }
 
     const handleCollapseChange = (activeNames: string[]) => {
@@ -264,7 +628,7 @@ export default defineComponent({
                       onClick={handleToggleOpticalImage}
                     >
                       <img
-                        src="/assets/microscope-icon.png"
+                        src={OpticalImage}
                         class="w-6 h-6 pointer-events-none"
                         style={{
                           filter: state.showOpticalImage ? '' : 'opacity(60%)',
@@ -274,6 +638,7 @@ export default defineComponent({
                   )}
                 </div>
                 <div class="collapse-actions">
+                  {renderRunSettings()}
                   <ElButton
                     title="Ion image controls"
                     link={true}
@@ -516,16 +881,22 @@ export default defineComponent({
 
       return (
         <div class="segmentation-page">
-          <div class="page-header">
-            <div
-              onClick={goBack}
-              class="flex items-center text-blue-600 hover:text-blue-800 underline cursor-pointer mt-2 mb-1"
-            >
-              <ElIcon>
-                <ArrowLeft />
-              </ElIcon>
-              Back to {currentDataset.value?.name} overview
+          <div class="page-header flex-row flex-wrap">
+            {/* Mirrors the two columns below: back link over the table, run switcher centred over the map. */}
+            <div class="flex w-full ml-1">
+              <div
+                onClick={goBack}
+                class="flex items-center text-blue-600 hover:text-blue-800 underline cursor-pointer mt-2 mb-1"
+              >
+                <ElIcon>
+                  <ArrowLeft />
+                </ElIcon>
+                Back to {currentDataset.value?.name} overview
+              </div>
             </div>
+            <div></div>
+            <div class="w-full sm:w-1/2" />
+            <div class="flex w-full sm:w-1/2  justify-center">{renderRunHeader()}</div>
           </div>
 
           <div class="flex w-full flex-wrap flex-row">

@@ -1,7 +1,7 @@
 import { defineComponent, computed, inject, ref, watch } from 'vue'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import type { ApolloClient } from '@apollo/client/core'
-import { ElButton, ElCheckbox, ElCheckboxGroup, ElNotification } from '../../lib/element-plus'
+import { ElButton, ElNotification, ElOption, ElSelect } from '../../lib/element-plus'
 import reportError from '../../lib/reportError'
 import {
   currentUserProGroupQuery,
@@ -21,6 +21,9 @@ interface ProjectSponsorshipQueryResult {
 interface CurrentUserProGroupQueryResult {
   currentUserProGroup: { id: string; name: string } | null
 }
+
+/** Value of the synthetic "Select all" / "Deselect all" option; never kept in the selection. */
+const SELECT_ALL_VALUE = '__all__'
 
 /** Order-insensitive equality of two entitlement sets. */
 const sameEntitlements = (a: ProjectEntitlement[], b: ProjectEntitlement[]): boolean => {
@@ -73,6 +76,19 @@ export default defineComponent({
     )
 
     const isUnchanged = computed(() => sameEntitlements(selected.value, storedEntitlements.value))
+    const allSelected = computed(() => PROJECT_ENTITLEMENT_ORDER.every((k) => selected.value.includes(k)))
+
+    /**
+     * Applies the select's new value. Picking the "Select all" entry selects every feature, or clears
+     * the selection when every feature is already selected; the entry itself is never stored.
+     */
+    const onSelectionChange = (value: string[]): void => {
+      if (value.includes(SELECT_ALL_VALUE)) {
+        selected.value = allSelected.value ? [] : [...PROJECT_ENTITLEMENT_ORDER]
+        return
+      }
+      selected.value = PROJECT_ENTITLEMENT_ORDER.filter((k) => value.includes(k))
+    }
 
     const runMutation = async (mutate: () => Promise<unknown>, successMessage: string): Promise<void> => {
       saving.value = true
@@ -137,19 +153,31 @@ export default defineComponent({
           )}
           {proGroup.value !== null ? (
             <div>
-              <ElCheckboxGroup
+              <ElSelect
+                class="w-full"
+                data-test-key="entitlement-select"
                 modelValue={selected.value}
+                multiple
+                clearable
+                placeholder="Select Pro features to share"
                 disabled={saving.value}
-                onUpdate:modelValue={(value: ProjectEntitlement[]) => {
-                  selected.value = value
-                }}
+                onUpdate:modelValue={onSelectionChange}
               >
+                <ElOption
+                  key={SELECT_ALL_VALUE}
+                  value={SELECT_ALL_VALUE}
+                  label={allSelected.value ? 'Deselect all' : 'Select all'}
+                  data-test-key="entitlement-select-all"
+                />
                 {PROJECT_ENTITLEMENT_ORDER.map((key) => (
-                  <ElCheckbox key={key} label={key} data-test-key={`entitlement-${key}`}>
-                    {PROJECT_ENTITLEMENT_LABELS[key]}
-                  </ElCheckbox>
+                  <ElOption
+                    key={key}
+                    value={key}
+                    label={PROJECT_ENTITLEMENT_LABELS[key]}
+                    data-test-key={`entitlement-${key}`}
+                  />
                 ))}
-              </ElCheckboxGroup>
+              </ElSelect>
               <div class="mt-4">
                 <ElButton
                   type="primary"

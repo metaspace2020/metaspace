@@ -6,9 +6,10 @@ import type { DocumentNode } from 'graphql'
 import store from '../../store'
 import router from '../../router'
 import ProjectProSettings from './ProjectProSettings'
-import { ElNotification } from '../../lib/element-plus'
+import { ElNotification, ElOption, ElSelect } from '../../lib/element-plus'
 import {
   currentUserProGroupQuery,
+  PROJECT_ENTITLEMENT_LABELS,
   ProjectEntitlement,
   ProjectSponsorship,
   projectSponsorshipQuery,
@@ -83,6 +84,8 @@ describe('ProjectProSettings', () => {
     const wrapper = mount(testHarness, {
       global: {
         plugins: [store, router],
+        // Use the real ElSelect, its options and dropdown (globally stubbed in setupTests) so props and tags are exercised.
+        stubs: { 'el-select': false, 'el-option': false, 'el-tooltip': false },
         provide: { [DefaultApolloClient as unknown as symbol]: { mutate } },
       },
       props: { projectId: PROJECT_ID, currentUserId },
@@ -92,8 +95,31 @@ describe('ProjectProSettings', () => {
     return wrapper
   }
 
-  const checkbox = (wrapper: VueWrapper, key: ProjectEntitlement) =>
-    wrapper.find(`[data-test-key="entitlement-${key}"] input`)
+  const ALL_KEYS: ProjectEntitlement[] = [
+    'PRIVATE_SUBMISSION',
+    'PRIVATE_RESUBMISSION',
+    'EXPERIMENTS',
+    'DIFF_ANALYSIS',
+    'SEGMENTATION',
+  ]
+
+  const select = (wrapper: VueWrapper) => wrapper.findComponent(ElSelect)
+
+  const selectedValues = (wrapper: VueWrapper): string[] => select(wrapper).props('modelValue') as string[]
+
+  const choose = async (wrapper: VueWrapper, value: string[]): Promise<void> => {
+    select(wrapper).vm.$emit('update:modelValue', value)
+    await nextTick()
+  }
+
+  const optionValues = (wrapper: VueWrapper): string[] =>
+    wrapper.findAllComponents(ElOption).map((o) => o.props('value') as string)
+
+  const optionLabel = (wrapper: VueWrapper, value: string): string | undefined =>
+    wrapper
+      .findAllComponents(ElOption)
+      .find((o) => o.props('value') === value)
+      ?.props('label') as string | undefined
 
   const saveButton = (wrapper: VueWrapper) => wrapper.find('[data-test-key="save-pro-settings"]')
 
@@ -122,34 +148,40 @@ describe('ProjectProSettings', () => {
     expect(wrapper.text()).toBe('')
   })
 
-  it('renders the five checkboxes for a manager in a pro group with no sponsorship, Save disabled', async () => {
+  it('renders the five options for a manager in a pro group with no sponsorship, Save disabled', async () => {
     mockQueries({ sponsorship: null, proGroup: PRO_GROUP })
     const wrapper = await mountComponent()
 
     expect(wrapper.find('[data-test-key="project-pro-settings"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Pro settings')
     expect(wrapper.text()).toContain("Usage counts against Pro Lab's plan.")
-    for (const key of ['PRIVATE_SUBMISSION', 'PRIVATE_RESUBMISSION', 'EXPERIMENTS', 'DIFF_ANALYSIS', 'SEGMENTATION']) {
-      expect(wrapper.find(`[data-test-key="entitlement-${key}"]`).exists()).toBe(true)
+    expect(select(wrapper).exists()).toBe(true)
+    expect(select(wrapper).props('multiple')).toBe(true)
+    expect(select(wrapper).props('placeholder')).toBe('Select Pro features to share')
+    expect(select(wrapper).attributes('data-test-key')).toBe('entitlement-select')
+    expect(optionValues(wrapper)).toEqual(['__all__', ...ALL_KEYS])
+    for (const key of ALL_KEYS) {
+      expect(
+        wrapper
+          .findAllComponents(ElOption)
+          .find((o) => o.props('value') === key)
+          ?.attributes('data-test-key')
+      ).toBe(`entitlement-${key}`)
     }
-    expect(
-      wrapper.findAll('input[type="checkbox"]').filter((i) => (i.element as HTMLInputElement).checked)
-    ).toHaveLength(0)
+    expect(optionLabel(wrapper, '__all__')).toBe('Select all')
+    expect(selectedValues(wrapper)).toEqual([])
     expect(saveButton(wrapper).attributes('disabled')).toBeDefined()
     expect(wrapper.text()).not.toContain('Currently sponsored by')
   })
 
-  it('pre-checks stored entitlements and enables Save after a change', async () => {
+  it('pre-selects stored entitlements and enables Save after a change', async () => {
     mockQueries({ sponsorship: makeSponsorship(['EXPERIMENTS', 'SEGMENTATION']), proGroup: PRO_GROUP })
     const wrapper = await mountComponent()
 
-    expect((checkbox(wrapper, 'EXPERIMENTS').element as HTMLInputElement).checked).toBe(true)
-    expect((checkbox(wrapper, 'SEGMENTATION').element as HTMLInputElement).checked).toBe(true)
-    expect((checkbox(wrapper, 'PRIVATE_SUBMISSION').element as HTMLInputElement).checked).toBe(false)
+    expect(selectedValues(wrapper)).toEqual(['EXPERIMENTS', 'SEGMENTATION'])
     expect(saveButton(wrapper).attributes('disabled')).toBeDefined()
 
-    await checkbox(wrapper, 'DIFF_ANALYSIS').setValue(true)
-    await nextTick()
+    await choose(wrapper, ['EXPERIMENTS', 'SEGMENTATION', 'DIFF_ANALYSIS'])
 
     expect(saveButton(wrapper).attributes('disabled')).toBeUndefined()
   })
@@ -158,8 +190,7 @@ describe('ProjectProSettings', () => {
     const { refetch } = mockQueries({ sponsorship: null, proGroup: PRO_GROUP })
     const wrapper = await mountComponent()
 
-    await checkbox(wrapper, 'EXPERIMENTS').setValue(true)
-    await checkbox(wrapper, 'SEGMENTATION').setValue(true)
+    await choose(wrapper, ['EXPERIMENTS', 'SEGMENTATION'])
     await saveButton(wrapper).trigger('click')
     await flushPromises()
 
@@ -175,8 +206,7 @@ describe('ProjectProSettings', () => {
     mockQueries({ sponsorship: null, proGroup: PRO_GROUP })
     const wrapper = await mountComponent()
 
-    await checkbox(wrapper, 'SEGMENTATION').setValue(true)
-    await checkbox(wrapper, 'EXPERIMENTS').setValue(true)
+    await choose(wrapper, ['SEGMENTATION', 'EXPERIMENTS'])
     await saveButton(wrapper).trigger('click')
     await flushPromises()
 
@@ -186,11 +216,11 @@ describe('ProjectProSettings', () => {
     })
   })
 
-  it('calls removeProjectSponsorship when all boxes are cleared', async () => {
+  it('calls removeProjectSponsorship when every feature is cleared', async () => {
     const { refetch } = mockQueries({ sponsorship: makeSponsorship(['EXPERIMENTS']), proGroup: PRO_GROUP })
     const wrapper = await mountComponent()
 
-    await checkbox(wrapper, 'EXPERIMENTS').setValue(false)
+    await choose(wrapper, [])
     await saveButton(wrapper).trigger('click')
     await flushPromises()
 
@@ -200,6 +230,64 @@ describe('ProjectProSettings', () => {
     })
     expect(ElNotification.success).toHaveBeenCalledWith({ title: '', message: 'Pro settings saved' })
     expect(refetch).toHaveBeenCalled()
+  })
+
+  it('"Select all" selects all five features', async () => {
+    mockQueries({ sponsorship: makeSponsorship(['EXPERIMENTS']), proGroup: PRO_GROUP })
+    const wrapper = await mountComponent()
+
+    await choose(wrapper, ['EXPERIMENTS', '__all__'])
+
+    expect(selectedValues(wrapper)).toEqual(ALL_KEYS)
+    expect(optionLabel(wrapper, '__all__')).toBe('Deselect all')
+    expect(saveButton(wrapper).attributes('disabled')).toBeUndefined()
+  })
+
+  it('"Deselect all" clears the selection when all five are selected', async () => {
+    mockQueries({ sponsorship: makeSponsorship([...ALL_KEYS]), proGroup: PRO_GROUP })
+    const wrapper = await mountComponent()
+
+    expect(optionLabel(wrapper, '__all__')).toBe('Deselect all')
+    await choose(wrapper, [...ALL_KEYS, '__all__'])
+
+    expect(selectedValues(wrapper)).toEqual([])
+    expect(optionLabel(wrapper, '__all__')).toBe('Select all')
+  })
+
+  it('never keeps "__all__" in the model or tags', async () => {
+    mockQueries({ sponsorship: null, proGroup: PRO_GROUP })
+    const wrapper = await mountComponent()
+
+    await choose(wrapper, ['__all__'])
+    expect(selectedValues(wrapper)).not.toContain('__all__')
+    const tagTexts = wrapper.findAll('.el-select__tags .el-tag').map((t) => t.text())
+    expect(tagTexts).toEqual(ALL_KEYS.map((k) => PROJECT_ENTITLEMENT_LABELS[k]))
+    expect(tagTexts).not.toContain('Select all')
+    expect(tagTexts).not.toContain('Deselect all')
+
+    await saveButton(wrapper).trigger('click')
+    await flushPromises()
+    expect(mutate).toHaveBeenCalledWith({
+      mutation: setProjectSponsorshipMutation,
+      variables: { projectId: PROJECT_ID, entitlements: ALL_KEYS },
+    })
+  })
+
+  it('disables the select while saving', async () => {
+    let resolveMutate: (value: unknown) => void = () => undefined
+    mutate.mockImplementation(() => new Promise((resolve) => (resolveMutate = resolve)))
+    mockQueries({ sponsorship: null, proGroup: PRO_GROUP })
+    const wrapper = await mountComponent()
+
+    await choose(wrapper, ['EXPERIMENTS'])
+    expect(select(wrapper).props('disabled')).toBe(false)
+    await saveButton(wrapper).trigger('click')
+    await nextTick()
+    expect(select(wrapper).props('disabled')).toBe(true)
+
+    resolveMutate({})
+    await flushPromises()
+    expect(select(wrapper).props('disabled')).toBe(false)
   })
 
   // eslint-disable-next-line vue/max-len
@@ -212,7 +300,7 @@ describe('ProjectProSettings', () => {
     const wrapper = await mountComponent()
 
     expect(wrapper.find('[data-test-key="project-pro-settings"]').exists()).toBe(true)
-    expect(wrapper.findAll('input[type="checkbox"]')).toHaveLength(0)
+    expect(select(wrapper).exists()).toBe(false)
     expect(saveButton(wrapper).exists()).toBe(false)
     expect(wrapper.text()).toContain("Usage counts against Other Lab's plan.")
 

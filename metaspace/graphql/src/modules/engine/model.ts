@@ -13,6 +13,7 @@ import { MomentValueTransformer } from '../../utils/MomentValueTransformer'
 import { Ion } from '../annotation/model'
 import { MolecularDB } from '../moldb/model'
 import { Dataset } from '../dataset/model'
+import { User } from '../user/model'
 import { Moment } from 'moment'
 import { EnrichmentBootstrap } from '../enrichmentdb/model'
 
@@ -418,6 +419,8 @@ export class DiffRoi {
 }
 
 @Entity({ schema: 'public', name: 'image_segmentation_job' })
+@Index('image_segmentation_job_ds_id_user_id_index', ['datasetId', 'userId'])
+@Index('image_segmentation_job_ds_id_is_default_index', ['datasetId', 'isDefault'])
 export class ImageSegmentationJob {
   @PrimaryGeneratedColumn()
   id: number;
@@ -439,6 +442,28 @@ export class ImageSegmentationJob {
   // Job request parameters (database ids, fdr, adducts, algorithm params), as submitted.
   @Column({ type: 'jsonb', nullable: true })
   parameters: any | null;
+
+  // Owner of the job. Null for legacy/unowned rows and after the owner's account is deleted
+  // (SET NULL keeps a dataset's default result alive without its submitter).
+  @Column({ name: 'user_id', type: 'uuid', nullable: true })
+  userId: string | null;
+
+  @ManyToOne(() => User, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'user_id' })
+  user: User | null;
+
+  // True for the dataset-wide default segmentation shown to everyone.
+  @Column({ name: 'is_default', type: 'boolean', default: true })
+  isDefault: boolean;
+
+  @Column({ type: 'jsonb', nullable: true })
+  result: any | null;
+
+  @Column({ name: 'label_map_image_id', type: 'text', nullable: true })
+  labelMapImageId: string | null;
+
+  @Column({ name: 'label_map_image_url', type: 'text', nullable: true })
+  labelMapImageUrl: string | null;
 
   @Column({
     name: 'created_at',
@@ -508,7 +533,7 @@ export class Segmentation {
   @JoinColumn({ name: 'dataset_id' })
   dataset: EngineDataset;
 
-  @ManyToOne(() => ImageSegmentationJob, { onDelete: 'SET NULL', nullable: true })
+  @ManyToOne(() => ImageSegmentationJob, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'job_id' })
   job: ImageSegmentationJob | null;
 

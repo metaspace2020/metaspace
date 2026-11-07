@@ -23,7 +23,6 @@ export interface SegmentationOption {
   id: string
   segmentIndex: number
   name: string | null
-  stale: boolean
 }
 
 export interface LabelGroupOption {
@@ -140,26 +139,24 @@ export default defineComponent({
           }
         })
       } else {
-        regions = props.segmentations
-          .filter((seg) => !seg.stale)
-          .map((seg) => {
-            const r = { sourceKind: 'segmentation_cluster' as const, segmentationId: seg.id }
-            return {
-              regionKey: generateRegionKey(datasetId, {
-                sourceKind: 'segmentation_cluster',
-                segmentationId: seg.id,
-              }),
+        regions = props.segmentations.map((seg) => {
+          const r = { sourceKind: 'segmentation_cluster' as const, segmentationId: seg.id }
+          return {
+            regionKey: generateRegionKey(datasetId, {
               sourceKind: 'segmentation_cluster',
-              roiId: null,
               segmentationId: seg.id,
-              labelGroupName: seg.name ?? `cluster_${seg.segmentIndex}`,
-              included: true,
-              metadata: {
-                ...preserved.metadata,
-                sampleId: inferSampleId('', r, props.rois, props.segmentations),
-              },
-            }
-          })
+            }),
+            sourceKind: 'segmentation_cluster',
+            roiId: null,
+            segmentationId: seg.id,
+            labelGroupName: seg.name ?? `cluster_${seg.segmentIndex}`,
+            included: true,
+            metadata: {
+              ...preserved.metadata,
+              sampleId: inferSampleId('', r, props.rois, props.segmentations),
+            },
+          }
+        })
       }
       emit('update:modelValue', {
         ...props.modelValue,

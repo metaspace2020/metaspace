@@ -394,7 +394,6 @@ export const datasetSegmentationsQuery = gql`
       id
       segmentIndex
       name
-      stale
     }
   }
 `

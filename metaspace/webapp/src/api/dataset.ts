@@ -812,8 +812,8 @@ export const getInitialPeak = gql`
 `
 
 export const getSegmentationsQuery = gql`
-  query getSegmentationsQuery($datasetId: String!) {
-    segmentations(datasetId: $datasetId) {
+  query getSegmentationsQuery($datasetId: String!, $jobId: Int) {
+    segmentations(datasetId: $datasetId, jobId: $jobId) {
       id
       datasetId
       jobId
@@ -873,6 +873,36 @@ export const getSegmentationJobsQuery = gql`
       datasetId
       status
       error
+      userId
+      isDefault
+      isMine
     }
+  }
+`
+
+/**
+ * The segmentation result the caller should see: the run `jobId` names when given (the default or the caller's
+ * own), otherwise their own latest finished run, else the finished default.
+ */
+export const segmentationJobQuery = gql`
+  query segmentationJobQuery($datasetId: String!, $jobId: Int) {
+    segmentationJob(datasetId: $datasetId, jobId: $jobId) {
+      id
+      datasetId
+      status
+      error
+      userId
+      isDefault
+      isMine
+      resultData
+      labelMapUrl
+      updatedAt
+    }
+  }
+`
+
+export const deleteSegmentationJobMutation = gql`
+  mutation deleteSegmentationJobMutation($id: Int!) {
+    deleteSegmentationJob(id: $id)
   }
 `

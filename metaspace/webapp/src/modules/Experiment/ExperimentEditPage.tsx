@@ -50,7 +50,7 @@ import {
   VARIABLE_KEYS,
 } from './composables/experimentVariables'
 import type { ExperimentVariables, VariableKey } from './composables/experimentVariables'
-import { getDatasetDiagnosticsQuery } from '../../api/dataset'
+import { segmentationJobQuery } from '../../api/dataset'
 import { InfoFilled } from '@element-plus/icons-vue'
 
 interface IonPreviewCacheEntry {
@@ -277,20 +277,20 @@ export default defineComponent({
       if (!segs || segs.length === 0) return
       segmentationMasksInflight.value = { ...segmentationMasksInflight.value, [datasetId]: true }
       try {
+        // The caller's visible segmentation job (their own, else the dataset default) owns the label map.
         const res = await apolloClient.query({
-          query: getDatasetDiagnosticsQuery,
-          variables: { id: datasetId },
-          fetchPolicy: 'cache-first',
+          query: segmentationJobQuery,
+          variables: { datasetId },
+          fetchPolicy: 'network-only',
         })
-        const segDiag = res.data?.dataset?.diagnostics?.find((d: any) => d.type === 'SEGMENTATION')
-        const labelMapImage = segDiag?.images?.find((img: any) => img.key === 'LABEL_MAP')
-        if (!labelMapImage?.url) return
+        const labelMapUrl: string | null | undefined = res.data?.segmentationJob?.labelMapUrl
+        if (!labelMapUrl) return
         const colorBySegmentationId: Record<string, string> = {}
         segs.forEach((seg, idx) => {
           colorBySegmentationId[seg.id] = paletteColor(idx)
         })
         const masks = await buildSegmentationMasks({
-          labelMapUrl: labelMapImage.url,
+          labelMapUrl,
           segmentations: segs.map((s) => ({ id: s.id, segmentIndex: s.segmentIndex })),
           colorBySegmentationId,
         })
