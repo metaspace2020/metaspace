@@ -69,13 +69,3 @@ def test_write_imzml_roundtrip_continuous_and_processed(tmp_path):
         xs = sorted({c[0] for c in coords})
         assert reader.w == len(xs)
         assert reader.xs.tolist() == [c[0] - min(xs) for c in coords]
-
-
-def test_scoring_frames_deterministic():
-    from tests.consistency.synth import make_scoring_frames
-
-    t1, d1 = make_scoring_frames(seed=2)
-    t2, d2 = make_scoring_frames(seed=2)
-    assert t1.equals(t2) and d1.equals(d2)
-    assert (t1.chaos == 0).any() and (d1.chaos == 0).any()
-    assert list(t1.columns) == ['chaos', 'spatial', 'spectral', 'mz_err_abs', 'mz_err_rel', 'msm']

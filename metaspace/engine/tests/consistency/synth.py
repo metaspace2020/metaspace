@@ -176,29 +176,6 @@ def make_ds_config(
     return config
 
 
-def make_scoring_frames(seed: int = 0):
-    import pandas as pd
-
-    rng = np.random.default_rng(seed)
-
-    def frame(n, a, b, err_scale, n_zero):
-        df = pd.DataFrame(
-            {
-                'chaos': rng.beta(a, b, n),
-                'spatial': rng.beta(a, b, n),
-                'spectral': rng.beta(a, b, n),
-                'mz_err_abs': rng.normal(0.0, err_scale, n),
-                'mz_err_rel': rng.normal(0.0, err_scale / 2, n),
-            }
-        )
-        zero_rows = rng.choice(n, n_zero, replace=False)
-        df.loc[zero_rows, 'chaos'] = 0.0
-        df['msm'] = df.chaos * df.spatial * df.spectral
-        return df
-
-    return frame(150, 6, 2, 0.001, 10), frame(300, 2, 5, 0.004, 25)
-
-
 PIPELINE_DECOYS = ['+Be', '+Al']
 PIPELINE_FORMULAS = [f'C{i}H{2 + 2 * i}O' for i in range(1, 11)]
 PIPELINE_COORDS = list(
