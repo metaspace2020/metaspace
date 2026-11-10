@@ -60,7 +60,8 @@ def _compare(actual, expected):
     assert_exact(actual['formula'], expected['formula'], 'formula')
     assert_exact(actual['adduct'], expected['adduct'], 'adduct')
     for col in METRIC_COLUMNS:
-        assert_close(actual[col], expected[col], 'NUM_METRIC', col)
+        tol = 'MASS_ERR' if col.startswith('mz_err') else 'NUM_METRIC'
+        assert_close(actual[col], expected[col], tol, col)
     assert_close(actual['spatial'], expected['spatial'], 'NUM_ORDER', 'spatial')
     assert_close(actual['fdr'], expected['fdr'], 'FDR_SAME_DECOYS', 'fdr')
 

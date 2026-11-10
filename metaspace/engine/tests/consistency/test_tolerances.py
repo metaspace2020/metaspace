@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from tests.consistency.tolerances import TOLERANCES, assert_close, assert_exact, assert_img_sim
+from tests.consistency.tolerances import RTOLS, TOLERANCES, assert_close, assert_exact
 
 
 def test_assert_close_within_tolerance_passes():
@@ -47,20 +47,60 @@ def test_assert_exact_nan_equal():
     assert_exact(np.array([1.0, np.nan]), np.array([1.0, np.nan]))
 
 
-def test_assert_img_sim_mask_mismatch_fails():
-    expected = np.array([[1.0, 2.0], [0.0, 3.0]])
-    actual = np.array([[1.0, 2.0], [3.0, 0.0]])
-    with pytest.raises(AssertionError):
-        assert_img_sim(actual, expected)
-
-
-def test_assert_img_sim_identical_passes():
-    image = np.random.default_rng(0).random((5, 5))
-    assert_img_sim(image, image.copy())
-
-
 def test_tolerance_keys():
-    assert set(TOLERANCES) == {'NUM_TIGHT', 'NUM_METRIC', 'NUM_ORDER', 'FDR_SAME_DECOYS'}
+    assert set(TOLERANCES) == {
+        'NUM_TIGHT',
+        'NUM_METRIC',
+        'NUM_ORDER',
+        'FDR_SAME_DECOYS',
+        'MASS_ERR',
+        'PNG_LEVEL',
+    }
+
+
+def _grey_levels():
+    return np.linspace(0, 65535, 50).reshape(5, 10)
+
+
+def test_png_level_rejects_rescaled_image():
+    levels = _grey_levels()
+    with pytest.raises(AssertionError):
+        assert_close(levels * 0.5, levels, 'PNG_LEVEL')
+
+
+def test_png_level_accepts_one_level_error():
+    levels = _grey_levels()
+    assert_close(levels + 1, levels, 'PNG_LEVEL')
+    with pytest.raises(AssertionError):
+        assert_close(levels + 2, levels, 'PNG_LEVEL')
+
+
+def test_png_level_constant_image_passes_when_equal():
+    constant = np.full((4, 4), 1234.0)
+    assert_close(constant, constant.copy(), 'PNG_LEVEL')
+
+
+def test_mass_err_rejects_ten_percent_change():
+    with pytest.raises(AssertionError):
+        assert_close(np.array([2.2e-4]), np.array([2e-4]), 'MASS_ERR')
+    assert_close(np.array([2.2e-4]), np.array([2e-4]), 'NUM_ORDER')
+
+
+def test_mass_err_accepts_rounding_noise():
+    expected = np.array([2e-4, 500.0])
+    assert_close(expected * (1 + RTOLS['MASS_ERR'] / 10), expected, 'MASS_ERR')
+
+
+def test_mass_err_zero_expected_uses_absolute_floor():
+    floor = TOLERANCES['MASS_ERR']
+    assert_close(np.array([floor / 2]), np.array([0.0]), 'MASS_ERR')
+    with pytest.raises(AssertionError):
+        assert_close(np.array([floor * 10]), np.array([0.0]), 'MASS_ERR')
+
+
+def test_mass_err_nan_positions_must_match():
+    with pytest.raises(AssertionError):
+        assert_close(np.array([np.nan, 1.0]), np.array([1.0, np.nan]), 'MASS_ERR')
 
 
 def test_assert_tree_nested_numeric_and_strings():

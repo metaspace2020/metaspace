@@ -27,7 +27,7 @@ def _metrics(case, images=None, mz_images=None):
 def test_mass_metrics_match_reference():
     actual = {case.name: _metrics(case) for case in make_image_cases()}
     assert any(v['mz_stddev'][0] > 0 for v in actual.values())
-    check_ref('mz_errors/v1', actual, partial(assert_tree, tol='NUM_ORDER'))
+    check_ref('mz_errors/v1', actual, partial(assert_tree, tol='MASS_ERR'))
 
 
 def _shuffled(images, mz_images, rng):
@@ -47,4 +47,4 @@ def test_mass_metrics_pixel_order_invariant():
     rng = np.random.default_rng(0)
     for case in make_image_cases():
         images, mz_images = _shuffled(case.images, case.mz_images, rng)
-        assert_tree(_metrics(case, images, mz_images), _metrics(case), 'NUM_ORDER', case.name)
+        assert_tree(_metrics(case, images, mz_images), _metrics(case), 'MASS_ERR', case.name)

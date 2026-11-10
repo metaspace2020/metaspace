@@ -8,8 +8,10 @@ TOLERANCES: Dict[str, float] = {
     'NUM_METRIC': 1e-6,
     'NUM_ORDER': 1e-4,
     'FDR_SAME_DECOYS': 1e-9,
+    'MASS_ERR': 1e-12,
+    'PNG_LEVEL': 1.0,
 }
-IMG_SIM_MIN_PEARSON = 0.9999
+RTOLS: Dict[str, float] = {'MASS_ERR': 1e-9}
 
 
 def _prefix(label):
@@ -29,11 +31,14 @@ def _compare_arrays(actual, expected, tol, label):
     if diff.size == 0:
         return
     atol = TOLERANCES[tol]
-    worst = int(np.argmax(diff))
-    if diff.flat[worst] > atol:
+    rtol = RTOLS.get(tol, 0.0)
+    excess = diff - (atol + rtol * np.abs(np.nan_to_num(expected)))
+    worst = int(np.argmax(excess))
+    if excess.flat[worst] > 0:
         raise AssertionError(
-            f'{_prefix(label)}{tol} (abs {atol}) exceeded: max abs diff {diff.flat[worst]:.3e} '
-            f'at index {worst}, actual {actual.flat[worst]!r}, expected {expected.flat[worst]!r}'
+            f'{_prefix(label)}{tol} (abs {atol}, rel {rtol}) exceeded: '
+            f'abs diff {diff.flat[worst]:.3e} at index {worst}, '
+            f'actual {actual.flat[worst]!r}, expected {expected.flat[worst]!r}'
         )
 
 
@@ -80,23 +85,6 @@ def assert_exact(actual, expected, label: str = '') -> None:
             f'{_prefix(label)}not exactly equal at index {worst}: '
             f'actual {actual.flat[worst]!r}, expected {expected.flat[worst]!r}'
         )
-
-
-def assert_img_sim(actual: np.ndarray, expected: np.ndarray, label: str = '') -> None:
-    actual = np.asarray(actual, dtype=float)
-    expected = np.asarray(expected, dtype=float)
-    if actual.shape != expected.shape:
-        raise AssertionError(f'{_prefix(label)}image shape mismatch')
-    if not np.array_equal(actual != 0, expected != 0):
-        raise AssertionError(f'{_prefix(label)}nonzero masks differ')
-    if not np.any(expected):
-        return
-    a_flat, e_flat = actual.ravel(), expected.ravel()
-    if np.ptp(a_flat) == 0 and np.ptp(e_flat) == 0:
-        return
-    pearson = np.corrcoef(a_flat, e_flat)[0, 1]
-    if not pearson >= IMG_SIM_MIN_PEARSON:
-        raise AssertionError(f'{_prefix(label)}Pearson {pearson:.6f} < {IMG_SIM_MIN_PEARSON}')
 
 
 def assert_tree(actual, expected, tol: Optional[str] = None, label: str = '') -> None:
