@@ -17,6 +17,13 @@ def test_spectral_matches_reference():
     check_ref('spectral/v1', actual, partial(assert_tree, tol='NUM_METRIC'))
 
 
+def test_spectral_degenerate_input_returns_zero():
+    empty = np.zeros_like(make_image_cases()[0].flat)
+    score = spectral_metric(empty, make_image_cases()[0].theo_ints)
+    assert np.isfinite(score)
+    assert score == 0
+
+
 @pytest.mark.parametrize('v1_impl', [True, False])
 def test_spatial_matches_reference(v1_impl):
     actual = {
