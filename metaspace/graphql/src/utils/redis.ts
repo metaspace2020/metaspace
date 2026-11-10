@@ -1,83 +1,32 @@
-import * as moment from 'moment'
-
 const RATE_LIMIT_WINDOW = 24 * 60 * 60 // 24 hours in seconds
 const RATE_LIMIT_COUNT = 2
 
+/** Promisify one node_redis v3 callback-style command */
+const redisCall = <T>(redisClient: any, command: string, ...args: any[]) =>
+  new Promise<T>((resolve, reject) => {
+    redisClient[command](...args, (err: any, res: T) => (err ? reject(err) : resolve(res)))
+  })
+
+/**
+ * Sliding window log per IP: a sorted set of allowed download timestamps (ms). A call is refused
+ * when the window already holds `rateLimitCount` downloads. Refused attempts are not recorded,
+ * each download stops counting 24h after it happened, and the set never exceeds the limit.
+ * The key name differs from the old string counter so stale keys cannot cause WRONGTYPE errors.
+ */
 export default async function isRateLimited(redisClient: any, ip: string,
   rateLimitCount: number = RATE_LIMIT_COUNT): Promise<boolean> {
-  const key = `rate_limit:downloadLinkJson:${ip}`
+  const key = `rate_limit:downloadLinkJson:log:${ip}`
+  const now = Date.now()
+  const windowStart = now - RATE_LIMIT_WINDOW * 1000
 
-  // Get the current value from Redis
-  const storedValue = await new Promise<string | null>((resolve, reject) => {
-    redisClient.get(key, (err: any, res: string | null) => {
-      if (err) {
-        reject(err)
-      }
-      resolve(res)
-    })
-  })
+  await redisCall(redisClient, 'zremrangebyscore', key, '-inf', windowStart)
+  const downloadsInWindow = await redisCall<number>(redisClient, 'zcard', key)
 
-  const currentTime = moment().utc()
-
-  if (!storedValue) {
-    // Key doesn't exist, initialize the counter
-    await new Promise<void>((resolve, reject) => {
-      redisClient.set(key, '1', 'EX', RATE_LIMIT_WINDOW, (err: any) => {
-        if (err) {
-          reject(err)
-        }
-        resolve()
-      })
-    })
-    return false // Not rate-limited
+  if (downloadsInWindow >= rateLimitCount) {
+    return true
   }
 
-  // Check if the stored value is a timestamp (indicating the limit was reached)
-  if (moment(storedValue, moment.ISO_8601, true).isValid()) {
-    const limitReachedAt = moment(storedValue)
-    const elapsedTime = currentTime.diff(limitReachedAt, 'seconds')
-
-    if (elapsedTime < RATE_LIMIT_WINDOW) {
-      return true // Rate-limited
-    }
-
-    // If the window has passed, reset the limit
-    await new Promise<void>((resolve, reject) => {
-      redisClient.set(key, '1', 'EX', RATE_LIMIT_WINDOW, (err: any) => {
-        if (err) {
-          reject(err)
-        }
-        resolve()
-      })
-    })
-    return false // Not rate-limited
-  }
-
-  // Increment the counter
-  const currentCount = parseInt(storedValue, 10) + 1
-
-  if (currentCount > rateLimitCount) {
-    // Store the timestamp when the rate limit is reached
-    await new Promise<void>((resolve, reject) => {
-      redisClient.set(key, currentTime.toISOString(), 'EX', RATE_LIMIT_WINDOW, (err: any) => {
-        if (err) {
-          reject(err)
-        }
-        resolve()
-      })
-    })
-    return true // Rate-limited
-  }
-
-  // Update the counter
-  await new Promise<void>((resolve, reject) => {
-    redisClient.set(key, currentCount.toString(), 'XX', (err: any) => {
-      if (err) {
-        reject(err)
-      }
-      resolve()
-    })
-  })
-
-  return false // Not rate-limited
+  await redisCall(redisClient, 'zadd', key, now, `${now}:${Math.random().toString(36).slice(2)}`)
+  await redisCall(redisClient, 'expire', key, RATE_LIMIT_WINDOW)
+  return false
 }
