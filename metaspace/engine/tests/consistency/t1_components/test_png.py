@@ -6,7 +6,7 @@ import pytest
 
 from sm.engine.annotation.png_generator import PngGenerator
 from tests.consistency.refs import check_ref
-from tests.consistency.tolerances import assert_exact, assert_img_sim
+from tests.consistency.tolerances import assert_close, assert_exact
 
 pytestmark = pytest.mark.consistency
 
@@ -28,10 +28,6 @@ def test_png_matches_reference():
 
     def compare(actual, expected):
         assert_exact(actual['alpha'], expected['alpha'], 'alpha')
-        expected_values = np.array(expected['values'])
-        for channel in range(expected_values.shape[2]):
-            assert_img_sim(
-                actual['values'][:, :, channel], expected_values[:, :, channel], f'channel{channel}'
-            )
+        assert_close(actual['values'], np.array(expected['values']), 'PNG_LEVEL', 'values')
 
     check_ref('png/grey1', actual, compare)
