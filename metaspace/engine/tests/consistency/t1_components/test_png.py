@@ -1,5 +1,3 @@
-from io import BytesIO
-
 import numpy as np
 import png
 import pytest

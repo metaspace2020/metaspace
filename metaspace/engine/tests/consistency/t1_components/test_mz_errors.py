@@ -7,7 +7,7 @@ from scipy.sparse import coo_matrix
 from sm.engine.annotation.metrics import mass_metrics
 from tests.consistency.refs import check_ref
 from tests.consistency.synth import make_image_cases
-from tests.consistency.tolerances import assert_close, assert_tree
+from tests.consistency.tolerances import assert_tree
 
 pytestmark = pytest.mark.consistency
 

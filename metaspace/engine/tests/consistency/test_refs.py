@@ -7,6 +7,8 @@ from tests.consistency import refs
 from tests.consistency.tolerances import assert_exact
 from tests.consistency.tools.regen_refs import check_clean
 
+pytestmark = pytest.mark.consistency
+
 
 @pytest.fixture()
 def tmp_refs(tmp_path, monkeypatch):

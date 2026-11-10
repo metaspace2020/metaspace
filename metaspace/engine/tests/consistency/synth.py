@@ -55,10 +55,6 @@ class ImageCase:
     mz_images: List[coo_matrix]
 
 
-def _to_coo(dense: np.ndarray) -> coo_matrix:
-    return coo_matrix(dense)
-
-
 def _blob(shape, center, sigma):
     ys, xs = np.mgrid[0 : shape[0], 0 : shape[1]]
     return np.exp(-(((ys - center[0]) ** 2 + (xs - center[1]) ** 2) / (2 * sigma ** 2)))
@@ -79,7 +75,7 @@ def _build_case(name, rng, shape, pattern, zero_peaks=(), duplicate=False) -> Im
         noise = 1.0 + 0.1 * rng.standard_normal(shape)
         dense = np.where(pattern > 0, pattern * noise * THEO_INTS[k], 0.0)
         dense = np.clip(dense, 0, None)
-        img = _to_coo(dense)
+        img = coo_matrix(dense)
         if duplicate and k == 0:
             half = coo_matrix((img.data[::2] * 0.5, (img.row[::2], img.col[::2])), shape=img.shape)
             img = coo_matrix(

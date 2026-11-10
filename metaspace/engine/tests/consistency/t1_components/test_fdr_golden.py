@@ -1,13 +1,10 @@
-from functools import partial
-
 import numpy as np
 import pandas as pd
 import pytest
 
 from sm.engine.annotation.fdr import FDR, score_to_fdr_map
 from tests.consistency.refs import check_ref, load_ref
-from tests.consistency.synth import make_formulas
-from tests.consistency.tolerances import assert_close, assert_exact, assert_tree
+from tests.consistency.tolerances import assert_close, assert_exact
 
 pytestmark = pytest.mark.consistency
 

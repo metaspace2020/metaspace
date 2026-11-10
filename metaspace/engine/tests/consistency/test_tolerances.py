@@ -4,6 +4,8 @@ import pytest
 
 from tests.consistency.tolerances import RTOLS, TOLERANCES, assert_close, assert_exact
 
+pytestmark = pytest.mark.consistency
+
 
 def test_assert_close_within_tolerance_passes():
     assert_close(np.array([1.0, 2.0]), np.array([1.0, 2.0 + 5e-7]), 'NUM_METRIC')
