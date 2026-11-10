@@ -1,11 +1,12 @@
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
 
 from tests.consistency import refs
 from tests.consistency.tolerances import assert_exact
-from tests.consistency.tools.regen_refs import check_clean
+from tests.consistency.tools.regen_refs import check_clean, plan_local_run
 
 pytestmark = pytest.mark.consistency
 
@@ -64,3 +65,11 @@ def test_regen_refuses_dirty_tree():
     dirty = check_clean(status, 'metaspace/engine/tests/consistency/')
     assert dirty == ['metaspace/engine/sm/engine/annotation/fdr.py']
     assert check_clean('', 'metaspace/engine/tests/consistency/') == []
+
+
+def test_local_regen_plan_sets_regen_env_and_runs_from_engine_dir():
+    root = Path('/repo')
+    cmd, cwd, env = plan_local_run(root, ['tests/consistency/t1_components'], 'abc123')
+    assert cwd == root / 'metaspace' / 'engine'
+    assert env == {'CONSISTENCY_REGEN': '1', 'CONSISTENCY_GIT_SHA': 'abc123'}
+    assert 'pytest' in cmd and cmd[-1] == 'tests/consistency/t1_components'

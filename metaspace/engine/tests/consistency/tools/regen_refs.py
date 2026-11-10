@@ -1,11 +1,12 @@
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import List
+from typing import Dict, List, Tuple
 
 ALLOWED_PREFIX = 'metaspace/engine/tests/consistency/'
-CONTAINER_REF_DIR = '/tmp/engine-tests/tests/consistency/refs'
+ENGINE_DIR = 'metaspace/engine'
 
 
 def check_clean(status_text: str, allowed_prefix: str) -> List[str]:
@@ -19,12 +20,18 @@ def check_clean(status_text: str, allowed_prefix: str) -> List[str]:
     return dirty
 
 
-def _run(cmd, **kwargs):
-    return subprocess.run(cmd, check=True, **kwargs)
+def plan_local_run(
+    root: Path, paths: List[str], sha: str
+) -> Tuple[List[str], Path, Dict[str, str]]:
+    cmd = [sys.executable, '-m', 'pytest', '--tb=short', *paths]
+    env = {'CONSISTENCY_REGEN': '1', 'CONSISTENCY_GIT_SHA': sha}
+    return cmd, root / ENGINE_DIR, env
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description='Regenerate consistency references (host side)')
+    parser = argparse.ArgumentParser(
+        description='Regenerate consistency references in the current environment'
+    )
     parser.add_argument('paths', nargs='*', default=['tests/consistency'])
     args = parser.parse_args(argv)
 
@@ -38,26 +45,15 @@ def main(argv=None) -> int:
         return 1
 
     sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
-    compose = ['docker-compose', '-f', str(root / 'docker' / 'docker-compose.yml')]
-    script = root / '.claude' / 'skills' / 'test' / 'scripts' / 'engine-pytest.sh'
-    with open(script) as script_file:
-        result = subprocess.run(
-            compose
-            + ['exec', '-T', '-e', 'CONSISTENCY_REGEN=1', '-e', f'CONSISTENCY_GIT_SHA={sha}']
-            + ['api', 'bash', '-s', '--']
-            + args.paths,
-            stdin=script_file,
-        )
+    cmd, cwd, extra_env = plan_local_run(root, args.paths, sha)
+    result = subprocess.run(cmd, cwd=cwd, env={**os.environ, **extra_env}, check=False)
     if result.returncode != 0:
-        print('pytest failed in regen mode; refs not copied back', file=sys.stderr)
-        return result.returncode
-
-    container = subprocess.check_output(compose + ['ps', '-q', 'api'], cwd=root, text=True).strip()
-    dest = root / 'metaspace' / 'engine' / 'tests' / 'consistency' / 'refs'
-    dest.mkdir(parents=True, exist_ok=True)
-    _run(['docker', 'cp', f'{container}:{CONTAINER_REF_DIR}/.', str(dest)])
-    print(f'references copied to {dest}')
-    return 0
+        print(
+            'pytest failed in regen mode; refs may be partly rewritten, '
+            'review `git status` before keeping them',
+            file=sys.stderr,
+        )
+    return result.returncode
 
 
 if __name__ == '__main__':
