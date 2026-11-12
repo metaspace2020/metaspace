@@ -52,6 +52,7 @@ describe('DatasetActionsDropdown', () => {
     canEdit: true,
     canDelete: true,
     canDownload: true,
+    editAccessMode: 'FULL',
     uploadDT: '2021-03-11T14:29:21.641Z',
   }
   const mockUserAdmin = {
@@ -73,11 +74,11 @@ describe('DatasetActionsDropdown', () => {
   const propsData = { dataset: mockDataset, currentUser: mockUserAdmin }
   const propsDataOwner = { dataset: mockDataset, currentUser: mockUserOwner }
   const propsDataNormal = {
-    dataset: { ...mockDataset, canEdit: false, canDelete: false },
+    dataset: { ...mockDataset, canEdit: false, canDelete: false, editAccessMode: null },
     currentUser: mockUser,
   }
   const propsDataNormalNoOptions = {
-    dataset: { ...mockDataset, canEdit: false, canDelete: false, canDownload: false },
+    dataset: { ...mockDataset, canEdit: false, canDelete: false, canDownload: false, editAccessMode: null },
     currentUser: mockUser,
   }
 
@@ -245,6 +246,40 @@ describe('DatasetActionsDropdown', () => {
     })
     expect(wrapper.findAll('.mock-el-dropdown-item').length).toBe(3)
     // expect((wrapper.find('.mock-el-dropdown').element as any).style.visibility).toBe('hidden')
+  })
+
+  describe('edit access mode', () => {
+    const itemTexts = async (props: any) => {
+      mockQueries()
+      const wrapper = mount(testHarness, {
+        global: { plugins: [store, router], provide: { [DefaultApolloClient]: graphqlMocks } },
+        props,
+      })
+      await flushPromises()
+      await nextTick()
+      return wrapper.findAll('.mock-el-dropdown-item').map((item) => item.text())
+    }
+
+    it('shows Edit but not optical image, enrichment or reprocess for a sponsored editor', async () => {
+      const items = await itemTexts({
+        dataset: { ...mockDataset, canEdit: false, canDelete: false, editAccessMode: 'SPONSORED' },
+        currentUser: mockUser,
+      })
+      expect(items).toContain('Edit')
+      expect(items).not.toContain('Add optical image')
+      expect(items).not.toContain('Reprocess data')
+      expect(items).not.toContain('Ontology enrichment')
+    })
+
+    it('shows Edit for an owner with editAccessMode FULL', async () => {
+      const items = await itemTexts(propsDataOwner)
+      expect(items).toContain('Edit')
+    })
+
+    it('hides Edit when editAccessMode is null', async () => {
+      const items = await itemTexts(propsDataNormal)
+      expect(items).not.toContain('Edit')
+    })
   })
 
   describe('segmentation access', () => {

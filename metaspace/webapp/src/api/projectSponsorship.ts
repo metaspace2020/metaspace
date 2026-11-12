@@ -12,7 +12,7 @@ export const PROJECT_ENTITLEMENT_LABELS: Record<ProjectEntitlement, string> = {
   PRIVATE_SUBMISSION: 'Private submission',
   PRIVATE_RESUBMISSION: 'Private resubmission',
   EXPERIMENTS: 'Experiments',
-  DIFF_ANALYSIS: 'Diff ROI analysis',
+  DIFF_ANALYSIS: 'Differential analysis by ROI',
   SEGMENTATION: 'Segmentation',
 }
 

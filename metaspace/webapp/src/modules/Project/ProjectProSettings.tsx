@@ -3,6 +3,7 @@ import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import type { ApolloClient } from '@apollo/client/core'
 import { ElButton, ElNotification, ElOption, ElSelect } from '../../lib/element-plus'
 import reportError from '../../lib/reportError'
+import { useConfirmAsync } from '../../components/ConfirmAsync'
 import {
   currentUserProGroupQuery,
   PROJECT_ENTITLEMENT_LABELS,
@@ -25,6 +26,12 @@ interface CurrentUserProGroupQueryResult {
 /** Value of the synthetic "Select all" / "Deselect all" option; never kept in the selection. */
 const SELECT_ALL_VALUE = '__all__'
 
+/** Shown before a save that grants features the project did not have before. */
+export const SHARE_FEATURES_WARNING =
+  'Please review the selected permissions carefully. By authorizing this you may allow members of this project ' +
+  "to submit and edit datasets using your Pro group's quota, and to run downstream analysis on the datasets " +
+  'present in this project. Are you sure you want to continue?'
+
 /** Order-insensitive equality of two entitlement sets. */
 const sameEntitlements = (a: ProjectEntitlement[], b: ProjectEntitlement[]): boolean => {
   if (a.length !== b.length) return false
@@ -46,6 +53,7 @@ export default defineComponent({
   },
   setup(props) {
     const apolloClient = inject(DefaultApolloClient) as ApolloClient<unknown>
+    const confirmAsync = useConfirmAsync()
 
     const {
       result: sponsorshipResult,
@@ -76,6 +84,10 @@ export default defineComponent({
     )
 
     const isUnchanged = computed(() => sameEntitlements(selected.value, storedEntitlements.value))
+    /** Features in the current selection that the stored sponsorship does not grant yet, in display order. */
+    const addedEntitlements = computed<ProjectEntitlement[]>(() =>
+      PROJECT_ENTITLEMENT_ORDER.filter((k) => selected.value.includes(k) && !storedEntitlements.value.includes(k))
+    )
     const allSelected = computed(() => PROJECT_ENTITLEMENT_ORDER.every((k) => selected.value.includes(k)))
 
     /**
@@ -109,7 +121,7 @@ export default defineComponent({
         variables: { projectId: props.projectId },
       })
 
-    const onSave = (): Promise<void> =>
+    const saveSelection = (): Promise<void> =>
       runMutation(
         () =>
           selected.value.length === 0
@@ -123,6 +135,21 @@ export default defineComponent({
               }),
         'Pro settings saved'
       )
+
+    /** Saves directly when only removing features; asks for confirmation when new features would be granted. */
+    const onSave = (): Promise<void> => {
+      const added = addedEntitlements.value
+      if (added.length === 0) return saveSelection()
+      const confirmOptions = {
+        title: 'Share Pro features with this project?',
+        message:
+          `${SHARE_FEATURES_WARNING} Features being shared: ` +
+          `${added.map((k) => PROJECT_ENTITLEMENT_LABELS[k]).join(', ')}.`,
+        confirmButtonText: 'Share features',
+        confirmButtonLoadingText: 'Saving...',
+      }
+      return confirmAsync(confirmOptions, saveSelection)
+    }
 
     const onRemove = (): Promise<void> => runMutation(removeSponsorship, 'Pro sponsorship removed')
 

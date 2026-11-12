@@ -16,6 +16,10 @@ import { FieldResolversFor } from '../../../bindingTypes'
 import { getUserProjectRoles } from '../../../utils/db'
 import { metadataSchemas } from '../../../../metadataSchemas/metadataRegistry'
 import { getDatasetForEditing } from '../operation/getDatasetForEditing'
+import {
+  assertSponsoredUpdateAllowed,
+  getDatasetForSponsoredEditing,
+} from '../operation/getDatasetForSponsoredEditing'
 import { deleteDataset } from '../operation/deleteDataset'
 import { checkNoPublishedProjectRemoved, checkProjectsPublicationStatus } from '../operation/publicationChecks'
 import {
@@ -426,7 +430,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     } = args
 
     logger.info(`User '${ctx.user.id}' updating '${datasetId}' dataset...`)
-    const dataset = await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId)
+    const { dataset, sponsored } = await getDatasetForSponsoredEditing(ctx, datasetId)
+    if (sponsored) await assertSponsoredUpdateAllowed(ctx.entityManager, dataset, update)
 
     let metadata
     if (update.metadataJson) {

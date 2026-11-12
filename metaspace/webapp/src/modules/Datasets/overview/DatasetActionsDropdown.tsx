@@ -417,7 +417,7 @@ export const DatasetActionsDropdown = defineComponent({
           {(!currentUser?.id || canDownload) && (
             <ElDropdownItem command="download">{downloadActionLabel}</ElDropdownItem>
           )}
-          {canEdit && <ElDropdownItem command="edit">{editActionLabel}</ElDropdownItem>}
+          {dataset?.editAccessMode != null && <ElDropdownItem command="edit">{editActionLabel}</ElDropdownItem>}
           {config.features.imzml_browser && (
             <ElDropdownItem command="browser">
               <div class="relative actionBadge">

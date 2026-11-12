@@ -5,8 +5,8 @@ import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import type { DocumentNode } from 'graphql'
 import store from '../../store'
 import router from '../../router'
-import ProjectProSettings from './ProjectProSettings'
-import { ElNotification, ElOption, ElSelect } from '../../lib/element-plus'
+import ProjectProSettings, { SHARE_FEATURES_WARNING } from './ProjectProSettings'
+import { ElMessageBox, ElNotification, ElOption, ElSelect } from '../../lib/element-plus'
 import {
   currentUserProGroupQuery,
   PROJECT_ENTITLEMENT_LABELS,
@@ -123,9 +123,13 @@ describe('ProjectProSettings', () => {
 
   const saveButton = (wrapper: VueWrapper) => wrapper.find('[data-test-key="save-pro-settings"]')
 
+  let confirmSpy: Mock
+
   beforeEach(() => {
     mutate = vi.fn().mockResolvedValue({})
     vi.spyOn(ElNotification, 'success').mockImplementation(() => ({}) as ReturnType<typeof ElNotification.success>)
+    // Granting new features asks for confirmation first; accept it unless a test says otherwise.
+    confirmSpy = vi.spyOn(ElMessageBox, 'confirm').mockResolvedValue('confirm' as any)
   })
 
   afterEach(() => {
@@ -202,6 +206,57 @@ describe('ProjectProSettings', () => {
     expect(refetch).toHaveBeenCalled()
   })
 
+  it('asks for confirmation, naming the features being granted, before saving new features', async () => {
+    mockQueries({ sponsorship: makeSponsorship(['EXPERIMENTS']), proGroup: PRO_GROUP })
+    const wrapper = await mountComponent()
+
+    await choose(wrapper, ['PRIVATE_SUBMISSION', 'PRIVATE_RESUBMISSION', 'EXPERIMENTS'])
+    await saveButton(wrapper).trigger('click')
+    await flushPromises()
+
+    expect(confirmSpy).toHaveBeenCalledTimes(1)
+    expect(confirmSpy).toHaveBeenCalledWith(
+      `${SHARE_FEATURES_WARNING} Features being shared: Private submission, Private resubmission.`,
+      'Share Pro features with this project?',
+      expect.objectContaining({ confirmButtonText: 'Share features' })
+    )
+    expect(mutate).toHaveBeenCalledWith({
+      mutation: setProjectSponsorshipMutation,
+      variables: { projectId: PROJECT_ID, entitlements: ['PRIVATE_SUBMISSION', 'PRIVATE_RESUBMISSION', 'EXPERIMENTS'] },
+    })
+  })
+
+  it('does not save when the confirmation is cancelled', async () => {
+    confirmSpy.mockRejectedValue('cancel')
+    const { refetch } = mockQueries({ sponsorship: null, proGroup: PRO_GROUP })
+    const wrapper = await mountComponent()
+
+    await choose(wrapper, ['PRIVATE_SUBMISSION'])
+    await saveButton(wrapper).trigger('click')
+    await flushPromises()
+
+    expect(confirmSpy).toHaveBeenCalledTimes(1)
+    expect(mutate).not.toHaveBeenCalled()
+    expect(ElNotification.success).not.toHaveBeenCalled()
+    expect(refetch).not.toHaveBeenCalled()
+    expect(selectedValues(wrapper)).toEqual(['PRIVATE_SUBMISSION'])
+  })
+
+  it('saves without confirmation when only removing features', async () => {
+    mockQueries({ sponsorship: makeSponsorship(['EXPERIMENTS', 'SEGMENTATION']), proGroup: PRO_GROUP })
+    const wrapper = await mountComponent()
+
+    await choose(wrapper, ['EXPERIMENTS'])
+    await saveButton(wrapper).trigger('click')
+    await flushPromises()
+
+    expect(confirmSpy).not.toHaveBeenCalled()
+    expect(mutate).toHaveBeenCalledWith({
+      mutation: setProjectSponsorshipMutation,
+      variables: { projectId: PROJECT_ID, entitlements: ['EXPERIMENTS'] },
+    })
+  })
+
   it('sends entitlements in display order regardless of click order', async () => {
     mockQueries({ sponsorship: null, proGroup: PRO_GROUP })
     const wrapper = await mountComponent()
@@ -224,6 +279,7 @@ describe('ProjectProSettings', () => {
     await saveButton(wrapper).trigger('click')
     await flushPromises()
 
+    expect(confirmSpy).not.toHaveBeenCalled()
     expect(mutate).toHaveBeenCalledWith({
       mutation: removeProjectSponsorshipMutation,
       variables: { projectId: PROJECT_ID },

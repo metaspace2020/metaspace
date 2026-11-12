@@ -57,6 +57,7 @@ type Dataset {
 
   canEdit: Boolean!
   canDelete: Boolean!
+  editAccessMode: DatasetEditAccessMode
   canDownload: Boolean!
   # JSON string containing:
   # a list of authors,
@@ -112,6 +113,11 @@ type DatasetGroup {
   members: [UserGroup!]  # @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
   adminNames: [String!]
 }
+enum DatasetEditAccessMode {
+  FULL
+  SPONSORED
+}
+
 type DatasetProject {
   id: ID!
   name: String!

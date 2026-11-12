@@ -1,4 +1,4 @@
-import { FieldResolversFor } from '../../../bindingTypes'
+import { FieldResolversFor, ProjectSource } from '../../../bindingTypes'
 import { Query, ApiUsage } from '../../../binding'
 import { Context } from '../../../context'
 import { UserError } from 'graphql-errors'
@@ -8,6 +8,7 @@ import logger from '../../../utils/logger'
 import { URLSearchParams } from 'url'
 import { assertCanEditGroup, assertCanAddDataset } from '../../../modules/group/controller'
 import { User } from '../../user/model'
+import { ProjectSourceRepository } from '../../project/ProjectSourceRepository'
 import { fetchBetaFeatures } from '../util/betaTesterApi'
 
 interface AllPlansArgs {
@@ -236,6 +237,8 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       const response = await makeApiRequest(ctx, `/api/api-usages${queryString}`)
       const apiUsages = response.data
       const userHash: Record<string, User | null> = {}
+      const projectHash: Record<string, ProjectSource | null> = {}
+      const projectRepository = entityManager.getCustomRepository(ProjectSourceRepository)
 
       for (let i = 0; i < apiUsages.length; i++) {
         const usage = apiUsages[i]
@@ -244,6 +247,14 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
           userHash[usage.userId] = user || null
         }
         apiUsages[i].user = userHash[usage.userId]
+
+        // A sponsored action records the project that sponsored it; resolve it so the sponsor can see which one.
+        // The repository applies the project visibility rules, so a private project the caller cannot see is null.
+        const projectId: string | null | undefined = usage.projectId
+        if (projectId != null && !(projectId in projectHash)) {
+          projectHash[projectId] = await projectRepository.findProjectById(ctx.user, projectId)
+        }
+        apiUsages[i].project = projectId != null ? projectHash[projectId] : null
       }
 
       return apiUsages

@@ -76,6 +76,7 @@ export interface DatasetDetailItem {
   }
   rawOpticalImageUrl: string
   canEdit: boolean
+  editAccessMode: 'FULL' | 'SPONSORED' | null
   canDelete: boolean
   canDownload: boolean
   uploadDT: string
@@ -161,6 +162,7 @@ export const datasetDetailItemFragment = gql`
     thumbnailOpticalImageUrl
     ionThumbnailUrl
     canEdit
+    editAccessMode
     canDelete
     canDownload
     uploadDT
