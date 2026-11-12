@@ -104,6 +104,109 @@ describe('MetadataEditor', () => {
     expect(wrapper.vm.state.metaspaceOptions).toMatchSnapshot('metaspaceOptions')
   })
 
+  const mountWithAccessMode = async (editAccessMode: string) => {
+    const graphqlMockClient = initMockGraphqlClient({
+      Query: () => ({
+        dataset: () => ({ ...mockDataset, editAccessMode }),
+      }),
+    })
+    const wrapper = mount(MetadataEditor, {
+      global: {
+        plugins: [store, router],
+        provide: {
+          [DefaultApolloClient]: graphqlMockClient,
+        },
+      },
+      props: { datasetId: '123' },
+    })
+    await wrapper.vm.state.loadingPromise
+    await flushPromises()
+    await nextTick()
+    return wrapper
+  }
+  // the section's own forms, not the ones inside its dialogs
+  const findSectionForms = (wrapper) =>
+    wrapper
+      .findComponent({ name: 'DataManagementSection' })
+      .findAllComponents({ name: 'ElForm' })
+      .filter((form) => form.classes().includes('w-full'))
+  const lockedText = 'Locked: only the dataset owner can change this.'
+
+  it('locks data management, PI and visibility when access is sponsored', async () => {
+    const wrapper = await mountWithAccessMode('SPONSORED')
+
+    expect(wrapper.findComponent({ name: 'DataManagementSection' }).props('locked')).toBe(true)
+    expect(wrapper.findComponent({ name: 'VisibilityOptionSection' }).props('locked')).toBe(true)
+    expect(wrapper.text()).toContain(lockedText)
+    expect(wrapper.findComponent({ name: 'VisibilityOptionSection' }).find('.el-switch').classes()).toContain(
+      'is-disabled'
+    )
+    // Element Plus disables every control inside a disabled el-form (selects are mocked in this suite)
+    const dmForms = findSectionForms(wrapper)
+    expect(dmForms.length).toBeGreaterThan(0)
+    dmForms.forEach((form) => expect(form.props('disabled')).toBe(true))
+    // annotation settings stay enabled
+    expect(wrapper.findComponent({ name: 'MetaspaceOptionsSection' }).props('locked')).toBeUndefined()
+  })
+
+  it('locks nothing for FULL access', async () => {
+    const wrapper = await mountWithAccessMode('FULL')
+
+    expect(wrapper.findComponent({ name: 'DataManagementSection' }).props('locked')).toBe(false)
+    expect(wrapper.findComponent({ name: 'VisibilityOptionSection' }).props('locked')).toBe(false)
+    expect(wrapper.text()).not.toContain(lockedText)
+    expect(findSectionForms(wrapper).length).toBeGreaterThan(0)
+    findSectionForms(wrapper).forEach((form) => expect(form.props('disabled')).toBe(false))
+    expect(wrapper.findComponent({ name: 'VisibilityOptionSection' }).find('.el-switch').classes()).not.toContain(
+      'is-disabled'
+    )
+  })
+
+  describe('principal investigator validation for a grouped dataset with a withheld PI email', () => {
+    const groupedDataset = {
+      name: 'Grouped dataset',
+      group: { id: 'group-id', name: 'Group', shortName: 'G' },
+      principalInvestigator: { name: 'John doe', email: null },
+      adducts: ['+H'],
+      configJson: JSON.stringify({ image_generation: { ppm: 3 } }),
+    }
+    const mountGrouped = async (editAccessMode: string) => {
+      const graphqlMockClient = initMockGraphqlClient({
+        Query: () => ({
+          dataset: () => ({ ...mockDataset, ...groupedDataset, editAccessMode }),
+          adductSuggestions: mockAdductSuggestions,
+        }),
+      })
+      const wrapper = mount(MetadataEditor, {
+        global: {
+          plugins: [store, router],
+          provide: {
+            [DefaultApolloClient]: graphqlMockClient,
+          },
+        },
+        props: { datasetId: '123' },
+      })
+      await wrapper.vm.state.loadingPromise
+      await flushPromises()
+      await nextTick()
+      return wrapper
+    }
+
+    it('skips the locked PI checks for a sponsored editor', async () => {
+      const wrapper = await mountGrouped('SPONSORED')
+
+      expect(wrapper.vm.getFormValueForSubmit()).not.toBeNull()
+      expect(wrapper.vm.errors.metaspaceOptions?.principalInvestigator).toBeUndefined()
+    })
+
+    it('still validates the PI for FULL access', async () => {
+      const wrapper = await mountGrouped('FULL')
+
+      expect(wrapper.vm.getFormValueForSubmit()).toBeNull()
+      expect(wrapper.vm.errors.metaspaceOptions.principalInvestigator.email).toBe('should be a valid email address')
+    })
+  })
+
   it("should load the user's last dataset when present", async () => {
     const graphqlMockClient = initMockGraphqlClient({
       Query: () => ({

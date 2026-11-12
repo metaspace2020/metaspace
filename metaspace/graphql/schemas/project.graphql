@@ -82,6 +82,10 @@ type Query {
               query: String, userIds: [ID!]): Int!
 
   projectUrlSlugIsValid(urlSlug: String!, existingProjectId: ID): Boolean! # Throws error if invalid, consistent with updateProject
+
+  ## Pro sponsorship
+  projectSponsorship(projectId: ID!): ProjectSponsorship
+  currentUserProGroup: Group # The Pro group the current user may sponsor projects with
 }
 
 type Mutation {
@@ -127,4 +131,26 @@ type Mutation {
   removeProjectExternalLink(projectId: ID!,
                             provider: String!,
                             link: String): Project!
+
+  ## Pro sponsorship (project managers only)
+  setProjectSponsorship(projectId: ID!, entitlements: [ProjectEntitlement!]!): ProjectSponsorship!
+  removeProjectSponsorship(projectId: ID!): Boolean!
+}
+
+enum ProjectEntitlement {
+  PRIVATE_SUBMISSION
+  PRIVATE_RESUBMISSION
+  EXPERIMENTS
+  DIFF_ANALYSIS
+  SEGMENTATION
+}
+
+# Pro features a Pro group member grants to a project
+type ProjectSponsorship {
+  projectId: ID!
+  proGroupId: ID!
+  proGroup: Group # null if the group no longer exists
+  sponsorUserId: ID!
+  entitlements: [ProjectEntitlement!]!
+  createdAt: String!
 }

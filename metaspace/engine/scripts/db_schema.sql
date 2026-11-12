@@ -411,6 +411,11 @@ CREATE TABLE "public"."image_segmentation_job" (
   "error" text, 
   "submitter_email" text, 
   "parameters" jsonb, 
+  "user_id" uuid, 
+  "is_default" boolean NOT NULL DEFAULT true, 
+  "result" jsonb, 
+  "label_map_image_id" text, 
+  "label_map_image_url" text, 
   "created_at" TIMESTAMP NOT NULL DEFAULT NOW(), 
   "updated_at" TIMESTAMP NOT NULL DEFAULT NOW(), 
   CONSTRAINT "PK_02b755530fe45b2070cf66f93b7" PRIMARY KEY ("id")
@@ -422,6 +427,16 @@ CREATE INDEX "image_segmentation_job_ds_id_index" ON "public"."image_segmentatio
 
 CREATE INDEX "image_segmentation_job_status_index" ON "public"."image_segmentation_job" (
   "status"
+) ;
+
+CREATE INDEX "image_segmentation_job_ds_id_is_default_index" ON "public"."image_segmentation_job" (
+  "ds_id", 
+  "is_default"
+) ;
+
+CREATE INDEX "image_segmentation_job_ds_id_user_id_index" ON "public"."image_segmentation_job" (
+  "ds_id", 
+  "user_id"
 ) ;
 
 CREATE TABLE "public"."segmentation" (
@@ -715,6 +730,10 @@ ALTER TABLE "public"."diff_roi" ADD CONSTRAINT "FK_483b703f6f7daa54977c79a9d2b" 
   "roi_id") REFERENCES "public"."roi"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
 
+ALTER TABLE "public"."image_segmentation_job" ADD CONSTRAINT "FK_60741f31f070f7f18270cfa0b07" FOREIGN KEY (
+  "user_id") REFERENCES "graphql"."user"("id"
+) ON DELETE SET NULL ON UPDATE NO ACTION;
+
 ALTER TABLE "public"."image_segmentation_job" ADD CONSTRAINT "FK_5bcd68b2b4aca24cc5edfc9daeb" FOREIGN KEY (
   "ds_id") REFERENCES "public"."dataset"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -725,7 +744,7 @@ ALTER TABLE "public"."segmentation" ADD CONSTRAINT "FK_1edf03796c0b5d6c554a33de5
 
 ALTER TABLE "public"."segmentation" ADD CONSTRAINT "FK_0c6a7c2a1459e2678ed1702496c" FOREIGN KEY (
   "job_id") REFERENCES "public"."image_segmentation_job"("id"
-) ON DELETE SET NULL ON UPDATE NO ACTION;
+) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE "public"."segmentation_ion_profile" ADD CONSTRAINT "FK_dc8d93ce0234e49a86b7c4547e5" FOREIGN KEY (
   "segmentation_id") REFERENCES "public"."segmentation"("id"

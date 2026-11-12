@@ -29,7 +29,10 @@ from sm.engine.postprocessing.experiment_wrapper import (
     submit_experiment_stats_job,
 )
 from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
-from sm.engine.postprocessing.segmentation_wrapper import submit_segmentation_job
+from sm.engine.postprocessing.segmentation_wrapper import (
+    del_segmentation_job_images,
+    submit_segmentation_job,
+)
 from sm.engine.postprocessing.ds_size_hash import save_size_hash
 from sm.engine.optical_image import del_optical_image
 from sm.engine.config import SMConfig
@@ -182,6 +185,7 @@ class DatasetManager:  # pylint: disable=too-many-public-methods
 
         self.logger.info(f'Deleting dataset: {ds.id}')
         del_diagnostics(ds.id)
+        del_segmentation_job_images(ds.id, self._db)
         del_jobs(ds)
         del_optical_image(self._db, ds.id)
         delete_ion_thumbnail(self._db, ds)

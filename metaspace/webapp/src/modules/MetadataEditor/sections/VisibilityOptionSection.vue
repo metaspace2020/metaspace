@@ -37,12 +37,14 @@
             </template>
           </el-popover>
         </div>
+        <p v-if="locked" class="text-xs text-gray-600">Locked: only the dataset owner can change this.</p>
       </el-col>
       <el-col :span="18" style="padding: 0 5px">
         <el-switch
           :model-value="isPublic"
           active-text="Public"
           inactive-text="Private"
+          :disabled="locked"
           @change="handleChangeIsPublic"
         />
       </el-col>
@@ -68,6 +70,7 @@ export default defineComponent({
       type: Boolean as PropType<boolean>,
       required: true,
     },
+    locked: { type: Boolean, default: false },
   },
   emits: ['change'],
   setup(props, { emit }) {

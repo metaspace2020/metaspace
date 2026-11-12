@@ -585,6 +585,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
         <div class=\\"el-row\\">
           <div class=\\"el-col el-col-6\\">
             <div class=\\"metadata-section__title\\">Data management</div>
+            <!--v-if-->
           </div>
           <div class=\\"el-col el-col-18\\">
             <div class=\\"el-row\\" style=\\"margin-left: -4px; margin-right: -4px;\\">
@@ -843,6 +844,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                 </div>
               </div>
             </div>
+            <!--v-if-->
           </div>
           <div class=\\"el-col el-col-18\\" style=\\"padding: 0px 5px;\\">
             <div class=\\"el-switch is-checked\\"><input class=\\"el-switch__input\\" type=\\"checkbox\\" role=\\"switch\\" aria-checked=\\"true\\" aria-disabled=\\"false\\" name=\\"\\" true-value=\\"true\\" false-value=\\"false\\" id=\\"el-id-replaced\\"><span class=\\"el-switch__label el-switch__label--left\\"><!--v-if--><span aria-hidden=\\"true\\">Private</span></span><span class=\\"el-switch__core\\"><!--v-if--><div class=\\"el-switch__action\\"><!--v-if--></div></span><span class=\\"el-switch__label el-switch__label--right is-active\\"><!--v-if--><span aria-hidden=\\"false\\">Public</span></span></div>

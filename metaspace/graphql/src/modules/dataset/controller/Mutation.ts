@@ -16,6 +16,10 @@ import { FieldResolversFor } from '../../../bindingTypes'
 import { getUserProjectRoles } from '../../../utils/db'
 import { metadataSchemas } from '../../../../metadataSchemas/metadataRegistry'
 import { getDatasetForEditing } from '../operation/getDatasetForEditing'
+import {
+  assertSponsoredUpdateAllowed,
+  getDatasetForSponsoredEditing,
+} from '../operation/getDatasetForSponsoredEditing'
 import { deleteDataset } from '../operation/deleteDataset'
 import { checkNoPublishedProjectRemoved, checkProjectsPublicationStatus } from '../operation/publicationChecks'
 import {
@@ -25,8 +29,6 @@ import {
   DiffRoi,
   Segmentation,
   ImageSegmentationJob,
-  DatasetDiagnostic,
-  DiagnosticTypeOptions,
 } from '../../engine/model'
 import { addExternalLink, removeExternalLink } from '../../project/ExternalLink'
 import { esDatasetByID } from '../../../../esConnector'
@@ -41,9 +43,18 @@ import { getS3Client } from '../../../utils/awsClient'
 import config from '../../../utils/config'
 import { assertCanPerformAction, getDeviceInfo, hashIp, performAction } from '../../plan/util/canPerformAction'
 import { hasBetaFeature } from '../../plan/util/betaTesterApi'
+import { memberProjectIds } from '../../plan/util/memberProjectIds'
+import { memberGroupId } from '../../plan/util/memberGroupId'
 import { cleanEmptyStrings } from '../../../utils/regexSanitizer'
 import canEditEsDataset from '../operation/canEditEsDataset'
 import parseRoiGeoJson, { getDatasetImageBounds } from '../operation/roiGeoJson'
+import {
+  assertJobNotInUse,
+  canManageSegmentationJob,
+  findFinishedJobInSlot,
+  findLiveJobInSlot,
+  LIVE_JOB_STATUSES,
+} from '../operation/segmentationOwnership'
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -280,6 +291,16 @@ const assertValidScoringModel = async(ctx: Context, scoringModel?: string | null
   }
 }
 
+/**
+ * Ids of the projects a dataset is currently linked to (approved or not).
+ *
+ * @param entityManager Entity manager to query with.
+ * @param datasetId Dataset id.
+ * @returns Project ids from the dataset's `DatasetProject` rows.
+ */
+const currentDatasetProjectIds = async(entityManager: EntityManager, datasetId: string): Promise<string[]> =>
+  (await entityManager.find(DatasetProjectModel, { datasetId })).map(dp => dp.projectId)
+
 const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
   const { input, priority, force, delFirst, skipValidation, useLithops, performEnrichment } = args
   const datasetId = args.id || newDatasetId()
@@ -289,6 +310,9 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     userId: ctx.user.id,
     datasetId: datasetId,
     groupId: input.groupId,
+    projectIds: await memberProjectIds(ctx, datasetIdWasSpecified && input.projectIds == null
+      ? await currentDatasetProjectIds(ctx.entityManager, datasetId)
+      : input.projectIds as string[] | null | undefined),
     type: 'dataset',
     visibility: input.isPublic ? 'public' : 'private',
     actionDt: moment.utc(moment.utc().toDate()),
@@ -407,7 +431,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     } = args
 
     logger.info(`User '${ctx.user.id}' updating '${datasetId}' dataset...`)
-    const dataset = await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId)
+    const { dataset, sponsored } = await getDatasetForSponsoredEditing(ctx, datasetId)
+    if (sponsored) await assertSponsoredUpdateAllowed(ctx.entityManager, dataset, update)
 
     let metadata
     if (update.metadataJson) {
@@ -465,6 +490,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       datasetId: datasetId,
       type: 'dataset',
       groupId: update.groupId || dataset.groupId,
+      projectIds: await memberProjectIds(ctx, update.projectIds != null
+        ? update.projectIds as string[]
+        : await currentDatasetProjectIds(ctx.entityManager, datasetId)),
       visibility: (update.isPublic === undefined ? engineDataset.isPublic : update.isPublic) ? 'public' : 'private',
       actionDt: moment.utc(moment.utc().toDate()),
       source: (ctx as any).getSource(),
@@ -691,7 +719,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         datasetId,
         type: 'dataset',
         visibility: dataset._source?.ds_is_public ? 'public' : 'private',
-        groupId: dataset._source?.ds_group_id,
+        groupId: await memberGroupId(ctx),
+        projectIds: await memberProjectIds(ctx, dataset._source?.ds_project_ids),
         actionDt: moment.utc(moment.utc().toDate()),
         source: (ctx as any).getSource(),
         deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),
@@ -988,6 +1017,17 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       throw new UserError('Dataset not found or access denied')
     }
 
+    // Editors (re)run the dataset-wide default segmentation; everyone else runs a private one.
+    const isDefault = await canEditEsDataset(dataset, ctx)
+    if (await findLiveJobInSlot(ctx.entityManager, datasetId, isDefault, ctx.user.id) != null) {
+      throw new UserError('A segmentation is already running for this dataset')
+    }
+    // The engine replaces the slot's previous result once the new run finishes; refuse if an experiment uses it.
+    const previousJob = await findFinishedJobInSlot(ctx.entityManager, datasetId, isDefault, ctx.user.id)
+    if (previousJob != null) {
+      await assertJobNotInUse(ctx.entityManager, previousJob)
+    }
+
     const isBetaTester = await hasBetaFeature(ctx.user.id, 'segmentation')
     const action: any = {
       actionType: 'segmentation',
@@ -995,7 +1035,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       datasetId,
       type: 'dataset',
       visibility: dataset._source?.ds_is_public ? 'public' : 'private',
-      groupId: dataset._source?.ds_group_id,
+      groupId: await memberGroupId(ctx),
+      projectIds: await memberProjectIds(ctx, dataset._source?.ds_project_ids),
       actionDt: moment.utc(moment.utc().toDate()),
       source: (ctx as any).getSource(),
       deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),
@@ -1012,6 +1053,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       fdr,
       params: params ? JSON.parse(params) : {},
       email: ctx.user.email,
+      user_id: ctx.user.id,
+      is_default: isDefault,
     }
     if (adducts != null) body.adducts = adducts
     if (minMz != null) body.min_mz = minMz
@@ -1022,17 +1065,6 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
        for dataset ${datasetId}, algorithm: ${algorithm}, databases: ${databaseIds.length}, fdr: ${fdr}`)
 
     try {
-      // Scoped to datasetId; ion_profile rows cascade from segmentation. Delete before enqueue
-      // so the new image_segmentation_job inserted by the API is not removed.
-      await ctx.entityManager.transaction(async(em) => {
-        await em.delete(Segmentation, { datasetId })
-        await em.delete(ImageSegmentationJob, { datasetId })
-        await em.delete(DatasetDiagnostic, {
-          datasetId,
-          type: DiagnosticTypeOptions.SEGMENTATION,
-        })
-      })
-
       const apiCallStart = Date.now()
       await smApiDatasetRequest('/v1/segmentation/run', body)
       const apiCallEnd = Date.now()
@@ -1074,9 +1106,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       throw new UserError('Dataset not found or access denied')
     }
 
-    // Check if user can edit the dataset
-    const canEdit = await canEditEsDataset(dataset, ctx)
-    if (!canEdit) {
+    // Owners manage their private job's segments; editors manage the default job's segments.
+    const job = segmentation.jobId != null
+      ? await ctx.entityManager.findOne(ImageSegmentationJob, segmentation.jobId)
+      : undefined
+    if (job == null || !(await canManageSegmentationJob(job, dataset, ctx))) {
       throw new UserError('You do not have permission to edit this segmentation')
     }
 
@@ -1089,6 +1123,42 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     // Return the updated segmentation
     const updatedSegmentation = await ctx.entityManager.findOne(Segmentation, { where: { id } })
     return updatedSegmentation
+  },
+
+  /**
+   * Deletes a segmentation job and its results through the engine.
+   *
+   * @param source - Unused parent value
+   * @param args - `id` of the job to delete
+   * @param ctx - Request context
+   * @returns True once the engine has deleted the job
+   * @throws UserError when unauthenticated, the job or dataset is not found, the caller may not manage the job,
+   *   the job is still running, an experiment uses it, or the engine call fails
+   */
+  deleteSegmentationJob: async(source: any, { id }: { id: number }, ctx: Context) => {
+    if (ctx.user.id == null) {
+      throw new UserError('Not authenticated')
+    }
+
+    const job = await ctx.entityManager.findOne(ImageSegmentationJob, id)
+    if (job == null) {
+      throw new UserError('Segmentation job not found')
+    }
+    const dataset = await esDatasetByID(job.datasetId, ctx.user)
+    if (!dataset) {
+      throw new UserError('Dataset not found or access denied')
+    }
+    if (!(await canManageSegmentationJob(job, dataset, ctx))) {
+      throw new UserError('You do not have permission to delete this segmentation')
+    }
+    if (LIVE_JOB_STATUSES.includes(job.status)) {
+      throw new UserError('A segmentation is already running for this dataset')
+    }
+    await assertJobNotInUse(ctx.entityManager, job)
+
+    // The column is BIGSERIAL, so pg hands the id back as a string; the engine expects an integer.
+    await smApiDatasetRequest('/v1/segmentation/delete_job', { ds_id: job.datasetId, job_id: Number(job.id) })
+    return true
   },
 }
 

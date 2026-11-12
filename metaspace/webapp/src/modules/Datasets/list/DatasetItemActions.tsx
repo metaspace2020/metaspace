@@ -333,7 +333,7 @@ export default defineComponent({
             </div>
           )}
 
-          {dataset.canEdit && (
+          {dataset?.editAccessMode != null && (
             <div class="items-center">
               <el-icon>
                 <EditPen />

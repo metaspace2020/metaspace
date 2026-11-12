@@ -7,6 +7,7 @@ import { DatasetProject as DatasetProjectModel } from '../../dataset/model'
 import updateProjectDatasets from './updateProjectDatasets'
 import { ProjectSourceRepository } from '../ProjectSourceRepository'
 import logger from '../../../utils/logger'
+import { revokeSponsorshipBySponsor } from '../../projectSponsorship/operation/revokeSponsorshipBySponsor'
 
 export default async(ctx: Context, userId: string, projectId: string, newRole: UserProjectRole | null) => {
   const currentUserId = ctx.getUserIdOrFail()
@@ -60,6 +61,7 @@ export default async(ctx: Context, userId: string, projectId: string, newRole: U
   } else if (newRole == null) {
     logger.info(`User ${userId} removed from project ${projectId}.`)
     await userProjectRepository.delete({ userId, projectId })
+    await revokeSponsorshipBySponsor(ctx, projectId, userId)
   } else {
     await userProjectRepository.update({ userId, projectId }, { role: newRole })
   }

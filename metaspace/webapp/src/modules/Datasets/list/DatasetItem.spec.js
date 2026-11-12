@@ -45,6 +45,7 @@ describe('DatasetItem', () => {
     },
     projects: [],
     canEdit: true,
+    editAccessMode: 'FULL',
     canDelete: true,
     uploadDT: '2020-04-17T11:37:50.318667',
   }

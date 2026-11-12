@@ -52,9 +52,14 @@
           :error="errors['metaspaceOptions']"
           :submitter="state.submitter"
           :is-new-dataset="isNew"
+          :locked="isLocked"
           @change="onOptionChange"
         />
-        <visibility-option-section :is-public="state.metaspaceOptions.isPublic" @change="handleVisibilityChange" />
+        <visibility-option-section
+          :is-public="state.metaspaceOptions.isPublic"
+          :locked="isLocked"
+          @change="handleVisibilityChange"
+        />
         <metaspace-options-section
           :value="state.metaspaceOptions"
           :error="errors['metaspaceOptions']"
@@ -199,6 +204,7 @@ export default defineComponent({
       scoringModels: [],
       metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
       submitter: null,
+      editAccessMode: null,
       initialValue: null,
       initialMetaspaceOptions: null,
       autoDatasetName: null,
@@ -214,6 +220,7 @@ export default defineComponent({
     })
 
     const isNew = computed(() => props.datasetId == null)
+    const isLocked = computed(() => !isNew.value && state.editAccessMode === 'SPONSORED')
     const otherSections = computed(() => {
       const allSections = Object.keys(state.schema?.properties)
       const specialSections = ['Data_Type', 'Sample_Information', 'Sample_Preparation', 'MS_Analysis']
@@ -354,6 +361,7 @@ export default defineComponent({
       if (dataset.submitter != null) {
         state.submitter = dataset.submitter
       }
+      state.editAccessMode = dataset.editAccessMode ?? null
 
       updateCurrentAdductOptions()
     }
@@ -396,10 +404,12 @@ export default defineComponent({
       if (!ppm) {
         set(errors, ['metaspaceOptions', 'ppm'], 'ppm cannot be blank')
       }
-      if (groupId == null && principalInvestigator == null) {
+      // A sponsored editor cannot change the locked group/PI sections (graphql enforces it) and is not sent the PI
+      // email, so validating them would block the submit on a hidden, read-only field.
+      if (!isLocked.value && groupId == null && principalInvestigator == null) {
         set(errors, ['metaspaceOptions', 'groupId'], 'select a group')
       }
-      if (principalInvestigator != null) {
+      if (!isLocked.value && principalInvestigator != null) {
         const piName = principalInvestigator.name || ''
         const piEmail = principalInvestigator.email || ''
         if (!groupId || piName.length > 0 || piEmail.length > 0) {
@@ -622,6 +632,7 @@ export default defineComponent({
             metaspaceOptions: metaspaceOptionsFromDataset(data.dataset, false),
             submitter,
             databases: data.dataset.databases,
+            editAccessMode: data.dataset.editAccessMode,
           }
         }
       } catch (e) {
@@ -721,6 +732,7 @@ export default defineComponent({
     return {
       errors,
       isNew,
+      isLocked,
       otherSections,
       adductOptions,
       state,

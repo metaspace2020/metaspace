@@ -49,3 +49,30 @@ def test_run_experiment_stats_marks_failed_on_exception(_submit):
     )
     args, _ = dm._db.alter.call_args
     assert "run_status='FAILED'" in args[0]
+
+
+@patch('sm.engine.daemons.dataset_manager.del_segmentation_job_images')
+@patch('sm.engine.daemons.dataset_manager.delete_ion_thumbnail')
+@patch('sm.engine.daemons.dataset_manager.del_optical_image')
+@patch('sm.engine.daemons.dataset_manager.del_jobs')
+@patch('sm.engine.daemons.dataset_manager.del_diagnostics')
+def test_dataset_delete_removes_job_images(
+    del_diagnostics, _del_jobs, _del_optical, _del_thumb, del_job_images
+):
+    from sm.engine.daemons.dataset_manager import DatasetManager
+
+    dm = DatasetManager.__new__(DatasetManager)
+    dm._db = MagicMock()
+    dm._es = MagicMock()
+    dm.logger = MagicMock()
+    ds = MagicMock()
+    ds.id = 'ds-1'
+
+    order = MagicMock()
+    order.attach_mock(del_diagnostics, 'del_diagnostics')
+    order.attach_mock(del_job_images, 'del_job_images')
+
+    dm.delete(ds)
+
+    assert [c[0] for c in order.mock_calls] == ['del_diagnostics', 'del_job_images']
+    del_job_images.assert_called_once_with('ds-1', dm._db)

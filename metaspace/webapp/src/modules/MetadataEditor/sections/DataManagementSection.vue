@@ -11,10 +11,11 @@
     <el-row>
       <el-col :span="6">
         <div class="metadata-section__title">Data management</div>
+        <p v-if="locked" class="text-xs text-gray-600">Locked: only the dataset owner can change this.</p>
       </el-col>
       <el-col :span="18">
         <el-row :gutter="8">
-          <el-form class="w-full flex flex-wrap" size="default" label-position="top">
+          <el-form class="w-full flex flex-wrap" size="default" label-position="top" :disabled="locked">
             <el-col v-if="isAdmin" :span="16" :offset="8" :pull="8">
               <form-field
                 :value="(submitter && `${submitter.name} (${submitter.email})`) || null"
@@ -64,10 +65,11 @@
       <el-row v-if="showPI && groupId == 'NO_GROUP'">
         <el-col :span="6">
           <div class="metadata-section__title">Principal Investigator</div>
+          <p v-if="locked" class="text-xs text-gray-600">Locked: only the dataset owner can change this.</p>
         </el-col>
         <el-col :span="18">
           <el-row :gutter="8">
-            <el-form size="default" class="w-full" label-position="top">
+            <el-form size="default" class="w-full" label-position="top" :disabled="locked">
               <el-col :span="8">
                 <form-field
                   type="text"
@@ -146,6 +148,7 @@ export default defineComponent({
     submitter: { type: Object as () => DatasetSubmitterFragment | null, default: null },
     error: { type: Object as () => any, default: () => ({}) },
     isNewDataset: { type: Boolean, required: true },
+    locked: { type: Boolean, default: false },
   },
   setup(props, { emit }) {
     const apolloClient = inject(DefaultApolloClient)

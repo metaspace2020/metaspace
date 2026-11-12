@@ -10,6 +10,8 @@ import {
   anonContext,
   testUser,
 } from '../../../tests/graphqlTestEnvironment'
+import { createTestGroup, createTestProject, createTestUserGroup } from '../../../tests/testDataCreation'
+import { UserGroupRoleOptions as UGRO } from '../../group/model'
 import * as moment from 'moment'
 import fetch from 'node-fetch'
 import config from '../../../utils/config'
@@ -698,6 +700,80 @@ describe('modules/plan/controller (queries)', () => {
 
     it('should throw an error for non-admin users', async() => {
       await expect(doQuery(queryAllApiUsages)).rejects.toThrow('Access denied')
+    })
+
+    it('exposes sponsor attribution and resolves the sponsoring project', async() => {
+      const project = await createTestProject({ name: 'Sponsored project' })
+      const sponsorUserId = '550e8400-e29b-41d4-a716-446655440002'
+      const sponsorGroupId = '550e8400-e29b-41d4-a716-446655440003'
+      const sponsoredUsage = {
+        id: 4,
+        userId: '550e8400-e29b-41d4-a716-446655440001',
+        datasetId: 'dataset4',
+        actionType: 'create',
+        type: 'dataset',
+        source: 'web',
+        projectId: project.id,
+        sponsorUserId,
+        sponsorGroupId,
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { actionDt, ...plainUsage } = API_USAGES[0]
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: [sponsoredUsage, plainUsage] }),
+      })
+
+      const result = await doQuery(`query {
+        allApiUsages {
+          id
+          projectId
+          sponsorUserId
+          sponsorGroupId
+          project { id name }
+        }
+      }`, {}, { context: adminContext })
+
+      expect(result).toEqual([
+        {
+          id: 4,
+          projectId: project.id,
+          sponsorUserId,
+          sponsorGroupId,
+          project: { id: project.id, name: 'Sponsored project' },
+        },
+        { id: 1, projectId: null, sponsorUserId: null, sponsorGroupId: null, project: null },
+      ])
+    })
+  })
+
+  describe('Query.allApiUsages project visibility', () => {
+    it('hides a private sponsoring project from a group admin who cannot see it', async() => {
+      const group = await createTestGroup()
+      await createTestUserGroup(testUser.id, group.id, UGRO.GROUP_ADMIN, true)
+      const privateProject = await createTestProject({ name: 'Private sponsoring project', isPublic: false })
+      const sponsoredUsage = {
+        id: 5,
+        userId: testUser.id,
+        datasetId: 'dataset5',
+        actionType: 'create',
+        type: 'dataset',
+        source: 'web',
+        groupId: group.id,
+        projectId: privateProject.id,
+      }
+      mockFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ data: [sponsoredUsage] }) })
+      const query = `query ($filter: ApiUsageFilter) {
+        allApiUsages(filter: $filter) { id projectId project { id name } }
+      }`
+
+      const asGroupAdmin = await doQuery(query, { filter: { groupId: group.id } }, { context: userContext })
+      const asAdmin = await doQuery(query, { filter: { groupId: group.id } }, { context: adminContext })
+
+      expect(asGroupAdmin).toEqual([{ id: 5, projectId: privateProject.id, project: null }])
+      expect(asAdmin).toEqual([{
+        id: 5, projectId: privateProject.id, project: { id: privateProject.id, name: 'Private sponsoring project' },
+      }])
     })
   })
 

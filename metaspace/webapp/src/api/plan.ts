@@ -89,6 +89,11 @@ export interface ApiUsage {
     name: string
     email: string
   }
+
+  sponsorUserId: string | null
+  sponsorGroupId: string | null
+
+  project: { id: string; name: string } | null
 }
 
 export interface AllApiUsagesData {
@@ -213,6 +218,12 @@ export const apiUsageFragment = gql`
     source
     canEdit
     actionDt
+    sponsorUserId
+    sponsorGroupId
+    project {
+      id
+      name
+    }
   }
 `
 
