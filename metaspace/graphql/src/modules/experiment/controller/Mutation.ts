@@ -1,6 +1,5 @@
 import { UserError } from 'graphql-errors'
 import * as moment from 'moment'
-import { In } from 'typeorm'
 import { FieldResolversFor } from '../../../bindingTypes'
 import { Mutation } from '../../../binding'
 import { Context } from '../../../context'
@@ -11,7 +10,7 @@ import { smApiDatasetRequest } from '../../../utils'
 import { assertCanPerformAction, performAction } from '../../plan/util/canPerformAction'
 import { hasBetaFeature } from '../../plan/util/betaTesterApi'
 import { memberProjectIds } from '../../plan/util/memberProjectIds'
-import { UserGroup, UserGroupRoleOptions as UGRO } from '../../group/model'
+import { memberGroupId } from '../../plan/util/memberGroupId'
 
 function loadFullExperiment(ctx: Context, id: string) {
   return ctx.entityManager.getRepository(Experiment).findOneOrFail({
@@ -58,16 +57,12 @@ const MutationResolvers: FieldResolversFor<Mutation, any> = {
     await assertCanAccessProject(ctx, projectId, { write: true })
 
     const isBetaTester = await hasBetaFeature(ctx.user.id, 'experiments')
-    const userGroup = await ctx.entityManager.getRepository(UserGroup).findOne({
-      where: { userId: ctx.user.id, role: In([UGRO.MEMBER, UGRO.GROUP_ADMIN]) },
-      order: { primary: 'DESC' },
-    })
     const action: any = {
       actionType: 'experiments',
       userId: ctx.user.id,
       projectId,
       projectIds: await memberProjectIds(ctx, [projectId]),
-      groupId: userGroup?.groupId,
+      groupId: await memberGroupId(ctx),
       type: 'experiment',
       actionDt: moment.utc(moment.utc().toDate()),
       source: (ctx as any).getSource(),

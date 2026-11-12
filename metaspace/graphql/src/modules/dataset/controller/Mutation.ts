@@ -44,6 +44,7 @@ import config from '../../../utils/config'
 import { assertCanPerformAction, getDeviceInfo, hashIp, performAction } from '../../plan/util/canPerformAction'
 import { hasBetaFeature } from '../../plan/util/betaTesterApi'
 import { memberProjectIds } from '../../plan/util/memberProjectIds'
+import { memberGroupId } from '../../plan/util/memberGroupId'
 import { cleanEmptyStrings } from '../../../utils/regexSanitizer'
 import canEditEsDataset from '../operation/canEditEsDataset'
 import parseRoiGeoJson, { getDatasetImageBounds } from '../operation/roiGeoJson'
@@ -718,7 +719,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         datasetId,
         type: 'dataset',
         visibility: dataset._source?.ds_is_public ? 'public' : 'private',
-        groupId: dataset._source?.ds_group_id,
+        groupId: await memberGroupId(ctx),
         projectIds: await memberProjectIds(ctx, dataset._source?.ds_project_ids),
         actionDt: moment.utc(moment.utc().toDate()),
         source: (ctx as any).getSource(),
@@ -1034,7 +1035,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       datasetId,
       type: 'dataset',
       visibility: dataset._source?.ds_is_public ? 'public' : 'private',
-      groupId: dataset._source?.ds_group_id,
+      groupId: await memberGroupId(ctx),
       projectIds: await memberProjectIds(ctx, dataset._source?.ds_project_ids),
       actionDt: moment.utc(moment.utc().toDate()),
       source: (ctx as any).getSource(),
