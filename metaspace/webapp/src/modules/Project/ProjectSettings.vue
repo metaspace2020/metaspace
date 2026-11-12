@@ -34,7 +34,11 @@
           <span> Update details </span>
         </button>
       </sm-form>
-      <project-pro-settings v-if="isManager" :project-id="projectId" :current-user-id="currentUser?.id" />
+      <project-pro-settings
+        v-if="isManager && proSettingsEnabled"
+        :project-id="projectId"
+        :current-user-id="currentUser?.id"
+      />
       <div class="mt-12">
         <h2>Delete project</h2>
         <p v-if="isPublished">
@@ -77,6 +81,7 @@ import {
   removeProjectDOIMutation,
 } from '../../api/project'
 import reportError from '../../lib/reportError'
+import config from '../../lib/config'
 import { parseValidationErrors } from '../../api/validation'
 import { useConfirmAsync } from '../../components/ConfirmAsync'
 import { currentUserRoleQuery } from '../../api/user'
@@ -136,6 +141,7 @@ export default defineComponent({
     })
     const isPublished = computed(() => project.value?.publicationStatus === 'PUBLISHED')
     const isManager = computed(() => project.value?.currentUserRole === 'MANAGER')
+    const proSettingsEnabled = computed(() => config.features.prj_pro_settings)
     const isUnderReview = computed(() => project.value?.publicationStatus === 'UNDER_REVIEW')
     const userisAdmin = computed(() => currentUser.value?.role === 'admin')
     const publicationDOI = computed(() => {
@@ -261,6 +267,7 @@ export default defineComponent({
       project,
       currentUser,
       isManager,
+      proSettingsEnabled,
       handleUpdate,
     }
   },

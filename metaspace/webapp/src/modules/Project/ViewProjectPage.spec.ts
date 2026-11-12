@@ -118,14 +118,17 @@ describe('ViewProjectPage', () => {
     updated() {},
   }
 
-  // These tests assert on the full tab set, including the flag-gated Experiments tab.
+  // These tests assert on the full tab set, including the flag-gated Experiments tab and Pro settings section.
   const originalExperimentFlag = config.features.experiment
+  const originalProSettingsFlag = config.features.prj_pro_settings
   beforeAll(async () => {
     config.features.experiment = true
+    config.features.prj_pro_settings = true
     await mockGraphql(defaultParams)
   })
   afterAll(() => {
     config.features.experiment = originalExperimentFlag
+    config.features.prj_pro_settings = originalProSettingsFlag
   })
 
   beforeEach(async () => {
@@ -466,6 +469,18 @@ describe('ViewProjectPage', () => {
 
       expect(wrapper.text()).toContain('Delete project')
       expect(wrapper.find('.mock-pro-settings').exists()).toBe(false)
+    })
+
+    it('should hide Pro settings when the prj_pro_settings flag is off', async () => {
+      config.features.prj_pro_settings = false
+      try {
+        const wrapper = await mountSettings('MANAGER', defaultParams.currentUser)
+
+        expect(wrapper.text()).toContain('Delete project')
+        expect(wrapper.find('.mock-pro-settings').exists()).toBe(false)
+      } finally {
+        config.features.prj_pro_settings = true
+      }
     })
   })
 
