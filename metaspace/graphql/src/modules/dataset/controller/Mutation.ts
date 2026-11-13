@@ -15,7 +15,9 @@ import { FieldResolversFor } from '../../../bindingTypes'
 import { getUserProjectRoles } from '../../../utils/db'
 import { metadataSchemas } from '../../../../metadataSchemas/metadataRegistry'
 import { getDatasetForEditing } from '../operation/getDatasetForEditing'
-import { projectToLegacyMetadata, upProjectToV2, MetadataV2Envelope } from '../projection'
+import {
+  mergeLegacyIntoV2, MetadataV2Envelope, projectToLegacyMetadata, upProjectToV2,
+} from '../projection'
 import { deleteDataset } from '../operation/deleteDataset'
 import { checkNoPublishedProjectRemoved, checkProjectsPublicationStatus } from '../operation/publicationChecks'
 import {
@@ -118,24 +120,19 @@ export const failedValidation = (validationErrors: any[]) => new UserError(JSON.
   validation_errors: validationErrors,
 }))
 
-// Keep in sync with _classify_instrument_label in sm/engine/dataset.py (order matters: 'exploris'
-// appears in both the Orbitrap and TOF lists and the engine resolves it as Orbitrap). The longer
-// phrases are the PSI-MS canonical labels, which controlled metadata_v2 values project to.
-const ANALYZER_CLASSES: Record<string, string[]> = {
-  Orbitrap: ['orbitrap', 'exactive', 'exploris', 'hf-x', 'uhmr'],
-  FTICR: ['fticr', 'ft-icr', 'ftms', 'ft-ms', 'fourier transform ion cyclotron', 'ltq ft'],
-  TOF: ['tof', 'mrt', 'exploris', 'synapt', 'xevo', 'time-of-flight'],
-}
+// The one source of the analyzer classification, shared with the engine (`_classify_instrument_label` reads the
+// copy that `yarn gen-analyzer-classes` writes). Order matters: the first class whose phrase the label contains
+// wins ('exploris' is listed under Orbitrap and TOF). The longer phrases are the PSI-MS canonical labels, which
+// controlled metadata_v2 values project to.
+const ANALYZER_CLASSES: { class: string, phrases: string[] }[] =
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  require('../../../../metadataSchemas/analyzer_classes.json')
 
 /** The analyzer class the engine derives from a free-text Analyzer label, or null if unrecognized. */
 export function classifyAnalyzer(analyzer?: string | null): string | null {
   const label = (analyzer || '').toLowerCase()
-  for (const [analyzerClass, phrases] of Object.entries(ANALYZER_CLASSES)) {
-    if (phrases.some(phrase => label.includes(phrase))) {
-      return analyzerClass
-    }
-  }
-  return null
+  const match = ANALYZER_CLASSES.find(entry => entry.phrases.some(phrase => label.includes(phrase)))
+  return match ? match.class : null
 }
 
 /**
@@ -589,19 +586,14 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await assertUserCanUseMolecularDBs(ctx, update.databaseIds as number[]|undefined)
 
     const engineDataset = await ctx.entityManager.findOneOrFail(EngineDataset, datasetId)
-    if (engineDataset.metadataV2 && metadata && !metadataV2) {
-      // Once a dataset has metadata_v2 it is the source of truth and the legacy document is derived
-      // from it; accepting a legacy-only edit would leave the stored v2 (and the engine's CURIE-based
-      // instrument resolution) contradicting the new legacy values.
-      throw failedValidation([{
-        dataPath: '.metadataV2',
-        message: 'This dataset uses metadata schema v2; send metadataV2Json instead of metadataJson',
-      }])
-    }
     if (metadata && !metadataV2) {
-      // A legacy dataset changed through the legacy document (e.g. the Python SDK) becomes a v2 dataset:
-      // the edit itself produces its v2 record, with the values pending curation.
-      metadataV2 = upProjectToV2(metadata)
+      // A dataset changed through the legacy document (e.g. the Python SDK) keeps a v2 record in step with it:
+      // a legacy dataset gets one up-projected from the edit, with the values pending curation; a v2 dataset
+      // keeps its stored record and only the fields the edit changed are re-projected, so the stored v2 (and
+      // the engine's CURIE-based instrument resolution) never contradicts the legacy values.
+      metadataV2 = engineDataset.metadataV2
+        ? mergeLegacyIntoV2(engineDataset.metadataV2, metadata)
+        : upProjectToV2(metadata)
       if (!skipValidation || !ctx.isAdmin) {
         validateMetadata(metadata, metadataV2)
       }

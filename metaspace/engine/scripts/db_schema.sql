@@ -633,15 +633,13 @@ CREATE TABLE "public"."metadata_curation_term" (
   "suggested_label" text, 
   "suggested_score" real, 
   "note" text, 
-  "dataset_id" text NOT NULL, 
+  "dataset_id" text, 
   "submitter_id" uuid, 
   "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), 
   "decided_by_id" uuid, 
   "decided_at" TIMESTAMP WITH TIME ZONE, 
   "apply_state" text NOT NULL DEFAULT 'idle', 
   "applied_count" integer NOT NULL DEFAULT '0', 
-  CONSTRAINT "UQ_metadata_curation_term_slot_dataset" UNIQUE ("slot", 
-  "dataset_id"), 
   CONSTRAINT "PK_0d1257e6e0251b6f2b2c5b2a867" PRIMARY KEY ("id")
 );
 
@@ -658,6 +656,11 @@ CREATE INDEX "metadata_curation_term_slot_status_index" ON "public"."metadata_cu
   "slot", 
   "status"
 ) ;
+
+CREATE UNIQUE INDEX "metadata_curation_term_slot_dataset_pending_uindex" ON "public"."metadata_curation_term" (
+  "slot", 
+  "dataset_id"
+) WHERE status = 'pending';
 
 ALTER TABLE "public"."molecular_db" ADD CONSTRAINT "FK_a18f5f7d6cc662006d9c849ea1f" FOREIGN KEY (
   "group_id") REFERENCES "graphql"."group"("id"
@@ -865,7 +868,7 @@ ALTER TABLE "public"."experiment_result" ADD CONSTRAINT "FK_4433cbb748784930eb54
 
 ALTER TABLE "public"."metadata_curation_term" ADD CONSTRAINT "FK_7604e42554a7ac201160b865ebc" FOREIGN KEY (
   "dataset_id") REFERENCES "graphql"."dataset"("id"
-) ON DELETE CASCADE ON UPDATE NO ACTION;
+) ON DELETE SET NULL ON UPDATE NO ACTION;
 
 ALTER TABLE "public"."metadata_curation_term" ADD CONSTRAINT "FK_67f18e4b979e0cfbb3771dd59ff" FOREIGN KEY (
   "submitter_id") REFERENCES "graphql"."user"("id"

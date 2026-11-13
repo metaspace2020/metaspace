@@ -48,11 +48,11 @@ describe('FieldRow', () => {
     expect(w.text()).toContain('analyzer type')
   })
 
-  it('shows new in v2 and server errors', async () => {
+  it('marks nothing for a field new in v2 and shows server errors', async () => {
     const fresh = mount(FieldRow, {
       props: { def: fieldByKey('sex'), required: false, inputId: 'b', report: { state: 'new' } },
     })
-    expect(fresh.find('.v2-prov--new').text()).toBe('new in v2')
+    expect(fresh.find('.v2-prov').exists()).toBe(false)
     const err = mount(FieldRow, {
       props: { def: fieldByKey('organism'), required: true, inputId: 'c', error: 'too short' },
     })

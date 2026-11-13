@@ -4,6 +4,7 @@ import logger from '../../../utils/logger'
 import { getDatasetForEditing } from './getDatasetForEditing'
 import { Dataset as DatasetModel, DatasetProject as DatasetProjectModel } from '../model'
 import { DeleteDatasetArgs, smApiDeleteDataset } from '../../../utils/smApi/datasets'
+import { deleteUndecidedRows } from '../../metadataCuration/queue'
 
 export const deleteDataset = async(entityManager: EntityManager, user: ContextUser, datasetId: string,
   args?: DeleteDatasetArgs) => {
@@ -14,6 +15,9 @@ export const deleteDataset = async(entityManager: EntityManager, user: ContextUs
   }
 
   await entityManager.getRepository(DatasetProjectModel).delete({ datasetId: datasetId })
+  // Undecided curation rows only asked a question about this dataset's text; decided rows are kept (dataset set
+  // to null by the FK) because other datasets' text resolves through them.
+  await deleteUndecidedRows(entityManager, datasetId)
   await entityManager.getRepository(DatasetModel).delete(datasetId)
   const resp = await smApiDeleteDataset(datasetId, args)
 

@@ -1,6 +1,6 @@
-import { EntityManager } from 'typeorm'
+import { EntityManager, In } from 'typeorm'
 import { MetadataV2Envelope, OntologyTermValue } from '../dataset/projection'
-import { MetadataCurationTerm, deletePendingRows } from './model'
+import { MetadataCurationTerm } from './model'
 import { isPlaceholderText, normalizeCurationText } from './normalize'
 import { CURATION_SLOTS, CurationSlot, getSlotValue } from './slots'
 import { suggestOntologyTermWithScore } from './ontologyLookup'
@@ -18,10 +18,16 @@ export function pendingFreeText(value: OntologyTermValue | null | undefined): st
   return normalizeCurationText(freeText) === '' ? null : freeText
 }
 
-/** This dataset's row of `slot`, whatever its text and status. */
-export async function findOwnRow(em: EntityManager, slot: string, datasetId: string):
+/** This dataset's row of `slot` for `normalizedText`, whatever its status; the latest decided one if several. */
+export async function findOwnRow(em: EntityManager, slot: string, datasetId: string, normalizedText: string):
   Promise<MetadataCurationTerm | undefined> {
-  return await em.findOne(MetadataCurationTerm, { slot, datasetId })
+  return await em.createQueryBuilder(MetadataCurationTerm, 'term')
+    .where('term.slot = :slot AND term.datasetId = :datasetId AND term.normalizedText = :normalizedText',
+      { slot, datasetId, normalizedText })
+    .orderBy('term.decidedAt', 'DESC', 'NULLS LAST')
+    .addOrderBy('term.createdAt', 'DESC')
+    .limit(1)
+    .getOne()
 }
 
 /**
@@ -96,29 +102,24 @@ const pendingRowParams = async(em: EntityManager, slot: CurationSlot, datasetId:
 }
 
 /**
- * Makes this dataset's row of `slot` a fresh pending row for `text`: inserted, or, when the dataset already has a
- * row for the slot (decided or not), overwritten with the new text and its decision cleared. Returns the row.
+ * Makes this dataset's pending row of `slot` ask about `text`: inserted, or, when the dataset already has a pending
+ * row for the slot, rewritten with the new text. Decided rows of the slot are never touched. Returns the row.
  */
 export async function upsertPendingRow(em: EntityManager, slot: CurationSlot, datasetId: string, text: string,
   submitterId: string | null): Promise<MetadataCurationTerm> {
   await em.query(`${INSERT_PENDING_SQL}
-    ON CONFLICT (slot, dataset_id) DO UPDATE SET
+    ON CONFLICT (slot, dataset_id) WHERE status = 'pending' DO UPDATE SET
       text = EXCLUDED.text,
       normalized_text = EXCLUDED.normalized_text,
-      status = 'pending',
-      canonical_label = NULL,
-      ontology_id = NULL,
-      aliases = '{}',
-      note = NULL,
-      decided_by_id = NULL,
-      decided_at = NULL,
+      submitter_id = EXCLUDED.submitter_id,
+      created_at = now(),
       apply_state = 'idle',
       applied_count = 0,
       suggested_ontology_id = EXCLUDED.suggested_ontology_id,
       suggested_label = EXCLUDED.suggested_label,
       suggested_score = EXCLUDED.suggested_score`,
   await pendingRowParams(em, slot, datasetId, text, submitterId))
-  return await em.findOneOrFail(MetadataCurationTerm, { slot: slot.slot, datasetId })
+  return await em.findOneOrFail(MetadataCurationTerm, { slot: slot.slot, datasetId, status: 'pending' })
 }
 
 /**
@@ -131,6 +132,14 @@ export async function prunePendingRows(em: EntityManager, datasetId: string, env
     .filter(slot => pendingFreeText(getSlotValue(envelope.document, slot)) === null)
     .map(slot => slot.slot)
   if (settled.length > 0) {
-    await deletePendingRows(em, datasetId, settled)
+    await em.delete(MetadataCurationTerm, { datasetId, slot: In(settled), status: 'pending' })
   }
+}
+
+/**
+ * Deletes this dataset's pending and rejected rows, for its deletion: neither carries a decision other datasets
+ * resolve through, while approved and mapped rows outlive the dataset (the FK nulls their dataset).
+ */
+export async function deleteUndecidedRows(em: EntityManager, datasetId: string): Promise<void> {
+  await em.delete(MetadataCurationTerm, { datasetId, status: In(['pending', 'rejected']) })
 }

@@ -128,10 +128,16 @@ const startApply = (ctx: Context, termId: string) => {
     .catch(err => logger.error(`Applying curation term ${termId} failed`, err))
 }
 
+/**
+ * The decision's stamp. It also marks the apply running, inside the decision's transaction, so a second
+ * decision on the row can never slip in between the commit and the start of the apply.
+ */
 const decisionStamp = (ctx: Context, note: string | null | undefined) => ({
   decidedById: ctx.user.id!,
   decidedAt: new Date(),
   note: note ?? null,
+  applyState: 'running' as const,
+  appliedCount: 0,
 })
 
 /** The non-obsolete term `curie` of the slot's subtrees, or undefined. */
@@ -212,7 +218,8 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     await getDatasetForEditing(ctx.entityManager, ctx.user, String(datasetId))
     const rows: { slot: string, text: string, status: CurationTermStatus, note: string | null }[] =
       await ctx.entityManager.query(
-        `SELECT slot, text, status, note FROM ${TABLE} WHERE dataset_id = $1 ORDER BY slot`,
+        // the newest row of a slot last: the editor keeps the last row it sees per slot
+        `SELECT slot, text, status, note FROM ${TABLE} WHERE dataset_id = $1 ORDER BY slot, created_at, id`,
         [String(datasetId)]
       )
     return rows.map(row => ({ ...row, status: row.status.toUpperCase() }))
@@ -354,14 +361,17 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const { rejectedIds, applyIds } = await ctx.entityManager.transaction(async em => {
       const rows = await findRows(em, ids)
       assertNotRunning(rows)
+      // a pending row's dataset carries no decision to revert, so only a decided row gets an apply
+      const applyIds = rows.filter(row => row.status === 'approved' || row.status === 'mapped').map(row => row.id)
       for (const row of rows) {
-        await em.update(MetadataCurationTerm, row.id, { status: 'rejected', ...decisionStamp(ctx, note) })
+        const stamp = decisionStamp(ctx, note)
+        await em.update(MetadataCurationTerm, row.id, {
+          status: 'rejected',
+          ...stamp,
+          ...(applyIds.includes(row.id) ? {} : { applyState: row.applyState, appliedCount: row.appliedCount }),
+        })
       }
-      return {
-        rejectedIds: rows.map(row => row.id),
-        // a pending row's dataset carries no decision to revert
-        applyIds: rows.filter(row => row.status === 'approved' || row.status === 'mapped').map(row => row.id),
-      }
+      return { rejectedIds: rows.map(row => row.id), applyIds }
     })
     applyIds.forEach(id => startApply(ctx, id))
     return { terms: await loadTerms(ctx.entityManager, rejectedIds), skipped: 0 }

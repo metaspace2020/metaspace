@@ -345,3 +345,69 @@ export function upProjectToV2(legacy: LegacyMetadata, schemaVersion = '0.2.0'): 
     },
   }
 }
+
+// ---------------------------------------------------------------------------
+// Legacy edit of a v2 dataset
+// ---------------------------------------------------------------------------
+
+type LegacySection = 'Sample_Information' | 'Sample_Preparation' | 'MS_Analysis'
+
+/**
+ * The stored v2 record with a legacy-only edit (e.g. the Python SDK's `update_dataset(metadata=...)`) merged in:
+ * only a slot whose legacy field differs from what the stored record renders takes the edit's up-projected
+ * (pending) value, so curated and controlled values of untouched fields survive. The unmodeled fields and the
+ * free-text protocol description are only stored in the legacy form and always come from the edit.
+ */
+export function mergeLegacyIntoV2(stored: MetadataV2Envelope, legacy: LegacyMetadata): MetadataV2Envelope {
+  const rendered = projectToLegacyMetadata(stored)
+  const fresh = upProjectToV2(legacy, stored.document.schema_version)
+  const merged: MetadataV2Envelope = JSON.parse(JSON.stringify(stored))
+  const { sample, acquisition } = merged.document
+  const changed = (section: LegacySection, key: string): boolean => {
+    const edited = (legacy[section] as Record<string, unknown> | undefined)?.[key]
+    const current = (rendered[section] as Record<string, unknown> | undefined)?.[key]
+    return (edited ?? '') !== (current ?? '')
+  }
+
+  if (changed('Sample_Information', 'Organism')) {
+    sample.organism = fresh.document.sample.organism
+  }
+  if (changed('Sample_Information', 'Organism_Part')) {
+    // the legacy field renders a fixed sentinel for plant and environmental samples: nothing to carry over
+    if (sample.sample_type === 'tissue') {
+      sample.anatomical_site_coarse = fresh.document.sample.anatomical_site_coarse
+    } else if (sample.sample_type === 'cell_culture') {
+      sample.cell_line_id = fresh.document.sample.anatomical_site_coarse
+    }
+  }
+  if (changed('Sample_Information', 'Condition')) {
+    sample.disease = fresh.document.sample.disease
+  }
+  sample.protocol_description = fresh.document.sample.protocol_description
+  if (changed('Sample_Preparation', 'Sample_Stabilisation')) {
+    sample.sample_stabilisation = fresh.document.sample.sample_stabilisation
+  }
+  if (changed('Sample_Preparation', 'Tissue_Modification')) {
+    sample.tissue_modification = fresh.document.sample.tissue_modification
+  }
+  if (changed('Sample_Preparation', 'MALDI_Matrix')) {
+    acquisition.maldi_matrix = fresh.document.acquisition.maldi_matrix
+  }
+  if (changed('Sample_Preparation', 'MALDI_Matrix_Application')) {
+    acquisition.maldi_matrix_application = fresh.document.acquisition.maldi_matrix_application
+  }
+  if (changed('Sample_Preparation', 'Solvent')) {
+    acquisition.solvent = fresh.document.acquisition.solvent
+  }
+  if (changed('MS_Analysis', 'Polarity')) {
+    acquisition.polarity = fresh.document.acquisition.polarity
+  }
+  if (changed('MS_Analysis', 'Ionisation_Source')) {
+    acquisition.ionization_source = fresh.document.acquisition.ionization_source
+  }
+  if (changed('MS_Analysis', 'Analyzer')) {
+    acquisition.instrument_model = fresh.document.acquisition.instrument_model
+  }
+  merged.unmodeled = fresh.unmodeled
+  return merged
+}

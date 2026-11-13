@@ -5,7 +5,12 @@
 const fs = require('fs')
 const path = require('path')
 
-const SLOTS = ['sample_stabilisation', 'tissue_modification', 'genetic_background', 'maldi_matrix_application']
+// The curated-list slots are the curation slots not bound to an ontology: read from the one catalogue
+// (src/modules/metadataCuration/slots.ts) rather than listed again here. The webapp runs this script from its
+// own directory, so graphql's tsconfig is named explicitly.
+require('ts-node').register({ transpileOnly: true, project: path.join(__dirname, '..', 'tsconfig.json') })
+const { CURATION_SLOTS } = require('../src/modules/metadataCuration/slots')
+const SLOTS = CURATION_SLOTS.filter(slot => !slot.bound).map(slot => slot.slot)
 
 const source = path.join(__dirname, '..', 'metadataSchemas', 'curated_values.json')
 const target = process.argv[2]

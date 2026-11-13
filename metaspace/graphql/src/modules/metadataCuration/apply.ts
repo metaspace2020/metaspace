@@ -47,9 +47,8 @@ export function patchDatasetForTerm(engineDataset: { metadata: any, metadataV2: 
 }
 
 /**
- * Ends the run, unless the row is no longer `running`: an owner re-save meanwhile resets the row to pending/idle,
- * and that reset must win over the outcome of the apply that started before it. A null `appliedCount` keeps the
- * stored count.
+ * Ends the run, unless the row is no longer `running`: a reset of the row meanwhile must win over the outcome of
+ * the apply that started before it. A null `appliedCount` keeps the stored count.
  */
 const finishApply = async(em: EntityManager, termId: string, applyState: 'done' | 'failed',
   appliedCount: number | null): Promise<void> => {
@@ -59,9 +58,9 @@ const finishApply = async(em: EntityManager, termId: string, applyState: 'done' 
 }
 
 /**
- * Rewrites the row's dataset with its decision. A dataset whose value no longer carries the text is skipped
- * (`done` with `appliedCount` 0); a failed engine update is logged and ends the run `failed`. Never rejects: it
- * runs in the background after the decision.
+ * Rewrites the row's dataset with its decision. A dataset whose value no longer carries the text, or a row whose
+ * dataset was deleted, is skipped (`done` with `appliedCount` 0); a failed engine update is logged and ends the
+ * run `failed`. Never rejects: it runs in the background after the decision.
  */
 export async function applyCurationTerm(em: EntityManager, termId: string): Promise<void> {
   try {
@@ -72,7 +71,8 @@ export async function applyCurationTerm(em: EntityManager, termId: string): Prom
     await em.update(MetadataCurationTerm, termId, { applyState: 'running', appliedCount: 0 })
 
     const { datasetId } = term
-    const engineDataset = await em.findOne(EngineDataset, datasetId)
+    // findOne(null) would return an arbitrary dataset
+    const engineDataset = datasetId !== null ? await em.findOne(EngineDataset, datasetId) : undefined
     const patch = engineDataset ? patchDatasetForTerm(engineDataset, term) : null
     let appliedCount = 0
     let failed = false

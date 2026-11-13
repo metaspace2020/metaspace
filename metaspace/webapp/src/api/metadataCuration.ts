@@ -22,7 +22,7 @@ export interface CurationTerm {
   suggestedLabel: string | null
   suggestedScore: number | null
   note: string | null
-  datasetId: string
+  datasetId: string | null
   datasetName: string | null
   submitter: CurationUser | null
   submittedAt: string | null

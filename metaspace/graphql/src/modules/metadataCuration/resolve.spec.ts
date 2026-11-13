@@ -415,7 +415,7 @@ describe('metadata curation resolution', () => {
       })
     })
 
-    it('changed text replaces a decided row', async() => {
+    it('changed text adds a pending row and leaves the decided row untouched', async() => {
       const decided = await saveTerm({
         ...APPROVED_FRESH_FROZEN,
         datasetId: ds,
@@ -426,27 +426,35 @@ describe('metadata curation resolution', () => {
         applyState: 'done',
         appliedCount: 1,
       })
+      const before = await testEntityManager.findOneOrFail(MetadataCurationTerm, decided.id)
 
       const { envelope } = await resolve('sample_stabilisation', pending('Cryo fixed'))
 
       expect(valueOf(envelope, 'sample_stabilisation')).toEqual(pending('Cryo fixed'))
-      expect(await rowCount()).toEqual(1)
-      const row = await testEntityManager.findOneOrFail(MetadataCurationTerm, decided.id)
-      expect(row).toMatchObject({
-        datasetId: ds,
-        submitterId: testUser.id,
-        text: 'Cryo fixed',
-        normalizedText: 'cryo fixed',
-        status: 'pending',
-        canonicalLabel: null,
-        ontologyId: null,
-        aliases: [],
-        note: null,
-        decidedById: null,
-        decidedAt: null,
-        applyState: 'idle',
-        appliedCount: 0,
-      })
+      expect(await rowCount()).toEqual(2)
+      expect(await testEntityManager.findOneOrFail(MetadataCurationTerm, decided.id)).toEqual(before)
+      const added = await testEntityManager.findOneOrFail(MetadataCurationTerm, { datasetId: ds, status: 'pending' })
+      expect(added).toMatchObject({ slot: 'sample_stabilisation', text: 'Cryo fixed', normalizedText: 'cryo fixed' })
+    })
+
+    it('changed text again rewrites the pending row, not a second one', async() => {
+      await saveTerm({ ...APPROVED_FRESH_FROZEN, datasetId: ds })
+      await resolve('sample_stabilisation', pending('Cryo fixed'))
+
+      await resolve('sample_stabilisation', pending('Snap frozen'))
+
+      expect(await rowCount()).toEqual(2)
+      const rows = await testEntityManager.find(MetadataCurationTerm, { datasetId: ds, status: 'pending' })
+      expect(rows.map(r => r.text)).toEqual(['Snap frozen'])
+    })
+
+    it('typing the decided text again resolves through the decided row beside a pending one', async() => {
+      await saveTerm({ ...APPROVED_FRESH_FROZEN, datasetId: ds })
+      await resolve('sample_stabilisation', pending('Cryo fixed'))
+
+      const { envelope } = await resolve('sample_stabilisation', pending('Fresh frozen'))
+
+      expect(valueOf(envelope, 'sample_stabilisation')).toMatchObject({ curation_state: 'free_text_accepted' })
     })
 
     it('placeholder and empty values never write a row', async() => {

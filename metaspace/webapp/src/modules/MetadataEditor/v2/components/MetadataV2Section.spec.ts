@@ -64,7 +64,8 @@ describe('MetadataV2Section', () => {
       slots: { description: '<div id="desc">D</div>' },
     })
     const right = w.find('.section-card__right')
-    expect(right.text()).toContain('New in v2')
+    expect(right.text()).toContain('Migrated')
+    expect(right.text()).not.toContain('New in v2')
     expect(right.text()).toMatch(/\d+ of \d+ required/)
     expect(w.find('.section-card__body > :first-child').classes()).toContain('v2-switch')
     expect(w.find('#desc').exists()).toBe(true)

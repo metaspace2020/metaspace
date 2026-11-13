@@ -185,6 +185,27 @@ describe('Dataset mutations: metadata curation', () => {
     expect(update.metadata).toEqual(metadata)
   })
 
+  it('updateDataset with legacy-only input on a v2 dataset keeps untouched slots and re-projects the changed field',
+    async() => {
+      const stored = envelopeWith({
+        disease: MELANOMA,
+        sample_stabilisation: { value_label: 'Fresh frozen', value_free_text: 'fresh frozen', curation_state: 'free_text_accepted' },
+      })
+      const datasetId = await existingDataset(stored)
+      const metadata = projectToLegacyMetadata(stored)
+      metadata.Sample_Information.Organism = 'Homo sapiens'
+
+      await updateDataset(datasetId, { metadataJson: JSON.stringify(metadata) })
+
+      const [id, update] = mockSmApiDatasets.smApiUpdateDataset.mock.calls[0]
+      expect(id).toBe(datasetId)
+      expect(update.metadataV2.document.sample.disease).toEqual(MELANOMA)
+      expect(update.metadataV2.document.sample.sample_stabilisation).toEqual(stored.document.sample.sample_stabilisation)
+      expect(update.metadataV2.document.sample.organism).toEqual(pending('Homo sapiens'))
+      expect(update.metadata).toEqual(metadata)
+      expect(await rowsOf(datasetId, 'organism')).toMatchObject([{ text: 'Homo sapiens', status: 'pending' }])
+    })
+
   it('createDataset with unknown text writes the dataset\'s pending row', async() => {
     const datasetId = await createDataset(envelopeWith({ disease: pending('Disease 1') }))
 
@@ -327,22 +348,59 @@ describe('Dataset mutations: metadata curation', () => {
     expect(mockSmApiDatasets.smApiDatasetRequest).not.toHaveBeenCalled()
   })
 
-  it('deleteDataset removes the rows', async() => {
+  it('deleteDataset drops undecided rows and keeps decisions without a dataset', async() => {
     const datasetId = await existingDataset(null)
     const otherId = await existingDataset(null, adminUser.id)
     await saveTerm({ slot: 'disease', datasetId, text: 'disease 1', status: 'pending' })
-    await saveTerm({
+    await saveTerm({ slot: 'organism', datasetId, text: 'organism 1', status: 'rejected', note: 'no' })
+    const approved = await saveTerm({
       slot: 'sample_stabilisation',
       datasetId,
       text: 'fresh frozen',
       status: 'approved',
       canonicalLabel: 'Fresh frozen',
     })
+    const mapped = await saveTerm({
+      slot: 'organism_part',
+      datasetId,
+      text: 'liver',
+      status: 'mapped',
+      canonicalLabel: 'liver',
+      ontologyId: 'UBERON:0002107',
+    })
     await saveTerm({ slot: 'disease', datasetId: otherId, text: 'disease 1', status: 'pending' })
 
     await doQuery(deleteDatasetQuery, { id: datasetId }, { context: userContext })
 
     expect(await testEntityManager.find(MetadataCurationTerm, { datasetId })).toEqual([])
+    const kept = await testEntityManager.findByIds(MetadataCurationTerm, [approved.id, mapped.id])
+    expect(kept.map(row => [row.slot, row.status, row.datasetId, row.canonicalLabel]).sort()).toEqual([
+      ['organism_part', 'mapped', null, 'liver'],
+      ['sample_stabilisation', 'approved', null, 'Fresh frozen'],
+    ])
+    expect(await countOf('organism')).toEqual(0)
     expect(await rowsOf(otherId)).toHaveLength(1)
+  })
+
+  it('a decision outlives its dataset and still resolves new text', async() => {
+    const sourceId = await existingDataset(null)
+    await saveTerm({
+      slot: 'disease',
+      datasetId: sourceId,
+      text: 'disease 1',
+      status: 'approved',
+      canonicalLabel: 'Disease One',
+      decidedAt: new Date(),
+    })
+    await doQuery(deleteDatasetQuery, { id: sourceId }, { context: userContext })
+
+    const datasetId = await createDataset(envelopeWith({ disease: pending('disease 1') }))
+
+    expect(lastAddDoc().metadataV2.document.sample.disease).toEqual({
+      value_label: 'Disease One',
+      value_free_text: 'disease 1',
+      curation_state: 'free_text_accepted',
+    })
+    expect(await rowsOf(datasetId)).toEqual([])
   })
 })

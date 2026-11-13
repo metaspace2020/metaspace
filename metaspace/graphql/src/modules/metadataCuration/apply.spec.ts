@@ -117,6 +117,18 @@ describe('applyCurationTerm', () => {
     expect(after.applyState).toEqual('done')
   })
 
+  it('ends done with nothing applied for a row without a dataset', async() => {
+    // a dataset carrying the text must not be picked up in place of the row's missing one
+    await createDataset(pendingDisease)
+    const term = await createTerm({ ...approved, datasetId: null }, null as any)
+
+    await applyCurationTerm(testEntityManager, term.id)
+
+    expect(calls()).toHaveLength(0)
+    const reloaded = await reload(term.id)
+    expect([reloaded.applyState, reloaded.appliedCount]).toEqual(['done', 0])
+  })
+
   it('does nothing for a missing row', async() => {
     await applyCurationTerm(testEntityManager, '00000000-0000-0000-0000-000000000000')
 

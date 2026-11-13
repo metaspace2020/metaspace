@@ -5,7 +5,7 @@ import './fields.scss'
 const PROVENANCE_WORDS: Record<FieldState, string> = {
   migrated: 'migrated',
   'required-empty': 'required, empty',
-  new: 'new in v2',
+  new: '', // a field without a legacy counterpart is not marked
   empty: '',
 }
 

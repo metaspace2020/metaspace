@@ -12,7 +12,6 @@ import './V2Form.scss'
 const LEGEND: { label: string; color: string }[] = [
   { label: 'Migrated', color: 'var(--mv2-success)' },
   { label: 'Required, empty', color: 'var(--mv2-danger)' },
-  { label: 'New in v2', color: 'var(--mv2-accent)' },
 ]
 
 /**

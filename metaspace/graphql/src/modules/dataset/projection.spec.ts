@@ -1,4 +1,4 @@
-import { projectLegacyField, projectToLegacyMetadata, upProjectToV2, LegacyMetadata, MetadataV2Envelope } from './projection'
+import { mergeLegacyIntoV2, projectLegacyField, projectToLegacyMetadata, upProjectToV2, LegacyMetadata, MetadataV2Envelope } from './projection'
 
 const fixtures: LegacyMetadata[] = [
   {
@@ -242,5 +242,50 @@ describe('projectLegacyField', () => {
       genetic_background: ['Sample_Information', 'Condition'],
       maldi_matrix_application: ['Sample_Preparation', 'MALDI_Matrix_Application'],
     })
+  })
+})
+
+describe('mergeLegacyIntoV2', () => {
+  const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value))
+  const stored = clone(baseV2)
+  stored.document.sample.disease = { value_ontology_id: 'MONDO:1', value_label: 'Melanoma', curation_state: 'controlled' }
+  stored.document.sample.sample_stabilisation = {
+    value_label: 'Fresh frozen', value_free_text: 'fresh frozen', curation_state: 'free_text_accepted',
+  }
+  const rendered = projectToLegacyMetadata(stored)
+
+  it('keeps every slot whose legacy field is unchanged', () => {
+    const merged = mergeLegacyIntoV2(stored, clone(rendered))
+
+    expect(merged).toEqual(stored)
+  })
+
+  it('replaces only the slots whose legacy field changed, as pending values', () => {
+    const legacy = clone(rendered)
+    legacy.Sample_Information.Organism = 'Homo sapiens'
+    legacy.MS_Analysis.Analyzer = 'timsTOF'
+    legacy.MS_Analysis.Pixel_Size = { Xaxis: 5, Yaxis: 5 }
+
+    const merged = mergeLegacyIntoV2(stored, legacy)
+
+    expect(merged.document.sample.organism).toEqual({ value_free_text: 'Homo sapiens', curation_state: 'pending_curation' })
+    expect(merged.document.acquisition.instrument_model).toEqual({
+      user_value: { value_free_text: 'timsTOF', curation_state: 'pending_curation' },
+      reconciliation_state: 'not_checked',
+    })
+    expect(merged.unmodeled.Pixel_Size).toEqual({ Xaxis: 5, Yaxis: 5 })
+    expect(merged.document.sample.disease).toEqual(stored.document.sample.disease)
+    expect(merged.document.sample.sample_stabilisation).toEqual(stored.document.sample.sample_stabilisation)
+    expect(merged.document.sample.sample_class).toEqual(stored.document.sample.sample_class)
+  })
+
+  it('does not change the stored envelope', () => {
+    const before = clone(stored)
+    const legacy = clone(rendered)
+    legacy.Sample_Information.Condition = 'wildtype'
+
+    mergeLegacyIntoV2(stored, legacy)
+
+    expect(stored).toEqual(before)
   })
 })

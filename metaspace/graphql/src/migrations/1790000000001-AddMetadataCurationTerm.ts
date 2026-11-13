@@ -17,7 +17,7 @@ export class AddMetadataCurationTerm1790000000001 implements MigrationInterface 
             "suggested_label" text,
             "suggested_score" real,
             "note" text,
-            "dataset_id" text NOT NULL,
+            "dataset_id" text,
             "submitter_id" uuid,
             "created_at" timestamptz NOT NULL DEFAULT now(),
             "decided_by_id" uuid,
@@ -25,11 +25,11 @@ export class AddMetadataCurationTerm1790000000001 implements MigrationInterface 
             "apply_state" text NOT NULL DEFAULT 'idle',
             "applied_count" integer NOT NULL DEFAULT 0,
             CONSTRAINT "PK_metadata_curation_term" PRIMARY KEY ("id"),
-            CONSTRAINT "UQ_metadata_curation_term_slot_dataset" UNIQUE ("slot", "dataset_id"),
-            CONSTRAINT "FK_metadata_curation_term_dataset" FOREIGN KEY ("dataset_id") REFERENCES "graphql"."dataset"("id") ON DELETE CASCADE,
+            CONSTRAINT "FK_metadata_curation_term_dataset" FOREIGN KEY ("dataset_id") REFERENCES "graphql"."dataset"("id") ON DELETE SET NULL,
             CONSTRAINT "FK_metadata_curation_term_submitter" FOREIGN KEY ("submitter_id") REFERENCES "graphql"."user"("id") ON DELETE SET NULL,
             CONSTRAINT "FK_metadata_curation_term_decided_by" FOREIGN KEY ("decided_by_id") REFERENCES "graphql"."user"("id") ON DELETE SET NULL
         )`);
+        await queryRunner.query(`CREATE UNIQUE INDEX "metadata_curation_term_slot_dataset_pending_uindex" ON "public"."metadata_curation_term" ("slot", "dataset_id") WHERE status = 'pending'`);
         await queryRunner.query(`CREATE INDEX "metadata_curation_term_slot_status_index" ON "public"."metadata_curation_term" ("slot", "status")`);
         await queryRunner.query(`CREATE INDEX "metadata_curation_term_slot_normalized_text_index" ON "public"."metadata_curation_term" ("slot", "normalized_text")`);
         await queryRunner.query(`CREATE INDEX "metadata_curation_term_dataset_id_index" ON "public"."metadata_curation_term" ("dataset_id")`);
@@ -43,6 +43,7 @@ export class AddMetadataCurationTerm1790000000001 implements MigrationInterface 
         await queryRunner.query(`DROP INDEX "public"."metadata_curation_term_dataset_id_index"`);
         await queryRunner.query(`DROP INDEX "public"."metadata_curation_term_slot_normalized_text_index"`);
         await queryRunner.query(`DROP INDEX "public"."metadata_curation_term_slot_status_index"`);
+        await queryRunner.query(`DROP INDEX "public"."metadata_curation_term_slot_dataset_pending_uindex"`);
         await queryRunner.query(`DROP TABLE "public"."metadata_curation_term"`);
     }
 

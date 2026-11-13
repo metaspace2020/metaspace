@@ -102,9 +102,10 @@ jobs:
             yarn run gen-binding
             NODE_CONFIG_ENV=test yarn run gen-sql-schema
             yarn run gen-ontology-slots
+            yarn run gen-analyzer-classes
       - run:
           name: Assert generated engine files don't have uncommitted changes
-          command: git diff --exit-code ../engine/scripts/db_schema.sql ../engine/sm/engine/ontology_slots.json
+          command: git diff --exit-code ../engine/scripts/db_schema.sql ../engine/sm/engine/ontology_slots.json ../engine/sm/engine/analyzer_classes.json
       - persist_to_workspace:
           root: dist
           paths:

@@ -14,7 +14,7 @@ type CurationTerm {
   suggestedLabel: String
   suggestedScore: Float
   note: String
-  datasetId: ID!
+  datasetId: ID              # null once the dataset was deleted; the decision outlives it
   datasetName: String
   submitter: User
   submittedAt: String

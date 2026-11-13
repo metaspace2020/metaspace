@@ -2119,7 +2119,9 @@ class SMInstance(object):
         :param name: New dataset name
         :param metadata: A JSON string or Python dict containing updated metadata. If
             ``metadata_v2`` is not given, the server up-projects it to the v2 metadata schema and
-            marks the converted values as pending curation.
+            marks the converted values as pending curation; on a dataset that already has a v2
+            record only the fields this edit changed are converted, the others keep their curated
+            values.
         :param databases: List of databases to process with, either as IDs or (name, version)
             tuples, e.g. [22, ('LipidMaps', '2017-12-12')]
         :param adducts: List of adducts. e.g. ['-H', '+Cl']

@@ -7,7 +7,8 @@ import {
 } from '../../tests/graphqlTestEnvironment'
 import { createTestDataset, createTestUser } from '../../tests/testDataCreation'
 import { Dataset } from '../dataset/model'
-import { MetadataCurationTerm, deletePendingRows } from './model'
+import { IsNull } from 'typeorm'
+import { MetadataCurationTerm } from './model'
 
 describe('MetadataCurationTerm', () => {
   beforeAll(onBeforeAll)
@@ -21,10 +22,6 @@ describe('MetadataCurationTerm', () => {
       { slot, datasetId, normalizedText, text: normalizedText, ...extra }))
 
   const newDataset = async() => await createTestDataset({ userId: (await createTestUser()).id })
-
-  const termsOf = async(datasetId: string) =>
-    (await testEntityManager.find(MetadataCurationTerm, { where: { datasetId }, order: { slot: 'ASC' } }))
-      .map(t => [t.slot, t.status])
 
   it('saves a pending row with defaults', async() => {
     const user = await createTestUser()
@@ -41,7 +38,16 @@ describe('MetadataCurationTerm', () => {
     expect(term.createdAt).toBeInstanceOf(Date)
   })
 
-  it('rejects a second row for the same slot and dataset', async() => {
+  it('allows a decided row beside the pending row of the same slot and dataset', async() => {
+    const dataset = await newDataset()
+    await createTerm('disease', dataset.id, 'disease 1', { status: 'approved' })
+    await createTerm('disease', dataset.id, 'disease 2', { status: 'mapped' })
+    await createTerm('disease', dataset.id, 'disease 3')
+
+    expect(await testEntityManager.count(MetadataCurationTerm, { slot: 'disease', datasetId: dataset.id })).toEqual(3)
+  })
+
+  it('rejects a second pending row for the same slot and dataset', async() => {
     const dataset = await newDataset()
     await createTerm('disease', dataset.id, 'disease 1')
     // TypeORM logs the failed INSERT through console.log; the failure is the expected outcome here.
@@ -64,26 +70,24 @@ describe('MetadataCurationTerm', () => {
       .toEqual(2)
   })
 
-  it('deletePendingRows deletes only pending rows of the listed slots', async() => {
-    const d1 = await newDataset()
-    const d2 = await newDataset()
-    await createTerm('disease', d1.id, 'a')
-    await createTerm('organism', d1.id, 'b', { status: 'approved' })
-    await createTerm('organism_part', d1.id, 'c')
-    await createTerm('disease', d2.id, 'a')
-
-    await deletePendingRows(testEntityManager, d1.id, ['disease', 'organism'])
-
-    expect(await termsOf(d1.id)).toEqual([['organism', 'approved'], ['organism_part', 'pending']])
-    expect(await termsOf(d2.id)).toEqual([['disease', 'pending']])
-  })
-
-  it('deleting the dataset cascades', async() => {
+  it('deleting the dataset keeps the row and clears its dataset', async() => {
     const dataset = await newDataset()
-    const term = await createTerm('disease', dataset.id, 'disease 1')
+    const term = await createTerm('disease', dataset.id, 'disease 1', { status: 'approved' })
 
     await testEntityManager.delete(Dataset, dataset.id)
 
-    expect(await testEntityManager.findOne(MetadataCurationTerm, term.id)).toBeUndefined()
+    expect((await testEntityManager.findOneOrFail(MetadataCurationTerm, term.id)).datasetId).toBeNull()
+  })
+
+  it('allows several dataset-less rows of the same slot', async() => {
+    const d1 = await newDataset()
+    const d2 = await newDataset()
+    await createTerm('disease', d1.id, 'disease 1', { status: 'approved' })
+    await createTerm('disease', d2.id, 'disease 2', { status: 'approved' })
+
+    await testEntityManager.delete(Dataset, d1.id)
+    await testEntityManager.delete(Dataset, d2.id)
+
+    expect(await testEntityManager.count(MetadataCurationTerm, { slot: 'disease', datasetId: IsNull() })).toEqual(2)
   })
 })

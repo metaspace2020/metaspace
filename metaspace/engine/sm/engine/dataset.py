@@ -1,7 +1,9 @@
 import json
 import logging
 from datetime import datetime
-from typing import Dict, Optional
+from functools import lru_cache
+from pathlib import Path
+from typing import Dict, List, Optional
 
 from sm.engine.config import SMConfig
 from sm.engine.ds_config import DSConfig
@@ -188,31 +190,27 @@ def _instrument_model_subtrees() -> list:
     return [b['root'] for b in get_slot_ontology_roots()['instrument_model']]
 
 
+# Generated from graphql's metadataSchemas/analyzer_classes.json by `yarn gen-analyzer-classes`
+# (CI fails when stale), so graphql's validation and this classification can never disagree.
+# Loaded lazily, like ontology_slots.json: lithops ships only .py files to workers, so importing
+# this module must not read it.
+ANALYZER_CLASSES_FILE = Path(__file__).with_name('analyzer_classes.json')
+
+
+@lru_cache(maxsize=1)
+def _analyzer_classes() -> List[Dict]:
+    return json.loads(ANALYZER_CLASSES_FILE.read_text())
+
+
 def _classify_instrument_label(label: Optional[str]) -> Optional[str]:
     """Keyword classification shared by both the legacy free-text path and the CURIE path below -
     unlike _normalize_instrument, returns None rather than defaulting to Orbitrap, so callers can
-    distinguish "recognized but unclassifiable" from "fall through to the next source"."""
-    # Keep in sync with ANALYZER_CLASSES in graphql's Mutation.ts. The longer phrases are PSI-MS
-    # canonical labels ("time-of-flight", "fourier transform ion cyclotron resonance", "LTQ FT").
+    distinguish "recognized but unclassifiable" from "fall through to the next source". The first
+    class whose phrase the label contains wins."""
     label = (label or '').lower()
-    if any(phrase in label for phrase in ['orbitrap', 'exactive', 'exploris', 'hf-x', 'uhmr']):
-        return 'Orbitrap'
-    if any(
-        phrase in label
-        for phrase in [
-            'fticr',
-            'ft-icr',
-            'ftms',
-            'ft-ms',
-            'fourier transform ion cyclotron',
-            'ltq ft',
-        ]
-    ):
-        return 'FTICR'
-    if any(
-        phrase in label for phrase in ['tof', 'mrt', 'exploris', 'synapt', 'xevo', 'time-of-flight']
-    ):
-        return 'TOF'
+    for entry in _analyzer_classes():
+        if any(phrase in label for phrase in entry['phrases']):
+            return entry['class']
     return None
 
 

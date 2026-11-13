@@ -39,8 +39,8 @@ const rejectionMessage = (text: string, note: string | null) =>
  * Resolves the typed free text of every curated slot still `pending_curation`, in order: an exact ontology match
  * (bound slots); this dataset's own row for the same text (rejected reports an error, approved/mapped resolve,
  * pending stays); the latest approved/mapped decision on any dataset; otherwise this dataset's pending row is
- * written (replacing its row for the slot, decided or not). Mutates and returns `envelope`; lookup failures are
- * logged and leave the value pending.
+ * written (rewriting its pending row of the slot if any; decided rows are left as they are). Mutates and returns
+ * `envelope`; lookup failures are logged and leave the value pending.
  */
 export async function resolveCurationStates(envelope: MetadataV2Envelope, em: EntityManager, datasetId: string,
   submitterId: string | null): Promise<CurationResolution> {
@@ -75,8 +75,8 @@ const resolveSlotValue = async(em: EntityManager, slot: CurationSlot, value: Ont
       return
     }
   }
-  const own = await findOwnRow(em, slot.slot, datasetId)
-  if (own !== undefined && own.normalizedText === normalizedText) {
+  const own = await findOwnRow(em, slot.slot, datasetId, normalizedText)
+  if (own !== undefined) {
     if (own.status === 'rejected') {
       resolution.errors.push({
         dataPath: `.metadataV2.document.${slot.path.join('.')}`,

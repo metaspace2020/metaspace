@@ -1,4 +1,4 @@
-import { Column, Entity, EntityManager, Index, JoinColumn, ManyToOne, PrimaryColumn, Unique } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm'
 import { User } from '../user/model'
 import { Dataset } from '../dataset/model'
 
@@ -7,7 +7,10 @@ export type CurationApplyState = 'idle' | 'running' | 'done' | 'failed'
 
 // The gin indexes (normalized_text gin_trgm_ops, aliases) cannot be expressed
 // with TypeORM 0.2 decorators, so they live in the migration only.
-@Unique('UQ_metadata_curation_term_slot_dataset', ['slot', 'datasetId'])
+// A dataset has one pending row per slot (the text it currently asks about); its decided rows stay as they were
+// decided, however often the text changes, and the row's dataset is only where the text came from.
+@Index('metadata_curation_term_slot_dataset_pending_uindex', ['slot', 'datasetId'],
+  { unique: true, where: "status = 'pending'" })
 @Index('metadata_curation_term_slot_status_index', ['slot', 'status'])
 @Index('metadata_curation_term_slot_normalized_text_index', ['slot', 'normalizedText'])
 @Entity({ schema: 'public', name: 'metadata_curation_term' })
@@ -48,11 +51,13 @@ export class MetadataCurationTerm {
   @Column({ type: 'text', nullable: true })
   note: string | null
 
+  // The dataset whose text the row holds: provenance only. Deleting the dataset drops its undecided rows
+  // (see deleteDataset) but a decision outlives it with a null dataset, since other datasets resolve through it.
   @Index('metadata_curation_term_dataset_id_index')
-  @Column({ type: 'text' })
-  datasetId: string
+  @Column({ type: 'text', nullable: true })
+  datasetId: string | null
 
-  @ManyToOne(() => Dataset, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Dataset, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'dataset_id' })
   dataset?: Dataset
 
@@ -84,10 +89,3 @@ export class MetadataCurationTerm {
 }
 
 export const METADATA_CURATION_ENTITIES = [MetadataCurationTerm]
-
-export const deletePendingRows = async(em: EntityManager, datasetId: string, slots: string[]): Promise<void> => {
-  await em.query(
-    'DELETE FROM public.metadata_curation_term WHERE dataset_id = $1 AND slot = ANY($2) AND status = \'pending\'',
-    [datasetId, slots]
-  )
-}

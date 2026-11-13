@@ -318,6 +318,16 @@ describe('metadataCuration controller', () => {
   })
 
   describe('running apply', () => {
+    it('a decision marks the row running before the apply starts', async() => {
+      const row = await createTerm({ text: 'fresh one' })
+      mockApply.mockImplementation(() => Promise.resolve())
+
+      await asAdmin(approveMutation, { input: { ids: [row.id] } })
+
+      expect(await reload(row.id)).toMatchObject({ status: 'approved', applyState: 'running', appliedCount: 0 })
+      expect(appliedIds()).toEqual([row.id])
+    })
+
     it('approve refuses a row whose apply is running', async() => {
       const decidedAt = new Date()
       const row = await createTerm({
