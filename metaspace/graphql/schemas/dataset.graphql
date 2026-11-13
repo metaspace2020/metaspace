@@ -61,6 +61,7 @@ type Dataset {
 
   canEdit: Boolean!
   canDelete: Boolean!
+  editAccessMode: DatasetEditAccessMode
   canDownload: Boolean!
   # JSON string containing:
   # a list of authors,
@@ -116,6 +117,11 @@ type DatasetGroup {
   members: [UserGroup!]  # @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
   adminNames: [String!]
 }
+enum DatasetEditAccessMode {
+  FULL
+  SPONSORED
+}
+
 type DatasetProject {
   id: ID!
   name: String!
@@ -406,6 +412,11 @@ type ImageSegmentationJob {
   status: String!
   error: String
   submitterEmail: String
+  userId: ID
+  isDefault: Boolean!
+  isMine: Boolean!
+  resultData: String
+  labelMapUrl: String
   createdAt: String!
   updatedAt: String!
 }
@@ -419,7 +430,6 @@ type Segmentation {
   status: String!
   error: String
   name: String
-  stale: Boolean!
   createdAt: String!
   updatedAt: String!
 }
@@ -462,6 +472,8 @@ type MeanSpectrum {
   # Peak-clustering tolerance, distinct from the user's ion-image ppm.
   clusteringPpm: Float!
   instrument: String!
+  # Smallest number of pixels a merged peak had to be detected in to be kept.
+  minSupportPixels: Int!
 }
 
 type MeanSpectrumRegionAvailability {
@@ -560,7 +572,8 @@ type Query {
   hasDiffRoiResults(datasetId: String!): Boolean!
 
   segmentationJobs(datasetId: String!): [ImageSegmentationJob!]!
-  segmentations(datasetId: String!): [Segmentation!]!
+  segmentationJob(datasetId: String!, jobId: Int): ImageSegmentationJob
+  segmentations(datasetId: String!, jobId: Int): [Segmentation!]!
   segmentationIonProfiles(segmentationId: ID!, filter: SegmentationIonProfileFilter = {}): [SegmentationIonProfileResult!]!
 }
 
@@ -647,6 +660,8 @@ type Mutation {
     id: ID!
     name: String!
   ): Segmentation!
+
+  deleteSegmentationJob(id: Int!): Boolean!
 }
 
 type Subscription {

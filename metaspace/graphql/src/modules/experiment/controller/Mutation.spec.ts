@@ -15,9 +15,11 @@ import {
   doQuery, onAfterAll, onAfterEach, onBeforeAll, onBeforeEach,
   setupTestUsers, testEntityManager, testUser,
 } from '../../../tests/graphqlTestEnvironment'
-import { createTestDataset, createTestProject } from '../../../tests/testDataCreation'
+import { getContextForTest } from '../../../getContext'
+import { createTestDataset, createTestProject, createTestUser } from '../../../tests/testDataCreation'
 import { UserProject, UserProjectRoleOptions as UPRO } from '../../project/model'
 import { Experiment, ExperimentDataset } from '../model'
+import { ImageSegmentationJob, Segmentation } from '../../engine/model'
 
 const mockEs = _mockEsConnector as jest.Mocked<typeof _mockEsConnector>
 const mockSm = _smApiDatasets as jest.Mocked<typeof _smApiDatasets>
@@ -122,10 +124,21 @@ describe('createExperiment', () => {
     setEsPolarity({ [ds.id]: '+' })
     await doQuery<any>(createMutation, { projectId: p.id, input: buildInput([ds.id]) })
 
-    expect(mockPlanActions.assertCanPerformAction).toHaveBeenCalledWith(
-      expect.anything(), expect.objectContaining({ actionType: 'experiments', userId: testUser.id }))
-    expect(mockPlanActions.performAction).toHaveBeenCalledWith(
-      expect.anything(), expect.objectContaining({ actionType: 'experiments' }))
+    const expected = expect.objectContaining({ actionType: 'experiments', userId: testUser.id, projectIds: [p.id] })
+    expect(mockPlanActions.assertCanPerformAction).toHaveBeenCalledWith(expect.anything(), expected)
+    expect(mockPlanActions.performAction).toHaveBeenCalledWith(expect.anything(), expected)
+  })
+
+  it('includes the project in projectIds when the user is a MANAGER of it', async() => {
+    mockBetaTesterApi.hasBetaFeature.mockResolvedValue(false)
+    const p = await makeProjectWithMember(UPRO.MANAGER)
+    const ds = await createTestDataset()
+    setEsPolarity({ [ds.id]: '+' })
+    await doQuery<any>(createMutation, { projectId: p.id, input: buildInput([ds.id]) })
+
+    const expected = expect.objectContaining({ actionType: 'experiments', userId: testUser.id, projectIds: [p.id] })
+    expect(mockPlanActions.assertCanPerformAction).toHaveBeenCalledWith(expect.anything(), expected)
+    expect(mockPlanActions.performAction).toHaveBeenCalledWith(expect.anything(), expected)
   })
 
   it('rejects and persists nothing when the usage limit is reached', async() => {
@@ -169,6 +182,72 @@ describe('createExperiment', () => {
     const exps = await testEntityManager.find(Experiment)
     expect(exps[0].labelGroups.map((l: any) => l.name)).toEqual(['tumor'])
   })
+
+  describe('segmentation validation', () => {
+    const SEG_ID = 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001'
+
+    const saveJob = async(datasetId: string, fields: { isDefault: boolean; userId: string | null }) =>
+      await testEntityManager.save(ImageSegmentationJob, {
+        datasetId, status: 'FINISHED', ...fields,
+      } as any) as ImageSegmentationJob
+
+    const saveSegmentation = async(datasetId: string, jobId: number | null) =>
+      await testEntityManager.save(Segmentation, {
+        id: SEG_ID, datasetId, jobId, segmentIndex: 0, algorithm: 'kmeans', status: 'FINISHED',
+      } as any)
+
+    const segInput = (datasetId: string) => {
+      const input = buildInput([datasetId])
+      input.datasets[0].regionSource = 'SEGMENTATION'
+      input.datasets[0].regions[0].sourceKind = 'segmentation_cluster'
+      input.datasets[0].regions[0].segmentationId = SEG_ID as any
+      return input
+    }
+
+    it('accepts regions on the default segmentation', async() => {
+      const p = await makeProjectWithMember()
+      const ds = await createTestDataset()
+      setEsPolarity({ [ds.id]: '+' })
+      const job = await saveJob(ds.id, { isDefault: true, userId: null })
+      await saveSegmentation(ds.id, job.id)
+      await doQuery<any>(createMutation, { projectId: p.id, input: segInput(ds.id) })
+      expect(await testEntityManager.find(Experiment)).toHaveLength(1)
+    })
+
+    it('accepts regions on the creator\'s private segmentation', async() => {
+      const p = await makeProjectWithMember()
+      const ds = await createTestDataset()
+      setEsPolarity({ [ds.id]: '+' })
+      const job = await saveJob(ds.id, { isDefault: false, userId: testUser.id })
+      await saveSegmentation(ds.id, job.id)
+      await doQuery<any>(createMutation, { projectId: p.id, input: segInput(ds.id) })
+      expect(await testEntityManager.find(Experiment)).toHaveLength(1)
+    })
+
+    it('rejects regions on another user\'s private segmentation', async() => {
+      const p = await makeProjectWithMember()
+      const other = await createTestUser()
+      const ds = await createTestDataset()
+      setEsPolarity({ [ds.id]: '+' })
+      const job = await saveJob(ds.id, { isDefault: false, userId: other.id })
+      await saveSegmentation(ds.id, job.id)
+      await expect(doQuery(createMutation, { projectId: p.id, input: segInput(ds.id) }))
+        .rejects.toThrowError(/not available to you/)
+      expect(await testEntityManager.find(Experiment)).toHaveLength(0)
+    })
+
+    it('rejects a segmentation from a different dataset', async() => {
+      const p = await makeProjectWithMember()
+      const ds = await createTestDataset()
+      const otherDs = await createTestDataset()
+      setEsPolarity({ [ds.id]: '+', [otherDs.id]: '+' })
+      const job = await saveJob(otherDs.id, { isDefault: true, userId: null })
+      await saveSegmentation(otherDs.id, job.id)
+      await expect(doQuery(createMutation, { projectId: p.id, input: segInput(ds.id) }))
+        .rejects.toThrowError(/not available to you/)
+      expect(await testEntityManager.find(Experiment)).toHaveLength(0)
+    })
+  })
 })
 
 const updateMutation = `
@@ -195,6 +274,57 @@ describe('updateExperiment', () => {
     expect(eds.map(e => e.datasetId)).toEqual([ds3.id])
     const exp = await testEntityManager.findOneOrFail(Experiment, created.id)
     expect(exp.labelGroups.map((l: any) => l.name)).toEqual(['stroma'])
+  })
+
+  describe('on the creator\'s private segmentation', () => {
+    const SEG_KEPT = 'bbbbbbbb-bbbb-bbbb-bbbb-000000000001'
+    const SEG_NEW = 'bbbbbbbb-bbbb-bbbb-bbbb-000000000002'
+
+    const seedPrivateExperiment = async() => {
+      const p = await makeProjectWithMember()
+      const ds = await createTestDataset()
+      setEsPolarity({ [ds.id]: '+' })
+      const job = await testEntityManager.save(ImageSegmentationJob, {
+        datasetId: ds.id, status: 'FINISHED', isDefault: false, userId: testUser.id,
+      } as any) as ImageSegmentationJob
+      await testEntityManager.save(Segmentation, [SEG_KEPT, SEG_NEW].map((id, i) => ({
+        id, datasetId: ds.id, jobId: job.id, segmentIndex: i, algorithm: 'kmeans', status: 'FINISHED',
+      })) as any)
+      const input = buildInput([ds.id])
+      input.datasets[0].regionSource = 'SEGMENTATION'
+      input.datasets[0].regions[0].sourceKind = 'segmentation_cluster'
+      input.datasets[0].regions[0].segmentationId = SEG_KEPT as any
+      const created = await doQuery<any>(createMutation, { projectId: p.id, input })
+
+      const manager = await createTestUser()
+      await testEntityManager.save(UserProject, { userId: manager.id, projectId: p.id, role: UPRO.MANAGER } as any)
+      const managerContext = getContextForTest(manager as any, testEntityManager)
+      return { ds, input, created, managerContext }
+    }
+
+    it('lets a project manager update an experiment keeping the stored regions', async() => {
+      const { input, created, managerContext } = await seedPrivateExperiment()
+      const r = await doQuery<any>(updateMutation,
+        { id: created.id, input: { ...input, name: 'Renamed' } }, { context: managerContext })
+      expect(r.name).toBe('Renamed')
+      const eds = await testEntityManager.find(ExperimentDataset, { where: { experimentId: created.id } })
+      expect(eds[0].regions.map(reg => reg.segmentationId)).toEqual([SEG_KEPT])
+    })
+
+    it('rejects a manager adding a region on the creator\'s private segmentation and keeps the stored rows',
+      async() => {
+        const { ds, input, created, managerContext } = await seedPrivateExperiment()
+        const extra = { ...input.datasets[0].regions[0], regionKey: `${ds.id}:extra`, segmentationId: SEG_NEW as any }
+        const newInput = {
+          ...input,
+          datasets: [{ ...input.datasets[0], regions: [...input.datasets[0].regions, extra] }],
+        }
+        await expect(doQuery(updateMutation, { id: created.id, input: newInput }, { context: managerContext }))
+          .rejects.toThrowError(/not available to you/)
+        const eds = await testEntityManager.find(ExperimentDataset, { where: { experimentId: created.id } })
+        expect(eds).toHaveLength(1)
+        expect(eds[0].regions.map(reg => reg.segmentationId)).toEqual([SEG_KEPT])
+      })
   })
 })
 

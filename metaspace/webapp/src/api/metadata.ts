@@ -11,6 +11,7 @@ export const editDatasetFragment = gql`
     description
     isPublic
     isEnriched
+    editAccessMode
     ontologyDatabases {
       id
       name

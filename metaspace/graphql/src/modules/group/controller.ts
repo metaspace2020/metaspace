@@ -23,6 +23,7 @@ import fetch from 'node-fetch'
 import { URLSearchParams } from 'url'
 import { assertCanPerformAction, performAction } from '../plan/util/canPerformAction'
 import * as moment from 'moment'
+import { deleteSponsorshipsBySponsor } from '../projectSponsorship/managerApi'
 
 const assertUserAuthenticated = (user: ContextUser) => {
   if (!user.id) {
@@ -466,7 +467,8 @@ export const Resolvers = {
       return true
     },
 
-    async leaveGroup(_: any, { groupId }: any, { getUserIdOrFail, entityManager }: Context): Promise<boolean> {
+    async leaveGroup(_: any, { groupId }: any, ctx: Context): Promise<boolean> {
+      const { getUserIdOrFail, entityManager } = ctx
       const userId = getUserIdOrFail()
       logger.info(`'${userId}' user leaving '${groupId}' group...`)
       await entityManager.getRepository(GroupModel).findOneOrFail(groupId)
@@ -481,6 +483,10 @@ export const Resolvers = {
       await userGroupRepo.delete({ userId, groupId })
 
       await updateUserGroupDatasets(entityManager, userId, groupId, false)
+      // Projects this user sponsored with the group's Pro plan lose that sponsorship. Never throws.
+      if (config.manager_api_url) {
+        await deleteSponsorshipsBySponsor(ctx, userId, groupId)
+      }
       logger.info(`User '${userId}' left '${groupId}' group`)
       return true
     },

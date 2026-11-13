@@ -72,10 +72,10 @@ describe('DatasetMetadataCard', () => {
     })
   })
 
-  it('does not auto-add stale segmentation clusters to regions', async () => {
+  it('auto-adds every segmentation cluster to regions', async () => {
     const segs: SegmentationOption[] = [
-      { id: 's0', segmentIndex: 0, name: 'Cluster 0', stale: false },
-      { id: 's1', segmentIndex: 1, name: 'Cluster 1', stale: true },
+      { id: 's0', segmentIndex: 0, name: 'Cluster 0' },
+      { id: 's1', segmentIndex: 1, name: 'Cluster 1' },
     ]
     const value = ref<ExperimentDraftDataset>(defaultDraft)
     const Wrapper = defineComponent({
@@ -98,8 +98,8 @@ describe('DatasetMetadataCard', () => {
     await (firstSelect.vm as any).$emit('change', 'SEGMENTATION')
 
     expect(value.value.regionSource).toBe('SEGMENTATION')
-    expect(value.value.regions).toHaveLength(1)
-    expect(value.value.regions.map((r) => r.segmentationId)).toEqual(['s0'])
+    expect(value.value.regions).toHaveLength(2)
+    expect(value.value.regions.map((r) => r.segmentationId)).toEqual(['s0', 's1'])
   })
 
   it('toggling the legend checkbox flips region.included and emits update', async () => {

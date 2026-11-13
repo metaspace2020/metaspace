@@ -61,7 +61,9 @@ def run_segmentation(segmentation_man, params):
         "min_mz":     float | null,
         "max_mz":     float | null,
         "off_sample": bool | null  (default null = no filter),
-        "email":      str | null
+        "email":      str | null,
+        "user_id":    str | null   (default null = dataset submitter),
+        "is_default": bool | null  (default null = true)
     }
     """
     ds_id = params.get('ds_id')
@@ -77,6 +79,8 @@ def run_segmentation(segmentation_man, params):
     max_mz = params.get('max_mz')
     off_sample = params.get('off_sample')
     email = params.get('email')
+    user_id = params.get('user_id')
+    is_default = params.get('is_default')
 
     result = segmentation_man.run_segmentation(
         ds_id=ds_id,
@@ -89,9 +93,23 @@ def run_segmentation(segmentation_man, params):
         max_mz=max_mz,
         off_sample=off_sample,
         email=email,
+        user_id=user_id,
+        is_default=is_default,
     )
 
     return result
+
+
+@app.post('/delete_job')
+@sm_modify_segmentation('DELETE_JOB')
+def delete_job(segmentation_man, params):
+    """Delete a segmentation job. Body: ``{"ds_id": str, "job_id": int}``."""
+    ds_id = params.get('ds_id')
+    job_id = params.get('job_id')
+    if not ds_id or job_id is None:
+        raise Exception('Missing required parameters: ds_id and job_id')
+
+    return segmentation_man.delete_job(ds_id=ds_id, job_id=int(job_id))
 
 
 @app.post('/restart_pending')

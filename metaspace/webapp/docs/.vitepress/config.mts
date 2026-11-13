@@ -142,6 +142,7 @@ export default defineConfig({
             items: [
               { text: 'Spectral Visualization', link: '/features/imzml-browser/spectral-visualization' },
               { text: 'Reference Peak Normalization', link: '/features/imzml-browser/reference-peak-normalization' },
+              { text: 'Mean Spectrum', link: '/features/imzml-browser/mean-spectrum' },
             ],
           },
         ],

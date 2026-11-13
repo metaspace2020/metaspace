@@ -248,6 +248,7 @@ def get_mean_spectrum():
             'returned_peaks': result['returned_peaks'],
             'clustering_ppm': result['clustering_ppm'],
             'instrument': result['instrument'],
+            'min_support_pixels': result['min_support_pixels'],
         }
         return bottle.HTTPResponse(body, **{'Content-Type': 'application/json'})
     except ValueError as e:

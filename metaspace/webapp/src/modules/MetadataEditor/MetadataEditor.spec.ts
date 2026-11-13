@@ -115,6 +115,77 @@ describe('MetadataEditor', () => {
     expect(banner.element.nextElementSibling?.classList.contains('v2-card')).toBe(true)
   })
 
+  // a v2 dataset: a legacy one with gaps cannot be made public, which would disable the switch regardless of the lock
+  const mountWithAccessMode = async (editAccessMode: string, dataset: Record<string, any> = v2Dataset) => {
+    const wrapper = mountEditor({ dataset: () => ({ ...dataset, editAccessMode }) }, { datasetId: '123' })
+    await wrapper.vm.state.loadingPromise
+    await flushPromises()
+    await nextTick()
+    return wrapper
+  }
+  // the section's own forms, not the ones inside its dialogs
+  const findSectionForms = (wrapper) =>
+    wrapper
+      .findComponent({ name: 'DataManagementSection' })
+      .findAllComponents({ name: 'ElForm' })
+      .filter((form) => form.classes().includes('section-grid'))
+  const lockedText = 'Locked: only the dataset owner can change this.'
+
+  it('locks data management, PI and visibility when access is sponsored', async () => {
+    const wrapper = await mountWithAccessMode('SPONSORED')
+
+    expect(wrapper.findComponent({ name: 'DataManagementSection' }).props('locked')).toBe(true)
+    expect(wrapper.findComponent({ name: 'VisibilityOptionSection' }).props('locked')).toBe(true)
+    expect(wrapper.text()).toContain(lockedText)
+    expect(wrapper.findComponent({ name: 'VisibilityOptionSection' }).find('.el-switch').classes()).toContain(
+      'is-disabled'
+    )
+    // Element Plus disables every control inside a disabled el-form (selects are mocked in this suite)
+    const dmForms = findSectionForms(wrapper)
+    expect(dmForms.length).toBeGreaterThan(0)
+    dmForms.forEach((form) => expect(form.props('disabled')).toBe(true))
+    // annotation settings stay enabled
+    expect(wrapper.findComponent({ name: 'MetaspaceOptionsSection' }).props('locked')).toBeUndefined()
+  })
+
+  it('locks nothing for FULL access', async () => {
+    const wrapper = await mountWithAccessMode('FULL')
+
+    expect(wrapper.findComponent({ name: 'DataManagementSection' }).props('locked')).toBe(false)
+    expect(wrapper.findComponent({ name: 'VisibilityOptionSection' }).props('locked')).toBe(false)
+    expect(wrapper.text()).not.toContain(lockedText)
+    expect(findSectionForms(wrapper).length).toBeGreaterThan(0)
+    findSectionForms(wrapper).forEach((form) => expect(form.props('disabled')).toBe(false))
+    expect(wrapper.findComponent({ name: 'VisibilityOptionSection' }).find('.el-switch').classes()).not.toContain(
+      'is-disabled'
+    )
+  })
+
+  describe('principal investigator validation for a grouped dataset with a withheld PI email', () => {
+    const groupedDataset = {
+      ...legacyDataset,
+      name: 'Grouped dataset',
+      group: { id: 'group-id', name: 'Group', shortName: 'G' },
+      principalInvestigator: { name: 'John doe', email: null },
+      adducts: ['+H'],
+      configJson: JSON.stringify({ image_generation: { ppm: 3 } }),
+    }
+
+    it('skips the locked PI checks for a sponsored editor', async () => {
+      const wrapper = await mountWithAccessMode('SPONSORED', groupedDataset)
+
+      expect(wrapper.vm.getFormValueForSubmit()).not.toBeNull()
+      expect(wrapper.vm.errors.metaspaceOptions?.principalInvestigator).toBeUndefined()
+    })
+
+    it('still validates the PI for FULL access', async () => {
+      const wrapper = await mountWithAccessMode('FULL', groupedDataset)
+
+      expect(wrapper.vm.getFormValueForSubmit()).toBeNull()
+      expect(wrapper.vm.errors.metaspaceOptions.principalInvestigator.email).toBe('should be a valid email address')
+    })
+  })
+
   it('wraps the page in Metadata, Data management and Annotation settings cards with counters', async () => {
     const wrapper = mountEditor({ dataset: () => v2Dataset }, { datasetId: '123' })
     await wrapper.vm.state.loadingPromise

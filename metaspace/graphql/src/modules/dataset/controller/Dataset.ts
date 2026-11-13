@@ -25,6 +25,7 @@ import { MolecularDbRepository } from '../../moldb/MolecularDbRepository'
 import { getS3Client } from '../../../utils/awsClient'
 import { In, IsNull } from 'typeorm'
 import canEditEsDataset from '../operation/canEditEsDataset'
+import { hasSponsoredEditAccess } from '../../projectSponsorship/operation/hasSponsoredEditAccess'
 import canDeleteEsDataset from '../operation/canDeleteEsDataset'
 import { DatasetEnrichment as DatasetEnrichmentModel, EnrichmentDB } from '../../enrichmentdb/model'
 import * as moment from 'moment/moment'
@@ -493,6 +494,17 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   async canEdit(ds, args, ctx) {
     return await canEditEsDataset(ds, ctx)
+  },
+
+  async editAccessMode(ds, args, ctx) {
+    if (await canEditEsDataset(ds, ctx)) {
+      return 'FULL'
+    }
+    if (ctx.user.id == null) {
+      return null
+    }
+    const projectIds = _.castArray(ds._source.ds_project_ids).filter(id => id != null)
+    return await hasSponsoredEditAccess(ctx, ds._source.ds_submitter_id, projectIds) ? 'SPONSORED' : null
   },
 
   async canDelete(ds, args, ctx) {

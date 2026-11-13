@@ -12,8 +12,7 @@ import {
 } from 'vue'
 import { ElIcon, ElInput, ElButton, ElProgress, ElMessage } from '../../../lib/element-plus'
 import { View, Edit, Hide, View as Show, Check, Close, Download } from '@element-plus/icons-vue'
-import { updateSegmentationMutation, getSegmentationsQuery } from '@/api/dataset'
-import { useRoute } from 'vue-router'
+import { updateSegmentationMutation } from '@/api/dataset'
 import { getOS } from '../../../lib/util'
 import OpacitySettings from '../../ImageViewer/OpacitySettings.vue'
 import FadeTransition from '../../../components/FadeTransition'
@@ -156,7 +155,6 @@ export const SegmentationVisualization = defineComponent({
   },
   setup(props) {
     const apolloClient = inject(DefaultApolloClient)
-    const route = useRoute()
     const canvasRef = ref<HTMLCanvasElement | null>(null)
     const opticalImageRef = ref<HTMLImageElement | null>(null)
     const viewBoxRef = ref<HTMLDivElement | null>(null)
@@ -274,12 +272,8 @@ export const SegmentationVisualization = defineComponent({
             id: segmentation.id,
             name: newName,
           },
-          refetchQueries: [
-            {
-              query: getSegmentationsQuery,
-              variables: { datasetId: route.params.dataset_id },
-            },
-          ],
+          // By operation name, so the page's active query is refetched with its own variables (dataset + run)
+          refetchQueries: ['getSegmentationsQuery'],
           awaitRefetchQueries: true,
         })
 

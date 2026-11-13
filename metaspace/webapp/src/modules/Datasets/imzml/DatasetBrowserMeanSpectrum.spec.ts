@@ -24,7 +24,6 @@ vi.mock('echarts/components', async () => {
   return {
     ...actual,
     GridComponent: vi.fn(),
-    TooltipComponent: vi.fn(),
     ToolboxComponent: vi.fn(),
     DataZoomComponent: vi.fn(),
   }

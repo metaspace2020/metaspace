@@ -160,7 +160,7 @@ jobs:
       - run:
           name: Run tests
           command: |
-            yarn run test-ci --mode CI --coverage
+            VITEST_MAX_THREADS=2 yarn run test-ci --mode CI --coverage
       - run:
           name: Upload coverage
           command: |

@@ -194,9 +194,28 @@ export default defineComponent({
                     ),
                   }}
                 </el-table-column>
-                <el-table-column prop="userId" label="User" width="140">
+                <el-table-column prop="userId" label="User" width="220">
                   {{
-                    default: ({ row }: { row: ApiUsage }) => <span class="user-email">{row.user?.name}</span>,
+                    default: ({ row }: { row: ApiUsage }) => (
+                      <div>
+                        <span class="user-email">{row.user?.name}</span>
+                        {row.sponsorGroupId != null && (
+                          <div class="text-xs text-gray-600 mt-1">
+                            <el-tag type="success" size="small">
+                              Sponsored
+                            </el-tag>
+                            {row.project != null && (
+                              <span class="ml-1">
+                                via{' '}
+                                <RouterLink to={`/project/${row.project.id}`} newTab>
+                                  {row.project.name}
+                                </RouterLink>
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ),
                   }}
                 </el-table-column>
                 <el-table-column prop="actionDt" label="Date" width="180">

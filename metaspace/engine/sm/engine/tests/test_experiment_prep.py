@@ -4,9 +4,13 @@ DB and image-loading hooks are faked here. Real-DB + real image_storage
 integration coverage lives in
 metaspace/engine/tests/test_experiment_prep_integration.py.
 """
+from unittest.mock import patch
+
 import numpy as np
 
-from sm.engine.postprocessing.experiment_prep import build_prep_block
+from sm.engine.postprocessing.experiment_prep import build_prep_block, _default_load_label_map
+
+_MOD = 'sm.engine.postprocessing.experiment_prep'
 
 
 class _FakeDB:
@@ -339,3 +343,27 @@ def test_default_load_iso_image_returns_owned_single_channel_float32():
     assert arr.base is None, 'array must own its data, not be a view of the RGBA decode'
     assert arr.nbytes == 3 * 4 * 4
     np.testing.assert_array_equal(arr, np.arange(12, dtype=np.float32).reshape(3, 4))
+
+
+def test_load_label_map_uses_job_image_id():
+    arr = np.zeros((2, 2))
+    with patch(f'{_MOD}.DB') as db_cls, patch(f'{_MOD}.load_npy_image') as load:
+        db_cls.return_value.select_one.return_value = ('ds-1', 2, 'job-img')
+        load.return_value = arr
+        result = _default_load_label_map('ds-1', 'seg-1')
+    load.assert_called_once_with('ds-1', 'job-img')
+    assert result[0] is arr and result[1] == 2
+
+
+def test_load_label_map_job_without_label_map_returns_none():
+    with patch(f'{_MOD}.DB') as db_cls, patch(f'{_MOD}.load_npy_image') as load:
+        db_cls.return_value.select_one.return_value = ('ds-1', 1, None)
+        assert _default_load_label_map('ds-1', 'seg-1') is None
+    load.assert_not_called()
+
+
+def test_load_label_map_missing_segment_returns_none():
+    with patch(f'{_MOD}.DB') as db_cls, patch(f'{_MOD}.load_npy_image') as load:
+        db_cls.return_value.select_one.return_value = None
+        assert _default_load_label_map('ds-1', 'seg-1') is None
+    load.assert_not_called()

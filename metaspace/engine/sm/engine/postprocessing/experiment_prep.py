@@ -7,7 +7,9 @@ Per dataset:
    total count.
 3. For each region, rasterise the mask per ``sourceKind``:
    - 'roi'                  -> public.roi.geojson polygon-fill
-   - 'segmentation_cluster' -> dataset's SEGMENTATION/LABEL_MAP diagnostic
+   - 'segmentation_cluster' -> label map loaded through segmentation.job_id ->
+                               image_segmentation_job.label_map_image_id
+                               (no label map -> the region is skipped)
    - 'whole'                -> first iso-image foreground (>0)
 4. Load each annotation's principal iso-image (PNG-decoded into a 2D float32
    array) once and compute its mean intensity over every region mask.
@@ -24,11 +26,7 @@ from botocore.exceptions import ClientError
 
 from sm.engine.db import DB
 from sm.engine import image_storage as _image_storage
-from sm.engine.annotation.diagnostics import (
-    DiagnosticImageKey,
-    get_dataset_diagnostics,
-    load_npy_image,
-)
+from sm.engine.annotation.diagnostics import load_npy_image
 from sm.engine.postprocessing.experiment_masks import (
     rasterise_roi_mask,
     rasterise_segmentation_mask,
@@ -59,26 +57,18 @@ def _default_load_label_map(ds_id: str, segmentation_id: str) -> Optional[Tuple[
 
     db = DB()
     row = db.select_one(
-        'SELECT dataset_id, segment_index FROM segmentation WHERE id=%s',
+        'SELECT s.dataset_id, s.segment_index, j.label_map_image_id '
+        'FROM segmentation s LEFT JOIN image_segmentation_job j ON j.id = s.job_id '
+        'WHERE s.id = %s',
         params=(segmentation_id,),
     )
     if not row:
         return None
-    seg_ds_id, segment_index = row
+    seg_ds_id, segment_index, label_map_image_id = row
     if seg_ds_id != ds_id:
         logger.warning(f'experiment_prep: segmentation belongs to ds {seg_ds_id}, not {ds_id}')
-    diagnostics = get_dataset_diagnostics(seg_ds_id)
-    label_map_image_id: Optional[str] = None
-    for diag in diagnostics:
-        if diag.get('type') != 'SEGMENTATION':
-            continue
-        for img in diag.get('images') or []:
-            if img.get('key') == DiagnosticImageKey.LABEL_MAP.value:
-                label_map_image_id = img.get('image_id')
-                break
-        if label_map_image_id:
-            break
     if not label_map_image_id:
+        logger.warning(f'experiment_prep: segmentation {segmentation_id} has no job label map')
         return None
     label_map = load_npy_image(seg_ds_id, label_map_image_id)
     return label_map, int(segment_index)

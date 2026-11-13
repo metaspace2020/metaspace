@@ -115,6 +115,11 @@ type ApiUsage {
     canEdit: Boolean
     actionDt: String!
     user: User
+
+    sponsorUserId: String
+    sponsorGroupId: String
+
+    project: Project
 }
 
 input ApiUsageFilter {

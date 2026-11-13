@@ -1,7 +1,7 @@
 <template>
   <div class="md-data-management-rows section-rows">
-    <section-row title="Ownership">
-      <el-form class="section-grid" size="default" label-position="top">
+    <section-row title="Ownership" :help="locked ? lockedNote : undefined">
+      <el-form class="section-grid" size="default" label-position="top" :disabled="locked">
         <div v-if="isAdmin">
           <form-field
             :value="(submitter && `${submitter.name} (${submitter.email})`) || null"
@@ -43,8 +43,12 @@
       </el-form>
     </section-row>
     <el-collapse-transition>
-      <section-row v-if="showPI && groupId == 'NO_GROUP'" title="Principal Investigator">
-        <el-form class="section-grid" size="default" label-position="top">
+      <section-row
+        v-if="showPI && groupId == 'NO_GROUP'"
+        title="Principal Investigator"
+        :help="locked ? lockedNote : undefined"
+      >
+        <el-form class="section-grid" size="default" label-position="top" :disabled="locked">
           <form-field
             type="text"
             name="Full name"
@@ -119,6 +123,7 @@ export default defineComponent({
     submitter: { type: Object as () => DatasetSubmitterFragment | null, default: null },
     error: { type: Object as () => any, default: () => ({}) },
     isNewDataset: { type: Boolean, required: true },
+    locked: { type: Boolean, default: false },
   },
   setup(props, { emit }) {
     const apolloClient = inject(DefaultApolloClient)
@@ -370,7 +375,10 @@ export default defineComponent({
       fetchUnknowns()
     })
 
+    const lockedNote = 'Locked: only the dataset owner can change this.'
+
     return {
+      lockedNote,
       currentUser,
       unknownGroup,
       unknownProjects,

@@ -46,6 +46,12 @@ have a look at our `METASPACE-converter <https://metaspace2020.github.io/metaspa
    content/apireference/projects_client
    content/apireference/types
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Project
+
+   content/changelog
+
 Indices and tables
 ------------------
 

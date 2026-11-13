@@ -1196,6 +1196,7 @@ exports[`ViewProjectPage > settings tab > should disable actions when under publ
                   <!--v-if--><span data-v-37081f7b=\\"\\"> Update details </span>
                 </button>
               </form>
+              <div data-v-37081f7b=\\"\\" class=\\"mock-pro-settings\\" project-id=\\"00000000-1111-2222-3333-444444444444\\" current-user-id=\\"userid\\"></div>
               <div data-v-37081f7b=\\"\\" class=\\"mt-12\\">
                 <h2 data-v-37081f7b=\\"\\">Delete project</h2>
                 <p data-v-37081f7b=\\"\\"><em data-v-37081f7b=\\"\\">Published projects cannot be deleted.</em></p>
@@ -1369,6 +1370,7 @@ exports[`ViewProjectPage > settings tab > should disable actions when under revi
                   <!--v-if--><span data-v-37081f7b=\\"\\"> Update details </span>
                 </button>
               </form>
+              <div data-v-37081f7b=\\"\\" class=\\"mock-pro-settings\\" project-id=\\"00000000-1111-2222-3333-444444444444\\" current-user-id=\\"userid\\"></div>
               <div data-v-37081f7b=\\"\\" class=\\"mt-12\\">
                 <h2 data-v-37081f7b=\\"\\">Delete project</h2>
                 <p data-v-37081f7b=\\"\\"><em data-v-37081f7b=\\"\\">This project is under review.</em><br data-v-37081f7b=\\"\\"> To delete the project, remove the review link on the
@@ -1545,6 +1547,7 @@ exports[`ViewProjectPage > settings tab > should match snapshot 1`] = `
                   <!--v-if--><span data-v-37081f7b=\\"\\"> Update details </span>
                 </button>
               </form>
+              <div data-v-37081f7b=\\"\\" class=\\"mock-pro-settings\\" project-id=\\"00000000-1111-2222-3333-444444444444\\" current-user-id=\\"userid\\"></div>
               <div data-v-37081f7b=\\"\\" class=\\"mt-12\\">
                 <h2 data-v-37081f7b=\\"\\">Delete project</h2>
                 <div data-v-37081f7b=\\"\\">

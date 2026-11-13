@@ -85,6 +85,7 @@ METASPACE runs two analyses automatically alongside annotation. These guides exp
 If you want to inspect the raw spectral data behind annotations, or explore intensity normalization options:
 
 - **[Spectral Visualization](/features/imzml-browser/spectral-visualization)** — browse per-pixel spectra directly from your imzML file in the imzML browser.
+- **[Mean Spectrum](/features/imzml-browser/mean-spectrum)** — see the combined spectrum of a saved ROI or the whole dataset, and click a peak to see its ion image.
 - **[Reference Peak Normalization](/features/imzml-browser/reference-peak-normalization)** — normalize ion images to a reference peak of your choice instead of TIC normalization.
 
 </details>

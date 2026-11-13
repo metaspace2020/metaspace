@@ -1,15 +1,16 @@
+import json
 import logging
 import math
 import time
+from typing import List, Optional
 
 import numpy as np
 import requests
 
+from sm.engine import image_storage
 from sm.engine.annotation.diagnostics import (
     DiagnosticImageFormat,
     DiagnosticImageKey,
-    DiagnosticType,
-    add_diagnostics,
     save_diagnostic_image,
 )
 from sm.engine.formula_parser import format_ion_formula
@@ -124,6 +125,56 @@ def submit_segmentation_job(  # pylint: disable=too-many-arguments, too-many-loc
     logger.info(f'Segmentation job {job_id} accepted by service for dataset {ds_id}')
 
 
+def _replaced_job_ids(
+    db, ds_id: str, job_id: int, is_default: bool, user_id: Optional[str]
+) -> List[int]:
+    """Find the finished jobs that a newly finished job replaces (same slot only).
+
+    Args:
+        db: Database wrapper.
+        ds_id: Dataset ID.
+        job_id: The job that just finished (excluded).
+        is_default: Whether that job is the dataset's default job.
+        user_id: Owner of that job (used for private jobs).
+
+    Returns:
+        IDs of the default jobs (default slot) or of the owner's private jobs (private slot).
+        A legacy private row with NULL user_id never matches, which fails safe (kept).
+        Jobs whose segments an experiment region references are kept (their segments would
+        cascade away otherwise); they stay as FINISHED orphans of the slot.
+    """
+    sql = (
+        'SELECT id FROM image_segmentation_job '
+        "WHERE ds_id = %s AND id <> %s AND status NOT IN ('QUEUED', 'STARTED') "
+    )
+    if is_default:
+        rows = db.select(sql + 'AND is_default = true', (ds_id, job_id))
+    else:
+        rows = db.select(sql + 'AND is_default = false AND user_id = %s', (ds_id, job_id, user_id))
+    candidates = [row[0] for row in rows]
+    if not candidates:
+        return []
+    referenced = {
+        row[0]
+        for row in db.select(
+            'SELECT DISTINCT s.job_id '
+            'FROM segmentation s '
+            'JOIN experiment_dataset ed ON ed.dataset_id = s.dataset_id '
+            'WHERE s.job_id = ANY(%s) '
+            'AND EXISTS (SELECT 1 FROM jsonb_array_elements(ed.regions) r '
+            "WHERE r->>'segmentationId' = s.id::text)",
+            (candidates,),
+        )
+    }
+    for old_id in candidates:
+        if old_id in referenced:
+            logger.warning(
+                f'Keeping replaced segmentation job {old_id} for dataset {ds_id}: '
+                'used by an experiment'
+            )
+    return [old_id for old_id in candidates if old_id not in referenced]
+
+
 def save_segmentation_result(
     ds_id, job_id, result, db
 ):  # pylint: disable=too-many-locals, too-many-statements
@@ -141,7 +192,15 @@ def save_segmentation_result(
 
     algorithm = result['algorithm']
 
-    # 1. Save label_map as NPY in dataset_diagnostic
+    job_row = db.select_one(
+        'SELECT user_id, is_default FROM image_segmentation_job WHERE id = %s', (job_id,)
+    )
+    if not job_row:
+        logger.warning(f'Segmentation job {job_id} no longer exists; dropping result')
+        return
+    user_id, is_default = job_row
+
+    # 1. Save label_map as NPY and store it, with the summary, on the job row
     raw_label_map = result['label_map']
 
     # Handle None values in label_map by replacing with -1 (background)
@@ -181,24 +240,18 @@ def save_segmentation_result(
          for dataset {ds_id}"""
     )
 
-    add_diagnostics(
-        [
-            {
-                'ds_id': ds_id,
-                # dataset_diagnostic.job_id references annotation job, not image_segmentation_job
-                'job_id': None,
-                'type': DiagnosticType.SEGMENTATION,
-                'data': {
-                    'algorithm': result['algorithm'],
-                    'map_type': result['map_type'],
-                    'n_segments': result['n_segments'],
-                    'parameters_used': result['parameters_used'],
-                    'segment_summary': result['segment_summary'],
-                    'diagnostics': result['diagnostics'],
-                },
-                'images': [label_map_image],
-            }
-        ]
+    summary = {
+        'algorithm': result['algorithm'],
+        'map_type': result['map_type'],
+        'n_segments': result['n_segments'],
+        'parameters_used': result['parameters_used'],
+        'segment_summary': result['segment_summary'],
+        'diagnostics': result['diagnostics'],
+    }
+    db.alter(
+        'UPDATE image_segmentation_job '
+        'SET result = %s, label_map_image_id = %s, label_map_image_url = %s WHERE id = %s',
+        params=(json.dumps(summary), label_map_image['image_id'], label_map_image['url'], job_id),
     )
 
     # 2. Insert one segmentation row per segment; let DB generate UUIDs
@@ -276,7 +329,17 @@ def save_segmentation_result(
             f' ({skipped} skipped — missing annotation or NaN score)'
         )
 
-    # 4. Mark job finished
+    # 4. Replace the previous finished job(s) of the same slot; cleanup must never block the result.
+    # Safe to retry: a job already deleted is a no-op and S3 deletes are idempotent.
+    for old_id in _replaced_job_ids(db, ds_id, job_id, is_default, user_id):
+        try:
+            delete_segmentation_job(ds_id, old_id, db)
+        except Exception as e:  # pylint: disable=broad-except
+            logger.warning(
+                f'Failed to delete replaced segmentation job {old_id} for dataset {ds_id}: {e}'
+            )
+
+    # 5. Mark job finished
     job_finish_start = time.time()
     db.alter(
         "UPDATE image_segmentation_job SET status = 'FINISHED', updated_at = NOW() WHERE id = %s",
@@ -291,3 +354,43 @@ def save_segmentation_result(
          in {total_save_time:.3f}s for dataset {ds_id}"""
     )
     logger.info(f'Segmentation result saved for dataset {ds_id} (job {job_id})')
+
+
+def del_segmentation_job_images(ds_id: str, db) -> None:
+    """Delete the label-map images of every segmentation job of a dataset.
+
+    Args:
+        ds_id: Dataset ID.
+        db: Database wrapper.
+    """
+    rows = db.select(
+        'SELECT label_map_image_id FROM image_segmentation_job '
+        'WHERE ds_id = %s AND label_map_image_id IS NOT NULL',
+        (ds_id,),
+    )
+    image_ids = [row[0] for row in rows]
+    if image_ids:
+        image_storage.delete_images(image_storage.DIAG, ds_id, image_ids)
+
+
+def delete_segmentation_job(ds_id: str, job_id: int, db) -> None:
+    """Delete a segmentation job, its label-map image and (cascading) its segments.
+
+    A job that does not exist for the dataset is a no-op.
+
+    Args:
+        ds_id: Dataset ID.
+        job_id: Segmentation job ID.
+        db: Database wrapper.
+    """
+    row = db.select_one(
+        'SELECT label_map_image_id FROM image_segmentation_job WHERE id = %s AND ds_id = %s',
+        (job_id, ds_id),
+    )
+    if not row:
+        return
+    (image_id,) = row
+    # Row first: a failure afterwards leaves an orphan S3 object, not a job whose image 404s
+    db.alter('DELETE FROM image_segmentation_job WHERE id = %s', (job_id,))
+    if image_id:
+        image_storage.delete_image(image_storage.DIAG, ds_id, image_id)

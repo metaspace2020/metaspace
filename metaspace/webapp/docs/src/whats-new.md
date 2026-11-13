@@ -3,6 +3,17 @@ sidebar: false
 ---
 
 # What's new
+## October 2026
+
+### Mean spectrum in the imzML Browser
+
+The imzML Browser has a new **Mean spectrum** view that shows one spectrum for a whole region instead of a single pixel.
+
+**Features**
+- [Mean Spectrum](/features/imzml-browser/mean-spectrum) — combines the peaks of every pixel in a saved ROI, or in the whole dataset, onto one m/z axis and shows their mean or summed intensity. Hovering a peak shows its m/z, intensity and the number of pixels it was detected in, and clicking a peak shows its ion image
+- Peaks detected in far fewer pixels than the region's strongest peaks are hidden as noise, so ROI spectra stay readable without any setting
+- The spectrum can be downloaded as a CSV file
+
 ## August 2026
 
 ### Cross-dataset statistical analysis (Pro)

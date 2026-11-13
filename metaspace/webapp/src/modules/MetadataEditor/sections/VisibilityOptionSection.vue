@@ -34,12 +34,13 @@
     <div class="flex items-center flex-wrap gap-x-3 gap-y-1">
       <el-switch
         :model-value="isPublic"
-        :disabled="disablePublic && !isPublic"
+        :disabled="locked || (disablePublic && !isPublic)"
         active-text="Public"
         inactive-text="Private"
         @change="handleChangeIsPublic"
       />
-      <span v-if="disablePublic && !isPublic" class="text-xs" style="color: #617f98">{{ disabledReason }}</span>
+      <span v-if="locked" class="text-xs text-gray-600">Locked: only the dataset owner can change this.</span>
+      <span v-else-if="disablePublic && !isPublic" class="text-xs" style="color: #617f98">{{ disabledReason }}</span>
     </div>
   </section-row>
 </template>
@@ -66,6 +67,7 @@ export default defineComponent({
     },
     disablePublic: { type: Boolean as PropType<boolean>, default: false },
     disabledReason: { type: String as PropType<string>, default: '' },
+    locked: { type: Boolean, default: false },
   },
   emits: ['change'],
   setup(props, { emit }) {

@@ -1491,20 +1491,27 @@ export default defineComponent({
                   content: () => (
                     <div class="space-y-1">
                       <p class="m-0">
-                        {'Peaks from all pixels in the region are clustered onto a reference m/z axis at ' +
-                          `${spectrum.clusteringPpm} ppm (${spectrum.instrument} peak-width scaling). ` +
-                          'This tolerance is independent of the ion image ppm.'}
+                        Peaks from every pixel in the region are merged onto one m/z axis. Peaks closer than the mass
+                        tolerance count as the same peak. This is separate from the ion image ppm.
+                      </p>
+                      <p class="m-0">
+                        {`Peaks detected in fewer than ${spectrum.minSupportPixels.toLocaleString()} of the ` +
+                          "region's pixels are hidden as noise." +
+                          (resolvedRegion.value === WHOLE_DATASET_REGION
+                            ? ''
+                            : " The cut follows how often the region's strongest peaks are detected.")}
                       </p>
                       <p class="m-0">{`${spectrum.nPixels.toLocaleString()} pixels in the region`}</p>
                       {typeof regionPeaks === 'number' && (
-                        <p class="m-0">{`${regionPeaks.toLocaleString()} peaks in the region`}</p>
+                        <p class="m-0">{`${regionPeaks.toLocaleString()} raw peaks in the region`}</p>
                       )}
                       <p class="m-0">
                         {spectrum.returnedPeaks < spectrum.totalPeaks
                           ? `Showing the ${spectrum.returnedPeaks.toLocaleString()} most intense of ` +
-                            `${spectrum.totalPeaks.toLocaleString()} clustered peaks`
-                          : `${spectrum.totalPeaks.toLocaleString()} clustered peaks`}
+                            `${spectrum.totalPeaks.toLocaleString()} merged peaks`
+                          : `${spectrum.totalPeaks.toLocaleString()} merged peaks`}
                       </p>
+                      <p class="m-0">Hover a peak to see how many pixels it appears in.</p>
                     </div>
                   ),
                   default: () => (
@@ -1512,7 +1519,7 @@ export default defineComponent({
                       <ElIcon class="text-sm">
                         <InfoFilled />
                       </ElIcon>
-                      <span>{`${spectrum.clusteringPpm} ppm clustering (${spectrum.instrument})`}</span>
+                      <span>About this spectrum</span>
                     </div>
                   ),
                 }}

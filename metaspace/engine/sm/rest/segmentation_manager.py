@@ -10,7 +10,10 @@ from botocore.exceptions import ClientError
 from sm.engine.config import SMConfig
 from sm.engine.daemons.actions import DaemonAction, DaemonActionStage
 from sm.engine.queue import QueuePublisher, SM_UPDATE
-from sm.engine.postprocessing.segmentation_wrapper import save_segmentation_result
+from sm.engine.postprocessing.segmentation_wrapper import (
+    delete_segmentation_job,
+    save_segmentation_result,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +52,8 @@ class SegmentationManager:
         max_mz: Optional[float] = None,
         off_sample: Optional[bool] = None,
         email: Optional[str] = None,
+        user_id: Optional[str] = None,
+        is_default: Optional[bool] = None,
     ):
         """Run segmentation analysis.
 
@@ -63,6 +68,8 @@ class SegmentationManager:
             max_mz: Maximum m/z value
             off_sample: Off-sample filter
             email: Email for notifications
+            user_id: Owner of the run (default: the dataset submitter)
+            is_default: Whether this is the dataset's default run (default True)
 
         Returns:
             dict: Job information with job_id
@@ -90,12 +97,27 @@ class SegmentationManager:
             'off_sample': off_sample,
         }
 
+        if is_default is None:
+            is_default = True
+        if user_id is None:
+            user_id = self._dataset_submitter_id(ds_id)
+
         # Insert a QUEUED job row and retrieve its id
         job_ids = self._db.insert_return(
-            '''INSERT INTO image_segmentation_job (ds_id, status, submitter_email, parameters)
-               VALUES (%s, %s, %s, %s)
+            '''INSERT INTO image_segmentation_job
+                   (ds_id, status, submitter_email, parameters, user_id, is_default)
+               VALUES (%s, %s, %s, %s, %s, %s)
                RETURNING id''',
-            rows=[(ds_id, DaemonActionStage.QUEUED, email, json.dumps(job_parameters))],
+            rows=[
+                (
+                    ds_id,
+                    DaemonActionStage.QUEUED,
+                    email,
+                    json.dumps(job_parameters),
+                    user_id,
+                    is_default,
+                )
+            ],
         )
         job_id = job_ids[0]
 
@@ -136,6 +158,24 @@ class SegmentationManager:
              time: {queue_publish_time:.3f}s, Total manager time: {total_time:.3f}s"""
         )
 
+        return {'job_id': job_id, 'ds_id': ds_id}
+
+    def _dataset_submitter_id(self, ds_id: str) -> Optional[str]:
+        """Return the user id of the dataset submitter, or None when unknown."""
+        row = self._db.select_one('SELECT user_id FROM graphql.dataset WHERE id = %s', (ds_id,))
+        return row[0] if row else None
+
+    def delete_job(self, ds_id: str, job_id: int) -> dict:
+        """Delete a segmentation job and its images; a missing job is a no-op.
+
+        Args:
+            ds_id: Dataset ID
+            job_id: Segmentation job ID
+
+        Returns:
+            dict: ``{'job_id': job_id, 'ds_id': ds_id}``
+        """
+        delete_segmentation_job(ds_id, job_id, self._db)
         return {'job_id': job_id, 'ds_id': ds_id}
 
     def handle_segmentation_callback(
@@ -181,7 +221,27 @@ class SegmentationManager:
             logger.info(
                 f'Received successful segmentation result for job {job_id}, dataset {ds_id}'
             )
-            save_segmentation_result(ds_id, job_id, result, self._db)
+            try:
+                save_segmentation_result(ds_id, job_id, result, self._db)
+            except Exception as e:
+                # Free the slot: a job left STARTED would block every later run and delete
+                logger.error(
+                    f'Failed to save segmentation result for job {job_id}, dataset {ds_id}: {e}',
+                    exc_info=True,
+                )
+                self._db.alter(
+                    """UPDATE image_segmentation_job SET
+                     status = 'FAILED', error = %s, updated_at = NOW() WHERE id = %s""",
+                    params=(str(e), job_id),
+                )
+                if email:
+                    try:
+                        self._send_failure_email(ds_id, email, str(e))
+                    except Exception as email_err:  # pylint: disable=broad-except
+                        logger.warning(
+                            f'Failed to send failure email for job {job_id}: {email_err}'
+                        )
+                raise
 
             # Send success email notification if email is provided
             if email:

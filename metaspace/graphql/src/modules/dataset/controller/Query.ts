@@ -11,9 +11,9 @@ import {
   DiffRoi,
   Roi,
   EngineDataset,
-  ImageSegmentationJob,
   Segmentation,
   SegmentationIonProfile,
+  ImageSegmentationJob,
 } from '../../engine/model'
 import {
   EnrichmentBootstrap,
@@ -22,6 +22,11 @@ import {
   EnrichmentTerm,
 } from '../../enrichmentdb/model'
 import canEditEsDataset from '../operation/canEditEsDataset'
+import {
+  findJobsVisibleTo,
+  findSegmentationJobVisibleById,
+  findVisibleSegmentationJob,
+} from '../operation/segmentationJobs'
 import normalizeLegacyRoiFeature from '../operation/normalizeLegacyRoiFeature'
 import parseRoiGeoJson, { getDatasetImageBounds } from '../operation/roiGeoJson'
 import { smApiJsonPost, smApiJsonGet } from '../../../utils/smApi/smApiCall'
@@ -31,6 +36,24 @@ import { UserError } from 'graphql-errors'
 import { ColocAnnotation, Ion } from '../../annotation/model'
 import * as _ from 'lodash'
 import { unpackAnnotation } from '../../annotation/controller/Query'
+
+/**
+ * Resolves the segmentation job to show: the one requested by id when the caller may see it, otherwise
+ * (no id given) the caller's default choice. Dataset visibility must be checked by the caller.
+ *
+ * @param ctx - Request context
+ * @param datasetId - Dataset id
+ * @param jobId - Optional requested job id
+ * @returns The job, or undefined when none is visible
+ */
+const resolveSegmentationJob = async(
+  ctx: Context, datasetId: string, jobId: number | null | undefined,
+): Promise<ImageSegmentationJob | undefined> => {
+  const userId = ctx.user.id || null
+  return jobId != null
+    ? findSegmentationJobVisibleById(ctx.entityManager, datasetId, jobId, userId)
+    : findVisibleSegmentationJob(ctx.entityManager, datasetId, userId)
+}
 
 const resolveDatasetScopeRole = async(ctx: Context, dsId: string) => {
   let scopeRole = SRO.OTHER
@@ -397,6 +420,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       returnedPeaks: resp.returned_peaks,
       clusteringPpm: resp.clustering_ppm,
       instrument: resp.instrument,
+      minSupportPixels: resp.min_support_pixels,
     }
   },
   async pixelSpectrum(source, { datasetId, x, y }) {
@@ -666,35 +690,29 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     if (!await esDatasetByID(datasetId, ctx.user)) {
       return []
     }
-
-    return ctx.entityManager.find(ImageSegmentationJob, {
-      where: { datasetId },
-      order: { createdAt: 'DESC' } as any,
-    })
+    return findJobsVisibleTo(ctx.entityManager, datasetId, ctx.user.id || null)
   },
 
-  async segmentations(source: any, { datasetId }: any, ctx: Context) {
+  async segmentationJob(source: any, { datasetId, jobId }: any, ctx: Context) {
+    if (!await esDatasetByID(datasetId, ctx.user)) {
+      return null
+    }
+    const job = await resolveSegmentationJob(ctx, datasetId, jobId)
+    return job || null
+  },
+
+  async segmentations(source: any, { datasetId, jobId }: any, ctx: Context) {
     if (!await esDatasetByID(datasetId, ctx.user)) {
       return []
     }
-
-    const rows = await ctx.entityManager.find(Segmentation, {
-      where: { datasetId },
+    const job = await resolveSegmentationJob(ctx, datasetId, jobId)
+    if (job == null) {
+      return []
+    }
+    return ctx.entityManager.find(Segmentation, {
+      where: { jobId: job.id },
       order: { segmentIndex: 'ASC' } as any,
     })
-    if (rows.length === 0) return []
-    const latestJob = await ctx.entityManager
-      .createQueryBuilder(ImageSegmentationJob, 'j')
-      .where('j.datasetId = :datasetId', { datasetId })
-      .andWhere('j.status = \'FINISHED\'')
-      .orderBy('j.createdAt', 'DESC')
-      .limit(1)
-      .getOne()
-    const latestJobId = latestJob != null ? latestJob.id : null
-    return rows.map((r: any) => ({
-      ...r,
-      stale: latestJobId != null && r.jobId != null && r.jobId !== latestJobId,
-    }))
   },
 
   async segmentationIonProfiles(
@@ -709,6 +727,13 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       return []
     }
     if (!await esDatasetByID(segmentation.datasetId, ctx.user)) {
+      return []
+    }
+    // Private runs stay private: only default segmentations are readable by every viewer
+    const job = segmentation.jobId != null
+      ? await ctx.entityManager.findOne(ImageSegmentationJob, segmentation.jobId)
+      : undefined
+    if (job == null || (!job.isDefault && (ctx.user.id == null || job.userId !== ctx.user.id))) {
       return []
     }
 
