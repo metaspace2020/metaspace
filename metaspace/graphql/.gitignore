@@ -8,6 +8,7 @@ src/binding.ts
 metadataSchemas/*.json
 !metadataSchemas/ontology_slots.json
 !metadataSchemas/curated_values.json
+!metadataSchemas/analyzer_classes.json
 metadataSchemas/metadataMapping.js
 health.json
 .eslintcache

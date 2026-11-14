@@ -1,0 +1,34 @@
+[
+  {
+    "class": "Orbitrap",
+    "phrases": [
+      "orbitrap",
+      "exactive",
+      "exploris",
+      "hf-x",
+      "uhmr"
+    ]
+  },
+  {
+    "class": "FTICR",
+    "phrases": [
+      "fticr",
+      "ft-icr",
+      "ftms",
+      "ft-ms",
+      "fourier transform ion cyclotron",
+      "ltq ft"
+    ]
+  },
+  {
+    "class": "TOF",
+    "phrases": [
+      "tof",
+      "mrt",
+      "exploris",
+      "synapt",
+      "xevo",
+      "time-of-flight"
+    ]
+  }
+]
