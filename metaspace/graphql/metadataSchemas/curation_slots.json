@@ -1,0 +1,57 @@
+{
+  "slots": [
+    {
+      "slot": "organism",
+      "group": "sample"
+    },
+    {
+      "slot": "disease",
+      "group": "sample"
+    },
+    {
+      "slot": "anatomical_site_coarse",
+      "group": "sample"
+    },
+    {
+      "slot": "anatomical_site_fine",
+      "group": "sample"
+    },
+    {
+      "slot": "developmental_stage",
+      "group": "sample"
+    },
+    {
+      "slot": "cell_line_id",
+      "group": "sample"
+    },
+    {
+      "slot": "ionization_source",
+      "group": "acquisition",
+      "reconciled": true
+    },
+    {
+      "slot": "maldi_matrix",
+      "group": "acquisition"
+    },
+    {
+      "slot": "solvent",
+      "group": "acquisition"
+    },
+    {
+      "slot": "sample_stabilisation",
+      "group": "sample"
+    },
+    {
+      "slot": "tissue_modification",
+      "group": "sample"
+    },
+    {
+      "slot": "genetic_background",
+      "group": "sample"
+    },
+    {
+      "slot": "maldi_matrix_application",
+      "group": "acquisition"
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import { EntityManager, In } from 'typeorm'
+import * as curatedValues from '../../../metadataSchemas/curated_values.json'
 import { MetadataV2Envelope, OntologyTermValue } from '../dataset/projection'
 import { MetadataCurationTerm } from './model'
 import { isPlaceholderText, normalizeCurationText } from './normalize'
@@ -46,8 +47,7 @@ export async function findLatestDecision(em: EntityManager, slot: string, normal
 }
 
 /** Seed values of the curated-list (unbound) slots, owned here and copied into the webapp. */
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const CURATED_VALUES: Record<string, string[]> = require('../../../metadataSchemas/curated_values.json')
+const CURATED_VALUES: Record<string, string[]> = curatedValues
 
 /** The seed values of curated-list `slot` (empty for any other slot). */
 export const curatedValuesFor = (slot: string): string[] => CURATED_VALUES[slot] ?? []

@@ -1,4 +1,6 @@
 import * as jsondiffpatch from 'jsondiffpatch'
+import * as metadataV2Schema from '../../../../../metadata/linkml/generated/metaspace_submission.schema.json'
+import * as analyzerClasses from '../../../../metadataSchemas/analyzer_classes.json'
 import logger from '../../../utils/logger'
 import { UserError } from 'graphql-errors'
 import { EntityManager } from 'typeorm'
@@ -68,8 +70,6 @@ const Ajv04 = require('ajv-draft-04')
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const Ajv2019 = require('ajv/dist/2019')
 // Vendored from the metaspace_metadata repo; provenance in metaspace/metadata/linkml/SCHEMA_VERSION.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const metadataV2Schema = require('../../../../../metadata/linkml/generated/metaspace_submission.schema.json')
 
 // Compiled once per process: the schemas are static and compilation is the expensive part of Ajv.
 // `strict: false` because ims.json/lcms.json carry custom UI-hint keywords (help, smEditorType, ...)
@@ -135,9 +135,7 @@ export const failedValidation = (validationErrors: any[]) => new UserError(JSON.
 // copy that `yarn gen-analyzer-classes` writes). Order matters: the first class whose phrase the label contains
 // wins ('exploris' is listed under Orbitrap and TOF). The longer phrases are the PSI-MS canonical labels, which
 // controlled metadata_v2 values project to.
-const ANALYZER_CLASSES: { class: string, phrases: string[] }[] =
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  require('../../../../metadataSchemas/analyzer_classes.json')
+const ANALYZER_CLASSES: { class: string, phrases: string[] }[] = analyzerClasses.classes
 
 /** The analyzer class the engine derives from a free-text Analyzer label, or null if unrecognized. */
 export function classifyAnalyzer(analyzer?: string | null): string | null {

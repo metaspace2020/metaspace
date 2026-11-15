@@ -1,4 +1,5 @@
 import { FieldResolversFor } from '../../bindingTypes'
+import * as ontologySlotsJson from '../../../metadataSchemas/ontology_slots.json'
 import { OntologyTerm, Query } from '../../binding'
 import { esFilterValueCountResults } from '../../../esConnector'
 import config from '../../utils/config'
@@ -12,8 +13,7 @@ import { EntityManager } from 'typeorm'
 // LinkML slot -> ontology root CURIE(s) its suggestions are scoped to. graphql owns this file; the
 // engine's import script reads a generated copy (`yarn gen-ontology-slots`, checked by CI), so the
 // suggestion scope and the imported subtrees cannot drift.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const ontologySlots: Record<string, { root: string }[]> = require('../../../metadataSchemas/ontology_slots.json')
+const ontologySlots: Record<string, { root: string }[]> = ontologySlotsJson
 export const SLOT_SUBTREES: Record<string, string[]> = _.mapValues(ontologySlots, bindings => bindings.map(b => b.root))
 
 // A metadata v2 field path under `ds_meta_v2` (the reconciled acquisition fields nest under `user_value`).

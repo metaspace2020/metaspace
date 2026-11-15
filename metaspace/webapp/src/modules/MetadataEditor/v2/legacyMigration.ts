@@ -38,7 +38,7 @@ const matches = (term: Term, text: string) =>
  * Resolve legacy free text against a bound slot. Exact label/synonym match -> controlled; otherwise (or on
  * request failure) -> free text.
  */
-async function resolveTerm(slot: string, raw: string, resolver: TermResolver): Promise<Resolution> {
+export async function resolveTerm(slot: string, raw: string, resolver: TermResolver): Promise<Resolution> {
   const text = normaliseText(raw)
   const freeText: OntologyTermValue = { value_free_text: raw, curation_state: 'pending_curation' }
   let terms: Term[] = []

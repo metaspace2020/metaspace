@@ -12,10 +12,10 @@ import {
   switchSampleType,
   unsetAtPath,
 } from './envelope'
-import { curatedValueResolver } from './curatedValues'
+import { CURATED_VALUES, curatedValueResolver } from './curatedValues'
 import { mapServerErrors } from './errorPaths'
-import { ENUM_VALUES, FieldDef, fieldByKey, fieldsFor, requiredFor } from './formDefinition'
-import { migrateLegacy } from './legacyMigration'
+import { ENUM_VALUES, FIELD_DEFS, FieldDef, fieldByKey, fieldsFor, requiredFor } from './formDefinition'
+import { migrateLegacy, resolveTerm } from './legacyMigration'
 import { computeStatus, StatusSummary } from './status'
 import {
   CurationStatus,
@@ -26,6 +26,7 @@ import {
   FieldReport,
   LegacyMetadata,
   MetadataV2Envelope,
+  OntologyTermValue,
   ResolvingPower,
   SampleType,
   TermResolver,
@@ -115,6 +116,33 @@ const stripForTemplate = (env: MetadataV2Envelope): MetadataV2Envelope => {
   return next
 }
 
+/**
+ * A template can carry values its source dataset stored as pending free text although they name a known option
+ * (saved before the ontology was imported, or through the legacy editor). Each is looked up again: an exact term
+ * of a bound slot becomes controlled, a curated value becomes accepted free text, anything else stays pending.
+ */
+const promoteKnownPending = async (env: MetadataV2Envelope, resolver: TermResolver): Promise<MetadataV2Envelope> => {
+  let next = env
+  await Promise.all(
+    FIELD_DEFS.map(async (def) => {
+      if (def.editor !== 'ontology' && def.editor !== 'freeText') return
+      const value = getAtPath<OntologyTermValue | undefined>(env, def.path)
+      const text = (value?.value_free_text || '').trim()
+      if (!value || value.curation_state !== 'pending_curation' || value.value_ontology_id || !text) return
+      let known: OntologyTermValue | undefined
+      if (def.slot) {
+        const { value: resolved } = await resolveTerm(def.slot, text, resolver)
+        if (resolved.curation_state === 'controlled') known = resolved
+      } else {
+        const curated = (CURATED_VALUES[def.key] || []).find((v) => v.trim().toLowerCase() === text.toLowerCase())
+        if (curated) known = { value_label: curated, value_free_text: curated, curation_state: 'free_text_accepted' }
+      }
+      if (known) next = setAtPath(next, def.path, known)
+    })
+  )
+  return next
+}
+
 export function useMetadataV2Form(
   resolver: TermResolver,
   valueResolver: ValueResolver = curatedValueResolver,
@@ -181,7 +209,7 @@ export function useMetadataV2Form(
     statusDatasetId = null
     const fromV2 = parseEnvelope(seed.metadataV2Json)
     if (fromV2) {
-      envelope.value = stripForTemplate(fromV2)
+      envelope.value = await promoteKnownPending(stripForTemplate(fromV2), resolver)
     } else if (seed.metadataJson && safeJsonParse(seed.metadataJson)?.Sample_Information) {
       // a template copies values only: migration provenance (tags, hints) belongs to editing
       // the legacy dataset itself, so fields/unmapped/failedSlots stay as reset() left them

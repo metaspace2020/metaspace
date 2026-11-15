@@ -1,7 +1,11 @@
+import * as ontologySlots from '../../../metadataSchemas/ontology_slots.json'
+// The curated slots, in queue order; shared with bin/copy-curated-values.js (plain JSON: that script runs from the
+// webapp without graphql's TypeScript toolchain).
+import * as curationCatalogue from '../../../metadataSchemas/curation_slots.json'
 import { MetadataV2Document, OntologyTermValue } from '../dataset/projection'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const ontologySlots: Record<string, unknown> = require('../../../metadataSchemas/ontology_slots.json')
+const curationSlots: { slot: string, group: 'sample' | 'acquisition', reconciled?: boolean }[] =
+  curationCatalogue.slots as { slot: string, group: 'sample' | 'acquisition', reconciled?: boolean }[]
 
 export interface CurationSlot {
   slot: string
@@ -12,35 +16,13 @@ export interface CurationSlot {
   bound: boolean
 }
 
-const sampleSlot = (slot: string): CurationSlot => ({
+export const CURATION_SLOTS: CurationSlot[] = curationSlots.map(({ slot, group, reconciled }) => ({
   slot,
-  group: 'sample',
-  path: ['sample', slot],
+  group,
+  // a reconciled acquisition value (user_value + reconciliation_state) holds its term one level down
+  path: reconciled ? [group, slot, 'user_value'] : [group, slot],
   bound: slot in ontologySlots,
-})
-
-const acquisitionSlot = (slot: string, reconciled = false): CurationSlot => ({
-  slot,
-  group: 'acquisition',
-  path: reconciled ? ['acquisition', slot, 'user_value'] : ['acquisition', slot],
-  bound: slot in ontologySlots,
-})
-
-export const CURATION_SLOTS: CurationSlot[] = [
-  sampleSlot('organism'),
-  sampleSlot('disease'),
-  sampleSlot('anatomical_site_coarse'),
-  sampleSlot('anatomical_site_fine'),
-  sampleSlot('developmental_stage'),
-  sampleSlot('cell_line_id'),
-  acquisitionSlot('ionization_source', true),
-  acquisitionSlot('maldi_matrix'),
-  acquisitionSlot('solvent'),
-  sampleSlot('sample_stabilisation'),
-  sampleSlot('tissue_modification'),
-  sampleSlot('genetic_background'),
-  acquisitionSlot('maldi_matrix_application'),
-]
+}))
 
 export function curationSlot(slot: string): CurationSlot | undefined {
   return CURATION_SLOTS.find(s => s.slot === slot)

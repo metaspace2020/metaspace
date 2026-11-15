@@ -68,6 +68,39 @@ describe('useMetadataV2Form', () => {
     expect(templated.envelope.value.document.sample.sample_type).toBe('tissue')
   })
 
+  it('a template promotes pending values that name a known option; unknown text stays pending', async () => {
+    const source = createEmptyEnvelope('tissue')
+    const pending = (text: string) => ({ value_free_text: text, curation_state: 'pending_curation' as const })
+    source.document.sample.organism = pending('Mus musculus')
+    source.document.sample.anatomical_site_coarse = pending('liver')
+    source.document.sample.sample_stabilisation = pending('formalin-fixed paraffin-embedded (ffpe)')
+    source.document.sample.tissue_modification = pending('Something new')
+    const form = useMetadataV2Form(resolver)
+    await form.loadNew({ metadataV2Json: JSON.stringify(source) })
+    const sample = form.envelope.value.document.sample
+    expect(sample.organism).toEqual({
+      value_ontology_id: 'NCBITaxon:10090',
+      value_label: 'Mus musculus',
+      curation_state: 'controlled',
+    })
+    expect(sample.sample_stabilisation).toEqual({
+      value_label: 'Formalin-fixed paraffin-embedded (FFPE)',
+      value_free_text: 'Formalin-fixed paraffin-embedded (FFPE)',
+      curation_state: 'free_text_accepted',
+    })
+    // no term and no curated value: left as typed
+    expect(sample.anatomical_site_coarse).toEqual(pending('liver'))
+    expect(sample.tissue_modification).toEqual(pending('Something new'))
+    expect(form.isDirty.value).toBe(false)
+
+    // a failing term lookup leaves the value pending
+    const failing = useMetadataV2Form(async () => {
+      throw new Error('network')
+    })
+    await failing.loadNew({ metadataV2Json: JSON.stringify(source) })
+    expect(failing.envelope.value.document.sample.organism).toEqual(pending('Mus musculus'))
+  })
+
   it('the value resolver defaults to the curated lists and can be injected', async () => {
     expect(await useMetadataV2Form(resolver).valueResolver('tissue_modification', 'wash')).toEqual([
       { label: 'Washed' },

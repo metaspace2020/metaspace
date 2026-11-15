@@ -9,7 +9,7 @@ const path = require('path')
 const source = path.join(__dirname, '..', 'metadataSchemas', 'analyzer_classes.json')
 const target = process.argv[2] || path.join(__dirname, '..', '..', 'engine', 'sm', 'engine', 'analyzer_classes.json')
 
-const classes = JSON.parse(fs.readFileSync(source, 'utf8'))
+const { classes } = JSON.parse(fs.readFileSync(source, 'utf8'))
 if (!Array.isArray(classes) || classes.length === 0) {
   throw new Error('analyzer_classes.json: must be a non-empty array of { class, phrases }')
 }
