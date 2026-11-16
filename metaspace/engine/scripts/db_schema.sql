@@ -2,6 +2,7 @@
 -- To regenerate this file, run 'yarn run gen-sql-schema' in the graphql project
 
 CREATE EXTENSION "uuid-ossp";
+CREATE EXTENSION "pg_trgm";
 CREATE SCHEMA IF NOT EXISTS graphql;
 
 CREATE TABLE "graphql"."credentials" (
@@ -236,6 +237,7 @@ CREATE TABLE "public"."dataset" (
   "ion_thumbnail" text, 
   "ion_thumbnail_url" text, 
   "size_hash" json, 
+  "metadata_v2" json, 
   CONSTRAINT "PK_1368c0f3639e45c45be6288a232" PRIMARY KEY ("id")
 );
 
@@ -618,6 +620,63 @@ CREATE TABLE "public"."experiment_result" (
   CONSTRAINT "PK_07ce415c4b2ba31fe9389ffabcf" PRIMARY KEY ("id")
 );
 
+CREATE TABLE "public"."ontology_term" (
+  "curie" text NOT NULL, 
+  "subtree" text NOT NULL, 
+  "label" text NOT NULL, 
+  "synonyms" text array NOT NULL DEFAULT '{}'::text[], 
+  "ontology" text NOT NULL, 
+  "obsolete" boolean NOT NULL DEFAULT false, 
+  CONSTRAINT "PK_0b7180641535673df751a19f104" PRIMARY KEY ("curie", 
+  "subtree")
+);
+
+CREATE INDEX "ontology_term_subtree_index" ON "public"."ontology_term" (
+  "subtree"
+) ;
+
+CREATE TABLE "public"."metadata_curation_term" (
+  "id" uuid NOT NULL DEFAULT uuid_generate_v4(), 
+  "slot" text NOT NULL, 
+  "normalized_text" text NOT NULL, 
+  "text" text NOT NULL, 
+  "status" text NOT NULL DEFAULT 'pending', 
+  "canonical_label" text, 
+  "ontology_id" text, 
+  "aliases" text array NOT NULL DEFAULT '{}', 
+  "suggested_ontology_id" text, 
+  "suggested_label" text, 
+  "suggested_score" real, 
+  "note" text, 
+  "dataset_id" text, 
+  "submitter_id" uuid, 
+  "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), 
+  "decided_by_id" uuid, 
+  "decided_at" TIMESTAMP WITH TIME ZONE, 
+  "apply_state" text NOT NULL DEFAULT 'idle', 
+  "applied_count" integer NOT NULL DEFAULT '0', 
+  CONSTRAINT "PK_0d1257e6e0251b6f2b2c5b2a867" PRIMARY KEY ("id")
+);
+
+CREATE INDEX "metadata_curation_term_dataset_id_index" ON "public"."metadata_curation_term" (
+  "dataset_id"
+) ;
+
+CREATE INDEX "metadata_curation_term_slot_normalized_text_index" ON "public"."metadata_curation_term" (
+  "slot", 
+  "normalized_text"
+) ;
+
+CREATE INDEX "metadata_curation_term_slot_status_index" ON "public"."metadata_curation_term" (
+  "slot", 
+  "status"
+) ;
+
+CREATE UNIQUE INDEX "metadata_curation_term_slot_dataset_pending_uindex" ON "public"."metadata_curation_term" (
+  "slot", 
+  "dataset_id"
+) WHERE status = 'pending';
+
 ALTER TABLE "public"."molecular_db" ADD CONSTRAINT "FK_a18f5f7d6cc662006d9c849ea1f" FOREIGN KEY (
   "group_id") REFERENCES "graphql"."group"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -825,5 +884,17 @@ ALTER TABLE "public"."experiment_result" ADD CONSTRAINT "FK_c22b587504d45afee045
 ALTER TABLE "public"."experiment_result" ADD CONSTRAINT "FK_4433cbb748784930eb5442b9aa5" FOREIGN KEY (
   "ion_id") REFERENCES "graphql"."ion"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."metadata_curation_term" ADD CONSTRAINT "FK_7604e42554a7ac201160b865ebc" FOREIGN KEY (
+  "dataset_id") REFERENCES "graphql"."dataset"("id"
+) ON DELETE SET NULL ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."metadata_curation_term" ADD CONSTRAINT "FK_67f18e4b979e0cfbb3771dd59ff" FOREIGN KEY (
+  "submitter_id") REFERENCES "graphql"."user"("id"
+) ON DELETE SET NULL ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."metadata_curation_term" ADD CONSTRAINT "FK_094bc423b2881902ffbd646dbbc" FOREIGN KEY (
+  "decided_by_id") REFERENCES "graphql"."user"("id"
+) ON DELETE SET NULL ON UPDATE NO ACTION;
 
 

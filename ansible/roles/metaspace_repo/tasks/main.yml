@@ -89,6 +89,11 @@
         - --exclude='.*'
         - --exclude=aws/env/*
         - --exclude=aws/files/*
+    # vendored metadata schema v2 (LinkML JSON schema), read by graphql for metadataV2Json validation
+    - src: "{{ sm_graphql_home }}/../metadata/"
+      dest: "{{ sm_graphql_home }}/../metadata/"
+      rsync_opts:
+        - --exclude=.*
     - src: "{{ sm_graphql_home }}/"
       dest: "{{ sm_graphql_home }}/"
       rsync_opts:

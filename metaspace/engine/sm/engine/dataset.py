@@ -1,13 +1,17 @@
 import json
 import logging
 from datetime import datetime
-from typing import Dict
+from functools import lru_cache
+from pathlib import Path
+from typing import Dict, List, Optional
 
 from sm.engine.config import SMConfig
 from sm.engine.ds_config import DSConfig
 from sm.engine.errors import UnknownDSID
 
 from sm.engine.annotation.scoring_model import find_by_id
+from sm.engine.metadata_v2 import get_instrument_model_curie
+from sm.engine.ontology_term import get_slot_ontology_roots
 
 logger = logging.getLogger('engine')
 
@@ -66,21 +70,22 @@ class Dataset:
 
     DS_SEL = (
         'SELECT id, name, input_path, upload_dt, metadata, config, status, '
-        '   status_update_dt, is_public, size_hash '
+        '   status_update_dt, is_public, size_hash, metadata_v2 '
         'FROM dataset WHERE id = %s'
     )
     DS_UPD = (
         'UPDATE dataset set name=%(name)s, input_path=%(input_path)s, upload_dt=%(upload_dt)s, '
         '   metadata=%(metadata)s, config=%(config)s, status=%(status)s, '
-        '   status_update_dt=%(status_update_dt)s, is_public=%(is_public)s '
+        '   status_update_dt=%(status_update_dt)s, is_public=%(is_public)s, '
+        '   metadata_v2=%(metadata_v2)s '
         'where id=%(id)s'
     )
     DS_INSERT = (
         'INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, '
-        '   status_update_dt, is_public, size_hash) '
+        '   status_update_dt, is_public, size_hash, metadata_v2) '
         'VALUES (%(id)s, %(name)s, %(input_path)s, %(upload_dt)s, '
         '   %(metadata)s, %(config)s, %(status)s, %(status_update_dt)s, '
-        '   %(is_public)s, %(size_hash)s)'
+        '   %(is_public)s, %(size_hash)s, %(metadata_v2)s)'
     )
 
     ACQ_GEOMETRY_SEL = 'SELECT acq_geometry FROM dataset WHERE id = %s'
@@ -99,6 +104,7 @@ class Dataset:
         status: str = DatasetStatus.QUEUED,
         status_update_dt: datetime = None,
         is_public: bool = True,
+        metadata_v2: Dict = None,
     ):
         self.id = id
         self.name = name
@@ -111,6 +117,7 @@ class Dataset:
         self.metadata = metadata
         self.size_hash = size_hash
         self.config = config
+        self.metadata_v2 = metadata_v2
         self._sm_config = SMConfig.get_conf()
 
     def __str__(self):
@@ -148,6 +155,7 @@ class Dataset:
             'status': self.status,
             'status_update_dt': self.status_update_dt,
             'is_public': self.is_public,
+            'metadata_v2': json.dumps(self.metadata_v2) if self.metadata_v2 else None,
         }
         if not self.is_stored(db):
             if allow_insert:
@@ -178,28 +186,66 @@ class Dataset:
         return msg
 
 
-def _normalize_instrument(instrument):
-    instrument = (instrument or '').lower()
-    if any(phrase in instrument for phrase in ['orbitrap', 'exactive', 'exploris', 'hf-x', 'uhmr']):
-        return 'Orbitrap'
-    if any(phrase in instrument for phrase in ['fticr', 'ft-icr', 'ftms', 'ft-ms']):
-        return 'FTICR'
-    if any(phrase in instrument for phrase in ['tof', 'mrt', 'exploris', 'synapt', 'xevo']):
-        return 'TOF'
+def _instrument_model_subtrees() -> list:
+    return [b['root'] for b in get_slot_ontology_roots()['instrument_model']]
+
+
+# Generated from graphql's metadataSchemas/analyzer_classes.json by `yarn gen-analyzer-classes`
+# (CI fails when stale), so graphql's validation and this classification can never disagree.
+# Loaded lazily, like ontology_slots.json: lithops ships only .py files to workers, so importing
+# this module must not read it.
+ANALYZER_CLASSES_FILE = Path(__file__).with_name('analyzer_classes.json')
+
+
+@lru_cache(maxsize=1)
+def _analyzer_classes() -> List[Dict]:
+    return json.loads(ANALYZER_CLASSES_FILE.read_text())
+
+
+def _classify_instrument_label(label: Optional[str]) -> Optional[str]:
+    """Keyword classification shared by both the legacy free-text path and the CURIE path below -
+    unlike _normalize_instrument, returns None rather than defaulting to Orbitrap, so callers can
+    distinguish "recognized but unclassifiable" from "fall through to the next source". The first
+    class whose phrase the label contains wins."""
+    label = (label or '').lower()
+    for entry in _analyzer_classes():
+        if any(phrase in label for phrase in entry['phrases']):
+            return entry['class']
+    return None
+
+
+def _normalize_instrument(instrument, instrument_curie: str = None, db=None) -> str:
+    # CURIE path first. PSI-MS has no relation linking instrument models (MS:1000031) to analyzer
+    # types (MS:1000443), so the class is derived from the term's canonical label with the same
+    # keyword heuristic used for free text.
+    if instrument_curie and db is not None:
+        row = db.select_one(
+            'SELECT label FROM ontology_term WHERE curie = %s AND subtree = ANY(%s) LIMIT 1',
+            params=(instrument_curie, _instrument_model_subtrees()),
+        )
+        if row:
+            classified = _classify_instrument_label(row[0])
+            if classified:
+                return classified
+
+    classified = _classify_instrument_label(instrument)
+    if classified:
+        return classified
 
     # Fall back to Orbitrap, because its resolving power as a function of mass lies between
     # the other analyzer types.
     return 'Orbitrap'
 
 
-def _get_isotope_generation_from_metadata(metadata):
+def _get_isotope_generation_from_metadata(metadata, metadata_v2: dict = None, db=None):
     assert 'MS_Analysis' in metadata
 
     sm_config = SMConfig.get_conf()
 
     polarity = metadata['MS_Analysis']['Polarity']
     polarity_sign = {'Positive': '+', 'Negative': '-'}[polarity]
-    instrument = _normalize_instrument(metadata['MS_Analysis']['Analyzer'])
+    instrument_curie = get_instrument_model_curie(metadata_v2)
+    instrument = _normalize_instrument(metadata['MS_Analysis']['Analyzer'], instrument_curie, db)
     resolving_power = metadata['MS_Analysis']['Detector_Resolving_Power']
     rp_mz = float(resolving_power['mz'])
     rp_resolution = float(resolving_power['Resolving_Power'])
@@ -235,9 +281,10 @@ def _get_isotope_generation_from_metadata(metadata):
     return default_adducts, charge, isocalc_sigma, instrument
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-locals
 def generate_ds_config(
     metadata,
+    metadata_v2: dict = None,
     moldb_ids=None,
     ontology_db_ids=None,
     adducts=None,
@@ -249,6 +296,7 @@ def generate_ds_config(
     chem_mods=None,
     compute_unused_metrics=None,
     scoring_model_id=None,
+    db=None,
 ) -> DSConfig:
     # The kwarg names should match FLAT_DS_CONFIG_KEYS
 
@@ -257,7 +305,7 @@ def generate_ds_config(
         scoring_model = find_by_id(scoring_model_id)
         model_type = scoring_model.type
 
-    iso_params = _get_isotope_generation_from_metadata(metadata)
+    iso_params = _get_isotope_generation_from_metadata(metadata, metadata_v2, db)
     default_adducts, charge, isocalc_sigma, instrument = iso_params
 
     return {
@@ -286,7 +334,7 @@ def generate_ds_config(
     }
 
 
-def update_ds_config(old_config, metadata, **kwargs):
+def update_ds_config(old_config, metadata, metadata_v2: dict = None, db=None, **kwargs):
     """Updates dataset config.
 
     Extracts parameters from an existing ds_config, and uses them
@@ -316,4 +364,4 @@ def update_ds_config(old_config, metadata, **kwargs):
         if v is not None:
             kwargs.setdefault(k, v)
 
-    return generate_ds_config(metadata, **kwargs)
+    return generate_ds_config(metadata, metadata_v2=metadata_v2, db=db, **kwargs)

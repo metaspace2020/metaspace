@@ -1,6 +1,7 @@
 import * as jsondiffpatch from 'jsondiffpatch'
+import * as metadataV2Schema from '../../../../../metadata/linkml/generated/metaspace_submission.schema.json'
+import * as analyzerClasses from '../../../../metadataSchemas/analyzer_classes.json'
 import logger from '../../../utils/logger'
-import * as Ajv from 'ajv'
 import { UserError } from 'graphql-errors'
 import { EntityManager } from 'typeorm'
 import * as moment from 'moment'
@@ -20,6 +21,9 @@ import {
   assertSponsoredUpdateAllowed,
   getDatasetForSponsoredEditing,
 } from '../operation/getDatasetForSponsoredEditing'
+import {
+  mergeLegacyIntoV2, MetadataV2Envelope, projectToLegacyMetadata, upProjectToV2,
+} from '../projection'
 import { deleteDataset } from '../operation/deleteDataset'
 import { checkNoPublishedProjectRemoved, checkProjectsPublicationStatus } from '../operation/publicationChecks'
 import {
@@ -55,6 +59,25 @@ import {
   findLiveJobInSlot,
   LIVE_JOB_STATUSES,
 } from '../operation/segmentationOwnership'
+import { resolveCurationStates } from '../../metadataCuration/resolve'
+import { prunePendingRows } from '../../metadataCuration/queue'
+
+// Plain `require`s: ajv@8's type declarations use TS 4.1+ syntax that this project's TypeScript 3.9
+// cannot parse, so these modules are kept out of type resolution entirely.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Ajv04 = require('ajv-draft-04')
+// The vendored schema declares draft 2019-09, which only the `ajv/dist/2019` build supports.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Ajv2019 = require('ajv/dist/2019')
+// Vendored from the metaspace_metadata repo; provenance in metaspace/metadata/linkml/SCHEMA_VERSION.
+
+// Compiled once per process: the schemas are static and compilation is the expensive part of Ajv.
+// `strict: false` because ims.json/lcms.json carry custom UI-hint keywords (help, smEditorType, ...)
+// that Ajv 4 ignored and Ajv 8's strict mode rejects. One Ajv instance per schema avoids `$id` clashes.
+const legacyValidators: Record<string, any> = _.mapValues(
+  metadataSchemas, schema => new Ajv04({ allErrors: true, strict: false }).compile(schema)
+)
+const validateV2Document = new Ajv2019({ allErrors: true, strict: false }).compile(metadataV2Schema)
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -96,25 +119,108 @@ function trimEmptyFields(schema: MetadataSchema, value: MetadataNode) {
   return obj
 }
 
-function validateMetadata(metadata: MetadataNode) {
-  const ajv = new Ajv({ allErrors: true })
+// Ajv >= 7 reports `instancePath` (JSON Pointer) instead of the dot-path `dataPath` the webapp still
+// reads (MetadataEditor.vue), so every Ajv error is translated here before it reaches the client.
+function translateAjvError(err: { instancePath?: string, [key: string]: any }, prefix = '') {
+  const { instancePath, ...rest } = err
+  return { ...rest, dataPath: prefix + (instancePath || '').replace(/\//g, '.') }
+}
+
+export const failedValidation = (validationErrors: any[]) => new UserError(JSON.stringify({
+  type: 'failed_validation',
+  validation_errors: validationErrors,
+}))
+
+// The one source of the analyzer classification, shared with the engine (`_classify_instrument_label` reads the
+// copy that `yarn gen-analyzer-classes` writes). Order matters: the first class whose phrase the label contains
+// wins ('exploris' is listed under Orbitrap and TOF). The longer phrases are the PSI-MS canonical labels, which
+// controlled metadata_v2 values project to.
+const ANALYZER_CLASSES: { class: string, phrases: string[] }[] = analyzerClasses.classes
+
+/** The analyzer class the engine derives from a free-text Analyzer label, or null if unrecognized. */
+export function classifyAnalyzer(analyzer?: string | null): string | null {
+  const label = (analyzer || '').toLowerCase()
+  const match = ANALYZER_CLASSES.find(entry => entry.phrases.some(phrase => label.includes(phrase)))
+  return match ? match.class : null
+}
+
+/**
+ * Parses a metadataV2Json payload and checks the structure projectToLegacyMetadata relies on, so a
+ * malformed envelope becomes a validation error rather than a crash. Schema validation of the
+ * document itself happens in validateMetadata.
+ */
+export function parseMetadataV2Envelope(metadataV2Json: string): MetadataV2Envelope {
+  let envelope: any
+  try {
+    envelope = JSON.parse(metadataV2Json)
+  } catch (err) {
+    throw failedValidation([{ dataPath: '.metadataV2', message: 'metadataV2Json is not valid JSON' }])
+  }
+  const acquisition = envelope?.document?.acquisition
+  const isObject = _.isPlainObject
+  const projectable = isObject(envelope) && isObject(envelope.document) && isObject(envelope.unmodeled)
+    && isObject(envelope.document.sample) && isObject(acquisition)
+    && isObject(acquisition.polarity?.user_value)
+    && isObject(acquisition.ionization_source?.user_value)
+    && isObject(acquisition.instrument_model?.user_value)
+  if (!projectable) {
+    throw failedValidation([{
+      dataPath: '.metadataV2',
+      message: 'metadataV2Json must contain "unmodeled" and a "document" with "sample" and "acquisition" '
+        + '(polarity, ionization_source and instrument_model each with a "user_value" object)',
+    }])
+  }
+  return envelope as MetadataV2Envelope
+}
+
+/**
+ * Resolves the metadata documents to store from a mutation's input. When metadataV2Json is given it
+ * is the source of truth and the legacy document is derived from it, so the two can never diverge
+ * and legacy consumers (Elasticsearch, filters, processingSettingsChanged) keep working unchanged.
+ * When only the legacy document is given (API clients such as the Python SDK), it is kept as sent and
+ * a metadata_v2 document is up-projected from it (values pending curation), so every dataset whose
+ * metadata is created or changed through this API carries a v2 record.
+ */
+export function resolveMetadataInput(
+  metadataJson?: string | null, metadataV2Json?: string | null, upProjectLegacy = true,
+): { metadata: any, metadataV2: MetadataV2Envelope | undefined } {
+  if (!metadataV2Json) {
+    if (!metadataJson) {
+      return { metadata: undefined, metadataV2: undefined }
+    }
+    const metadata = JSON.parse(metadataJson)
+    return { metadata, metadataV2: upProjectLegacy ? upProjectToV2(metadata) : undefined }
+  }
+  const metadataV2 = parseMetadataV2Envelope(metadataV2Json)
+  return { metadata: projectToLegacyMetadata(metadataV2), metadataV2 }
+}
+
+/**
+ * Validates the legacy metadata against its ims.json/lcms.json schema and, when supplied, the
+ * metadata_v2 document against the vendored schema. All errors are reported together.
+ */
+export function validateMetadata(metadata: MetadataNode, metadataV2?: MetadataV2Envelope) {
   const mdSchema = metadataSchemas[metadata.Data_Type]
-  const validator = ajv.compile(mdSchema)
+  const validator = legacyValidators[metadata.Data_Type]
+  if (validator == null) {
+    throw failedValidation([{ dataPath: '.Data_Type', message: `Unknown Data_Type: ${metadata.Data_Type}` }])
+  }
   const cleanValue = trimEmptyFields(mdSchema, metadata)
   /* eslint-disable-next-line @typescript-eslint/no-floating-promises */ // ajv is only async when the schema has $async nodes
   validator(cleanValue)
-  const validationErrors = validator.errors || []
+  const validationErrors = (validator.errors || []).map((err: any) => translateAjvError(err))
 
-  // Validate MS_Analysis.Analyzer (if present) is a recognized analyzer type
+  if (metadataV2) {
+    /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
+    validateV2Document(metadataV2.document)
+    validationErrors.push(
+      ...(validateV2Document.errors || []).map((err: any) => translateAjvError(err, '.metadataV2.document'))
+    )
+  }
+
   // eslint-disable-next-line camelcase
-  const analyzer = metadata.MS_Analysis?.Analyzer?.toLowerCase()
-  const recognizedAnalyzers = [
-    // This list should match _normalize_instrument in sm/engine/dataset.py
-    'orbitrap', 'exactive', 'exploris', 'hf-x', 'uhmr', // Orbitraps
-    'fticr', 'ft-icr', 'ftms', 'ft-ms', // FT-ICRs
-    'tof', 'mrt', 'exploris', 'synapt', 'xevo', // TOFs
-  ]
-  if (analyzer && !recognizedAnalyzers.some(a => analyzer.includes(a))) {
+  const analyzer = metadata.MS_Analysis?.Analyzer
+  if (analyzer && classifyAnalyzer(analyzer) == null) {
     validationErrors.push({
       dataPath: '.MS_Analysis.Analyzer',
       message: 'Unrecognized analyzer. Please specify the technology: FT-ICR, Orbitrap or TOF.',
@@ -122,10 +228,7 @@ function validateMetadata(metadata: MetadataNode) {
   }
 
   if (validationErrors.length > 0) {
-    throw new UserError(JSON.stringify({
-      type: 'failed_validation',
-      validation_errors: validationErrors,
-    }))
+    throw failedValidation(validationErrors)
   }
 }
 
@@ -162,6 +265,16 @@ export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpda
           }
         }
       }
+    }
+
+    // From analysis version 2 the analyzer class feeds the DSConfig's isotope generation; version 1
+    // ("Original MSM", also when unset) ignores it. Compare classes, not labels, so a cosmetic relabel
+    // within a class does not force a reprocess. Orbitrap is the engine's fallback.
+    const analysisVersion = ds.config?.analysis_version ?? 1
+    const oldAnalyzerClass = classifyAnalyzer(ds.metadata?.MS_Analysis?.Analyzer) || 'Orbitrap'
+    const newAnalyzerClass = classifyAnalyzer(update.metadata?.MS_Analysis?.Analyzer) || 'Orbitrap'
+    if (analysisVersion >= 2 && oldAnalyzerClass !== newAnalyzerClass) {
+      procSettingsUpd = true
     }
   }
 
@@ -334,9 +447,13 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     assertCanCreateDataset(ctx.user)
   }
 
-  const metadata = JSON.parse(input.metadataJson)
+  if (!input.metadataJson && !input.metadataV2Json) {
+    throw failedValidation([{ dataPath: '.metadataV2', message: 'metadataJson or metadataV2Json is required' }])
+  }
+  const resolved = resolveMetadataInput(input.metadataJson, input.metadataV2Json)
+  let metadata = resolved.metadata
   if (!skipValidation || !ctx.isAdmin) {
-    validateMetadata(metadata)
+    validateMetadata(metadata, resolved.metadataV2)
   }
 
   let description
@@ -354,6 +471,21 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
 
   // Only admins can specify the submitterId
   const submitterId = (ctx.isAdmin && input.submitterId) || (dataset && dataset.userId) || ctx.user.id
+  const metadataV2 = resolved.metadataV2 as MetadataV2Envelope
+
+  const resolveCuration = async() => {
+    const { errors } = await resolveCurationStates(metadataV2, ctx.entityManager, datasetId, submitterId as string)
+    if (errors.length && (!skipValidation || !ctx.isAdmin)) {
+      throw failedValidation(errors)
+    }
+    if (input.metadataV2Json) {
+      // v2 input is the source of truth, so a promoted value must reach the legacy document as well
+      metadata = projectToLegacyMetadata(metadataV2)
+    }
+  }
+  if (dataset) {
+    await resolveCuration()
+  }
   const saveDsArgs = {
     datasetId,
     submitterId: submitterId as string,
@@ -363,6 +495,9 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     principalInvestigator: input.principalInvestigator,
   }
   await saveDataset(ctx.entityManager, saveDsArgs, !datasetIdWasSpecified)
+  if (!dataset) {
+    await resolveCuration()
+  }
 
   const url = `/v1/datasets/${datasetId}/add`
 
@@ -379,7 +514,12 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
   }
 
   await smApiDatasetRequest(url, {
-    doc: { ...input, metadata, size_hash: input.sizeHashJson ? JSON.parse(input.sizeHashJson) : undefined },
+    doc: {
+      ...input,
+      metadata,
+      metadataV2,
+      size_hash: input.sizeHashJson ? JSON.parse(input.sizeHashJson) : undefined,
+    },
     priority: priority,
     use_lithops: useLithops,
     perform_enrichment: performEnrichment,
@@ -387,6 +527,7 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     del_first: delFirst,
     email: ctx.user.email,
   })
+  await prunePendingRows(ctx.entityManager, datasetId, metadataV2)
 
   await performAction(ctx, action)
 
@@ -410,6 +551,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       input: {
         ...engineDataset,
         metadataJson: JSON.stringify(engineDataset.metadata),
+        metadataV2Json: engineDataset.metadataV2 ? JSON.stringify(engineDataset.metadataV2) : undefined,
       } as any, // TODO: map this properly
       priority,
       useLithops,
@@ -434,12 +576,12 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const { dataset, sponsored } = await getDatasetForSponsoredEditing(ctx, datasetId)
     if (sponsored) await assertSponsoredUpdateAllowed(ctx.entityManager, dataset, update)
 
-    let metadata
-    if (update.metadataJson) {
-      metadata = JSON.parse(update.metadataJson)
-      if (!skipValidation || !ctx.isAdmin) {
-        validateMetadata(metadata)
-      }
+    // Legacy-only edits are up-projected below, once we know the dataset has no v2 record yet
+    const resolved = resolveMetadataInput(update.metadataJson, update.metadataV2Json, false)
+    let metadata = resolved.metadata
+    let metadataV2 = resolved.metadataV2
+    if (metadata && (!skipValidation || !ctx.isAdmin)) {
+      validateMetadata(metadata, metadataV2)
     }
 
     if (update?.ppm && update.ppm > 15) {
@@ -467,6 +609,18 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await assertUserCanUseMolecularDBs(ctx, update.databaseIds as number[]|undefined)
 
     const engineDataset = await ctx.entityManager.findOneOrFail(EngineDataset, datasetId)
+    if (metadata && !metadataV2) {
+      // A dataset changed through the legacy document (e.g. the Python SDK) keeps a v2 record in step with it:
+      // a legacy dataset gets one up-projected from the edit, with the values pending curation; a v2 dataset
+      // keeps its stored record and only the fields the edit changed are re-projected, so the stored v2 (and
+      // the engine's CURIE-based instrument resolution) never contradicts the legacy values.
+      metadataV2 = engineDataset.metadataV2
+        ? mergeLegacyIntoV2(engineDataset.metadataV2, metadata)
+        : upProjectToV2(metadata)
+      if (!skipValidation || !ctx.isAdmin) {
+        validateMetadata(metadata, metadataV2)
+      }
+    }
     let isEnriched : boolean | any = false
 
     if (performEnrichment) {
@@ -511,10 +665,35 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       principalInvestigator: update.principalInvestigator,
     }
 
+    if (!reprocess && reprocessingNeeded) {
+      throw new UserError(JSON.stringify({
+        type: 'reprocessing_needed',
+        message: 'Reprocessing needed. Provide \'reprocess\' flag.',
+      }))
+    }
+
+    // Resolved only once every check has passed, so a refused request leaves no queue rows behind
+    if (metadataV2) {
+      const { envelope, errors } = await resolveCurationStates(metadataV2, ctx.entityManager, datasetId,
+        dataset.userId ?? null)
+      if (errors.length && (!skipValidation || !ctx.isAdmin)) {
+        throw failedValidation(errors)
+      }
+      metadataV2 = envelope
+      if (update.metadataV2Json) {
+        metadata = projectToLegacyMetadata(envelope)
+      }
+    }
+
     if (reprocess) {
       await saveDataset(ctx.entityManager, saveDatasetArgs)
       await smApiDatasetRequest(`/v1/datasets/${datasetId}/add`, {
-        doc: { ...engineDataset, ...update, ...(metadata ? { metadata } : {}) },
+        doc: {
+          ...engineDataset,
+          ...update,
+          ...(metadata ? { metadata } : {}),
+          ...(metadataV2 ? { metadataV2 } : {}),
+        },
         del_first: procSettingsUpd || delFirst, // delete old results if processing settings changed
         priority: priority,
         use_lithops: useLithops,
@@ -523,24 +702,20 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         email: ctx.user.email,
       })
     } else {
-      if (reprocessingNeeded) {
-        throw new UserError(JSON.stringify({
-          type: 'reprocessing_needed',
-          message: 'Reprocessing needed. Provide \'reprocess\' flag.',
-        }))
-      } else {
-        await saveDataset(ctx.entityManager, saveDatasetArgs)
-        await smApiUpdateDataset(datasetId, {
-          // Unfortunately `update` has bad generated types, so `as any` is needed here
-          ..._.omit(update, 'metadataJson') as any,
-          ...(metadata ? { metadata } : {}),
-        }, {
-          priority,
-          useLithops,
-          performEnrichment,
-          force,
-        })
-      }
+      await saveDataset(ctx.entityManager, saveDatasetArgs)
+      await smApiUpdateDataset(datasetId, {
+        ..._.omit(update, ['metadataJson', 'metadataV2Json']) as any,
+        ...(metadata ? { metadata } : {}),
+        ...(metadataV2 ? { metadataV2 } : {}),
+      }, {
+        priority,
+        useLithops,
+        performEnrichment,
+        force,
+      })
+    }
+    if (metadataV2) {
+      await prunePendingRows(ctx.entityManager, datasetId, metadataV2)
     }
     await performAction(ctx, action)
 

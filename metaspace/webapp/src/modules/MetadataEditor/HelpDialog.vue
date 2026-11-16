@@ -6,7 +6,7 @@
       <li>
         <b>Format:</b> we can receive only data in the imzML centroided format. Please check out
         <a
-          href="https://docs.google.com/document/d/e/2PACX-1vTT4QrMQ2RJMjziscaU8S3gbznlv6Rm5ojwrsdAXPbR5bt7Ivp-ThkC0hefrk3ZdVqiyCX7VU_ddA62/pub"
+          href="/docs/guides/before-submission/exporting-to-imzml.html"
           target="_blank"
           class="external"
           title="The page will open in a new window"
@@ -19,7 +19,7 @@
     <p>
       If you have any further questions, please check out our main
       <a href="/learn" target="_blank" class="external" title="The page will open in a new window">learn</a>
-      page or email us at <a href="mailto:contact@metaspace2020.org">contact@metaspace2020.org</a>.
+      page or contact us <a href="/contact" target="_blank">here</a>.
     </p>
     <p>Have fun using METASPACE!</p>
   </el-dialog>

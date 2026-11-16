@@ -26,6 +26,10 @@ type Dataset {
   # https://github.com/metaspace2020/metaspace/tree/master/metaspace/metadata
   roiJson: String
   metadataJson: String!
+  # new LinkML-authored metadata document (coexists with metadataJson during the schema v2
+  # migration - see metaspace_metadata's docs/integration_metaspace.md). Null for every dataset
+  # submitted before this field existed.
+  metadataV2Json: String
   isPublic: Boolean!
   isPublishedOrUnderReview: Boolean
   isEnriched: Boolean
@@ -206,6 +210,10 @@ input DatasetFilter {
   organismPart: String
   condition: String
   growthConditions: String
+  disease: String
+  sampleType: String
+  healthStatus: String
+  sex: String
   metadataType: String
   status: String # list of JobStatus separated by '|'
   hasAnnotationMatching: AnnotationFilter # Does not support some advanced filters e.g. the colocalization filters
@@ -230,7 +238,9 @@ input DatasetCreateInput {
   uploadDT: String
   description: String
   sizeHashJson: String
-  metadataJson: String!
+  # one of metadataJson / metadataV2Json is required; metadataV2Json is the source of truth when given
+  metadataJson: String
+  metadataV2Json: String
   databaseIds: [Int!]
   ontologyDbIds: [Int]
   molDBs: [String!]  # @deprecated(reason: "This field will be removed. Use \"databaseIds\" instead.")
@@ -259,6 +269,7 @@ input DatasetUpdateInput {
   name: String
   uploadDT: String
   metadataJson: String
+  metadataV2Json: String
   description: String
   databaseIds: [Int!]
   ontologyDbIds: [Int]

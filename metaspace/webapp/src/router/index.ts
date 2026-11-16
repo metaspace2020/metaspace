@@ -75,6 +75,8 @@ const asyncPagesFreelyTyped = {
     import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Project/ProjectsListPage.vue'),
   SystemHealthPage: () =>
     import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Admin/SystemHealthPage.vue'),
+  CurationQueuePage: () =>
+    import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Admin/Curation/CurationQueuePage'),
   GroupsListPage: () =>
     import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Group/GroupsListPage'),
   PrivacyPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/App/PrivacyPage.vue'),
@@ -200,6 +202,7 @@ export const routes: any = [
   { path: '/user/me', name: 'profile', component: asyncPages.EditUserPage },
 
   { path: '/admin/health', name: 'admin', component: asyncPages.SystemHealthPage },
+  { path: '/admin/curation', name: 'admin-curation', component: asyncPages.CurationQueuePage },
 
   { path: '/account/sign-in', name: 'sign-in', component: DialogPage, props: { dialog: 'signIn' } },
   { path: '/account/sign-in-success', name: 'sign-in-success', redirect: redirectAfterSignIn },

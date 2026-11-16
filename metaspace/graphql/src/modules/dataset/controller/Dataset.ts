@@ -43,13 +43,14 @@ interface DbDataset {
   ion_thumbnail_url: string | null;
   transform: number[][] | null;
   external_links: ExternalLink[] | null;
+  metadata_v2: any | null;
 }
 const getDbDatasetById = async(ctx: Context, id: string): Promise<DbDataset | null> => {
   const dataloader = ctx.contextCacheGet('getDbDatasetByIdDataLoader', [], () => {
     return new DataLoader(async(datasetIds: string[]): Promise<any[]> => {
       const results = await ctx.entityManager.query(`
       SELECT ds.id, ds.thumbnail, ds.thumbnail_url, ds.ion_thumbnail, ds.ion_thumbnail_url,
-             ds.transform, ds.roi, gds.external_links
+             ds.transform, ds.roi, ds.metadata_v2, gds.external_links
       FROM public.dataset ds
       JOIN graphql.dataset gds on ds.id = gds.id
       WHERE ds.id = ANY($1)`,
@@ -160,6 +161,12 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   metadataJson(ds) {
     return JSON.stringify(ds._source.ds_meta)
+  },
+
+  // Read from Postgres, not ES: the envelope's `unmodeled` block is not indexed (only `document` is, as ds_meta_v2).
+  async metadataV2Json(ds, args, ctx) {
+    const result = await getDbDatasetById(ctx, ds._source.ds_id)
+    return result?.metadata_v2 ? JSON.stringify(result.metadata_v2) : null
   },
 
   async roiJson(ds, args, ctx) {

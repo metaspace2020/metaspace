@@ -356,7 +356,7 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
   </div>
   <div class=\\"tf-outer border-gray-300 border border-solid text-sm pr-3\\" data-test-key=\\"organismPart\\" filter-key=\\"organismPart\\">
     <div class=\\"tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300\\">
-      <!-- If you want to provide a default content for the \\"name\\" slot --> Organism part
+      <!-- If you want to provide a default content for the \\"name\\" slot --> Anatomical site
       <!--v-if-->
     </div>
     <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
@@ -379,6 +379,86 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\" teleported=\\"false\\">
         <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
         <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
+      </div>
+    </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+          <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
+        </svg></div>
+    </button>
+  </div>
+  <div class=\\"tf-outer border-gray-300 border border-solid text-sm pr-3\\" data-test-key=\\"disease\\" options=\\"\\">
+    <div class=\\"tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300\\">
+      <!-- If you want to provide a default content for the \\"name\\" slot --> Disease
+      <!--v-if-->
+    </div>
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select\\" placeholder=\\"Start typing name\\" remote=\\"\\" filterable=\\"\\" clearable=\\"true\\" remote-method=\\"async (query) => {
+      loading.value = true;
+      try {
+        options.value = await __vite_ssr_import_4__.default[props.filterKey].search(apolloClient, store, query);
+      } catch (err) {
+        options.value = [];
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    }\\" loading=\\"false\\" loading-text=\\"Loading matching entries...\\" no-match-text=\\"No matches\\" multiple=\\"false\\" multiple-limit=\\"10\\" teleported=\\"false\\">
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
+      </div>
+    </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+          <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
+        </svg></div>
+    </button>
+  </div>
+  <div class=\\"tf-outer border-gray-300 border border-solid text-sm pr-3\\" data-test-key=\\"sampleType\\" filter-key=\\"sampleType\\">
+    <div class=\\"tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300\\">
+      <!-- If you want to provide a default content for the \\"name\\" slot --> Sample type
+      <!--v-if-->
+    </div>
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select\\" filterable=\\"false\\" clearable=\\"false\\" teleported=\\"false\\">
+        <div class=\\"mock-el-option\\" label=\\"Tissue\\" value=\\"tissue\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"Cell culture\\" value=\\"cell_culture\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"Plant\\" value=\\"plant\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"Environmental\\" value=\\"environmental\\"></div>
+      </div>
+    </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+          <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
+        </svg></div>
+    </button>
+  </div>
+  <div class=\\"tf-outer border-gray-300 border border-solid text-sm pr-3\\" data-test-key=\\"healthStatus\\" filter-key=\\"healthStatus\\">
+    <div class=\\"tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300\\">
+      <!-- If you want to provide a default content for the \\"name\\" slot --> Health status
+      <!--v-if-->
+    </div>
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select\\" filterable=\\"false\\" clearable=\\"false\\" teleported=\\"false\\">
+        <div class=\\"mock-el-option\\" label=\\"Control\\" value=\\"control\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"Disease\\" value=\\"disease\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"Disease model\\" value=\\"disease_model\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"Treated\\" value=\\"treated\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"Other\\" value=\\"other\\"></div>
+      </div>
+    </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+          <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
+        </svg></div>
+    </button>
+  </div>
+  <div class=\\"tf-outer border-gray-300 border border-solid text-sm pr-3\\" data-test-key=\\"sex\\" filter-key=\\"sex\\">
+    <div class=\\"tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300\\">
+      <!-- If you want to provide a default content for the \\"name\\" slot --> Sex
+      <!--v-if-->
+    </div>
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select\\" filterable=\\"false\\" clearable=\\"false\\" teleported=\\"false\\">
+        <div class=\\"mock-el-option\\" label=\\"Female\\" value=\\"female\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"Male\\" value=\\"male\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"Mixed\\" value=\\"mixed\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"Unknown\\" value=\\"unknown\\"></div>
       </div>
     </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
       <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
@@ -478,18 +558,22 @@ exports[`FilterPanel > should match snapshot (database without dataset) 1`] = `
     <div class=\\"mock-el-option\\" label=\\"Search by m/z\\" value=\\"mz\\"></div>
     <div class=\\"mock-el-option\\" label=\\"Show/hide off-sample annotations\\" value=\\"offSample\\"></div>
     <div class=\\"mock-el-option\\" label=\\"Select polarity\\" value=\\"polarity\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Search anything\\" value=\\"simpleQuery\\"></div>
     <div class=\\"mock-el-option\\" label=\\"Select adduct\\" value=\\"adduct\\"></div>
-    <div class=\\"mock-el-option\\" label=\\"Select organism\\" value=\\"organism\\"></div>
-    <div class=\\"mock-el-option\\" label=\\"Select organism part\\" value=\\"organismPart\\"></div>
-    <div class=\\"mock-el-option\\" label=\\"Select organism condition\\" value=\\"condition\\"></div>
-    <div class=\\"mock-el-option\\" label=\\"Select sample growth conditions\\" value=\\"growthConditions\\"></div>
     <div class=\\"mock-el-option\\" label=\\"Select analyzer\\" value=\\"analyzerType\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select anatomical site\\" value=\\"organismPart\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select class\\" value=\\"molClass\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select data type\\" value=\\"metadataType\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select disease\\" value=\\"disease\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select health status\\" value=\\"healthStatus\\"></div>
     <div class=\\"mock-el-option\\" label=\\"Select ionisation source\\" value=\\"ionisationSource\\"></div>
     <div class=\\"mock-el-option\\" label=\\"Select MALDI matrix\\" value=\\"maldiMatrix\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select organism\\" value=\\"organism\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select organism condition\\" value=\\"condition\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select sample growth conditions\\" value=\\"growthConditions\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select sample type\\" value=\\"sampleType\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select sex\\" value=\\"sex\\"></div>
     <div class=\\"mock-el-option\\" label=\\"Set minimum MSM score\\" value=\\"minMSM\\"></div>
-    <div class=\\"mock-el-option\\" label=\\"Search anything\\" value=\\"simpleQuery\\"></div>
-    <div class=\\"mock-el-option\\" label=\\"Select data type\\" value=\\"metadataType\\"></div>
-    <div class=\\"mock-el-option\\" label=\\"Select class\\" value=\\"molClass\\"></div>
   </div>
   <div class=\\"tf-outer border-gray-300 border border-solid text-sm pr-3\\" data-test-key=\\"database\\" filter-key=\\"database\\" options=\\"\\">
     <div class=\\"tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300\\">
@@ -573,18 +657,22 @@ exports[`FilterPanel > should match snapshot (no filters) 1`] = `
     <div class=\\"mock-el-option\\" label=\\"Search by m/z\\" value=\\"mz\\"></div>
     <div class=\\"mock-el-option\\" label=\\"Show/hide off-sample annotations\\" value=\\"offSample\\"></div>
     <div class=\\"mock-el-option\\" label=\\"Select polarity\\" value=\\"polarity\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Search anything\\" value=\\"simpleQuery\\"></div>
     <div class=\\"mock-el-option\\" label=\\"Select adduct\\" value=\\"adduct\\"></div>
-    <div class=\\"mock-el-option\\" label=\\"Select organism\\" value=\\"organism\\"></div>
-    <div class=\\"mock-el-option\\" label=\\"Select organism part\\" value=\\"organismPart\\"></div>
-    <div class=\\"mock-el-option\\" label=\\"Select organism condition\\" value=\\"condition\\"></div>
-    <div class=\\"mock-el-option\\" label=\\"Select sample growth conditions\\" value=\\"growthConditions\\"></div>
     <div class=\\"mock-el-option\\" label=\\"Select analyzer\\" value=\\"analyzerType\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select anatomical site\\" value=\\"organismPart\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select class\\" value=\\"molClass\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select data type\\" value=\\"metadataType\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select disease\\" value=\\"disease\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select health status\\" value=\\"healthStatus\\"></div>
     <div class=\\"mock-el-option\\" label=\\"Select ionisation source\\" value=\\"ionisationSource\\"></div>
     <div class=\\"mock-el-option\\" label=\\"Select MALDI matrix\\" value=\\"maldiMatrix\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select organism\\" value=\\"organism\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select organism condition\\" value=\\"condition\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select sample growth conditions\\" value=\\"growthConditions\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select sample type\\" value=\\"sampleType\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select sex\\" value=\\"sex\\"></div>
     <div class=\\"mock-el-option\\" label=\\"Set minimum MSM score\\" value=\\"minMSM\\"></div>
-    <div class=\\"mock-el-option\\" label=\\"Search anything\\" value=\\"simpleQuery\\"></div>
-    <div class=\\"mock-el-option\\" label=\\"Select data type\\" value=\\"metadataType\\"></div>
-    <div class=\\"mock-el-option\\" label=\\"Select class\\" value=\\"molClass\\"></div>
   </div>
 </div>"
 `;

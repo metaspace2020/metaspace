@@ -5,6 +5,8 @@ export const editDatasetFragment = gql`
   fragment EditDatasetFragment on Dataset {
     id
     metadataJson
+    metadataV2Json
+    uploadDT
     configJson
     description
     isPublic
@@ -40,6 +42,7 @@ export const editDatasetQuery = gql`
       ...EditDatasetFragment
       submitter {
         id
+        name
       }
     }
     currentUser {
@@ -88,8 +91,37 @@ export const datasetSubmitterQuery = gql`
 `
 
 export const fetchAutocompleteSuggestionsQuery = gql`
-  query suggestions($field: String!, $query: String!) {
-    metadataSuggestions(field: $field, query: $query, limit: 5)
+  query suggestions($field: String!, $query: String!, $limit: Int = 5) {
+    metadataSuggestions(field: $field, query: $query, limit: $limit)
+  }
+`
+
+export const fetchApprovedCurationValuesQuery = gql`
+  query approvedCurationValues($slot: String!, $query: String!) {
+    approvedCurationValues(slot: $slot, query: $query, limit: 8)
+  }
+`
+
+// one row per curated slot of the dataset (only for users who can edit it)
+export const datasetCurationStatusQuery = gql`
+  query datasetCurationStatus($datasetId: ID!) {
+    datasetCurationStatus(datasetId: $datasetId) {
+      slot
+      text
+      status
+      note
+    }
+  }
+`
+
+// `slot` is the LinkML slot name (e.g. "disease"), not an ontology CURIE.
+export const fetchOntologyTermSuggestionsQuery = gql`
+  query ontologyTermSuggestions($slot: String!, $query: String!) {
+    ontologyTermSuggestions(slot: $slot, query: $query, limit: 5) {
+      curie
+      label
+      synonyms
+    }
   }
 `
 

@@ -1,0 +1,413 @@
+/**
+ * Projection between the LinkML-authored `metadata_v2` document and the legacy metadata shape
+ * (`ims.json`). Down-projection (v2 -> legacy) runs on every create/update that carries metadata_v2:
+ * the stored legacy blob is derived from it, so Elasticsearch, filters, the public API and the Python
+ * client keep working unchanged. Up-projection (legacy -> v2) exists for the round-trip test and for
+ * using a legacy dataset as a template in the webapp; it is never used to backfill stored datasets.
+ */
+
+// ---------------------------------------------------------------------------
+// metadata_v2 document shape (mirrors metaspace/metadata/linkml/generated/metaspace_submission.schema.json)
+// ---------------------------------------------------------------------------
+
+export type CurationState = 'controlled' | 'pending_curation' | 'free_text_accepted'
+export type ReconciliationState = 'not_checked' | 'matched' | 'mismatched' | 'file_value_absent'
+export type SampleType = 'tissue' | 'cell_culture' | 'plant' | 'environmental'
+export type SampleClass = 'TissueSample' | 'CellCultureSample' | 'PlantSample' | 'EnvironmentalSample'
+export type HealthStatus = 'control' | 'disease' | 'disease_model' | 'treated' | 'other'
+export type Sex = 'female' | 'male' | 'mixed' | 'unknown'
+
+export interface OntologyTermValue {
+  value_ontology_id?: string | null
+  value_label?: string | null
+  value_free_text?: string | null
+  curation_state: CurationState
+}
+
+export interface ReconciledValue {
+  user_value: OntologyTermValue
+  file_observed_value?: string | null
+  reconciliation_state: ReconciliationState
+}
+
+export interface Sample {
+  sample_class: SampleClass
+  organism: OntologyTermValue
+  sample_type: SampleType
+  health_status?: HealthStatus | null
+  genetic_background?: OntologyTermValue | null
+  disease?: OntologyTermValue | null
+  protocol_description?: string | null
+  // TissueSample-only
+  anatomical_site_coarse?: OntologyTermValue | null
+  anatomical_site_fine?: OntologyTermValue | null
+  sample_stabilisation?: OntologyTermValue | null
+  tissue_modification?: OntologyTermValue | null
+  developmental_stage?: OntologyTermValue | null
+  sex?: Sex | null
+  // CellCultureSample-only
+  cell_line_id?: OntologyTermValue | null
+  passage_number?: number | null
+}
+
+export interface AcquisitionInfo {
+  polarity: ReconciledValue
+  ionization_source: ReconciledValue
+  instrument_model: ReconciledValue
+  maldi_matrix?: OntologyTermValue | null
+  maldi_matrix_application?: OntologyTermValue | null
+  solvent?: OntologyTermValue | null
+}
+
+export interface MetadataV2Document {
+  schema_version: string
+  data_type: 'Imaging MS'
+  dataset_name?: string | null
+  sample: Sample
+  acquisition: AcquisitionInfo
+}
+
+// Legacy fields deliberately not modeled in the LinkML schema, carried beside `document` so the
+// down-projection can still produce a complete legacy document.
+export interface UnmodeledFields {
+  Detector_Resolving_Power?: { mz: number, Resolving_Power: number } | null
+  Pixel_Size?: { Xaxis: number, Yaxis: number } | null
+  Supplementary?: string | null
+  Submitted_By?: unknown
+}
+
+export interface MetadataV2Envelope {
+  document: MetadataV2Document
+  unmodeled: UnmodeledFields
+}
+
+// ---------------------------------------------------------------------------
+// Legacy metadata shape (ims.json)
+// ---------------------------------------------------------------------------
+
+export interface LegacyMetadata {
+  Data_Type: 'Imaging MS'
+  Sample_Information: {
+    Organism: string
+    Organism_Part: string
+    Condition: string
+    Sample_Growth_Conditions?: string
+  }
+  Sample_Preparation: {
+    Sample_Stabilisation: string
+    Tissue_Modification: string
+    MALDI_Matrix: string
+    MALDI_Matrix_Application: string
+    Solvent?: string
+  }
+  // Optional only so a projection of an incomplete v2 document can leave them out and let the
+  // ims.json validation report them, rather than inventing processing-critical values.
+  MS_Analysis: {
+    Polarity?: 'Positive' | 'Negative'
+    Ionisation_Source: string
+    Analyzer: string
+    Detector_Resolving_Power?: { mz: number, Resolving_Power: number }
+    Pixel_Size?: { Xaxis: number, Yaxis: number }
+  }
+  Additional_Information?: {
+    Supplementary?: string
+  }
+  // Not in ims.json, but the engine reads it (dataset.py `to_queue_message`), so it must survive.
+  Submitted_By?: unknown
+}
+
+// ---------------------------------------------------------------------------
+// Down-projection: metadata_v2 -> legacy
+// ---------------------------------------------------------------------------
+
+function renderScalar(value: OntologyTermValue | null | undefined, fallback = ''): string {
+  if (!value) {
+    return fallback
+  }
+  return value.value_label || value.value_free_text || fallback
+}
+
+const POLARITY_CURIE_MAP: Record<string, 'Positive' | 'Negative'> = {
+  'MS:1000130': 'Positive', // positive scan
+  'MS:1000129': 'Negative', // negative scan
+}
+
+/**
+ * The legacy field is a strict enum, while the PSI-MS labels are "positive scan"/"negative scan",
+ * so polarity maps by CURIE first, then by the label or free text. Unresolved stays undefined so
+ * the legacy validation reports it instead of guessing.
+ */
+function renderPolarity(polarity: ReconciledValue): 'Positive' | 'Negative' | undefined {
+  const { value_ontology_id: curie, value_label: label, value_free_text: freeText } = polarity.user_value
+  if (curie && POLARITY_CURIE_MAP[curie]) {
+    return POLARITY_CURIE_MAP[curie]
+  }
+  const normalized = `${label || ''} ${freeText || ''}`.toLowerCase()
+  if (/\bneg/.test(normalized)) {
+    return 'Negative'
+  }
+  if (/\bpos/.test(normalized)) {
+    return 'Positive'
+  }
+  return undefined
+}
+
+/**
+ * The legacy `Condition` field is split into disease / health_status / genetic_background in v2.
+ * Pick one short value (disease first) rather than a compound string, so the `condition` facet
+ * keeps the single-token register real values have (`wildtype`, `healthy`, `melanoma`).
+ */
+function renderCondition(sample: Sample): string {
+  const disease = renderScalar(sample.disease)
+  if (disease) {
+    return disease
+  }
+  if (sample.health_status && sample.health_status !== 'other') {
+    return sample.health_status
+  }
+  return renderScalar(sample.genetic_background) || 'unspecified'
+}
+
+/**
+ * `anatomical_site_coarse` is a tissue-only slot, so other sample types get a visible sentinel for
+ * the required legacy `Organism_Part`. Keyed on `sample_type`, which the schema requires
+ * (`sample_class` is optional).
+ */
+function renderOrganismPart(sample: Sample): string {
+  switch (sample.sample_type) {
+    case 'tissue':
+      return renderScalar(sample.anatomical_site_coarse)
+    case 'cell_culture':
+      return renderScalar(sample.cell_line_id, 'cell culture')
+    case 'plant':
+      return 'plant'
+    case 'environmental':
+      return 'environmental'
+    default:
+      return ''
+  }
+}
+
+interface LegacyField {
+  path: [string, string]
+  render: (doc: MetadataV2Document) => string
+}
+
+// tissue-only slots: other sample types get 'N/A' so the required legacy fields still validate
+const nonTissueFallback = (sample: Sample) => sample.sample_type === 'tissue' ? '' : 'N/A'
+
+const legacyField = (path: [string, string], render: (doc: MetadataV2Document) => string): LegacyField =>
+  ({ path, render })
+
+/** The legacy fields a curated slot feeds, read by both `projectToLegacyMetadata` and `projectLegacyField`. */
+const LEGACY_FIELDS = {
+  organism: legacyField(['Sample_Information', 'Organism'],
+    ({ sample }) => renderScalar(sample.organism)),
+  organismPart: legacyField(['Sample_Information', 'Organism_Part'],
+    ({ sample }) => renderOrganismPart(sample)),
+  condition: legacyField(['Sample_Information', 'Condition'],
+    ({ sample }) => renderCondition(sample)),
+  sampleStabilisation: legacyField(['Sample_Preparation', 'Sample_Stabilisation'],
+    ({ sample }) => renderScalar(sample.sample_stabilisation, nonTissueFallback(sample))),
+  tissueModification: legacyField(['Sample_Preparation', 'Tissue_Modification'],
+    ({ sample }) => renderScalar(sample.tissue_modification, nonTissueFallback(sample))),
+  maldiMatrix: legacyField(['Sample_Preparation', 'MALDI_Matrix'],
+    ({ acquisition }) => renderScalar(acquisition.maldi_matrix, 'none')),
+  maldiMatrixApplication: legacyField(['Sample_Preparation', 'MALDI_Matrix_Application'],
+    ({ acquisition }) => renderScalar(acquisition.maldi_matrix_application, 'none')),
+  solvent: legacyField(['Sample_Preparation', 'Solvent'],
+    ({ acquisition }) => renderScalar(acquisition.solvent, 'none')),
+  ionisationSource: legacyField(['MS_Analysis', 'Ionisation_Source'],
+    ({ acquisition }) => renderScalar(acquisition.ionization_source.user_value)),
+}
+
+const LEGACY_FIELD_BY_SLOT: Record<string, LegacyField | null> = {
+  organism: LEGACY_FIELDS.organism,
+  anatomical_site_coarse: LEGACY_FIELDS.organismPart,
+  cell_line_id: LEGACY_FIELDS.organismPart,
+  disease: LEGACY_FIELDS.condition,
+  genetic_background: LEGACY_FIELDS.condition,
+  sample_stabilisation: LEGACY_FIELDS.sampleStabilisation,
+  tissue_modification: LEGACY_FIELDS.tissueModification,
+  maldi_matrix: LEGACY_FIELDS.maldiMatrix,
+  maldi_matrix_application: LEGACY_FIELDS.maldiMatrixApplication,
+  solvent: LEGACY_FIELDS.solvent,
+  ionization_source: LEGACY_FIELDS.ionisationSource,
+  anatomical_site_fine: null,
+  developmental_stage: null,
+}
+
+/**
+ * The legacy key and value `projectToLegacyMetadata` writes for a curated slot's value, or null when the
+ * slot (or an unknown slot name) has no legacy field.
+ */
+export function projectLegacyField(envelope: MetadataV2Envelope, slot: string):
+  { path: [string, string], value: string } | null {
+  const field = Object.prototype.hasOwnProperty.call(LEGACY_FIELD_BY_SLOT, slot) ? LEGACY_FIELD_BY_SLOT[slot] : null
+  if (!field) {
+    return null
+  }
+  return { path: [...field.path] as [string, string], value: field.render(envelope.document) }
+}
+
+/**
+ * metadata_v2 -> legacy metadata. It is a pure mapping, not a validator: unresolved polarity or a
+ * missing `unmodeled` value is left undefined so the ims.json validation that follows reports it,
+ * rather than inventing a processing-critical default.
+ */
+export function projectToLegacyMetadata(envelope: MetadataV2Envelope): LegacyMetadata {
+  const { document: doc, unmodeled } = envelope
+  const { sample, acquisition } = doc
+
+  return {
+    Data_Type: doc.data_type,
+    Sample_Information: {
+      Organism: LEGACY_FIELDS.organism.render(doc),
+      Organism_Part: LEGACY_FIELDS.organismPart.render(doc),
+      Condition: LEGACY_FIELDS.condition.render(doc),
+      Sample_Growth_Conditions: sample.protocol_description || undefined,
+    },
+    Sample_Preparation: {
+      Sample_Stabilisation: LEGACY_FIELDS.sampleStabilisation.render(doc),
+      Tissue_Modification: LEGACY_FIELDS.tissueModification.render(doc),
+      MALDI_Matrix: LEGACY_FIELDS.maldiMatrix.render(doc),
+      MALDI_Matrix_Application: LEGACY_FIELDS.maldiMatrixApplication.render(doc),
+      Solvent: LEGACY_FIELDS.solvent.render(doc),
+    },
+    MS_Analysis: {
+      Polarity: renderPolarity(acquisition.polarity),
+      Ionisation_Source: LEGACY_FIELDS.ionisationSource.render(doc),
+      Analyzer: renderScalar(acquisition.instrument_model.user_value),
+      Detector_Resolving_Power: unmodeled.Detector_Resolving_Power || undefined,
+      Pixel_Size: unmodeled.Pixel_Size || undefined,
+    },
+    Additional_Information: unmodeled.Supplementary ? { Supplementary: unmodeled.Supplementary } : undefined,
+    Submitted_By: unmodeled.Submitted_By,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Up-projection: legacy -> metadata_v2
+// ---------------------------------------------------------------------------
+
+/** Legacy free text becomes a `pending_curation` value: nothing in the legacy corpus is a resolved term. */
+function toPendingCuration(freeText: string | undefined | null): OntologyTermValue {
+  return {
+    value_free_text: freeText || undefined,
+    curation_state: 'pending_curation',
+  }
+}
+
+function toReconciledPending(freeText: string | undefined | null): ReconciledValue {
+  return {
+    user_value: toPendingCuration(freeText),
+    reconciliation_state: 'not_checked',
+  }
+}
+
+/**
+ * legacy -> metadata_v2. `Condition` was never split on the way in, so it round-trips through
+ * `disease` as free text, which `renderCondition` checks first.
+ */
+export function upProjectToV2(legacy: LegacyMetadata, schemaVersion = '0.2.0'): MetadataV2Envelope {
+  const sample: Sample = {
+    sample_class: 'TissueSample',
+    organism: toPendingCuration(legacy.Sample_Information.Organism),
+    sample_type: 'tissue',
+    disease: toPendingCuration(legacy.Sample_Information.Condition),
+    protocol_description: legacy.Sample_Information.Sample_Growth_Conditions || undefined,
+    anatomical_site_coarse: toPendingCuration(legacy.Sample_Information.Organism_Part),
+    sample_stabilisation: toPendingCuration(legacy.Sample_Preparation.Sample_Stabilisation),
+    tissue_modification: toPendingCuration(legacy.Sample_Preparation.Tissue_Modification),
+  }
+
+  const acquisition: AcquisitionInfo = {
+    polarity: toReconciledPending(legacy.MS_Analysis.Polarity),
+    ionization_source: toReconciledPending(legacy.MS_Analysis.Ionisation_Source),
+    instrument_model: toReconciledPending(legacy.MS_Analysis.Analyzer),
+    maldi_matrix: toPendingCuration(legacy.Sample_Preparation.MALDI_Matrix),
+    maldi_matrix_application: toPendingCuration(legacy.Sample_Preparation.MALDI_Matrix_Application),
+    solvent: toPendingCuration(legacy.Sample_Preparation.Solvent),
+  }
+
+  return {
+    document: {
+      schema_version: schemaVersion,
+      data_type: 'Imaging MS',
+      sample,
+      acquisition,
+    },
+    unmodeled: {
+      Detector_Resolving_Power: legacy.MS_Analysis.Detector_Resolving_Power,
+      Pixel_Size: legacy.MS_Analysis.Pixel_Size,
+      Supplementary: legacy.Additional_Information?.Supplementary,
+      Submitted_By: legacy.Submitted_By,
+    },
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Legacy edit of a v2 dataset
+// ---------------------------------------------------------------------------
+
+type LegacySection = 'Sample_Information' | 'Sample_Preparation' | 'MS_Analysis'
+
+/**
+ * The stored v2 record with a legacy-only edit (e.g. the Python SDK's `update_dataset(metadata=...)`) merged in:
+ * only a slot whose legacy field differs from what the stored record renders takes the edit's up-projected
+ * (pending) value, so curated and controlled values of untouched fields survive. The unmodeled fields and the
+ * free-text protocol description are only stored in the legacy form and always come from the edit.
+ */
+export function mergeLegacyIntoV2(stored: MetadataV2Envelope, legacy: LegacyMetadata): MetadataV2Envelope {
+  const rendered = projectToLegacyMetadata(stored)
+  const fresh = upProjectToV2(legacy, stored.document.schema_version)
+  const merged: MetadataV2Envelope = JSON.parse(JSON.stringify(stored))
+  const { sample, acquisition } = merged.document
+  const changed = (section: LegacySection, key: string): boolean => {
+    const edited = (legacy[section] as Record<string, unknown> | undefined)?.[key]
+    const current = (rendered[section] as Record<string, unknown> | undefined)?.[key]
+    return (edited ?? '') !== (current ?? '')
+  }
+
+  if (changed('Sample_Information', 'Organism')) {
+    sample.organism = fresh.document.sample.organism
+  }
+  if (changed('Sample_Information', 'Organism_Part')) {
+    // the legacy field renders a fixed sentinel for plant and environmental samples: nothing to carry over
+    if (sample.sample_type === 'tissue') {
+      sample.anatomical_site_coarse = fresh.document.sample.anatomical_site_coarse
+    } else if (sample.sample_type === 'cell_culture') {
+      sample.cell_line_id = fresh.document.sample.anatomical_site_coarse
+    }
+  }
+  if (changed('Sample_Information', 'Condition')) {
+    sample.disease = fresh.document.sample.disease
+  }
+  sample.protocol_description = fresh.document.sample.protocol_description
+  if (changed('Sample_Preparation', 'Sample_Stabilisation')) {
+    sample.sample_stabilisation = fresh.document.sample.sample_stabilisation
+  }
+  if (changed('Sample_Preparation', 'Tissue_Modification')) {
+    sample.tissue_modification = fresh.document.sample.tissue_modification
+  }
+  if (changed('Sample_Preparation', 'MALDI_Matrix')) {
+    acquisition.maldi_matrix = fresh.document.acquisition.maldi_matrix
+  }
+  if (changed('Sample_Preparation', 'MALDI_Matrix_Application')) {
+    acquisition.maldi_matrix_application = fresh.document.acquisition.maldi_matrix_application
+  }
+  if (changed('Sample_Preparation', 'Solvent')) {
+    acquisition.solvent = fresh.document.acquisition.solvent
+  }
+  if (changed('MS_Analysis', 'Polarity')) {
+    acquisition.polarity = fresh.document.acquisition.polarity
+  }
+  if (changed('MS_Analysis', 'Ionisation_Source')) {
+    acquisition.ionization_source = fresh.document.acquisition.ionization_source
+  }
+  if (changed('MS_Analysis', 'Analyzer')) {
+    acquisition.instrument_model = fresh.document.acquisition.instrument_model
+  }
+  merged.unmodeled = fresh.unmodeled
+  return merged
+}

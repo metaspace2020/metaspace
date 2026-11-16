@@ -16,6 +16,7 @@ import { Resolvers as ImageViewerSnapshotResolvers } from './src/modules/imageVi
 import { Resolvers as NewsResolvers } from './src/modules/news/controller'
 import { Resolvers as ExperimentResolvers } from './src/modules/experiment/controller'
 import { Resolvers as ProjectSponsorshipResolvers } from './src/modules/projectSponsorship/controller'
+import { Resolvers as MetadataCurationResolvers } from './src/modules/metadataCuration/controller'
 import { mergedSchemas } from './schema'
 import addReadOnlyInterceptorToSchema from './src/modules/system/addReadOnlyInterceptorToSchema'
 import { Context } from './src/context'
@@ -42,6 +43,7 @@ export const makeNewExecutableSchema = () => {
       NewsResolvers,
       ExperimentResolvers,
       ProjectSponsorshipResolvers,
+      MetadataCurationResolvers,
     ],
   })
 }

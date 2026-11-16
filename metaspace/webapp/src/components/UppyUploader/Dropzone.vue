@@ -1,11 +1,15 @@
 <template>
   <div
-    :class="[
-      'text-base leading-6 text-gray-700 box-border outline-none',
-      'transition-all ease-in-out duration-150',
-      'border-2 border-dashed border-gray-400 focus:border-primary',
-      { 'border-primary': state.dragover, 'cursor-pointer hover:border-gray-600': !disabled },
-    ]"
+    :class="
+      bare
+        ? ['sm-dropzone--bare box-border outline-none', { 'is-dragover': state.dragover }]
+        : [
+            'text-base leading-6 text-gray-700 box-border outline-none',
+            'transition-all ease-in-out duration-150',
+            'border-2 border-dashed border-gray-400 focus:border-primary',
+            { 'border-primary': state.dragover, 'cursor-pointer hover:border-gray-600': !disabled },
+          ]
+    "
     :tabindex="disabled ? undefined : '0'"
     title="Drag and drop, or click to browse"
     @click="openFilePicker"
@@ -31,6 +35,7 @@ interface Props {
   accept: string[]
   disabled: boolean
   multiple: boolean
+  bare: boolean
 }
 
 export default defineComponent({
@@ -39,6 +44,8 @@ export default defineComponent({
     accept: Array as any,
     disabled: Boolean,
     multiple: Boolean,
+    /** no own border/hover styles (the children draw the drop targets); `is-dragover` while dragging */
+    bare: Boolean,
   },
   setup(props: Props | any, { emit }) {
     const state = reactive<State>({

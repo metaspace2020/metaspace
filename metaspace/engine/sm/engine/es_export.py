@@ -65,6 +65,7 @@ FROM (
     d.name AS ds_name,
     d.config AS ds_config,
     d.metadata AS ds_meta,
+    d.metadata_v2 #> '{document}' AS ds_meta_v2,
     d.input_path AS ds_input_path,
     d.upload_dt AS ds_upload_dt,
     d.status AS ds_status,
@@ -499,6 +500,9 @@ class ESExporter:
         with self._ds_locker.lock(ds_id):
             try:
                 ds_doc = self._remove_mol_db_from_dataset(ds_id, moldb)
+                # The ES copy is merged on every save, so a v2 key dropped from the document
+                # would survive a reprocess; take ds_meta_v2 from the row, the source of truth.
+                ds_doc['ds_meta_v2'] = self._select_ds_by_id(ds_id)['ds_meta_v2']
             except NotFoundError:
                 ds_doc = self._select_ds_by_id(ds_id)
                 ds_doc['annotation_counts'] = []
@@ -565,6 +569,11 @@ class ESExporter:
             elif field == 'metadata':
                 ds_meta_flat_doc = flatten_doc(ds_doc['ds_meta'], parent_key='ds_meta')
                 ds_doc_upd.update(ds_meta_flat_doc)
+            elif field == 'metadata_v2':
+                # No `remove` for a NULL metadata_v2: the field may be absent in ES and the ingest
+                # `remove` processor fails on a missing field.
+                if ds_doc['ds_meta_v2'] is not None:
+                    ds_doc_upd['ds_meta_v2'] = ds_doc['ds_meta_v2']
             elif f'ds_{field}' in ds_doc:
                 ds_doc_upd[f'ds_{field}'] = ds_doc[f'ds_{field}']
             else:

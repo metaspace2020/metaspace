@@ -7,6 +7,15 @@ export type DetectorResolvingPower = { mz: number; Resolving_Power: number }
 export type PixelSize = { Xaxis: number; Yaxis: number }
 export type Person = { First_Name: string; Last_Name: string; Email: string }
 
+// metadata schema v2: mirrors OntologyTermValue in the LinkML schema and graphql's projection.ts
+export type CurationState = 'controlled' | 'pending_curation' | 'free_text_accepted'
+export type OntologyTermValue = {
+  value_ontology_id?: string | null
+  value_label?: string | null
+  value_free_text?: string | null
+  curation_state: CurationState
+}
+
 export interface JsonSchemaProperty {
   type?: 'string' | 'boolean' | 'array' | 'object'
   enum?: any[]

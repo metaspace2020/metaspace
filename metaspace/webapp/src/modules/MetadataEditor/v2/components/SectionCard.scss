@@ -1,0 +1,179 @@
+@import './tokens';
+
+.section-card {
+  border: 1px solid var(--mv2-border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 14px;
+  background: var(--mv2-surface);
+}
+.section-card__header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  /* same height whatever the header holds (legend + bar, or legacy badge + small buttons): no jump on swap */
+  box-sizing: border-box;
+  min-height: 46px;
+  padding: 8px 16px;
+  background: var(--mv2-surface-muted);
+}
+.section-card--legacy .section-card__header {
+  background: repeating-linear-gradient(135deg, var(--mv2-surface-stripe) 0 6px, var(--mv2-surface-muted) 6px 12px);
+}
+.section-card__toggle {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  &:focus-visible {
+    outline: 2px solid var(--el-color-primary);
+    outline-offset: 2px;
+  }
+}
+.section-card__caret {
+  font-size: 11px;
+  color: var(--mv2-text-muted);
+}
+.section-card__title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--mv2-text);
+}
+.section-card__subtitle {
+  font-size: 12px;
+  color: var(--mv2-text-muted);
+}
+.section-card__right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  font-size: 11px;
+  color: var(--mv2-text-muted);
+}
+.section-card__body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.section-card--legacy .section-card__body {
+  background: var(--mv2-surface-legacy);
+}
+.section-card__progress {
+  display: inline-block;
+  width: 90px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--mv2-border);
+  overflow: hidden;
+  > span {
+    display: block;
+    height: 100%;
+    background: var(--el-color-primary);
+  }
+  &.is-complete > span {
+    background: var(--mv2-success);
+  }
+}
+
+.section-row {
+  display: flex;
+  gap: 20px;
+}
+.section-row + .section-row {
+  border-top: 1px solid var(--mv2-border);
+  padding-top: 14px;
+}
+.section-row__label {
+  width: 164px;
+  flex-shrink: 0;
+}
+.section-row__title {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--mv2-text);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.section-row__help {
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--mv2-text-muted);
+}
+.section-row__body {
+  flex: 1;
+  min-width: 0;
+}
+/* shared 3-column grid for the Data management and Annotation settings rows */
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 20px;
+  .el-form-item {
+    margin-bottom: 0;
+  }
+  /* FormField inside a section grid: no legacy column padding, 12px labels like the v2 fields */
+  .md-form-field.el-form-item {
+    padding: 0;
+    > .el-form-item__label {
+      font-size: 12px;
+      line-height: 16px;
+      margin-bottom: 4px;
+      color: var(--mv2-text-label);
+    }
+  }
+  /* room for the absolutely positioned error message */
+  .el-form-item.is-error {
+    margin-bottom: 16px;
+  }
+}
+.section-grid__rule {
+  grid-column: 1 / -1;
+  border-top: 1px dashed var(--mv2-border);
+}
+@media (max-width: 767px) {
+  .section-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .section-row__label {
+    width: auto;
+  }
+  .section-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* a container of SectionRows (V2Form, LegacyRecordView) placed after other rows in a card body */
+.section-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.section-card__body > * + .section-rows > .section-row:first-child {
+  border-top: 1px solid var(--mv2-border);
+  padding-top: 14px;
+}
+.section-rows + .section-row {
+  border-top: 1px solid var(--mv2-border);
+  padding-top: 14px;
+}
+/* small grey help line under a field */
+.md-field-help {
+  margin-top: 4px;
+  font-size: 10.5px;
+  line-height: 14px;
+  color: var(--mv2-text-subtle);
+}
+.section-row .metadata-help-icon {
+  cursor: pointer;
+  margin-left: 2px;
+}

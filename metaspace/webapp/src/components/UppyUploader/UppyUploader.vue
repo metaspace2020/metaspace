@@ -1,5 +1,27 @@
 <template>
   <dropzone
+    v-if="variant === 'slots'"
+    :id="$attrs.id"
+    ref="dropzone"
+    bare
+    class="sm-uppy-slots"
+    :accept="accept"
+    :multiple="multiple"
+    :disabled="state.status === 'UPLOADING'"
+    @upload="addFiles"
+  >
+    <file-slot
+      v-for="f of slotFiles"
+      :key="f.extension"
+      v-bind="f"
+      @browse="browse"
+      @replace="replaceFile(f.id)"
+      @remove="removeFile(f.id)"
+      @retry="retryFile(f.id)"
+    />
+  </dropzone>
+  <dropzone
+    v-else
     :id="$attrs.id"
     class="flex items-center justify-evenly px-6 h-32"
     :accept="accept"
@@ -17,12 +39,13 @@
   </dropzone>
 </template>
 <script lang="ts">
-import { defineComponent, reactive, onUnmounted, computed, watch } from 'vue'
+import { defineComponent, reactive, onUnmounted, computed, watch, ref, nextTick, PropType } from 'vue'
 import Uppy, { UppyOptions, UppyFile } from '@uppy/core'
 import AwsS3Multipart, { AwsS3MultipartOptions } from '@uppy/aws-s3-multipart'
 
 import Dropzone from './Dropzone.vue'
 import FileStatus, { FileStatusName } from './FileStatus.vue'
+import FileSlot from './FileSlot.vue'
 
 import createStore from './store'
 
@@ -49,7 +72,11 @@ interface Props {
   options: UppyOptions
   requiredFileTypes: string[]
   s3Options: AwsS3MultipartOptions
+  variant: UppyUploaderVariant
 }
+
+/** `classic`: one wide dropzone with a FileStatus per file; `slots`: a 2-column grid of FileSlot drop targets. */
+export type UppyUploaderVariant = 'classic' | 'slots'
 
 const UppyUploader = defineComponent({
   name: 'UppyUploader',
@@ -57,6 +84,7 @@ const UppyUploader = defineComponent({
   components: {
     Dropzone,
     FileStatus,
+    FileSlot,
   },
   props: {
     disabled: Boolean,
@@ -64,6 +92,7 @@ const UppyUploader = defineComponent({
     requiredFileTypes: Array,
     s3Options: Object,
     currentUser: Object,
+    variant: { type: String as PropType<UppyUploaderVariant>, default: 'classic' },
   },
   setup(props: Props | any, { emit }) {
     const state = reactive<State>({
@@ -72,12 +101,15 @@ const UppyUploader = defineComponent({
 
     preventDropEvents()
 
+    let replacingId: string | null = null
     const uppy = new Uppy({ ...props.options, store: createStore() })
       .on('file-added', (file) => {
         emit('file-added', file)
       })
       .on('file-removed', (file) => {
-        emit('file-removed', file)
+        // second argument only for a Replace (slots variant), so the page can keep its upload context
+        if (replacingId === file.id) emit('file-removed', file, { replacing: true })
+        else emit('file-removed', file)
       })
       .on('upload', () => {
         state.status = 'UPLOADING'
@@ -90,6 +122,8 @@ const UppyUploader = defineComponent({
         console.log(args)
       })
       .on('complete', (result) => {
+        // the batch is over: re-enable the dropzone so remaining slots can be browsed/dropped again
+        state.status = 'DROPPING'
         emit('complete', result)
       })
 
@@ -155,6 +189,62 @@ const UppyUploader = defineComponent({
       }))
     })
 
+    // slots variant: same entries plus the file size and, for a picked file that waits for its pair, the missing
+    // extension (kept out of `files` so classic FileStatus attrs stay unchanged)
+    const slotFiles = computed(() => {
+      const missing = files.value.filter((f) => f.status === 'EMPTY').map((f) => f.extension)
+      return files.value.map(({ id, name, extension, progress, status }) => ({
+        id,
+        name,
+        extension,
+        progress,
+        status,
+        size: id ? uppy.getFile(id)?.size ?? undefined : undefined,
+        waitingFor: status === 'PENDING' && missing.length ? missing.join(', ') : undefined,
+      }))
+    })
+
+    const dropzone = ref<InstanceType<typeof Dropzone> | null>(null)
+    /** Opens the file picker once the dropzone is enabled again (after a Replace re-enables it). */
+    const browse = async () => {
+      await nextTick()
+      dropzone.value?.openFilePicker()
+    }
+
+    // slots variant: per-type status for the page's "N of M files" counter. Watch a value signature, not the
+    // array: `files` is rebuilt whenever the parent re-renders (e.g. an inline requiredFileTypes literal), and
+    // emitting on every rebuild would loop through the parent's state.
+    if (props.variant === 'slots') {
+      const statusSignature = computed(() =>
+        JSON.stringify(files.value.map(({ extension, status }) => [extension, status]))
+      )
+      watch(
+        statusSignature,
+        () =>
+          emit(
+            'files-changed',
+            files.value.map(({ extension, status }) => ({ extension, status }))
+          ),
+        { immediate: true }
+      )
+    }
+
+    const removeFile = (id: string) => {
+      uppy.removeFile(id)
+      state.status = 'DROPPING'
+    }
+
+    /** Replace (slots variant): remove the file flagged as a replacement, then open the picker. */
+    const replaceFile = (id: string) => {
+      replacingId = id
+      try {
+        removeFile(id)
+      } finally {
+        replacingId = null
+      }
+      browse()
+    }
+
     const addFiles = (files: File[]) => {
       try {
         for (const file of files) {
@@ -165,7 +255,10 @@ const UppyUploader = defineComponent({
             data: file,
           })
         }
-        uppy.upload()
+        // start only once the restriction is met (e.g. both files of a pair): an early upload() only logs a
+        // RestrictionError at error level
+        const minFiles = props.options?.restrictions?.minNumberOfFiles ?? 1
+        if (uppy.getFiles().length >= minFiles) uppy.upload()
       } catch (err: any) {
         uppy.log(err)
       }
@@ -175,6 +268,9 @@ const UppyUploader = defineComponent({
       addFiles,
       state,
       files,
+      slotFiles,
+      dropzone,
+      browse,
       accept: computed(() => props.options?.restrictions?.allowedFileTypes),
       multiple: computed(() => {
         if (props.requiredFileTypes) {
@@ -186,10 +282,8 @@ const UppyUploader = defineComponent({
         }
         return true
       }),
-      removeFile(id: string) {
-        uppy.removeFile(id)
-        state.status = 'DROPPING'
-      },
+      removeFile,
+      replaceFile,
       retryFile: uppy.retryUpload,
     }
   },
@@ -197,3 +291,21 @@ const UppyUploader = defineComponent({
 
 export default UppyUploader
 </script>
+<style scoped>
+.sm-uppy-slots {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  border-radius: 6px;
+  transition: box-shadow 150ms ease-in-out;
+}
+.sm-uppy-slots:focus-visible,
+.sm-uppy-slots.is-dragover {
+  box-shadow: 0 0 0 2px var(--el-color-primary);
+}
+@media (max-width: 767px) {
+  .sm-uppy-slots {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+</style>

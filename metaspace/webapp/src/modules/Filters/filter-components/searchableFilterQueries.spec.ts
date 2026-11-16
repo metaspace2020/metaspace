@@ -46,6 +46,18 @@ const mockLink = new ApolloLink((operation) => {
           data: { user: datasetOptions.options[0] },
         }
         break
+      case 'MetadataV2TermOptions':
+      case 'MetadataV2TermOptionById':
+        result = {
+          data: {
+            options: [
+              { curie: '1', label: 'glioma', count: 2 },
+              { curie: '2', label: 'breast cancer', count: 1 },
+              { curie: 'MONDO:0005070', label: 'glioma', count: 1 },
+            ],
+          },
+        }
+        break
       default:
         result = {
           data: datasetOptions,
@@ -89,5 +101,15 @@ describe('searchableFilterQueries', () => {
 
       expect(results).toEqual([validOption, validOption])
     })
+  })
+
+  it('disease getById matches CURIE case-insensitively', async () => {
+    const results = await searchableFilterQueries.disease.getById(mockClient, ['mondo:0005070'])
+    expect(results).toEqual([{ value: 'MONDO:0005070', label: 'glioma' }])
+  })
+
+  it('disease getById returns [] for an unknown CURIE', async () => {
+    const results = await searchableFilterQueries.disease.getById(mockClient, ['MONDO:0000000'])
+    expect(results).toEqual([])
   })
 })

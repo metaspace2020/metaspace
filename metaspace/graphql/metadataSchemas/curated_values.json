@@ -1,0 +1,43 @@
+{
+  "sample_stabilisation": [
+    "Fresh frozen",
+    "Flash frozen (liquid nitrogen)",
+    "Snap frozen",
+    "Formalin-fixed paraffin-embedded (FFPE)",
+    "Fixed",
+    "OCT embedded",
+    "Dried",
+    "Lyophilised"
+  ],
+  "tissue_modification": [
+    "None",
+    "Washed",
+    "Fixed",
+    "Derivatised",
+    "Enzymatically digested",
+    "Delipidated",
+    "Dried",
+    "Coated"
+  ],
+  "genetic_background": [
+    "Wild type",
+    "C57BL/6J",
+    "C57BL/6N",
+    "BALB/c",
+    "Sprague Dawley",
+    "Wistar",
+    "NSG",
+    "Knockout",
+    "Transgenic"
+  ],
+  "maldi_matrix_application": [
+    "Spraying",
+    "Sprayer robot (TM-Sprayer / HTX)",
+    "Sublimation",
+    "Airbrush",
+    "Dried droplet",
+    "Spotting",
+    "Electrospray deposition",
+    "None"
+  ]
+}
