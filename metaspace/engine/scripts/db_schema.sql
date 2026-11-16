@@ -288,6 +288,18 @@ CREATE UNIQUE INDEX "IDX_2e8c4885755304fd125f7c4815" ON "public"."dataset_diagno
   "job_id"
 ) ;
 
+CREATE TABLE "public"."dataset_qc" (
+  "ds_id" text NOT NULL, 
+  "gate_version" integer NOT NULL, 
+  "mode" text NOT NULL DEFAULT 'shadow', 
+  "would_block" boolean NOT NULL DEFAULT false, 
+  "created_dt" TIMESTAMP NOT NULL DEFAULT (now() at time zone 'utc'), 
+  "checks" json NOT NULL, 
+  "metrics" json NOT NULL, 
+  "timings" json NOT NULL, 
+  CONSTRAINT "PK_41f545a1448412ff43344f5d847" PRIMARY KEY ("ds_id")
+);
+
 CREATE TABLE "public"."annotation" (
   "id" SERIAL NOT NULL, 
   "job_id" integer NOT NULL, 
@@ -704,6 +716,10 @@ ALTER TABLE "public"."dataset_diagnostic" ADD CONSTRAINT "FK_e13bfa279306d04d020
 
 ALTER TABLE "public"."dataset_diagnostic" ADD CONSTRAINT "FK_0216974d86c145e2a08ea291c5d" FOREIGN KEY (
   "job_id") REFERENCES "public"."job"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."dataset_qc" ADD CONSTRAINT "FK_41f545a1448412ff43344f5d847" FOREIGN KEY (
+  "ds_id") REFERENCES "public"."dataset"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE "public"."annotation" ADD CONSTRAINT "FK_bfed30991918671d59fc1f5d5e4" FOREIGN KEY (

@@ -228,6 +228,42 @@ interface AnnotationOffSample {
   label: OffSampleLabel;
 }
 
+// Pre-annotation QC report, one row per dataset, replaced on every reprocess. Written by the engine.
+@Entity({ schema: 'public', name: 'dataset_qc' })
+export class DatasetQc {
+  @PrimaryColumn({ name: 'ds_id', type: 'text' })
+  datasetId: string;
+
+  @Column({ type: 'int' })
+  gateVersion: number;
+
+  @Column({ type: 'text', default: 'shadow' })
+  mode: string;
+
+  @Column({ type: 'boolean', default: false })
+  wouldBlock: boolean;
+
+  @Column({
+    type: 'timestamp without time zone',
+    default: () => "(now() at time zone 'utc')",
+    transformer: new MomentValueTransformer(),
+  })
+  createdDT: Moment;
+
+  @Column({ type: 'json' })
+  checks: any;
+
+  @Column({ type: 'json' })
+  metrics: any;
+
+  @Column({ type: 'json' })
+  timings: any;
+
+  @ManyToOne(() => EngineDataset, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'ds_id' })
+  engineDataset: EngineDataset;
+}
+
 @Entity({ schema: 'public' })
 @Unique('annotation_annotation_uindex', ['jobId', 'formula', 'chemMod', 'neutralLoss', 'adduct'])
 export class Annotation {
@@ -572,6 +608,7 @@ export const ENGINE_ENTITIES = [
   OpticalImage,
   Job,
   DatasetDiagnostic,
+  DatasetQc,
   Annotation,
   PerfProfile,
   PerfProfileEntry,
