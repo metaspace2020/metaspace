@@ -383,6 +383,12 @@ export class Roi {
   @Column({ type: 'jsonb' })
   geojson: any;
 
+  @Column({ type: 'text', nullable: true })
+  groupLabel: string | null;
+
+  @Column({ type: 'boolean', default: true })
+  includeInDiff: boolean;
+
   @OneToMany(() => DiffRoi, diffRoi => diffRoi.roi)
   diffRois: DiffRoi[];
 }
@@ -408,6 +414,15 @@ export class DiffRoi {
   @Index('diff_roi_auc_index')
   @Column({ type: 'real' })
   auc: number;
+
+  @Column({ type: 'text', nullable: true })
+  groupLabel: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  referenceLabel: string | null;
+
+  @Column({ type: 'real', nullable: true })
+  roiLfc: number | null;
 
   @ManyToOne(() => Annotation, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'annotation_id' })

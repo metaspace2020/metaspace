@@ -6,6 +6,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 import pandas as pd  # pylint: disable=import-error
 
+from sm.engine.db import transaction_context
 from sm.engine.image_storage import ImageStorage
 from sm.engine.config import SMConfig
 from sm.engine.storage import get_s3_client
@@ -14,6 +15,49 @@ from sm.engine.utils.dataset_image_data import get_ppm, get_tic_image
 from sm.engine.utils.ion_images import iter_ion_image_chunks, postprocess_ion_image_chunk
 
 logger = logging.getLogger(__name__)
+
+
+def build_comparison(roi_masks, labels, names=None):
+    """Group ROIs by label and decide what is compared against what.
+
+    ``labels`` maps roi_id -> label (blank/None = unlabeled, a group of one). Returns group
+    masks (union of member masks), members, the display label per group (None for unlabeled),
+    the groups to score (``targets``), the mode and the reference label (two_group only).
+    two_group applies when exactly two groups exist and at least one is labeled; the first
+    group (labeled alphabetically, then unlabeled by ROI name) is scored against the second.
+    """
+    names = names or {}
+    groups = {}
+    for roi_id, mask in roi_masks.items():
+        label = (labels.get(roi_id) or '').strip()
+        key = ('label', label) if label else ('roi', roi_id)
+        group = groups.setdefault(
+            key,
+            {'label': label or None, 'roi_ids': [], 'mask': np.zeros_like(mask, dtype=bool)},
+        )
+        group['roi_ids'].append(roi_id)
+        group['mask'] |= mask.astype(bool)
+
+    if len(groups) < 2:
+        raise ValueError('At least two groups are required for a comparison')
+
+    def display(key):
+        group = groups[key]
+        return group['label'] or str(names.get(group['roi_ids'][0], group['roi_ids'][0]))
+
+    def sort_key(key):
+        return (0 if groups[key]['label'] else 1, display(key).lower(), display(key))
+
+    two_group = len(groups) == 2 and any(g['label'] for g in groups.values())
+    ordered = sorted(groups, key=sort_key)
+    return {
+        'mode': 'two_group' if two_group else 'vs_rest',
+        'group_masks': {key: group['mask'] for key, group in groups.items()},
+        'members': {key: group['roi_ids'] for key, group in groups.items()},
+        'labels': {key: group['label'] for key, group in groups.items()},
+        'targets': ordered[:1] if two_group else ordered,
+        'reference_label': display(ordered[1]) if two_group else None,
+    }
 
 
 def precompute_roi_info(roi_masks):
@@ -44,6 +88,10 @@ def _compute_chunk_metrics(chunk_data, roi_info, results, row_ann):
         mean_in = (chunk_data @ info['in_mask_f']) / info['n_in']
         mean_out = (chunk_data @ info['out_mask_f']) / info['n_out']
         log2fc = (mean_in - mean_out) * ln_to_log2
+        for member_id, member in info.get('members', {}).items():
+            member_mean = (chunk_data @ member['mask_f']) / member['n']
+            lfc = ((member_mean - mean_out) * ln_to_log2).astype(np.float32)
+            results[roi_id]['roi_lfc'][member_id][row_ann] = lfc
         auc = (chunk_data[:, info['in_samples']] > chunk_data[:, info['out_samples']]).mean(axis=1)
         results[roi_id]['log2fc'][row_ann] = log2fc.astype(np.float32)
         results[roi_id]['auc'][row_ann] = auc.astype(np.float32)
@@ -77,8 +125,12 @@ def compute_roi_metrics(  # pylint: disable=too-many-arguments, too-many-locals
         roi_id: {
             'log2fc': np.empty(n_ann, dtype=np.float32),
             'auc': np.empty(n_ann, dtype=np.float32),
+            'roi_lfc': {
+                member_id: np.empty(n_ann, dtype=np.float32)
+                for member_id in info.get('members', {})
+            },
         }
-        for roi_id in roi_info
+        for roi_id, info in roi_info.items()
     }
     chunks = iter_ion_image_chunks(arrays, mz_lo, mz_hi, chunk_bytes, n_pixels, rows)
     for group_start, group_end, chunk in chunks:
@@ -109,21 +161,31 @@ class DiffROIData:
         self.tic_normalize = tic_normalize
         self.log_transform_tic = log_transform_tic
 
-    def get_dataset_roi(self):
-        """Get all ROI GeoJSON data for this dataset from the roi table."""
+    def check_roi_ids(self, roi_ids):
+        """Raise unless every id is a ROI of this dataset."""
+        ids = [int(i) for i in roi_ids]
+        found = self._db.select_onecol(
+            'SELECT id FROM roi WHERE dataset_id = %s AND id = ANY(%s)', params=(self.ds_id, ids)
+        )
+        missing = set(ids) - {int(i) for i in found}
+        if missing:
+            raise ValueError(f'ROIs {sorted(missing)} do not belong to dataset {self.ds_id}')
+
+    def get_dataset_roi(self, roi_ids):
+        """Get the requested ROIs' GeoJSON, name and group label from the roi table."""
         query = '''
-            SELECT id, name, geojson
+            SELECT id, name, geojson, group_label
             FROM roi
-            WHERE dataset_id = %s
+            WHERE dataset_id = %s AND id = ANY(%s)
         '''
-        roi_results = self._db.select(query, params=(self.ds_id,))
+        roi_results = self._db.select(query, params=(self.ds_id, [int(i) for i in roi_ids]))
 
         if not roi_results:
             return None
 
         # Convert to the expected GeoJSON FeatureCollection format
         features = []
-        for roi_id, roi_name, geojson_data in roi_results:
+        for roi_id, roi_name, geojson_data, group_label in roi_results:
             # If geojson_data is already a dict, use it directly
             # If it's a string, parse it
             if isinstance(geojson_data, str):
@@ -134,6 +196,7 @@ class DiffROIData:
                 geojson_data['properties'] = {}
             geojson_data['properties']['id'] = roi_id
             geojson_data['properties']['name'] = roi_name
+            geojson_data['properties']['group_label'] = group_label
             features.append(geojson_data)
 
         return {'type': 'FeatureCollection', 'features': features}
@@ -198,7 +261,7 @@ class DiffROIData:
         all_metrics_df['monoiso_theo_mz'] = monoiso_theo_mz
         return all_metrics_df
 
-    def prepare_data_for_diff_analysis(self):
+    def prepare_data_for_diff_analysis(self, roi_ids):
         """Prepare lookup data for the streaming differential analysis (no peak arrays)."""
 
         def create_roi_masks(geojson, width, height):
@@ -230,7 +293,7 @@ class DiffROIData:
         tic_flat = tic_image.ravel()
         tic_nonzero = tic_flat > 0
 
-        roi_geojson = self.get_dataset_roi()
+        roi_geojson = self.get_dataset_roi(roi_ids)
         if roi_geojson is None:
             raise ValueError(f"No ROI found for dataset {self.ds_id}")
 
@@ -245,6 +308,13 @@ class DiffROIData:
             'tic_flat': tic_flat,
             'tic_nonzero': tic_nonzero,
             'roi_masks': roi_masks,
+            'roi_labels': {
+                f['properties']['id']: f['properties']['group_label']
+                for f in roi_geojson['features']
+            },
+            'roi_names': {
+                f['properties']['id']: f['properties']['name'] for f in roi_geojson['features']
+            },
             'hotspot_percentile': self.hotspot_percentile,
             'tic_normalize': self.tic_normalize,
             'log_transform_tic': self.log_transform_tic,
@@ -253,8 +323,8 @@ class DiffROIData:
     def browser_arrays(self):
         return browser_arrays_for_dataset(self._db, self.s3_client, self._sm_config, self.ds_id)
 
-    def save_diff_roi_results(self, diff_roi_df: pd.DataFrame):
-        """Insert diff ROI results into the diff_roi table."""
+    def save_diff_roi_results(self, diff_roi_df: pd.DataFrame, scope_roi_ids):
+        """Replace the diff_roi rows of every ROI in ``scope_roi_ids`` with the new results."""
         annot_map = self.get_annots_ids()
 
         merged = diff_roi_df.merge(
@@ -262,26 +332,31 @@ class DiffROIData:
         )
         merged = merged.dropna(subset=['annotation_id'])
 
-        # All ROIs now have roi_id (either real IDs or legacy_X IDs)
+        merged = merged.astype(object).where(merged.notna(), None)
         rows = list(
             zip(
                 merged['annotation_id'].astype(int),
                 merged['roi_id'].astype(int),
                 merged['log2fc'],
                 merged['auc'],
+                merged['group_label'],
+                merged['reference_label'],
+                merged['roi_lfc'],
             )
         )
 
-        if rows:
-            self._db.insert(
-                'INSERT INTO diff_roi '
-                '(annotation_id, roi_id, lfc, auc) '
-                'VALUES (%s, %s, %s, %s) '
-                'ON CONFLICT (annotation_id, roi_id) '
-                'DO UPDATE SET lfc = EXCLUDED.lfc, '
-                'auc = EXCLUDED.auc',
-                rows=rows,
+        with transaction_context():
+            self._db.alter(
+                'DELETE FROM diff_roi WHERE roi_id = ANY(%s)',
+                params=([int(i) for i in scope_roi_ids],),
             )
+            if rows:
+                self._db.insert(
+                    'INSERT INTO diff_roi '
+                    '(annotation_id, roi_id, lfc, auc, group_label, reference_label, roi_lfc) '
+                    'VALUES (%s, %s, %s, %s, %s, %s, %s)',
+                    rows=rows,
+                )
 
 
 class DiffROIManager:
@@ -294,6 +369,8 @@ class DiffROIManager:
     def run_diff_roi(  # pylint: disable=too-many-arguments, too-many-locals
         self,
         ds_id,
+        roi_ids,
+        scope_roi_ids=None,
         hotspot_percentile: int = 99,
         tic_normalize: bool = True,
         log_transform_tic: bool = True,
@@ -303,11 +380,29 @@ class DiffROIManager:
         """Run differential ROI analysis by streaming the annotation m/z windows,
         ``chunk_size`` ion images at a time."""
         data = DiffROIData(ds_id, self._db, hotspot_percentile, tic_normalize, log_transform_tic)
-        diff_data = data.prepare_data_for_diff_analysis()
+        roi_ids = [int(i) for i in roi_ids]
+        scope_ids = roi_ids if scope_roi_ids is None else scope_roi_ids
+        scope = {int(i) for i in scope_ids}
+        if len(roi_ids) < 2 or not set(roi_ids) <= scope:
+            raise ValueError('roi_ids must hold at least two ids and be a subset of scope_roi_ids')
+        data.check_roi_ids(scope)
+
+        diff_data = data.prepare_data_for_diff_analysis(roi_ids)
         n_pixels = diff_data['n_pixels']
 
-        roi_info = precompute_roi_info(diff_data['roi_masks'])
-        for info in roi_info.values():
+        comparison = build_comparison(
+            diff_data['roi_masks'], diff_data['roi_labels'], diff_data['roi_names']
+        )
+        all_info = precompute_roi_info(comparison['group_masks'])
+        roi_info = {key: all_info[key] for key in comparison['targets']}
+        for key, info in roi_info.items():
+            info['members'] = {
+                roi_id: {
+                    'mask_f': diff_data['roi_masks'][roi_id].ravel().astype(np.float32),
+                    'n': diff_data['roi_masks'][roi_id].sum(),
+                }
+                for roi_id in comparison['members'][key]
+            }
             effective_samples = min(n_pixel_samples, info['n_in'] * info['n_out'])
             info['in_samples'] = np.random.choice(
                 info['in_idx'], size=effective_samples, replace=True
@@ -339,16 +434,20 @@ class DiffROIManager:
             }
         )
         dfs = []
-        for roi_id, metrics in results.items():
-            roi_df = annot_cols.copy()
-            roi_df['roi_id'] = roi_id
-            roi_df['log2fc'] = metrics['log2fc']
-            roi_df['auc'] = metrics['auc']
-            dfs.append(roi_df)
+        for key, metrics in results.items():
+            for roi_id in comparison['members'][key]:
+                roi_df = annot_cols.copy()
+                roi_df['roi_id'] = roi_id
+                roi_df['log2fc'] = metrics['log2fc']
+                roi_df['auc'] = metrics['auc']
+                roi_df['group_label'] = comparison['labels'][key]
+                roi_df['reference_label'] = comparison['reference_label']
+                roi_df['roi_lfc'] = metrics['roi_lfc'][roi_id]
+                dfs.append(roi_df)
 
         return pd.concat(dfs, ignore_index=True)
 
-    def save_diff_roi_results(self, ds_id, diff_roi_df):
+    def save_diff_roi_results(self, ds_id, diff_roi_df, scope_roi_ids):
         """Save differential ROI results to the database."""
         data = DiffROIData(ds_id, self._db)
-        data.save_diff_roi_results(diff_roi_df)
+        data.save_diff_roi_results(diff_roi_df, scope_roi_ids)
