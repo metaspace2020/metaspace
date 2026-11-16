@@ -17,6 +17,7 @@ import {
   onBeforeAll,
   onBeforeEach,
   setupTestUsers,
+  testEntityManager,
   testUser,
 } from '../../../tests/graphqlTestEnvironment'
 import {
@@ -26,6 +27,7 @@ import {
   createTestUserProject,
 } from '../../../tests/testDataCreation'
 import { Project, UserProjectRoleOptions as UPRO } from '../../project/model'
+import { Roi } from '../../engine/model'
 
 const mockEsConnector = _mockEsConnector as jest.Mocked<typeof _mockEsConnector>
 const mockSmApiDatasets = _smApiDatasets as jest.Mocked<typeof _smApiDatasets>
@@ -106,14 +108,46 @@ describe('Dataset mutations: plan action projectIds (project sponsorship)', () =
   describe('compareROIs', () => {
     const compareROIsQuery = 'mutation($datasetId: String!) { compareROIs(datasetId: $datasetId) }'
 
+    const createRois = async(datasetId: string, specs: Array<[string, string | null, boolean]>) => {
+      const rois = []
+      for (const [name, groupLabel, includeInDiff] of specs) {
+        rois.push(await testEntityManager.save(testEntityManager.create(Roi, {
+          datasetId, userId: testUser.id, name, isDefault: false, geojson: {}, groupLabel, includeInDiff,
+        })))
+      }
+      return rois
+    }
+
     it('sends only the ES dataset projects where the user is a member', async() => {
       const dataset = await createTestDataset()
+      await createRois(dataset.id, [['a', null, true], ['b', null, true]])
       setEsProjectIds([memberProject.id, reviewerProject.id])
 
       const result = await doQuery(compareROIsQuery, { datasetId: dataset.id })
 
       expect(result).toBe(true)
       expectActionProjectIds('diffAnalysis', [memberProject.id])
+    })
+
+    it('sends included and scope ROI ids to the engine', async() => {
+      const dataset = await createTestDataset()
+      const [a, b, c] = await createRois(dataset.id, [['a', 'x', true], ['b', 'y', true], ['c', 'z', false]])
+      setEsProjectIds([memberProject.id])
+
+      await doQuery(compareROIsQuery, { datasetId: dataset.id })
+
+      expect(mockSmApiDatasets.smApiDatasetRequest).toHaveBeenCalledWith(
+        '/v1/diffroi/compareROIs',
+        expect.objectContaining({ roi_ids: [a.id, b.id], scope_roi_ids: [a.id, b.id, c.id] }))
+    })
+
+    it('rejects a comparison with fewer than two included groups', async() => {
+      const dataset = await createTestDataset()
+      await createRois(dataset.id, [['a', 'x', true], ['b', 'x', true]])
+      setEsProjectIds([memberProject.id])
+
+      await expect(doQuery(compareROIsQuery, { datasetId: dataset.id })).rejects.toThrow(/two ROI groups/)
+      expect(mockSmApiDatasets.smApiDatasetRequest).not.toHaveBeenCalled()
     })
   })
 

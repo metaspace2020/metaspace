@@ -48,6 +48,7 @@ import { memberGroupId } from '../../plan/util/memberGroupId'
 import { cleanEmptyStrings } from '../../../utils/regexSanitizer'
 import canEditEsDataset from '../operation/canEditEsDataset'
 import parseRoiGeoJson, { getDatasetImageBounds } from '../operation/roiGeoJson'
+import { expectedRowKeys, resolveComparison, roiToGraphql, sameRowSets } from '../operation/roiGroups'
 import {
   assertJobNotInUse,
   canManageSegmentationJob,
@@ -55,6 +56,9 @@ import {
   findLiveJobInSlot,
   LIVE_JOB_STATUSES,
 } from '../operation/segmentationOwnership'
+
+const normalizeGroupLabel = (label?: string | null): string | null =>
+  (typeof label === 'string' && label.trim() ? label.trim() : null)
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -663,51 +667,39 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         throw new UserError('Dataset not found or access denied')
       }
 
-      // Check if there are existing diff analysis results and if ROIs match
       const userRoisCount = await ctx.entityManager.createQueryBuilder(Roi, 'roi')
         .where('roi.datasetId = :datasetId', { datasetId })
         .andWhere('roi.userId = :userId', { userId: ctx.user.id })
         .getCount()
 
-      let qb = ctx.entityManager.createQueryBuilder(DiffRoi, 'diffRoi')
-        .leftJoin('diffRoi.roi', 'roi')
-        .select('DISTINCT diffRoi.roiId', 'roiId')
+      let roiQb = ctx.entityManager.createQueryBuilder(Roi, 'roi')
         .where('roi.datasetId = :datasetId', { datasetId })
+      roiQb = userRoisCount > 0
+        ? roiQb.andWhere('roi.userId = :userId', { userId: ctx.user.id })
+        : roiQb.andWhere('roi.isDefault = true')
+      const scopeRois = await roiQb.orderBy('roi.id', 'ASC').getMany()
 
-      if (userRoisCount > 0) {
-        qb = qb.andWhere('roi.userId = :userId', { userId: ctx.user.id })
-      } else {
-        qb = qb.andWhere('roi.isDefault = true')
+      let comparison
+      try {
+        comparison = resolveComparison(scopeRois)
+      } catch (e) {
+        throw new UserError('At least two ROI groups must be included to run the comparison')
       }
 
-      const existingRoiIds = await qb.getRawMany()
+      const existingRows = await ctx.entityManager.createQueryBuilder(DiffRoi, 'diffRoi')
+        .where('diffRoi.roiId IN (:...roiIds)', { roiIds: scopeRois.map(roi => roi.id) })
+        .getMany()
 
-      if (existingRoiIds.length > 0) {
-        const previousRoiIds = new Set(existingRoiIds.map(result => result.roiId))
-        let qbCurrent = ctx.entityManager.createQueryBuilder(Roi, 'roi')
-          .select('id', 'id')
-          .where('roi.datasetId = :datasetId', { datasetId })
-
-        if (userRoisCount > 0) {
-          qbCurrent = qbCurrent.andWhere('roi.userId = :userId', { userId: ctx.user.id })
-        } else {
-          qbCurrent = qbCurrent.andWhere('roi.isDefault = true')
-        }
-
-        const currentDefaultRois = await qbCurrent.getRawMany()
-        const currentRoiIds = new Set(currentDefaultRois.map((roi: any) => roi.id))
-
-        // Only skip recalculation if ROI sets match exactly
-        const roiSetsMatch = previousRoiIds.size === currentRoiIds.size
-          && [...previousRoiIds].every(id => currentRoiIds.has(id))
-
-        if (roiSetsMatch) {
-          logger.info(`ROIs for dataset '${datasetId}' haven't changed (${currentRoiIds.size} ROIs), `
-            + 'skipping diff analysis recalculation')
+      if (existingRows.length > 0) {
+        const previous = expectedRowKeys(existingRows.map(row => ({
+          roiId: row.roiId, groupLabel: row.groupLabel, referenceLabel: row.referenceLabel,
+        })))
+        // Only skip recalculation if the expected (roi, group, reference) set matches exactly
+        if (sameRowSets(previous, expectedRowKeys(comparison.expectedRows))) {
+          logger.info(`ROI groups for dataset '${datasetId}' haven't changed, skipping diff analysis recalculation`)
           return true
         }
-
-        logger.info(`ROIs for dataset '${datasetId}' have changed, proceeding with diff analysis recalculation`)
+        logger.info(`ROIs or groups for dataset '${datasetId}' have changed, recalculating diff analysis`)
       } else {
         logger.info(`No existing diff analysis found for dataset '${datasetId}', proceeding with calculation`)
       }
@@ -732,6 +724,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
       await smApiDatasetRequest('/v1/diffroi/compareROIs', {
         ds_id: datasetId,
+        roi_ids: comparison.includedRoiIds,
+        scope_roi_ids: scopeRois.map(roi => roi.id),
         TIC_normalize: ticNormalize,
         log_transform_tic: logTransformTic,
         chunk_size: chunkSize,
@@ -772,18 +766,13 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         name: input.name,
         isDefault: canEdit,
         geojson,
+        groupLabel: normalizeGroupLabel(input.groupLabel),
+        includeInDiff: input.includeInDiff !== false,
       })
 
       const savedRoi = await ctx.entityManager.save(roi)
 
-      return {
-        id: savedRoi.id,
-        datasetId: savedRoi.datasetId,
-        userId: savedRoi.userId,
-        name: savedRoi.name,
-        isDefault: savedRoi.isDefault,
-        geojson: JSON.stringify(savedRoi.geojson),
-      }
+      return roiToGraphql(savedRoi)
     } catch (e) {
       throw new UserError('Invalid GeoJSON or other error creating ROI')
     }
@@ -830,29 +819,26 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
           name: roi.name,
           isDefault: false,
           geojson: roi.geojson,
+          groupLabel: roi.groupLabel,
+          includeInDiff: roi.includeInDiff,
         })))
       }
     }
 
-    const imported = features.map(({ name, feature }) => ctx.entityManager.create(Roi, {
+    const imported = features.map(({ name, feature, groupLabel, includeInDiff }) => ctx.entityManager.create(Roi, {
       datasetId,
       userId: ctx.user.id,
       name,
       isDefault: canEdit,
       geojson: feature,
+      groupLabel,
+      includeInDiff,
     }))
 
     const saved = await ctx.entityManager.save([...defaultCopies, ...imported])
     const savedRois = saved.slice(defaultCopies.length)
 
-    return savedRois.map((roi: any) => ({
-      id: roi.id,
-      datasetId: roi.datasetId,
-      userId: roi.userId,
-      name: roi.name,
-      isDefault: roi.isDefault,
-      geojson: JSON.stringify(roi.geojson),
-    }))
+    return savedRois.map((roi: any) => (roiToGraphql(roi)))
   },
 
   updateRoi: async(
@@ -891,18 +877,13 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         userId: ctx.user.id,
         isDefault: canEdit,
         geojson,
+        groupLabel: normalizeGroupLabel(input.groupLabel),
+        includeInDiff: input.includeInDiff !== false,
       })
 
       const updatedRoi = await ctx.entityManager.findOne(Roi, { where: { id } })
 
-      return {
-        id: updatedRoi!.id,
-        datasetId: updatedRoi!.datasetId,
-        userId: updatedRoi!.userId,
-        name: updatedRoi!.name,
-        isDefault: updatedRoi!.isDefault,
-        geojson: JSON.stringify(updatedRoi!.geojson),
-      }
+      return roiToGraphql(updatedRoi!)
     } catch (e) {
       throw new UserError('Invalid GeoJSON or other error updating ROI')
     }
@@ -987,6 +968,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
           name: roi.name,
           isDefault: canEdit,
           geojson: roi.geojson,
+          groupLabel: roi.groupLabel,
+          includeInDiff: roi.includeInDiff,
         })
         await ctx.entityManager.save(newRoi)
       }
