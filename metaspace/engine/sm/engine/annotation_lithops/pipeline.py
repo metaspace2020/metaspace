@@ -11,6 +11,9 @@ from sm.engine.annotation.acq_geometry import make_acq_geometry_lithops
 from sm.engine.annotation.diagnostics import FdrDiagnosticBundle
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
+from sm.engine.annotation.qc import store as qc_store
+from sm.engine.annotation.qc.config import NZ_PIXEL_LIMIT, PIXEL_LIMIT, load_qc_config
+from sm.engine.annotation.qc.report import QCReport
 from sm.engine.annotation_lithops.run_enrichment import run_enrichment
 from sm.engine.annotation_lithops.annotate import process_centr_segments
 from sm.engine.annotation_lithops.build_moldb import InputMolDb, DbFDRData
@@ -53,6 +56,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
     fdrs: Dict[int, pd.DataFrame]
     results_dfs: Dict[int, pd.DataFrame]
     png_cobjs: List[CObj[List[Tuple[int, bytes]]]]
+    qc_report: Optional[QCReport]
 
     # pylint: disable=too-many-arguments
     def __init__(
@@ -67,6 +71,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         cache_key=None,
         use_db_cache=True,
         use_db_mutex=True,
+        ds_metadata: Optional[Dict[str, Any]] = None,
     ):
         lithops_config = lithops_config or SMConfig.get_conf()['lithops']
         self.lithops_config = lithops_config
@@ -94,6 +99,13 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
 
         self.enrichment_data = None
 
+        self.qc_report = None
+        self.qc_inputs = {
+            'config': load_qc_config(SMConfig.get_conf()),
+            'ds_metadata': ds_metadata,
+            'ds_config': ds_config,
+        }
+
     def run_pipeline(
         self, debug_validate=False, use_cache=True, perform_enrichment=False
     ) -> Tuple[Dict[int, pd.DataFrame], List[CObj[List[Tuple[int, bytes]]]], Any]:
@@ -101,12 +113,13 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.prepare_moldb(debug_validate=debug_validate)
 
         self.load_ds(use_cache=use_cache)
+        self.save_qc_report()
         if debug_validate:
             self.validate_load_ds()
 
         # Check pixel limits
-        nz_pixel_limit = 2000000
-        pixel_limit = 4500000
+        nz_pixel_limit = NZ_PIXEL_LIMIT
+        pixel_limit = PIXEL_LIMIT
         nz_pixels = self.imzml_reader.n_spectra
         n_pixels = self.imzml_reader.h * self.imzml_reader.w
 
@@ -161,11 +174,27 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.ds_segments_bounds,
             self.ds_segms_cobjs,
             self.ds_segm_lens,
+            self.qc_report,
         ) = load_ds(
-            self.executor, self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, self.ds_id
+            self.executor,
+            self.imzml_cobject,
+            self.ibd_cobject,
+            self.ds_segm_size_mb,
+            self.ds_id,
+            self.qc_inputs,
         )
 
         self.is_intensive_dataset = len(self.ds_segms_cobjs) * self.ds_segm_size_mb > 5000
+
+    def save_qc_report(self):
+        """Persist the QC report as soon as it exists so that the row is there even if a later
+        stage fails. Recording only: this must never affect the annotation."""
+        if not (self.ds_id and self.qc_report is not None):
+            return
+        try:
+            qc_store.save_qc_report(self.ds_id, self.qc_report, self._db)
+        except Exception:  # pylint: disable=broad-except
+            logger.warning('Failed to save the pre-annotation QC report', exc_info=True)
 
     def validate_load_ds(self):
         validate_ds_segments(

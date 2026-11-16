@@ -314,6 +314,7 @@ class ServerAnnotationJob:
             cache_key=cache_key,
             executor=executor,
             ds_id=self.ds.id,
+            ds_metadata=self.ds.metadata,
         )
 
         self.results_dfs = None

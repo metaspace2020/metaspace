@@ -176,5 +176,9 @@ The Prefix is necessary and should not have a leading or trailing slash
   },
   "imzml_browser_storage": {
     "bucket": "{{ sm_imzml_browser_bucket }}"
+  },
+  "pre_annotation_qc": {
+    "enabled": true,
+    "sample_size": 300
   }
 }

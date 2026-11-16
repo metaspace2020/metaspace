@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, List, Tuple, Union, Any
+from typing import Dict, List, Optional, Tuple, Union, Any
 
 import numpy as np
 import pandas as pd
@@ -11,8 +11,16 @@ from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
 
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
+from sm.engine.annotation.qc import gate
+from sm.engine.annotation.qc.report import QCReport
 from sm.engine.annotation_lithops.executor import Executor, MEM_LIMITS
-from sm.engine.annotation_lithops.io import CObj, load_cobj, save_cobj, multipart_upload_cobj
+from sm.engine.annotation_lithops.io import (
+    CObj,
+    get_ranges_from_cobject,
+    load_cobj,
+    save_cobj,
+    multipart_upload_cobj,
+)
 from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import SubtaskProfiler
 
@@ -147,15 +155,24 @@ def _upload_imzml_browser_files(
     cobjs.append(save_cobj(browser_storage, imzml_reader.imzml_reader, key=key))
 
 
-def _load_ds(
+def _qc_enabled(qc_inputs: Optional[Dict[str, Any]]) -> bool:
+    return bool(qc_inputs and qc_inputs['config']['enabled'])
+
+
+def _load_ds(  # pylint: disable=too-many-arguments
     imzml_cobject: CloudObject,
     ibd_cobject: CloudObject,
     ds_segm_size_mb: int,
     conf: Dict[str, Any],
+    qc_inputs: Optional[Dict[str, Any]] = None,
     *,
     storage: Storage,
     perf: SubtaskProfiler,
-) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray]:
+) -> Tuple[
+    LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray, Optional[QCReport]
+]:
+    qc_report = QCReport() if _qc_enabled(qc_inputs) else None
+
     logger.info('Loading .imzML file...')
     imzml_reader = LithopsImzMLReader(storage, imzml_cobject, ibd_cobject)
     perf.record_entry(
@@ -165,12 +182,30 @@ def _load_ds(
         int_dtype=imzml_reader.imzml_reader.intensityPrecision,
     )
 
+    if qc_report is not None:
+        gate.run_tier_a(
+            qc_report,
+            imzml_reader,
+            qc_inputs,
+            read_ibd_head=lambda: get_ranges_from_cobject(storage, ibd_cobject, [(0, 16)])[0],
+        )
+        gate.run_tier_b(qc_report, imzml_reader, qc_inputs, storage)
+        perf.record_entry('qc header and sample checks')
+
     logger.info('Reading spectra')
     mzs, ints, sp_lens = _load_spectra(storage, imzml_reader)
     perf.record_entry('read spectra', n_peaks=len(mzs))
 
+    if qc_report is not None:
+        gate.run_tier_c1(qc_report, imzml_reader, qc_inputs, mzs, ints, sp_lens)
+        perf.record_entry('qc array checks')
+
     logger.info('Sorting spectra')
     mzs, ints, sp_idxs = _sort_spectra(imzml_reader, perf, mzs, ints, sp_lens)
+
+    if qc_report is not None:
+        gate.run_tier_c2(qc_report, imzml_reader, qc_inputs, mzs, ints, sp_idxs)
+        perf.record_entry('qc occupancy checks')
 
     logger.info('Uploading imzml browser files')
     browser_storage, uuid = _prepare_storage_imzml_browser_files(imzml_cobject, conf)
@@ -188,6 +223,7 @@ def _load_ds(
         ds_segments_bounds,
         ds_segms_cobjs,
         ds_segm_lens,
+        qc_report,
     )
 
 
@@ -197,7 +233,10 @@ def load_ds(
     ibd_cobject: CloudObject,
     ds_segm_size_mb: int,
     ds_id: Union[str, None],
-) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,]:
+    qc_inputs: Optional[Dict[str, Any]] = None,
+) -> Tuple[
+    LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray, Optional[QCReport]
+]:
     try:
         imzml_head = executor.storage.head_object(imzml_cobject.bucket, imzml_cobject.key)
         ibd_head = executor.storage.head_object(ibd_cobject.bucket, ibd_cobject.key)
@@ -222,14 +261,14 @@ def load_ds(
 
     conf = SMConfig.get_conf()
 
-    (imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens,) = executor.call(
+    (imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens, qc_report,) = executor.call(
         _load_ds,
-        (imzml_cobject, ibd_cobject, ds_segm_size_mb, conf),
+        (imzml_cobject, ibd_cobject, ds_segm_size_mb, conf, qc_inputs),
         runtime_memory=runtime_memory,
     )
     logger.info(f'Segmented dataset chunks into {len(ds_segms_cobjs)} segments')
 
-    return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens
+    return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens, qc_report
 
 
 def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens):
