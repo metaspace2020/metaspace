@@ -246,6 +246,8 @@ export const getRoisQuery = gql`
       name
       isDefault
       geojson
+      groupLabel
+      includeInDiff
     }
   }
 `
@@ -297,6 +299,8 @@ export const getRoiQuery = gql`
       name
       isDefault
       geojson
+      groupLabel
+      includeInDiff
     }
   }
 `
@@ -399,6 +403,8 @@ export const createRoiMutation = gql`
       name
       isDefault
       geojson
+      groupLabel
+      includeInDiff
     }
   }
 `
@@ -412,6 +418,8 @@ export const updateRoiMutation = gql`
       name
       isDefault
       geojson
+      groupLabel
+      includeInDiff
     }
   }
 `
@@ -491,9 +499,16 @@ export const diffRoiResultsQuery = gql`
         name
         isDefault
         geojson
+        groupLabel
+        includeInDiff
       }
       lfc
       auc
+      groupLabel
+      referenceLabel
+      roiIds
+      nRois
+      nConcordant
       annotation {
         id
         ion

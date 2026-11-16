@@ -2,7 +2,9 @@ import { defineComponent, ref, reactive, computed, onMounted, onUnmounted, watch
 import { useStore } from 'vuex'
 import { useMutation, useQuery, DefaultApolloClient } from '@vue/apollo-composable'
 import {
+  ElAutocomplete,
   ElButton,
+  ElCheckbox,
   ElDropdown,
   ElDropdownItem,
   ElDropdownMenu,
@@ -13,6 +15,7 @@ import {
   ElTooltip,
 } from '../lib/element-plus'
 import * as FileSaver from 'file-saver'
+import { describeComparison, resolveComparison } from '../lib/roiGroups'
 import ChannelSelector from '../modules/ImageViewer/ChannelSelector.vue'
 import './RoiSettings.scss'
 import { annotationListQuery } from '../api/annotation'
@@ -265,6 +268,8 @@ export default defineComponent({
             edit: false,
             isDrawing: false,
             userId: roi.userId,
+            groupLabel: roi.groupLabel ?? '',
+            includeInDiff: roi.includeInDiff !== false,
             canUpdate: roi.userId === currentUser.value?.id || canEdit.value,
           }
 
@@ -468,6 +473,8 @@ export default defineComponent({
         edit: false,
         isDrawing: true,
         isDefault: false,
+        groupLabel: '',
+        includeInDiff: true,
         canUpdate: true,
       }
 
@@ -534,6 +541,8 @@ export default defineComponent({
               name: roi.name,
               isDefault: roi.isDefault || false,
               geojson: JSON.stringify(roiToFeature(roi)),
+              groupLabel: roi.groupLabel?.trim() || null,
+              includeInDiff: roi.includeInDiff !== false,
             }
 
             if (roi.id && !roi.isLegacy && roi.canUpdate) {
@@ -633,6 +642,8 @@ export default defineComponent({
         allVisible: true,
         edit: false,
         isDrawing: false,
+        groupLabel: featureProps.group ?? '',
+        includeInDiff: featureProps.includeInDiff !== false,
         canUpdate: true,
       }
     }
@@ -754,6 +765,31 @@ export default defineComponent({
       }
     }
 
+    const handleGroupEdit = (value: string, roiId: string) => {
+      const roiIndex = findRoiIndexById(roiId)
+      if (roiIndex !== -1) {
+        state.rois[roiIndex].groupLabel = value
+      }
+    }
+
+    const handleIncludeEdit = (value: boolean, roiId: string) => {
+      const roiIndex = findRoiIndexById(roiId)
+      if (roiIndex !== -1) {
+        state.rois[roiIndex].includeInDiff = value
+      }
+    }
+
+    const groupSuggestions = (query: string, callback: (items: { value: string }[]) => void) => {
+      const labels = new Set<string>()
+      state.rois.forEach((roi: any) => {
+        const label = (roi.groupLabel || '').trim()
+        if (!roi.removed && label && label.toLowerCase().includes((query || '').trim().toLowerCase())) {
+          labels.add(label)
+        }
+      })
+      callback(Array.from(labels).map((value) => ({ value })))
+    }
+
     const handleNameEdit = (value: any, roiId: string) => {
       const roiIndex = findRoiIndexById(roiId)
       if (roiIndex !== -1) {
@@ -860,12 +896,13 @@ export default defineComponent({
       const roiInfo = (state.rois || []).filter((roi: any) => !roi.removed)
 
       const isLoggedIn = !!currentUser.value?.id
-      const canRunDiffAnalysis = isLoggedIn && roiInfo.length >= 2
+      const comparison = resolveComparison(roiInfo)
+      const canRunDiffAnalysis = isLoggedIn && comparison != null
       const showDiffDropdown = isLoggedIn && hasDiffResults.value
       const diffAnalysisTooltip = !isLoggedIn
         ? 'Please log in to perform differential analysis among the ROIs.'
-        : roiInfo.length < 2
-        ? 'At least two ROIs are needed to perform differential analysis.'
+        : comparison == null
+        ? 'At least two included groups are needed to perform differential analysis.'
         : 'Click to perform differential analysis among the ROIs.'
       const importTooltip = isLoggedIn ? 'Import ROIs from a GeoJSON file.' : 'Please log in to import ROIs.'
       const canExport = roiInfo.length > 0 && imageBounds.value != null
@@ -901,7 +938,7 @@ export default defineComponent({
                           <ElDropdownItem command="view" icon={TopRight}>
                             View results
                           </ElDropdownItem>
-                          <ElDropdownItem command="regenerate" icon={Refresh} disabled={roiInfo.length < 2}>
+                          <ElDropdownItem command="regenerate" icon={Refresh} disabled={comparison == null}>
                             Regenerate analysis
                           </ElDropdownItem>
                         </ElDropdownMenu>
@@ -984,6 +1021,7 @@ export default defineComponent({
               </ElTooltip>
             </div>
           </div>
+          {roiInfo.length >= 2 && <div class="roi-compare-line">{describeComparison(comparison)}</div>}
           {roiInfo.map((roi: any) => {
             const roiId = getRoiId(roi)
             return (
@@ -1012,6 +1050,25 @@ export default defineComponent({
                       {!roi.visible && <HiddenIcon class="fill-current w-5 h-5 text-gray-800" />}
                     </ElButton>
                   </div>
+                </div>
+                <div class="roi-group-row flex items-center gap-1 mt-1">
+                  <ElAutocomplete
+                    class="roi-group-input"
+                    size="small"
+                    placeholder="Group"
+                    modelValue={roi.groupLabel || ''}
+                    fetchSuggestions={groupSuggestions}
+                    triggerOnFocus={true}
+                    onInput={(value: string) => handleGroupEdit(value, roiId)}
+                    onSelect={(item: { value: string }) => handleGroupEdit(item.value, roiId)}
+                  />
+                  <ElCheckbox
+                    size="small"
+                    modelValue={roi.includeInDiff !== false}
+                    onChange={(value: boolean) => handleIncludeEdit(value, roiId)}
+                  >
+                    Include
+                  </ElCheckbox>
                 </div>
                 <div class="roi-channels">
                   <ChannelSelector

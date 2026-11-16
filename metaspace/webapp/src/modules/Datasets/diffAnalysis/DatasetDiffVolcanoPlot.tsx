@@ -174,7 +174,7 @@ export const DatasetDiffVolcanoPlot = defineComponent({
           typeof item.lfc === 'number' ? item.lfc : 0, // log2FC (for symbolSize)
           typeof item.auc === 'number' ? item.auc : 0, // AUC (for symbolSize)
           item.annotation?.ion || item.annotation?.sumFormula || 'Unknown', // metabolite
-          item.roi?.name || `ROI ${item.roi?.id || 'Unknown'}`, // ROI name
+          item.groupLabel || item.roi?.name || `ROI ${item.roi?.id || 'Unknown'}`, // group or ROI name
           item.annotation, // full annotation object
         ])
 
