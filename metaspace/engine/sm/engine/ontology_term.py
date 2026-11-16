@@ -20,8 +20,6 @@ from itertools import islice
 from pathlib import Path
 from typing import Dict, Iterable, Iterator, List
 
-from sm.engine.db import DB, transaction_context
-
 logger = logging.getLogger('engine')
 
 OBO_LIBRARY_URL = 'http://purl.obolibrary.org/obo/'
@@ -165,6 +163,10 @@ def import_subtree(ontology: str, root: str, obo_file: str, batch_size: int = 10
     then every term still reachable is upserted with obsolete = false, so terms that disappeared
     from the ontology stay in the table (a CURIE a dataset references never dangles). Runs in one
     transaction: a failed or empty walk rolls back and leaves the table untouched."""
+    # Imported here, not at module level: sm.engine.dataset imports this module, and Lambda
+    # workers that unpickle a function referencing Dataset have no psycopg2
+    from sm.engine.db import DB, transaction_context  # pylint: disable=import-outside-toplevel
+
     _obo_path(obo_file)  # download before opening the transaction below
     n_terms = 0
     with transaction_context():

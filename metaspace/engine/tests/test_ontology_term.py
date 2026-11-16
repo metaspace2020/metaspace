@@ -147,6 +147,21 @@ def test_module_imports_without_ontology_slots_json(tmp_path):
         module.get_slot_ontology_roots()
 
 
+def test_dataset_imports_without_psycopg2():
+    """The Lambda runtime has no psycopg2, and unpickling the colocalization function there
+    imports sm.engine.dataset, which imports this module — so neither may import sm.engine.db
+    at module level."""
+    import subprocess
+    import sys
+
+    code = (
+        "import sys; sys.modules['psycopg2'] = None; import sm.engine.postprocessing.colocalization"
+    )
+    result = subprocess.run([sys.executable, '-c', code], capture_output=True, text=True)
+
+    assert result.returncode == 0, result.stderr
+
+
 def test_get_slot_ontology_roots_reads_the_real_file():
     from sm.engine.ontology_term import get_slot_ontology_roots
 
