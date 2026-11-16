@@ -10,6 +10,19 @@ ROI Differential Analysis identifies which metabolites and lipids are enriched o
 
 For each annotated ion, the analysis computes two effect-size metrics: **log₂ fold change**, which quantifies the magnitude of the intensity difference, and **AUC** (area under the ROC curve), which reflects how well the ion discriminates between the focal ROI and all other regions. Formal p-values are intentionally omitted: the spatial autocorrelation inherent in imaging MS data inflates false-positive rates when standard statistical tests are applied at the pixel level.
 
+## Grouping ROIs
+
+Each ROI in the ROI panel has an optional **Group** field and an **Include** checkbox.
+
+- **No groups:** every ROI is compared against all other included ROIs combined.
+- **Groups:** ROIs with the same group label are pooled into one region (for example, all infiltrated tumor regions). Each group is compared against all other included groups combined.
+- **Exactly two groups with a label:** you get a single comparison, "first vs second", where positive values mean higher in the first group. The first group is the one that comes first alphabetically. The panel shows a "Will compare" line so you can check the result before running.
+- **Include:** untick Include to leave an ROI out of the analysis without deleting it. It does not matter whether the ROI has a group.
+
+At least two groups must be included to run the analysis. To compare two groups out of three or more, untick Include on the others and run the analysis again. Only the latest run is kept.
+
+Group and Include are saved with the ROI and are carried in GeoJSON export and import.
+
 ## When to use it
 
 - When you want to identify the molecular signature of a tissue region relative to its surroundings (for example, tumor core vs. the rest of the tissue).
