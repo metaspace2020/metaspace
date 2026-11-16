@@ -8,6 +8,7 @@ import numpy as np
 from pyimzml.ImzMLParser import ImzMLParser
 from scipy.sparse import coo_matrix
 
+from sm.engine.annotation.qc.metadata import extract_header_metadata
 from sm.engine.errors import ImzMLError, IbdError
 
 from sm.engine.util import find_file_by_ext
@@ -76,6 +77,7 @@ class ImzMLReader:  # pylint: disable=too-many-instance-attributes
         )
 
         self.metadata_summary = imzml_parser.metadata.pretty()
+        self.header_metadata = extract_header_metadata(imzml_parser)
 
         min_mz_metadata = imzml_parser.spectrum_metadata_fields[MIN_MZ_ACCESSION]
         max_mz_metadata = imzml_parser.spectrum_metadata_fields[MAX_MZ_ACCESSION]
@@ -211,6 +213,16 @@ class LithopsImzMLReader(ImzMLReader):
             raise Exception('Incomplete .ibd file')
 
     def iter_spectra(self, storage: Storage, sp_inds: Sequence[int]):
+        for sp_idx, mzs, ints in self.read_raw_spectra(storage, sp_inds):
+            # _process_spectrum isn't thread-safe, so only access it in a mutex
+            with _process_spectrum_lock:
+                sp_idx, mzs, ints = self._process_spectrum(sp_idx, mzs, ints)
+
+            yield sp_idx, mzs, ints
+
+    def read_raw_spectra(self, storage: Storage, sp_inds: Sequence[int]):
+        """Reads spectra by ranged requests without processing them: zero-intensity peaks are kept
+        and no reader state is updated."""
         # pylint: disable=import-outside-toplevel # defer Lithops import until needed
         from sm.engine.annotation_lithops.io import get_ranges_from_cobject
 
@@ -246,9 +258,5 @@ class LithopsImzMLReader(ImzMLReader):
                 self._check_consistency(mzs, ints, sp_idx)
             except Exception as e:
                 raise IbdError(format_exc()) from e
-
-            # _process_spectrum isn't thread-safe, so only access it in a mutex
-            with _process_spectrum_lock:
-                sp_idx, mzs, ints = self._process_spectrum(sp_idx, mzs, ints)
 
             yield sp_idx, mzs, ints

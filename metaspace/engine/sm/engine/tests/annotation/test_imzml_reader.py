@@ -34,12 +34,13 @@ def make_lithops_imzml_reader(
     mz_precision='f',
     polarity='positive',
     ds_config=TEST_DS_CONFIG,
+    spectra=MOCK_SPECTRA,
 ):
     """Create an ImzML file, upload it into storage, and return an imzml_reader for it"""
     mz_dtype = {'f': np.float32, 'd': np.float64}[mz_precision]
     with TemporaryDirectory() as tmpdir:
         with ImzMLWriter(f'{tmpdir}/test.imzML', polarity=polarity, mz_dtype=mz_dtype) as writer:
-            for coords, (mzs, ints) in zip(MOCK_COORDINATES, MOCK_SPECTRA):
+            for coords, (mzs, ints) in zip(MOCK_COORDINATES, spectra):
                 writer.addSpectrum(mzs, ints, coords)
 
         imzml_content = open(f'{tmpdir}/test.imzML', 'rb').read()
@@ -165,3 +166,18 @@ def test_imzml_reader_lithops(executor):
 
     # Ensure imzml_reader is pickleable, as Lithops will pickle it
     p = pickle.dumps(imzml_reader)
+
+
+def test_read_raw_spectra_keeps_zero_peaks_and_leaves_reader_state_untouched(executor):
+    spectra = [(np.arange(1, 6), np.array([0, 3, 0, 5, 7])) for _ in MOCK_COORDINATES]
+    imzml_reader = make_lithops_imzml_reader(executor.storage, spectra=spectra)
+
+    raw = list(imzml_reader.read_raw_spectra(executor.storage, [0, 2]))
+
+    assert [sp_idx for sp_idx, _, _ in raw] == [0, 2]
+    assert np.array_equal(raw[0][2], [0, 3, 0, 5, 7])
+    assert np.isnan(imzml_reader._sp_rms).all()
+
+    processed = list(imzml_reader.iter_spectra(executor.storage, [0]))
+    assert np.array_equal(processed[0][2], [3, 5, 7])
+    assert not np.isnan(imzml_reader._sp_rms[0])
