@@ -100,6 +100,25 @@
         </p>
       </li>
     </ul>
+    <h2>Dataset download limits</h2>
+    <ul>
+      <li>
+        <p>
+          To ensure fair access, maintain Service availability, and manage infrastructure and data transfer costs,
+          METASPACE limits dataset downloads to two (2) per user per day, regardless of subscription plan.
+        </p>
+      </li>
+      <li>
+        <p>Download limits may be enforced at the account or IP address level.</p>
+      </li>
+      <li>
+        <p>
+          Users requiring additional downloads may <a href="/contact">contact us</a>
+          to request an increased limit. Requests will be reviewed on a case-by-case basis, considering the intended
+          usage and associated infrastructure and operational costs. Approval is at METASPACE's discretion.
+        </p>
+      </li>
+    </ul>
   </content-page>
 </template>
 <script>
