@@ -36,6 +36,18 @@ class LimitError(SMError):
         self.traceback = str(message)
 
 
+class CostLimitError(LimitError):
+    """Raised when the estimated cost of an annotation job exceeds the configured limit."""
+
+    def __init__(self, spent: float, limit: float):
+        super().__init__(
+            f'Processing stopped: estimated cost ${spent:.2f} exceeded the limit of '
+            f'${limit:.2f}.'
+        )
+        self.spent = spent
+        self.limit = limit
+
+
 class DSError(SMError):
     def __init__(self, ds_id, message):
         super().__init__(message)

@@ -76,3 +76,28 @@ def test_dataset_delete_removes_job_images(
 
     assert [c[0] for c in order.mock_calls] == ['del_diagnostics', 'del_job_images']
     del_job_images.assert_called_once_with('ds-1', dm._db)
+
+
+def _failed_email_body(**kwargs):
+    from sm.engine.daemons.dataset_manager import DatasetManager
+
+    dm = DatasetManager.__new__(DatasetManager)
+    dm.fetch_ds_metadata = MagicMock(return_value=('my ds', {}))
+    dm._send_email = MagicMock()
+    dm.send_failed_email({'ds_id': 'ds1', 'email': 'a@b.c'}, **kwargs)
+    dm._send_email.assert_called_once()
+    return dm._send_email.call_args.args[2]
+
+
+def test_send_failed_email_with_reason_replaces_imzml_paragraph():
+    body = _failed_email_body(
+        traceback='cost $12.30 over $10.00', reason='Processing was stopped because it was big.'
+    )
+    assert 'Processing was stopped because it was big.' in body
+    assert 'imzML' not in body and '$' not in body
+    assert 'contact@metaspace2020.org' in body
+
+
+def test_send_failed_email_keeps_imzml_paragraph_without_reason():
+    body = _failed_email_body(traceback='Traceback: bad ibd')
+    assert 'imzML' in body and 'Traceback: bad ibd' in body
