@@ -12,21 +12,23 @@ For additional help, reach out to [contact@metaspace2020.org](mailto:contact@met
 
 ## Supported Configurations
 
-| Vendor | Platform | Required Files | Software |
-|---|---|---|---|
-| Generic Multi-Vendor | Any (single file) | Any vendor format | msConvert (ProteoWizard 3.0.6938) + imzMLConverter v1.1.0 |
-| Generic Multi-Vendor | Any (multiple files) | Any vendor format | msConvert (ProteoWizard 3.0.6938) + imzMLConverter v1.1.0 |
-| Thermo | QExactive | `.raw` | ImageQuest v1.1.0 |
-| Thermo | QExactive | `.raw` | RawToImzmlConverter v1.1.4.5 |
-| Bruker | Solarix FT-ICR | `.mis` | SCiLS Lab 2016b+ |
-| Bruker | Solarix FT-ICR | `.mis` + `peaks.sqlite` | SCiLS Lab 2016b+ |
-| Bruker | timsTOF fleX | `.mis` + `.tsf` | SCiLS Lab 2020a |
+| Vendor               | Platform             | Required Files            | Software                                                  |
+| -------------------- | -------------------- | ------------------------- | --------------------------------------------------------- |
+| Generic Multi-Vendor | Any (single file)    | Any vendor format         | msConvert (ProteoWizard 3.0.6938) + imzMLConverter v1.1.0 |
+| Generic Multi-Vendor | Any (multiple files) | Any vendor format         | msConvert (ProteoWizard 3.0.6938) + imzMLConverter v1.1.0 |
+| Thermo               | QExactive            | `.raw`                    | ImageQuest v1.1.0                                         |
+| Thermo               | QExactive            | `.raw`                    | RawToImzmlConverter v1.1.4.5                              |
+| Bruker               | Solarix FT-ICR       | `.mis`                    | SCiLS Lab 2016b+                                          |
+| Bruker               | Solarix FT-ICR       | `.mis` + `peaks.sqlite`   | SCiLS Lab 2016b+                                          |
+| Bruker               | timsTOF fleX         | `.mis` + `.tsf`           | SCiLS Lab 2020a                                           |
+| Waters               | HDI-compatible       | Raw data processed in HDI | HDI v1.9.1 + MassLynx                                     |
 
 ## 0.1 — Generic Multi-Vendor (Single Input File)
 
 **Software:** msConvert GUI (ProteoWizard 3.0.6938), imzMLConverter v1.1.0
 
 **Notes:**
+
 - Applies to rectangular images where the entire dataset is contained in a
   single file. For datasets where each row is a separate file, see [0.2](#02--generic-multi-vendor-multiple-files).
 - This two-step conversion does not always preserve all imaging MS metadata.
@@ -60,6 +62,7 @@ For additional help, reach out to [contact@metaspace2020.org](mailto:contact@met
 **Software:** msConvert GUI (ProteoWizard 3.0.6938), imzMLConverter v1.1.0
 
 **Notes:**
+
 - Use this method when each row of the image is stored as a separate file.
 - See the notes from [0.1](#01--generic-multi-vendor-single-input-file) for
   general guidance.
@@ -80,6 +83,7 @@ For additional help, reach out to [contact@metaspace2020.org](mailto:contact@met
 **Software:** Thermo ImageQuest v1.1.0
 
 **Notes:**
+
 - Requires a `.raw` file and either a `.MALDIPos` or `.udp` spatial file.
 - In some cases the exported image may appear incomplete or distorted. If this
   occurs, try an alternative conversion method or inspect the metadata file.
@@ -98,6 +102,7 @@ For additional help, reach out to [contact@metaspace2020.org](mailto:contact@met
 **Software:** RawToImzmlConverter v1.1.4.5 (University of Giessen)
 
 **Notes:**
+
 - All image acquisition parameters must be entered manually — ensure they are
   recorded carefully during data acquisition.
 - This software is designed and maintained for AP-SMALDI series instruments.
@@ -127,6 +132,7 @@ FTMS data and do not have access to SCiLS Lab 2016b, contact
 **Software:** SCiLS Lab 2016b or later
 
 **Notes:**
+
 - This method is still undergoing testing. Contact
   [contact@metaspace2020.org](mailto:contact@metaspace2020.org) if you encounter
   any issues.
@@ -159,6 +165,7 @@ FTMS data and do not have access to SCiLS Lab 2016b, contact
 **Software:** SCiLS Lab 2016b or later
 
 **Notes:**
+
 - Use this method when the dataset was acquired with on-the-fly centroid
   detection, indicated by a `peaks.sqlite` file inside the `.d` folder.
 - Refer to **Section 7.6: Exporting spectra from regions to imzML** in the
@@ -184,6 +191,7 @@ FTMS data and do not have access to SCiLS Lab 2016b, contact
 **Software:** SCiLS Lab 2020a
 
 **Notes:**
+
 - METASPACE is currently **incompatible with TIMS measurements**.
 - This method is still undergoing testing. Contact
   [contact@metaspace2020.eu](mailto:contact@metaspace2020.eu) if you encounter
@@ -203,13 +211,61 @@ FTMS data and do not have access to SCiLS Lab 2016b, contact
    - Select a save location for the `.imzML` and `.ibd` files
 3. The export runs as a background task. Progress is shown in the **Tasks** tab.
 
+## 3.1 — Waters (HDI and MassLynx)
+
+**Software:** HDI v1.9.1 (required), MassLynx (any version)
+
+**Notes:**
+
+- The workflow has three stages: lock mass correction in HDI, an Accurate Mass
+  Measure run in MassLynx that produces an AFAMM file, and the imzML export
+  from that file in HDI.
+- Lock mass correction (step 1) is only needed if your data requires it.
+- The lock mass values below are examples. Use the reference m/z and tolerances
+  that match your own experiment.
+
+**Steps:**
+
+1. Apply CLMC lock mass correction in **HDI**, if required:
+   - In the **Process** tab, select **Lockmass correction**
+   - Enter the reference m/z, threshold counts, tolerance, correction period
+     and combine time (example values below)
+   - Use the green plus button to add the dataset, then the green **Start
+     processing** button to run it
+2. Run **Accurate Mass Measure** in **MassLynx**:
+   - Open your data in the chromatogram view
+   - Open **Accurate Mass Measure** from the **Tools** tab
+   - Double click your dataset until a green tick appears
+   - In **Parameters**, select the ionization **polarity**
+   - Select **Set detection parameters automatically**
+   - Deselect the **Lockmass** option
+   - Click **Process**
+   - An AFAMM data file appears in your output location
+3. In **HDI**, process the AFAMM file using your instrument and peak picking
+   settings
+4. Load the processed file into the **Analysis** tab
+5. Click the **imzML convert** button. A new file is created in the specified
+   folder
+6. Upload the `.imzML` and `.ibd` files to METASPACE (see [the upload page guide](./the-upload-page.md))
+   and check your ion images
+
+Example lock mass correction values (step 1):
+
+| Parameter               | Example value |
+| ----------------------- | ------------- |
+| Reference m/z           | 798.5415      |
+| Threshold counts        | 1000          |
+| Tolerance (ppm)         | 500           |
+| Correction period (min) | 1             |
+| Combine time (min)      | 0.1           |
+
 ## Software & References
 
-| Tool | Link |
-|---|---|
-| ProteoWizard (msConvert) | [proteowizard.sourceforge.net](http://proteowizard.sourceforge.net/download.html) |
-| imzMLConverter 1.3.0 (GUI) | [cs.bham.ac.uk/~ibs/imzMLConverter](http://www.cs.bham.ac.uk/~ibs/imzMLConverter/) |
-| jimzMLConverter 2.1.0 (CLI) | [github.com/AlanRace/imzMLConverter](https://github.com/AlanRace/imzMLConverter) |
-| pyimzML | [github.com/alexandrovteam/pyimzML](https://github.com/alexandrovteam/pyimzML) |
-| pyMS | [github.com/alexandrovteam/pyMS](https://github.com/alexandrovteam/pyMS) |
-| imzML format overview | [maldi-msi.org](http://www.maldi-msi.org/) |
+| Tool                        | Link                                                                               |
+| --------------------------- | ---------------------------------------------------------------------------------- |
+| ProteoWizard (msConvert)    | [proteowizard.sourceforge.net](http://proteowizard.sourceforge.net/download.html)  |
+| imzMLConverter 1.3.0 (GUI)  | [cs.bham.ac.uk/~ibs/imzMLConverter](http://www.cs.bham.ac.uk/~ibs/imzMLConverter/) |
+| jimzMLConverter 2.1.0 (CLI) | [github.com/AlanRace/imzMLConverter](https://github.com/AlanRace/imzMLConverter)   |
+| pyimzML                     | [github.com/alexandrovteam/pyimzML](https://github.com/alexandrovteam/pyimzML)     |
+| pyMS                        | [github.com/alexandrovteam/pyMS](https://github.com/alexandrovteam/pyMS)           |
+| imzML format overview       | [maldi-msi.org](http://www.maldi-msi.org/)                                         |
