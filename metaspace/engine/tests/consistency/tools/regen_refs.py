@@ -35,17 +35,34 @@ def main(argv=None) -> int:
     parser.add_argument('paths', nargs='*', default=['tests/consistency'])
     args = parser.parse_args(argv)
 
-    root = Path(subprocess.check_output(['git', 'rev-parse', '--show-toplevel'], text=True).strip())
-    status = subprocess.check_output(['git', 'status', '--porcelain'], cwd=root, text=True)
-    dirty = check_clean(status, ALLOWED_PREFIX)
-    if dirty:
-        print('Refusing to regenerate: dirty paths outside tests/consistency:', file=sys.stderr)
-        for path in dirty:
-            print(f'  {path}', file=sys.stderr)
-        return 1
+    try:
+        root = Path(
+            subprocess.check_output(
+                ['git', 'rev-parse', '--show-toplevel'], text=True, stderr=subprocess.DEVNULL
+            ).strip()
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        root = None
 
-    sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
-    cmd, cwd, extra_env = plan_local_run(root, args.paths, sha)
+    if root is None:
+        # A copy of the engine tree outside a git checkout (e.g. inside a container)
+        sha = os.environ.get('CONSISTENCY_GIT_SHA', 'unknown')
+        cmd, _, extra_env = plan_local_run(Path('.'), args.paths, sha)
+        cwd = Path(__file__).resolve().parents[3]
+        print(
+            f'Not a git checkout: skipping the clean-tree check, refs go to {cwd}', file=sys.stderr
+        )
+    else:
+        status = subprocess.check_output(['git', 'status', '--porcelain'], cwd=root, text=True)
+        dirty = check_clean(status, ALLOWED_PREFIX)
+        if dirty:
+            print('Refusing to regenerate: dirty paths outside tests/consistency:', file=sys.stderr)
+            for path in dirty:
+                print(f'  {path}', file=sys.stderr)
+            return 1
+
+        sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
+        cmd, cwd, extra_env = plan_local_run(root, args.paths, sha)
     result = subprocess.run(cmd, cwd=cwd, env={**os.environ, **extra_env}, check=False)
     if result.returncode != 0:
         print(
