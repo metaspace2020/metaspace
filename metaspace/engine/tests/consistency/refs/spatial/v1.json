@@ -1,0 +1,24 @@
+{
+ "data": {
+  "all_zero_peak": 0.26101266015664754,
+  "dense": 0.8921343691761211,
+  "duplicate_coords": 0.9750185875854095,
+  "missing_m3": 0.931979731879594,
+  "single_pixel": 0.0,
+  "sparse_blob": 0.9909705498081971
+ },
+ "provenance": {
+  "catboost": "1.0.3",
+  "cpyImagingMSpec": "0.2.4",
+  "cpyMSpec": "0.4.2",
+  "cpyMSpec_0_3_5": "0.3.5",
+  "date_utc": "2026-11-09T20:26:08Z",
+  "git_sha": "ee5792462a95b64e4b0fc11128d98fd73a63cc88",
+  "numpy": "1.19.5",
+  "pandas": "1.2.0",
+  "pyarrow": "1.0.1",
+  "pyimzML": "1.5.3",
+  "python": "3.8.10",
+  "scipy": "1.6.0"
+ }
+}
