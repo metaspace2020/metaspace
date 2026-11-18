@@ -6,6 +6,22 @@ sidebar: false
 
 ## November 2026
 
+### Standardized dataset metadata
+
+The upload and edit forms now fill most biological and technical metadata fields with standard ontology terms instead of free text, and there are four new dataset filters.
+
+**Guides**
+
+- [Uploading a dataset](/guides/before-submission/the-upload-page) — rewritten sample information, sample preparation and MS analysis steps. Fields depend on the sample type (tissue, cell culture, plant or environmental), and organism, anatomical site, disease, instrument model and other fields are picked from ontology suggestions. The single **Condition** field is split into **Health status**, **Genetic background** and **Disease**
+- Values that match no ontology term can still be typed. They are marked as pending curation and reviewed by the METASPACE team
+- Datasets submitted earlier are converted to the new fields when you open them for editing, and the original record stays available to view
+- [Metadata recommendations](/guides/before-submission/metadata-recommendations) — updated for the new fields, with a section on how the metadata is used for filtering
+
+**Features**
+
+- New dataset filters: **Disease**, **Sample type**, **Health status** and **Sex**. They match datasets whose metadata was entered in the new form
+- [Python client](/features/tools-and-integrations/python-client) — `submit_dataset` and `update_dataset` take an optional `metadata_v2` argument from version 2.1.1. Existing calls are unchanged
+
 ### Waters imzML export guide
 
 The imzML export guide now covers Waters data.
