@@ -119,7 +119,7 @@ class DatasetManager:  # pylint: disable=too-many-public-methods
             del_jobs(ds)
         ds.save(self._db, self._es)
         with perf_profile(self._db, 'annotate_lithops', ds.id) as perf:
-            executor = Executor(self._sm_config['lithops'], perf=perf)
+            executor = Executor(self._sm_config['lithops'], perf=perf, ds_id=ds.id)
 
             job = ServerAnnotationJob(executor, ds, perf, perform_enrichment=perform_enrichment)
             job.run()
@@ -136,6 +136,8 @@ class DatasetManager:  # pylint: disable=too-many-public-methods
                 )
 
             profile_id = perf._profile_id  # pylint: disable=protected-access
+
+            executor.finish_cost_tracking()  # successful runs stop counting toward the cap
 
         save_size_hash(
             executor=executor, ds=ds, db=self._db, imzml_cobj=job.imzml_cobj, ibd_cobj=job.ibd_cobj
@@ -251,13 +253,15 @@ class DatasetManager:  # pylint: disable=too-many-public-methods
         )
         self._send_email(email, 'METASPACE service notification (SEGMENTATION FAILED)', email_body)
 
-    def send_failed_email(self, msg, traceback=None):
+    def send_failed_email(self, msg, traceback=None, reason=None):
         ds_name, _ = self.fetch_ds_metadata(msg['ds_id'])
         content = (
             f'We are sorry to inform you that there was a problem '
             f'during processing of the "{ds_name}" dataset and it could not be annotated.'
         )
-        if traceback:
+        if reason:
+            content += f'\n\n{reason}'
+        elif traceback:
             content += (
                 f'\n\nWe could not successfully read the dataset\'s imzML or ibd file. '
                 f'Please make sure you are using up-to-date software for '

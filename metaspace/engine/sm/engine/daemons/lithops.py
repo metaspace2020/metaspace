@@ -8,7 +8,14 @@ from sm.engine.annotation_lithops.executor import LithopsStalledException
 from sm.engine.config import SMConfig
 from sm.engine.daemons.actions import DaemonActionStage, DaemonAction
 from sm.engine.dataset import DatasetStatus
-from sm.engine.errors import AnnotationError, ImzMLError, IbdError, LimitError, UnknownDSID
+from sm.engine.errors import (
+    AnnotationError,
+    CostLimitError,
+    ImzMLError,
+    IbdError,
+    LimitError,
+    UnknownDSID,
+)
 from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.rest.dataset_manager import DatasetActionPriority
 
@@ -67,7 +74,17 @@ class LithopsDaemon:
         # Stop processing in case of limit error
         if isinstance(e, (LimitError,)):
             if 'email' in msg:
-                self._manager.send_failed_email(msg, e.traceback)
+                if isinstance(e, CostLimitError):
+                    # the traceback holds dollar figures: keep them out of the user's email
+                    self._manager.send_failed_email(
+                        msg,
+                        reason=(
+                            'Processing was stopped because the dataset exceeded the '
+                            'processing limit.'
+                        ),
+                    )
+                else:
+                    self._manager.send_failed_email(msg, e.traceback)
 
             os.kill(os.getpid(), signal.SIGINT)
             self._manager.ds_failure_handler(msg, e)

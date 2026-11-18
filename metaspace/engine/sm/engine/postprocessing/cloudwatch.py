@@ -8,14 +8,8 @@ from datetime import datetime, timedelta
 import boto3
 import numpy as np
 
+from sm.engine.annotation_lithops.cost_cap import ec2_cost, lambda_cost
 from sm.engine.db import DB
-
-EC2_PRICE = {
-    32768: 0.2538,
-    65536: 0.5076,
-    131072: 1.0152,
-    262144: 2.0304,
-}
 
 PERF_PROFILE = 'SELECT start, finish FROM perf_profile WHERE id = %s'
 
@@ -164,18 +158,11 @@ def extract_data_from_cloudwatch_logs(
 
 
 def _calc_lambda_cost(gb_secs, actions) -> float:
-    cost = 16.67 * 10 ** (-6) * gb_secs
-    cost += 0.20 * 10 ** (-6) * actions
-    return round(cost, 8)
+    return round(lambda_cost(gb_secs, actions), 8)
 
 
 def _calc_ec2_cost(runtime_memory, total_time) -> float:
-    # when runtime_memory equal 16 or 32 GB we use a VM with 32 GB RAM
-    memory = runtime_memory if runtime_memory >= 32768 else 32768
-
-    price_per_hour = EC2_PRICE[memory]
-    total_cost = price_per_hour * total_time / 3600.0
-    return round(total_cost, 8)
+    return round(ec2_cost(runtime_memory, total_time), 8)
 
 
 def calc_costs(perf_profile_entries, request_ids_stat) -> Dict[int, float]:
