@@ -459,6 +459,8 @@ type Roi {
   name: String!
   isDefault: Boolean!
   geojson: String!  # JSON string representation of GeoJSON
+  groupLabel: String
+  includeInDiff: Boolean!
 }
 
 type MeanSpectrum {
@@ -495,6 +497,11 @@ type DiffRoiResult {
   roi: Roi!
   lfc: Float!
   auc: Float!
+  groupLabel: String!
+  referenceLabel: String
+  roiIds: [ID!]!
+  nRois: Int!
+  nConcordant: Int
   annotation: Annotation!
 }
 
@@ -510,6 +517,8 @@ input RoiInput {
   name: String!
   isDefault: Boolean! = false
   geojson: String!
+  groupLabel: String
+  includeInDiff: Boolean! = true
 }
 
 type RoiValidationIssue {

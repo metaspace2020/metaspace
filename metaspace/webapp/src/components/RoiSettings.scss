@@ -91,8 +91,25 @@ $pro-color: #ffab3f;
 
   .roi-item {
     @apply flex w-full justify-center items-center flex-wrap;
-    height: 60px;
+    height: 92px;
     border-bottom: 1px solid lightgray;
+  }
+
+  .roi-compare-line {
+    @apply w-full text-xs text-gray-700 py-1;
+  }
+
+  .roi-group-row {
+    @apply w-full;
+
+    .roi-group-input {
+      @apply flex-1;
+    }
+
+    .el-checkbox {
+      @apply mr-0;
+      height: 24px;
+    }
   }
 
   .roi-channels {

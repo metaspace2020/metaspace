@@ -358,6 +358,8 @@ CREATE TABLE "public"."roi" (
   "name" text NOT NULL, 
   "is_default" boolean NOT NULL DEFAULT false, 
   "geojson" jsonb NOT NULL, 
+  "group_label" text, 
+  "include_in_diff" boolean NOT NULL DEFAULT true, 
   CONSTRAINT "PK_4222bb4a9687c7f2ad8423fc8bb" PRIMARY KEY ("id")
 );
 
@@ -385,6 +387,9 @@ CREATE TABLE "public"."diff_roi" (
   "roi_id" bigint NOT NULL, 
   "lfc" real NOT NULL, 
   "auc" real NOT NULL, 
+  "group_label" text, 
+  "reference_label" text, 
+  "roi_lfc" real, 
   CONSTRAINT "diff_roi_annotation_roi_uindex" UNIQUE ("annotation_id", 
   "roi_id"), 
   CONSTRAINT "PK_1e8cd6ce84c7af082c10a179d6e" PRIMARY KEY ("id")

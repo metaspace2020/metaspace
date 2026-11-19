@@ -6,6 +6,16 @@ sidebar: false
 
 ## November 2026
 
+### ROI groups in differential analysis
+
+ROIs can now be labelled with a group, and the differential analysis compares groups instead of single ROIs.
+
+**Features**
+- [ROI Differential Analysis](/features/spatial-pattern-analysis/roi-differential-analysis) — give ROIs a group label (for example infiltrated vs non-infiltrated tumor regions) and compare groups. Two groups give a single "first vs second" comparison; three or more groups are each compared against the rest
+- An **Include** checkbox leaves an ROI out of the analysis without deleting it
+- A **Consistency** column shows how many ROIs in a group agree with the pooled result
+- Groups and the Include setting are kept when ROIs are exported to and imported from GeoJSON
+
 ### Waters imzML export guide
 
 The imzML export guide now covers Waters data.

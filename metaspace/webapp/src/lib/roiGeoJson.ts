@@ -23,6 +23,8 @@ export interface PanelRoiLike {
   strokeColor: string
   visible: boolean
   allVisible: boolean
+  groupLabel?: string | null
+  includeInDiff?: boolean
   /** `{x, y}` objects normally; legacy rows may hold `[x, y]` pairs or drop a 0-valued axis. */
   coordinates: Array<Partial<RoiVertex> | number[]>
   isDrawing?: boolean
@@ -43,6 +45,8 @@ export interface RoiFeatureProperties {
   'stroke-opacity': number
   fill: string
   'fill-opacity': number
+  group?: string
+  includeInDiff?: boolean
 }
 
 export interface RoiFeature {
@@ -97,6 +101,8 @@ export function roiToFeature(roi: PanelRoiLike): RoiFeature {
       'stroke-opacity': 0,
       fill: roi.rgb,
       'fill-opacity': 0.4,
+      ...(roi.groupLabel && roi.groupLabel.trim() ? { group: roi.groupLabel.trim() } : {}),
+      ...(roi.includeInDiff === false ? { includeInDiff: false } : {}),
     },
     geometry: {
       type: 'Polygon',

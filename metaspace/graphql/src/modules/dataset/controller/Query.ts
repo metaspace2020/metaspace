@@ -29,6 +29,7 @@ import {
 } from '../operation/segmentationJobs'
 import normalizeLegacyRoiFeature from '../operation/normalizeLegacyRoiFeature'
 import parseRoiGeoJson, { getDatasetImageBounds } from '../operation/roiGeoJson'
+import { collapseDiffRows, roiToGraphql } from '../operation/roiGroups'
 import { smApiJsonPost, smApiJsonGet } from '../../../utils/smApi/smApiCall'
 import { smApiDatasetRequest } from '../../../utils'
 import { uniq } from 'lodash'
@@ -463,45 +464,42 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       if (filter.absLfc !== undefined) {
         qb = qb.andWhere('ABS(diffRoi.lfc) <= :absLfc', { absLfc: filter.absLfc })
       }
+      qb = qb.orderBy('roi.id', 'ASC')
+      const diffRows = await qb.getMany()
+
+      let groupedRows = collapseDiffRows(diffRows as any[])
       if (filter.roiId) {
-        qb = qb.andWhere('roi.id = :roiId', { roiId: filter.roiId })
+        const roiId = String(filter.roiId)
+        groupedRows = groupedRows.filter(group => group.members.some((row: any) => String(row.roiId) === roiId))
       }
       if (filter.roiName) {
-        qb = qb.andWhere('roi.name ILIKE :roiName', { roiName: `%${filter.roiName}%` })
+        const needle = String(filter.roiName).toLowerCase()
+        groupedRows = groupedRows.filter(group => (group.members[0].groupLabel ?? group.members[0].roi.name)
+          .toLowerCase().includes(needle))
       }
 
-      const diffRois = await qb.getMany()
-
-      // Get unique annotation IDs and build ES filter
-      const ionIds = uniq(diffRois.map((diffRoi: any) => `${datasetId}_${diffRoi.annotationId}`)).join('|')
-
-      // Build Elasticsearch filter combining annotationId and annotation filters
+      const ionIds = uniq(groupedRows.map(group => `${datasetId}_${group.members[0].annotationId}`)).join('|')
       const esFilter = { annotationId: ionIds, ...annotationFilter }
-
       const annotations = await esSearchResults({ filter: esFilter, limit: 10000 }, 'annotation', ctx.user)
 
-      // Create a map for quick annotation lookup
       const annotationMap = new Map()
       annotations.forEach((ann: any) => {
         annotationMap.set(ann._id, unpackAnnotation(ann))
       })
 
-      // Map diffRois to results with annotations
-      const filteredResults = diffRois.map((diffRoi: any) => {
-        const annotationId = `${datasetId}_${diffRoi.annotationId}`
-        const annotation = annotationMap.get(annotationId)
+      const filteredResults = groupedRows.map(({ members, nRois, nConcordant }: any) => {
+        const first = members[0]
+        const annotation = annotationMap.get(`${datasetId}_${first.annotationId}`)
 
         return {
-          roi: {
-            id: diffRoi.roi.id,
-            datasetId: diffRoi.roi.datasetId,
-            userId: diffRoi.roi.userId,
-            name: diffRoi.roi.name,
-            isDefault: diffRoi.roi.isDefault,
-            geojson: JSON.stringify(diffRoi.roi.geojson),
-          },
-          lfc: diffRoi.lfc,
-          auc: diffRoi.auc,
+          roi: roiToGraphql(first.roi),
+          lfc: first.lfc,
+          auc: first.auc,
+          groupLabel: first.groupLabel ?? first.roi.name,
+          referenceLabel: first.referenceLabel,
+          roiIds: members.map((m: any) => m.roiId),
+          nRois,
+          nConcordant,
           annotation,
         }
       }).filter((result: any) => result.annotation) // Filter out results without annotations
@@ -577,14 +575,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
                 })
               )
               const saved = await ctx.entityManager.save(toSave)
-              return saved.map((roi: any) => ({
-                id: roi.id,
-                datasetId: roi.datasetId,
-                userId: roi.userId,
-                name: roi.name,
-                isDefault: roi.isDefault,
-                geojson: JSON.stringify(roi.geojson),
-              }))
+              return saved.map((roi: any) => (roiToGraphql(roi)))
             }
 
             return legacyFeatures.map((feature: any, index: number) => ({
@@ -594,18 +585,13 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
               name: legacyName(feature, index),
               isDefault: false,
               geojson: JSON.stringify(normalizeLegacyRoiFeature(feature)),
+              groupLabel: null,
+              includeInDiff: true,
             }))
           }
         }
 
-        return rois.map((roi: any) => ({
-          id: roi.id,
-          datasetId: roi.datasetId,
-          userId: roi.userId,
-          name: roi.name,
-          isDefault: roi.isDefault,
-          geojson: JSON.stringify(roi.geojson),
-        }))
+        return rois.map((roi: any) => (roiToGraphql(roi)))
       }
       return []
     } catch (error) {
@@ -619,14 +605,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     if (roi) {
       // Check if user has access to the dataset
       if (await esDatasetByID(roi.datasetId, ctx.user)) {
-        return {
-          id: roi.id,
-          datasetId: roi.datasetId,
-          userId: roi.userId,
-          name: roi.name,
-          isDefault: roi.isDefault,
-          geojson: JSON.stringify(roi.geojson),
-        }
+        return roiToGraphql(roi)
       }
     }
     return null

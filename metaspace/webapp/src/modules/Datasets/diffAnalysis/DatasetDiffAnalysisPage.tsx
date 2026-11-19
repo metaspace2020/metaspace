@@ -23,6 +23,7 @@ import { DatasetDiffHeatmap } from './DatasetDiffHeatmap'
 import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
+import { resolveComparison } from '../../../lib/roiGroups'
 import { parseFormulaAndCharge } from '../../../lib/formulaParser'
 import SimpleIonImageViewer from '../imzml/SimpleIonImageViewer'
 import { userProfileQuery, UserProfileQuery } from '../../../api/user'
@@ -172,10 +173,10 @@ export default defineComponent({
 
     handleRoisLoad(async (result) => {
       if (result?.data?.rois) {
-        const rois = result.data.rois.map((roi: any) => ({
-          id: parseInt(roi.id),
-          name: roi.name,
-        }))
+        const comparison = resolveComparison(result.data.rois)
+        const rois = comparison
+          ? comparison.targets.map((target) => ({ id: parseInt(target.roiId as string), name: target.name }))
+          : result.data.rois.map((roi: any) => ({ id: parseInt(roi.id), name: roi.name }))
         // Set ROI options in the store's filterLists
         const currentFilterLists = store.state.filterLists || {}
         store.commit('setFilterLists', {
@@ -220,6 +221,8 @@ export default defineComponent({
             return {
               id: parseInt(roi.id),
               name: roi.name,
+              groupLabel: (roi.groupLabel || '').trim(),
+              includeInDiff: roi.includeInDiff !== false,
               coordinates: coordinates,
               visible: true,
               strokeColor: geojson?.properties?.stroke,
@@ -335,23 +338,55 @@ export default defineComponent({
       )
     }
 
+    const legendGroups = computed(() => {
+      const groups = new Map<string, { key: string; label: string; count: number; color: string }>()
+      roiInfo.value.forEach((roi: any) => {
+        if (roi.includeInDiff === false) {
+          return
+        }
+        const key = roi.groupLabel ? `label:${roi.groupLabel}` : `roi:${roi.id}`
+        const group = groups.get(key)
+        if (group) {
+          group.count += 1
+        } else {
+          groups.set(key, {
+            key,
+            label: roi.groupLabel || roi.name,
+            count: 1,
+            color: roi.color || roi.strokeColor || '#666666',
+          })
+        }
+      })
+      return Array.from(groups.values())
+    })
+
+    const comparisonTitle = computed(() => {
+      const first = diffData.value?.[0]
+      if (!first) {
+        return null
+      }
+      return first.referenceLabel ? `${first.groupLabel} vs ${first.referenceLabel}` : 'Each group vs the rest'
+    })
+
     const renderRoiLegend = () => {
-      if (!roiInfo.value || roiInfo.value.length === 0) {
+      if (legendGroups.value.length === 0) {
         return null
       }
 
       return (
         <div class="roi-legend mt-3 w-full">
           <div class="flex flex-wrap gap-2 w-full justify-center items-center">
-            {roiInfo.value.map((roi: any) => (
-              <div key={roi.id} class="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded text-xs">
+            {legendGroups.value.map((group) => (
+              <div key={group.key} class="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded text-xs">
                 <div
                   class="w-3 h-3 rounded border border-gray-300"
                   style={{
-                    backgroundColor: roi.color || roi.strokeColor || '#666666',
+                    backgroundColor: group.color,
                   }}
                 ></div>
-                <span class="text-gray-700">{roi.name}</span>
+                <span class="text-gray-700">
+                  {group.count > 1 ? `${group.label} (${group.count} ROIs)` : group.label}
+                </span>
               </div>
             ))}
           </div>
@@ -577,6 +612,9 @@ export default defineComponent({
             </div>
           </div>
 
+          {comparisonTitle.value && (
+            <div class="w-full text-sm font-medium text-gray-700 mt-2">Comparison: {comparisonTitle.value}</div>
+          )}
           <div class="flex w-full flex-wrap flex-row">
             {renderRoiTableWrapper()}
             {renderAnnotationInfoWrapper()}
