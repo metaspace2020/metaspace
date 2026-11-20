@@ -23,7 +23,8 @@ import { DatasetDiffHeatmap } from './DatasetDiffHeatmap'
 import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
-import { resolveComparison } from '../../../lib/roiGroups'
+import { deriveGroups, hasSavedGroups, resolveComparison, roisForDisplay } from '../../../lib/roiGroups'
+import { channels } from '../../../lib/getColorScale'
 import { parseFormulaAndCharge } from '../../../lib/formulaParser'
 import SimpleIonImageViewer from '../imzml/SimpleIonImageViewer'
 import { userProfileQuery, UserProfileQuery } from '../../../api/user'
@@ -171,11 +172,23 @@ export default defineComponent({
       }
     })
 
+    /** A ROI is part of the comparison unless excluded; in group mode it also needs a group. */
+    const isInComparison = (roi: { includeInDiff?: boolean; groupLabel?: string | null }, groupMode: boolean) =>
+      roi.includeInDiff !== false && !(groupMode && !(roi.groupLabel || '').trim())
+
     handleRoisLoad(async (result) => {
       if (result?.data?.rois) {
-        const comparison = resolveComparison(result.data.rois)
+        const groupMode = hasSavedGroups(result.data.rois)
+        const comparison = resolveComparison(result.data.rois, groupMode)
         const rois = comparison
-          ? comparison.targets.map((target) => ({ id: parseInt(target.roiId as string), name: target.name }))
+          ? comparison.targets.map((target) => ({
+              id: parseInt(target.roiId as string),
+              // two groups give one result set (first relative to the second): name it so
+              name:
+                comparison.mode === 'two_group'
+                  ? `${comparison.firstGroup} vs ${comparison.referenceGroup}`
+                  : target.name,
+            }))
           : result.data.rois.map((roi: any) => ({ id: parseInt(roi.id), name: roi.name }))
         // Set ROI options in the store's filterLists
         const currentFilterLists = store.state.filterLists || {}
@@ -193,45 +206,54 @@ export default defineComponent({
 
         // Store ROI display data for image viewer
         if (datasetId.value) {
-          const roiDisplayData = result.data.rois.map((roi: any) => {
-            const geojson = roi.geojson ? JSON.parse(roi.geojson) : null
+          const roiEntries = result.data.rois
+            .filter((roi: any) => isInComparison(roi, groupMode))
+            .map((roi: any) => {
+              const geojson = roi.geojson ? JSON.parse(roi.geojson) : null
 
-            // Convert GeoJSON coordinates to the format expected by the renderer
-            let coordinates: any[] = []
-            if (
-              geojson &&
-              geojson.geometry &&
-              geojson.geometry.coordinates &&
-              geojson.geometry.coordinates.length > 0
-            ) {
-              // Handle different GeoJSON geometry types
-              if (geojson.geometry.type === 'Polygon' && geojson.geometry.coordinates[0]) {
-                coordinates = geojson.geometry.coordinates[0].map((coord: number[]) => ({
-                  x: coord[0],
-                  y: coord[1],
-                  isEndPoint: false,
-                }))
-                // Mark the last point as end point to close the polygon
-                if (coordinates.length > 0) {
-                  coordinates[coordinates.length - 1].isEndPoint = true
+              // Convert GeoJSON coordinates to the format expected by the renderer
+              let coordinates: any[] = []
+              if (
+                geojson &&
+                geojson.geometry &&
+                geojson.geometry.coordinates &&
+                geojson.geometry.coordinates.length > 0
+              ) {
+                // Handle different GeoJSON geometry types
+                if (geojson.geometry.type === 'Polygon' && geojson.geometry.coordinates[0]) {
+                  coordinates = geojson.geometry.coordinates[0].map((coord: number[]) => ({
+                    x: coord[0],
+                    y: coord[1],
+                    isEndPoint: false,
+                  }))
+                  // Mark the last point as end point to close the polygon
+                  if (coordinates.length > 0) {
+                    coordinates[coordinates.length - 1].isEndPoint = true
+                  }
                 }
               }
-            }
 
-            return {
-              id: parseInt(roi.id),
-              name: roi.name,
-              groupLabel: (roi.groupLabel || '').trim(),
-              includeInDiff: roi.includeInDiff !== false,
-              coordinates: coordinates,
-              visible: true,
-              strokeColor: geojson?.properties?.stroke,
-              color: geojson?.properties?.color,
-              rgb: geojson?.properties?.rgb,
-              isDrawing: false,
-              allVisible: true,
-            }
-          })
+              return {
+                id: parseInt(roi.id),
+                name: roi.name,
+                groupLabel: (roi.groupLabel || '').trim(),
+                groupChannel: geojson?.properties?.groupChannel as string | undefined,
+                includeInDiff: roi.includeInDiff !== false,
+                coordinates: coordinates,
+                visible: true,
+                strokeColor: geojson?.properties?.stroke,
+                color: geojson?.properties?.color,
+                rgb: geojson?.properties?.rgb,
+                isDrawing: false,
+                allVisible: true,
+              }
+            })
+          const roiDisplayData = roisForDisplay(
+            roiEntries,
+            deriveGroups(roiEntries, Object.keys(channels), channels),
+            groupMode,
+            channels
+          )
           store.commit('setRoiInfo', { key: datasetId.value, roi: roiDisplayData })
         }
       }
@@ -340,8 +362,9 @@ export default defineComponent({
 
     const legendGroups = computed(() => {
       const groups = new Map<string, { key: string; label: string; count: number; color: string }>()
+      const groupMode = hasSavedGroups(roiInfo.value)
       roiInfo.value.forEach((roi: any) => {
-        if (roi.includeInDiff === false) {
+        if (!isInComparison(roi, groupMode)) {
           return
         }
         const key = roi.groupLabel ? `label:${roi.groupLabel}` : `roi:${roi.id}`
@@ -353,7 +376,7 @@ export default defineComponent({
             key,
             label: roi.groupLabel || roi.name,
             count: 1,
-            color: roi.color || roi.strokeColor || '#666666',
+            color: roi.rgb || roi.color || roi.strokeColor || '#666666',
           })
         }
       })

@@ -2,10 +2,12 @@ $bgColor: hsl(208, 36%, 96%);
 $pro-color: #ffab3f;
 
 .roi-content {
-  @apply flex flex-col flex-wrap justify-center items-center;
+  @apply flex flex-col flex-wrap justify-center items-center w-full;
 
   .roi-options {
-    @apply flex flex-row flex-wrap justify-between items-center w-full pb-1;
+    @apply flex flex-row flex-wrap justify-between items-center w-full;
+    padding: 12px 12px 4px;
+    box-sizing: border-box;
     border-bottom: 1px solid lightgray;
   }
 
@@ -16,7 +18,7 @@ $pro-color: #ffab3f;
 
   .roi-save-icon-wrapper {
     @apply flex justify-center items-center h-6 w-6;
-    margin-left: 3px !important;
+    margin-left: 0 !important;
     margin-right: -2px;
   }
 
@@ -25,11 +27,14 @@ $pro-color: #ffab3f;
   }
 
   .roi-download-icon {
-    @apply flex justify-center items-center h-8 w-6;
+    @apply flex justify-center items-center h-6 w-6 ml-0;
   }
 
   .roi-footer {
-    @apply flex w-full items-center justify-between pt-1;
+    @apply flex w-full items-center justify-between;
+    padding: 4px 12px 12px;
+    box-sizing: border-box;
+    border-top: 1px solid lightgray;
 
     .roi-footer-btn {
       @apply flex items-center justify-center h-9 px-2 rounded-lg font-bold text-gray-700 hover:bg-gray-100;
@@ -70,6 +75,32 @@ $pro-color: #ffab3f;
     }
   }
 
+  // Swapped region (ROI rows / group panel) between the header icons and the footer: capped and scrollable.
+  // Its max-height comes inline from BODY_MAX_HEIGHT in RoiSettings.tsx (also the animation target), and its
+  // height animates towards min(content, BODY_MAX_HEIGHT); the scrollbar is hidden while a transition runs.
+  // The gutter is always reserved so a scrollbar appearing never shifts the rows sideways.
+  .roi-body {
+    @apply w-full;
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    transition: height 200ms ease;
+    &.animating {
+      overflow-y: hidden;
+    }
+  }
+
+  // Group-mode toggle, in the right-hand cluster before the download icon
+  .roi-group-toggle {
+    @apply flex justify-center items-center h-6 w-6 rounded;
+    margin-left: 3px !important;
+    &.active {
+      background: theme('colors.gray.800');
+      color: white;
+    }
+  }
+
   // "results available" dot on the diff-analysis button
   .roi-diff-badge {
     @apply absolute rounded-full;
@@ -85,36 +116,115 @@ $pro-color: #ffab3f;
     min-width: 200px;
   }
 
-  .roi-label {
-    @apply font-bold overflow-hidden truncate;
-  }
-
+  // Plain-view ROI row: picker, name, then eye / pencil / trash on one line. Same box as the "Assign ROIs" row
+  // (.roi-group-assign-row): 40px high, 12px side padding, 22px colour column, 8px gap, 14px bold name (x = 42px).
+  // Long names truncate: every flex level down to the name may shrink (min-width: 0); swatch and icons never do
   .roi-item {
-    @apply flex w-full justify-center items-center flex-wrap;
-    height: 92px;
-    border-bottom: 1px solid lightgray;
+    @apply flex w-full items-center gap-2;
+    height: 40px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    min-width: 0;
   }
 
-  .roi-compare-line {
-    @apply w-full text-xs text-gray-700 py-1;
+  .roi-label {
+    @apply font-bold text-gray-900 truncate;
+    font-size: 14px;
+    line-height: 20px;
+    flex: 1 1 0;
+    min-width: 0;
   }
 
-  .roi-group-row {
-    @apply w-full;
+  // Name editor: fills the name's space and may shrink below the input's intrinsic width
+  .el-input.roi-label,
+  .el-input.roi-label .el-input__wrapper,
+  .el-input.roi-label .el-input__inner {
+    min-width: 0;
+  }
+}
 
-    .roi-group-input {
-      @apply flex-1;
-    }
+// Row actions of plain ROI rows and group rows, in the order eye, pencil, trash: 16px glyphs in 20px buttons,
+// 4px apart, muted dark grey, darker on hover. The EP button colours are reset through its own variables so no
+// state (hover, active, disabled) paints a white box; a disabled button only fades.
+.roi-popper .roi-actions {
+  @apply flex items-center gap-1;
+  flex: none;
+}
 
-    .el-checkbox {
-      @apply mr-0;
-      height: 24px;
-    }
+.roi-popper .roi-action-btn {
+  --el-button-text-color: theme('colors.gray.700');
+  --el-button-hover-text-color: theme('colors.gray.900');
+  --el-button-active-text-color: theme('colors.gray.900');
+  --el-button-disabled-text-color: theme('colors.gray.700');
+  --el-button-bg-color: transparent;
+  --el-button-hover-bg-color: transparent;
+  --el-button-active-bg-color: transparent;
+  --el-button-disabled-bg-color: transparent;
+  --el-button-border-color: transparent;
+  --el-button-hover-border-color: transparent;
+  --el-button-active-border-color: transparent;
+  --el-button-disabled-border-color: transparent;
+  @apply flex items-center justify-center p-0;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-left: 0 !important;
+  border: none;
+
+  &.is-disabled {
+    opacity: 0.4;
+  }
+}
+
+// Column of a flat colour indicator (ROI dot, new-group preview): as wide as the 22px colour picker, marker centred,
+// so the name after it starts at the same x as after a picker
+.roi-popper .roi-indicator-slot {
+  @apply flex items-center justify-center;
+  flex: none;
+  width: 22px;
+  cursor: default;
+}
+
+// ROI colour in the "Assign ROIs" rows: a legend marker, not a control: 12px, round, borderless, translucent
+.roi-popper .roi-dot {
+  @apply inline-block flex-shrink-0 rounded-full;
+  width: 12px;
+  height: 12px;
+  opacity: 0.75;
+  cursor: default;
+}
+
+// Colour picker of plain ROI rows and group rows: a 22px framed control (Element Plus's own trigger border, hover
+// colour and arrow), with the colour in a 14px box inside a 3px padding ring
+.roi-popper .roi-color-picker {
+  @apply flex items-center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  line-height: 0;
+
+  .el-color-picker {
+    display: block;
+    width: 22px;
+    height: 22px;
   }
 
-  .roi-channels {
-    @apply flex w-full justify-between items-center relative;
-    height: 10px;
+  .el-color-picker__trigger {
+    width: 22px;
+    height: 22px;
+    padding: 3px;
+    box-sizing: border-box;
+  }
+
+  // A ROI or group always has a colour: never show Element Plus's "no colour" mark
+  .el-color-picker__empty {
+    display: none;
+  }
+
+  // A stored CSS colour the hex picker cannot represent (e.g. hsl()) is painted as is; !important beats the
+  // picker's inline transparent background
+  &.has-fallback .el-color-picker__color-inner {
+    background-color: var(--roi-picker-fallback) !important;
   }
 }
 
@@ -124,6 +234,179 @@ $pro-color: #ffab3f;
 
   .popper__arrow::after {
     border-bottom-color: $bgColor !important;
+  }
+
+  .roi-group-panel {
+    @apply w-full text-sm;
+    min-width: 0;
+    box-sizing: border-box;
+
+    // Sections carry no padding of their own: the caption and every row pad themselves 12px at the sides, so
+    // "Assign ROIs" and its rows sit exactly where "Dataset ROIs" and its rows sit in the plain view
+    .roi-group-assign {
+      @apply bg-white;
+      box-sizing: border-box;
+    }
+
+    .roi-group-list {
+      box-sizing: border-box;
+      // flow-root: the New group button's bottom margin stays inside the grey instead of collapsing out of it
+      display: flow-root;
+      background: #f3f4f6;
+      border-top: 1px solid lightgray;
+    }
+
+    // Same box as the plain view's .roi-item: 40px high, 12px side padding, 8px gap
+    .roi-group-assign-row {
+      @apply flex w-full items-center gap-2;
+      height: 40px;
+      padding: 0 12px;
+      box-sizing: border-box;
+      min-width: 0;
+    }
+
+    .roi-group-roi-name {
+      @apply font-bold text-gray-900 truncate;
+      font-size: 14px;
+      line-height: 20px;
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    .roi-group-select {
+      flex: none;
+      width: 110px;
+    }
+
+    // Group colour next to the select: a flat 12px legend marker like the ROI dot, square
+    .roi-group-swatch {
+      @apply inline-block;
+      flex: none;
+      width: 12px;
+      height: 12px;
+      box-sizing: border-box;
+      border-radius: 2px;
+      opacity: 0.75;
+      cursor: default;
+    }
+
+    .roi-group-swatch-empty {
+      border: 1px dashed #9ca3af;
+    }
+
+    // Single line, a ROI row's height (40px); grows only for the rename error line
+    .roi-group-item {
+      @apply flex w-full items-center;
+      min-height: 40px;
+      padding: 0 12px;
+      box-sizing: border-box;
+    }
+
+    .roi-group-line {
+      @apply flex w-full items-center gap-2;
+      min-width: 0;
+    }
+
+    .roi-group-name {
+      @apply font-bold text-gray-900 truncate;
+      font-size: 14px;
+      line-height: 20px;
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    .roi-group-rename {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    // Rename and new-group inputs fill the name's space and may shrink below their intrinsic width
+    .roi-group-line .el-input {
+      flex: 1 1 0;
+      min-width: 0;
+
+      .el-input__wrapper,
+      .el-input__inner {
+        min-width: 0;
+      }
+    }
+
+    .roi-group-info {
+      @apply inline-flex items-center text-gray-500 cursor-pointer;
+
+      &:hover,
+      &:focus-visible {
+        @apply text-gray-800;
+      }
+    }
+
+    // An action, not another group row: 8px above, 4px below, a full-width 32px hit area. The section has no side
+    // padding (rows pad themselves 12px), so the button spans from 4px inside the left edge to 4px inside the right
+    // edge, and its 8px padding puts "+" on the swatch column (x = 12px). Footprint 8 + 32 + 4 = 44px.
+    .roi-group-new-btn {
+      @apply flex items-center justify-start text-left text-sm font-bold text-gray-700 cursor-pointer;
+      width: calc(100% - 8px);
+      height: 32px;
+      margin: 8px 4px 4px;
+      padding: 0 8px;
+      box-sizing: border-box;
+      border-radius: 4px;
+
+      &:hover {
+        background: #e3e9f3;
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--el-color-primary);
+        outline-offset: 1px;
+      }
+    }
+
+    // No groups yet: the button sits centred under the "No groups yet" line and hugs its content
+    .roi-group-new-btn.is-centered {
+      justify-content: center;
+      width: fit-content;
+      margin: 8px auto 12px;
+    }
+
+    .roi-group-empty {
+      @apply text-gray-600 text-center;
+      font-size: 13px;
+      line-height: 18px;
+      padding: 8px 12px 0;
+    }
+
+    // The editor that replaces the button takes the same 44px (4px + 24px input line + 16px hint), so the panel
+    // does not jump when it opens; only a validation error makes it taller
+    .roi-group-new {
+      padding: 4px 12px 0;
+    }
+
+    .roi-group-confirm-btn,
+    .roi-group-cancel-btn {
+      @apply flex items-center justify-center rounded cursor-pointer text-sm;
+      flex: none;
+      width: 24px;
+      height: 24px;
+    }
+
+    .roi-group-confirm-btn {
+      @apply text-white;
+      background: #1f2937;
+    }
+
+    .roi-group-cancel-btn {
+      @apply text-gray-700 hover:bg-gray-200;
+    }
+
+    .roi-group-error {
+      @apply text-xs text-red-600 mt-1;
+    }
+
+    // Directly under the editor line (no top margin), part of the editor's 44px
+    .roi-group-hint {
+      @apply text-xs text-gray-600;
+    }
   }
 }
 
@@ -180,4 +463,74 @@ $pro-color: #ffab3f;
 .roi-save-tooltip {
   max-width: 200px;
   text-align: justify;
+}
+
+// Caption of each section ("Dataset ROIs", "Assign ROIs", "Groups"): the whole row toggles the section.
+// Fixed 32px box with its own 12px side padding in every view, collapsed or not, so switching views never moves it;
+// the height is fixed so slotted content (the info icon) cannot make one caption taller than another
+.roi-popper .roi-section-header {
+  @apply flex w-full items-center justify-between text-xs text-gray-600 cursor-pointer;
+  text-align: left;
+  height: 32px;
+  padding: 0 12px;
+  box-sizing: border-box;
+
+  .roi-section-label {
+    @apply flex items-center gap-1;
+    min-width: 0;
+  }
+
+  .roi-section-toggle {
+    @apply flex items-baseline gap-1 cursor-pointer;
+    min-width: 0;
+    color: inherit;
+    font: inherit;
+  }
+
+  .roi-section-count {
+    @apply text-gray-500;
+  }
+
+  .roi-section-extra {
+    @apply inline-flex items-center;
+  }
+
+  .roi-section-chevron {
+    @apply flex-shrink-0;
+  }
+
+  // Empty section (count 0): nothing to collapse, so the caption is plain text
+  &.is-static,
+  &.is-static .roi-section-toggle {
+    cursor: default;
+  }
+}
+
+// Empty-state line under the "Dataset ROIs (0)" caption: muted like the captions, text 12px from the edge
+.roi-popper .roi-empty {
+  @apply w-full text-gray-600 text-left;
+  font-size: 13px;
+  line-height: 18px;
+  padding: 6px 12px 16px;
+  box-sizing: border-box;
+}
+
+// Group view with no ROIs: the line replaces both sections
+.roi-popper .roi-empty.roi-empty-group {
+  padding: 16px 12px;
+}
+
+// Colour picker dropdown (teleported to body, so styled outside .roi-popper): no "Clear" (a cleared value is
+// ignored anyway; a ROI or group always has a colour)
+.roi-color-picker-popper .el-color-dropdown__link-btn {
+  display: none;
+}
+
+// The panel pads its own rows so grey bars and divider lines can reach the popover edges
+.el-popover.roi-popper {
+  padding: 0 !important;
+  // Pinned: otherwise the popover shrink-wraps its content and a long name widens it instead of truncating
+  width: 280px !important;
+  max-width: 280px;
+  min-width: 280px !important;
 }
