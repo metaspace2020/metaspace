@@ -22,8 +22,6 @@ export interface RoiIssue {
 export interface ParsedRoiFeature {
   name: string
   feature: any
-  groupLabel: string | null
-  includeInDiff: boolean
 }
 
 export interface RoiParseResult {
@@ -165,12 +163,8 @@ export default function parseRoiGeoJson(raw: string, bounds: Bounds): RoiParseRe
         ? props.strokeColor
         : derivationBase.replace('rgb', 'rgba').replace(')', ', 0)')
 
-      const groupLabel = typeof props.group === 'string' && props.group.trim() ? props.group.trim() : null
-
       features.push({
         name: provisionalName,
-        groupLabel,
-        includeInDiff: props.includeInDiff !== false,
         feature: {
           type: 'Feature',
           properties: {

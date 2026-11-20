@@ -1,4 +1,4 @@
-import { computed, defineComponent, reactive, onMounted } from 'vue'
+import { computed, defineComponent, reactive, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { useQuery } from '@vue/apollo-composable'
@@ -16,14 +16,14 @@ import { cloneDeep, uniqBy } from 'lodash-es'
 
 import { ElCollapse, ElCollapseItem, ElIcon, ElTooltip } from '../../../lib/element-plus'
 import { Loading, QuestionFilled, ArrowLeft } from '@element-plus/icons-vue'
-import { diffRoiResultsQuery } from '../../../api/dataset'
+import { diffRoiResultsQuery, diffRoiResultSetsQuery } from '../../../api/dataset'
 import { DatasetDiffTable } from './DatasetDiffTable'
 import { DatasetDiffVolcanoPlot } from './DatasetDiffVolcanoPlot'
 import { DatasetDiffHeatmap } from './DatasetDiffHeatmap'
 import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
-import { deriveGroups, hasSavedGroups, resolveComparison, roisForDisplay } from '../../../lib/roiGroups'
+import { comparisonFromResults, deriveGroups, DiffRoiResultSet, roisForDisplay } from '../../../lib/roiGroups'
 import { channels } from '../../../lib/getColorScale'
 import { parseFormulaAndCharge } from '../../../lib/formulaParser'
 import SimpleIonImageViewer from '../imzml/SimpleIonImageViewer'
@@ -93,10 +93,27 @@ export default defineComponent({
       },
     })
 
-    const { onResult: handleRoisLoad } = useQuery<any>(getRoisQuery, {
-      datasetId: datasetId.value,
-      userId: currentUser.value?.id,
-    })
+    // Results and ROIs change when the analysis is regenerated from the annotations page: never show them from cache
+    const { result: roisResult } = useQuery<any>(
+      getRoisQuery,
+      {
+        datasetId: datasetId.value,
+        userId: currentUser.value?.id,
+      },
+      { fetchPolicy: 'network-only' }
+    )
+
+    // The stored result sets, whatever the page filters are: what the stored results compare
+    const { result: resultSetsResult } = useQuery<{ diffRoiResultSets: DiffRoiResultSet[] }>(
+      diffRoiResultSetsQuery,
+      { datasetId: datasetId.value },
+      { fetchPolicy: 'network-only' }
+    )
+    const comparison = computed(() =>
+      roisResult.value?.rois && resultSetsResult.value?.diffRoiResultSets
+        ? comparisonFromResults(resultSetsResult.value.diffRoiResultSets, roisResult.value.rois)
+        : null
+    )
 
     onMounted(() => {
       setTimeout(() => {
@@ -172,24 +189,14 @@ export default defineComponent({
       }
     })
 
-    /** A ROI is part of the comparison unless excluded; in group mode it also needs a group. */
-    const isInComparison = (roi: { includeInDiff?: boolean; groupLabel?: string | null }, groupMode: boolean) =>
-      roi.includeInDiff !== false && !(groupMode && !(roi.groupLabel || '').trim())
-
-    handleRoisLoad(async (result) => {
-      if (result?.data?.rois) {
-        const groupMode = hasSavedGroups(result.data.rois)
-        const comparison = resolveComparison(result.data.rois, groupMode)
-        const rois = comparison
-          ? comparison.targets.map((target) => ({
-              id: parseInt(target.roiId as string),
-              // two groups give one result set (first relative to the second): name it so
-              name:
-                comparison.mode === 'two_group'
-                  ? `${comparison.firstGroup} vs ${comparison.referenceGroup}`
-                  : target.name,
-            }))
-          : result.data.rois.map((roi: any) => ({ id: parseInt(roi.id), name: roi.name }))
+    // The filter options, the image overlay and the legend all come from the results (comparisonFromResults)
+    watch(
+      comparison,
+      (comparison) => {
+        if (!comparison) {
+          return
+        }
+        const rois = comparison.targets
         // Set ROI options in the store's filterLists
         const currentFilterLists = store.state.filterLists || {}
         store.commit('setFilterLists', {
@@ -206,8 +213,8 @@ export default defineComponent({
 
         // Store ROI display data for image viewer
         if (datasetId.value) {
-          const roiEntries = result.data.rois
-            .filter((roi: any) => isInComparison(roi, groupMode))
+          const roiEntries = roisResult.value.rois
+            .filter((roi: any) => comparison.roiLabels.has(String(roi.id)))
             .map((roi: any) => {
               const geojson = roi.geojson ? JSON.parse(roi.geojson) : null
 
@@ -236,9 +243,8 @@ export default defineComponent({
               return {
                 id: parseInt(roi.id),
                 name: roi.name,
-                groupLabel: (roi.groupLabel || '').trim(),
+                groupLabel: comparison.roiLabels.get(String(roi.id)),
                 groupChannel: geojson?.properties?.groupChannel as string | undefined,
-                includeInDiff: roi.includeInDiff !== false,
                 coordinates: coordinates,
                 visible: true,
                 strokeColor: geojson?.properties?.stroke,
@@ -251,19 +257,24 @@ export default defineComponent({
           const roiDisplayData = roisForDisplay(
             roiEntries,
             deriveGroups(roiEntries, Object.keys(channels), channels),
-            groupMode,
+            comparison.grouped,
             channels
           )
           store.commit('setRoiInfo', { key: datasetId.value, roi: roiDisplayData })
         }
-      }
-    })
+      },
+      { immediate: true }
+    )
 
-    const { result: diffRoiResult } = useQuery<any>(diffRoiResultsQuery, {
-      datasetId: datasetId.value,
-      filter: computed(() => ({ ...store.getters.gqlRoiFilter, topNAnnotations: state.topNAnnotations })),
-      annotationFilter: computed(() => store.getters.gqlAnnotationFilter),
-    })
+    const { result: diffRoiResult } = useQuery<any>(
+      diffRoiResultsQuery,
+      {
+        datasetId: datasetId.value,
+        filter: computed(() => ({ ...store.getters.gqlRoiFilter, topNAnnotations: state.topNAnnotations })),
+        annotationFilter: computed(() => store.getters.gqlAnnotationFilter),
+      },
+      { fetchPolicy: 'network-only' }
+    )
     const diffData = computed(() => diffRoiResult.value?.diffRoiResults)
 
     // const dataset = computed(() => (datasetResult.value != null ? datasetResult.value.dataset : null))
@@ -353,6 +364,7 @@ export default defineComponent({
               data={diffData.value}
               currentAnnotation={state.selectedAnnotation}
               isLoading={!diffData.value}
+              isGrouped={!!comparison.value?.grouped}
               onRowChange={handleRowChange}
             />
           )}
@@ -362,11 +374,7 @@ export default defineComponent({
 
     const legendGroups = computed(() => {
       const groups = new Map<string, { key: string; label: string; count: number; color: string }>()
-      const groupMode = hasSavedGroups(roiInfo.value)
       roiInfo.value.forEach((roi: any) => {
-        if (!isInComparison(roi, groupMode)) {
-          return
-        }
         const key = roi.groupLabel ? `label:${roi.groupLabel}` : `roi:${roi.id}`
         const group = groups.get(key)
         if (group) {
@@ -376,7 +384,8 @@ export default defineComponent({
             key,
             label: roi.groupLabel || roi.name,
             count: 1,
-            color: roi.rgb || roi.color || roi.strokeColor || '#666666',
+            // a group shows its solid colour; a plain ROI its own fill, as before groups existed
+            color: (roi.groupLabel && roi.rgb) || roi.color || roi.strokeColor || '#666666',
           })
         }
       })
@@ -385,7 +394,7 @@ export default defineComponent({
 
     const comparisonTitle = computed(() => {
       const first = diffData.value?.[0]
-      if (!first) {
+      if (!first || !comparison.value?.grouped) {
         return null
       }
       return first.referenceLabel ? `${first.groupLabel} vs ${first.referenceLabel}` : 'Each group vs the rest'

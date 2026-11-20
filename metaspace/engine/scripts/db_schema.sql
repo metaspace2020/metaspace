@@ -390,6 +390,7 @@ CREATE TABLE "public"."diff_roi" (
   "group_label" text, 
   "reference_label" text, 
   "roi_lfc" real, 
+  "comparison_roi_ids" bigint array, 
   CONSTRAINT "diff_roi_annotation_roi_uindex" UNIQUE ("annotation_id", 
   "roi_id"), 
   CONSTRAINT "PK_1e8cd6ce84c7af082c10a179d6e" PRIMARY KEY ("id")

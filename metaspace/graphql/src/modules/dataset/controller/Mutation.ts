@@ -52,7 +52,7 @@ import { memberGroupId } from '../../plan/util/memberGroupId'
 import { cleanEmptyStrings } from '../../../utils/regexSanitizer'
 import canEditEsDataset from '../operation/canEditEsDataset'
 import parseRoiGeoJson, { getDatasetImageBounds } from '../operation/roiGeoJson'
-import { expectedRowKeys, resolveComparison, roiToGraphql, sameRowSets } from '../operation/roiGroups'
+import { ExistingDiffRow, isSameComparison, resolveComparison, roiToGraphql } from '../operation/roiGroups'
 import {
   assertJobNotInUse,
   canManageSegmentationJob,
@@ -80,8 +80,26 @@ const legacyValidators: Record<string, any> = _.mapValues(
 )
 const validateV2Document = new Ajv2019({ allErrors: true, strict: false }).compile(metadataV2Schema)
 
-const normalizeGroupLabel = (label?: string | null): string | null =>
-  (typeof label === 'string' && label.trim() ? label.trim() : null)
+const MAX_GROUP_LABEL_LENGTH = 64
+
+/**
+ * Trims a ROI group label; blank means "no group".
+ *
+ * @param label - Label as submitted
+ * @returns The trimmed label, or null when blank
+ * @throws UserError when the trimmed label is longer than MAX_GROUP_LABEL_LENGTH (the engine copies
+ *   the label onto every diff_roi row)
+ *
+ * @example
+ * normalizeGroupLabel('  Tumor ') // => 'Tumor'
+ */
+const normalizeGroupLabel = (label?: string | null): string | null => {
+  const trimmed = typeof label === 'string' ? label.trim() : ''
+  if (trimmed.length > MAX_GROUP_LABEL_LENGTH) {
+    throw new UserError(`ROI group name is longer than ${MAX_GROUP_LABEL_LENGTH} characters`)
+  }
+  return trimmed || null
+}
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -861,16 +879,20 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         throw new UserError('At least two ROI groups must be included to run the comparison')
       }
 
-      const existingRows = await ctx.entityManager.createQueryBuilder(DiffRoi, 'diffRoi')
-        .where('diffRoi.roiId IN (:...roiIds)', { roiIds: scopeRois.map(roi => roi.id) })
-        .getMany()
+      const scopeRoiIds = scopeRois.map(roi => roi.id)
+      // Distinct combinations only: a run stores one row per annotation and ROI, all with the same values
+      const existingRows: ExistingDiffRow[] = await ctx.entityManager.createQueryBuilder(DiffRoi, 'diffRoi')
+        .select('diffRoi.roiId', 'roiId')
+        .addSelect('diffRoi.groupLabel', 'groupLabel')
+        .addSelect('diffRoi.referenceLabel', 'referenceLabel')
+        .addSelect('diffRoi.comparisonRoiIds', 'comparisonRoiIds')
+        .distinct(true)
+        .where('diffRoi.roiId IN (:...scopeRoiIds)', { scopeRoiIds })
+        .getRawMany()
 
       if (existingRows.length > 0) {
-        const previous = expectedRowKeys(existingRows.map(row => ({
-          roiId: row.roiId, groupLabel: row.groupLabel, referenceLabel: row.referenceLabel,
-        })))
-        // Only skip recalculation if the expected (roi, group, reference) set matches exactly
-        if (sameRowSets(previous, expectedRowKeys(comparison.expectedRows))) {
+        // Only skip recalculation when the whole comparison (included ROIs, groups, target/reference) is identical
+        if (isSameComparison(existingRows, comparison)) {
           logger.info(`ROI groups for dataset '${datasetId}' haven't changed, skipping diff analysis recalculation`)
           return true
         }
@@ -900,12 +922,20 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       await smApiDatasetRequest('/v1/diffroi/compareROIs', {
         ds_id: datasetId,
         roi_ids: comparison.includedRoiIds,
-        scope_roi_ids: scopeRois.map(roi => roi.id),
+        scope_roi_ids: scopeRoiIds,
         TIC_normalize: ticNormalize,
         log_transform_tic: logTransformTic,
         chunk_size: chunkSize,
         n_pixel_samples: nPixelSamples,
       })
+
+      // The engine replaced the rows of every ROI in scope. Record which ROIs took part, so the next
+      // call can tell an identical comparison from one whose reference group changed.
+      await ctx.entityManager.createQueryBuilder()
+        .update(DiffRoi)
+        .set({ comparisonRoiIds: comparison.includedRoiIds })
+        .where('roiId IN (:...scopeRoiIds)', { scopeRoiIds })
+        .execute()
 
       if (!isBetaTester) {
         await performAction(ctx, action)
@@ -932,6 +962,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       throw new UserError('Dataset not found or access denied')
     }
 
+    const groupLabel = normalizeGroupLabel(input.groupLabel)
+
     try {
       const geojson = JSON.parse(input.geojson)
       const canEdit = await canEditEsDataset(dataset, ctx)
@@ -941,7 +973,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         name: input.name,
         isDefault: canEdit,
         geojson,
-        groupLabel: normalizeGroupLabel(input.groupLabel),
+        groupLabel,
         includeInDiff: input.includeInDiff !== false,
       })
 
@@ -1000,14 +1032,12 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       }
     }
 
-    const imported = features.map(({ name, feature, groupLabel, includeInDiff }) => ctx.entityManager.create(Roi, {
+    const imported = features.map(({ name, feature }) => ctx.entityManager.create(Roi, {
       datasetId,
       userId: ctx.user.id,
       name,
       isDefault: canEdit,
       geojson: feature,
-      groupLabel,
-      includeInDiff,
     }))
 
     const saved = await ctx.entityManager.save([...defaultCopies, ...imported])
@@ -1044,6 +1074,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       throw new UserError('You can only edit ROIs you created')
     }
 
+    const groupLabel = normalizeGroupLabel(input.groupLabel)
+
     try {
       const geojson = JSON.parse(input.geojson)
 
@@ -1052,7 +1084,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         userId: ctx.user.id,
         isDefault: canEdit,
         geojson,
-        groupLabel: normalizeGroupLabel(input.groupLabel),
+        groupLabel,
         includeInDiff: input.includeInDiff !== false,
       })
 

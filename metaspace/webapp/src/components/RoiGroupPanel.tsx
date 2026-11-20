@@ -3,6 +3,7 @@ import { Delete, Edit, Hide, InfoFilled, View } from '@element-plus/icons-vue'
 import { ElButton, ElColorPicker, ElIcon, ElInput, ElOption, ElSelect, ElTooltip } from '../lib/element-plus'
 import { channels } from '../lib/getColorScale'
 import {
+  MAX_GROUP_LABEL_LENGTH,
   RoiGroup,
   displayColor,
   groupNameError,
@@ -343,7 +344,12 @@ export default defineComponent({
             )}
             {isRenaming ? (
               <div class="roi-group-rename" onKeydown={onEnterEsc(commitRename, cancelRename)}>
-                <ElInput ref={renameInput} size="small" v-model={renameDraft.value} />
+                <ElInput
+                  ref={renameInput}
+                  size="small"
+                  maxlength={MAX_GROUP_LABEL_LENGTH}
+                  v-model={renameDraft.value}
+                />
                 {renameError.value && <div class="roi-group-error">{renameError.value}</div>}
               </div>
             ) : (
@@ -413,7 +419,7 @@ export default defineComponent({
                 )
               )}
             </span>
-            <ElInput ref={newInput} size="small" v-model={newName.value} />
+            <ElInput ref={newInput} size="small" maxlength={MAX_GROUP_LABEL_LENGTH} v-model={newName.value} />
             <button type="button" class="button-reset roi-group-confirm-btn" title="Create" onClick={commitCreate}>
               &#10003;
             </button>

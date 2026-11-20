@@ -308,6 +308,18 @@ export const roisForDisplay = <T extends GroupableRoi>(
 export const hasSavedGroups = (rois: Array<{ groupLabel?: string | null }>): boolean =>
   rois.some((roi) => (roi.groupLabel || '').trim() !== '')
 
+/**
+ * Marks the panel ROIs whose outline the image viewer has closed. The viewer finishes a ROI on the store's array,
+ * which in group view is a copy of the panel's (roisForDisplay) holding the same ROIs in the same order.
+ */
+export const syncClosedOutlines = (rois: GroupableRoi[], stored: GroupableRoi[]): void => {
+  rois.forEach((roi, index) => {
+    if (roi.isDrawing && stored[index]?.isDrawing === false) {
+      roi.isDrawing = false
+    }
+  })
+}
+
 /** Returns ROIs whose groupChannel matches their group's channel; ROIs already aligned (or ungrouped) are kept as-is. */
 export const alignGroupChannels = <T extends GroupableRoi>(rois: T[], groups: RoiGroup[]): T[] =>
   rois.map((roi) => {
@@ -325,4 +337,70 @@ export const toSaveFields = (
   }
   const label = trimLabel(roi) || null
   return { groupLabel: label, includeInDiff: label != null }
+}
+
+/** Longest group label the server accepts (after trimming). */
+export const MAX_GROUP_LABEL_LENGTH = 64
+
+/** One stored differential analysis result set: a plain ROI, or a target group (`diffRoiResultSets`). */
+export interface DiffRoiResultSet {
+  /** Group name; null when the set is a single ungrouped ROI. */
+  groupLabel?: string | null
+  /** Set when the set is relative to one other group instead of to the rest. */
+  referenceLabel?: string | null
+  /** ROIs that have rows in this set. */
+  roiIds: Array<string | number>
+  /** Two-group run: the reference group's members as of the run; null when not recorded or not a two-group run. */
+  referenceRoiIds?: Array<string | number> | null
+}
+
+/** True when results are for groups: some set covers several ROIs or is relative to a reference group. */
+export const isGroupedRun = (sets: Array<Pick<DiffRoiResultSet, 'roiIds' | 'referenceLabel'>>): boolean =>
+  sets.some((set) => set.roiIds.length > 1 || !!set.referenceLabel)
+
+export interface ResultsComparison {
+  grouped: boolean
+  /** One per result set, in ROI order: the options of the results filter. */
+  targets: Array<{ id: number; name: string }>
+  /** Id of every ROI the results are about -> the group it was compared as ('' in a plain run). */
+  roiLabels: Map<string, string>
+}
+
+/**
+ * What the stored results compare, read from the result sets, so the results page shows the run that produced them
+ * whatever was saved on the ROIs afterwards. `rois` are the current ROIs: they give the order and the names of
+ * ungrouped ROIs. The reference group has no rows of its own: its members are the set's `referenceRoiIds` (those
+ * that still exist), or, when that was not recorded, the ROIs whose current label is the reference label.
+ */
+export const comparisonFromResults = (
+  sets: DiffRoiResultSet[],
+  rois: Array<{ id: string | number; name?: string; groupLabel?: string | null }>
+): ResultsComparison => {
+  const grouped = isGroupedRun(sets)
+  const order = rois.map((roi) => String(roi.id))
+  // A set is selected in the results filter by its first ROI (lowest id), the `roi` of its result rows
+  const firstRoiId = (set: DiffRoiResultSet): number => Math.min(...set.roiIds.map((id) => parseInt(String(id), 10)))
+  const position = (set: DiffRoiResultSet): number => order.indexOf(String(firstRoiId(set)))
+  const targets: Array<{ id: number; name: string }> = []
+  const roiLabels = new Map<string, string>()
+  const sorted = sets.filter((set) => set.roiIds.length > 0).sort((a, b) => position(a) - position(b))
+  sorted.forEach((set) => {
+    const id = firstRoiId(set)
+    const label = set.groupLabel ?? rois[order.indexOf(String(id))]?.name ?? String(id)
+    targets.push({ id, name: set.referenceLabel ? `${label} vs ${set.referenceLabel}` : label })
+    set.roiIds.forEach((roiId) => roiLabels.set(String(roiId), grouped ? label : ''))
+  })
+  sorted.forEach(({ referenceLabel, referenceRoiIds }) => {
+    if (!referenceLabel) {
+      return
+    }
+    const recorded = referenceRoiIds?.map(String)
+    rois.forEach((roi) => {
+      const isMember = recorded ? recorded.includes(String(roi.id)) : (roi.groupLabel || '').trim() === referenceLabel
+      if (isMember && !roiLabels.has(String(roi.id))) {
+        roiLabels.set(String(roi.id), referenceLabel)
+      }
+    })
+  })
+  return { grouped, targets, roiLabels }
 }

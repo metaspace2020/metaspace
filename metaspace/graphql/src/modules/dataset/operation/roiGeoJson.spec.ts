@@ -243,20 +243,3 @@ describe('parseRoiGeoJson', () => {
     expect(errors[0].message).toContain('Unsupported GeoJSON type')
   })
 })
-
-describe('parseRoiGeoJson group properties', () => {
-  const withProps = (properties: any) => JSON.stringify({
-    type: 'Feature',
-    properties,
-    geometry: { type: 'Polygon', coordinates: [[[0, 0], [0, 5], [5, 5]]] },
-  })
-
-  it('reads group and includeInDiff, defaulting when missing', () => {
-    const [custom] = parseRoiGeoJson(withProps({ name: 'a', group: ' Infiltrated ', includeInDiff: false }), BOUNDS).features
-    expect(custom.groupLabel).toBe('Infiltrated')
-    expect(custom.includeInDiff).toBe(false)
-    const [plain] = parseRoiGeoJson(withProps({ name: 'a' }), BOUNDS).features
-    expect(plain.groupLabel).toBeNull()
-    expect(plain.includeInDiff).toBe(true)
-  })
-})

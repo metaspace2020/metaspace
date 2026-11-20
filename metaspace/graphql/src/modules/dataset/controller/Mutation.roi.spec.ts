@@ -93,6 +93,17 @@ describe('Dataset mutations: importRois', () => {
     ])
   })
 
+  it('does not take the group or the include flag from the file', async() => {
+    const dataset = await createTestDataset()
+    mockEsDataset(testUser.id)
+    const feature = { ...triangle('A'), properties: { name: 'A', group: 'Tumor', includeInDiff: false } }
+
+    await doQuery(importRoisQuery, { datasetId: dataset.id, geojson: JSON.stringify(feature) })
+
+    const all = await listRois(dataset.id)
+    expect(all.map(r => [r.name, r.groupLabel, r.includeInDiff])).toEqual([['A', null, true]])
+  })
+
   describe('as a non-editor', () => {
     it('copies the dataset defaults into the user\'s own set before appending, so nothing disappears', async() => {
       const owner = await createTestUser()
@@ -120,6 +131,21 @@ describe('Dataset mutations: importRois', () => {
       ])
     })
 
+    it('keeps the group labels of the copied defaults', async() => {
+      const owner = await createTestUser()
+      const dataset = await createTestDataset({ userId: owner.id })
+      mockEsDataset(owner.id)
+      await testEntityManager.save(Roi, {
+        datasetId: dataset.id, userId: owner.id, name: 'Default', isDefault: true, geojson: triangle('Default'), groupLabel: 'Tumor', includeInDiff: false,
+      })
+      const ctx = getContextForTest({ ...testUser } as any, testEntityManager)
+
+      await doQuery(importRoisQuery, { datasetId: dataset.id, geojson: JSON.stringify(triangle('Mine')) }, { context: ctx })
+
+      const mine = await testEntityManager.find(Roi, { where: { datasetId: dataset.id, userId: testUser.id }, order: { id: 'ASC' } })
+      expect(mine.map(r => [r.name, r.groupLabel, r.includeInDiff])).toEqual([['Default', 'Tumor', false], ['Mine', null, true]])
+    })
+
     it('does not copy defaults again when the user already has their own ROIs', async() => {
       const owner = await createTestUser()
       const dataset = await createTestDataset({ userId: owner.id })
@@ -137,5 +163,53 @@ describe('Dataset mutations: importRois', () => {
         ['New', false, testUser.id],
       ])
     })
+  })
+})
+
+describe('Dataset mutations: ROI group label', () => {
+  beforeAll(onBeforeAll)
+  afterAll(onAfterAll)
+  beforeEach(async() => {
+    await onBeforeEach()
+    await setupTestUsers()
+    mockEsConnector.esDatasetByID.mockImplementation(async(id) =>
+      Promise.resolve({ _source: { ds_id: id, ds_submitter_id: testUser.id } } as any))
+  })
+  afterEach(async() => {
+    await onAfterEach()
+    jest.clearAllMocks()
+  })
+
+  const createRoiQuery = `mutation($datasetId: String!, $input: RoiInput!) {
+      createRoi(datasetId: $datasetId, input: $input) { id groupLabel }
+    }`
+  const updateRoiQuery = `mutation($id: ID!, $input: RoiInput!) {
+      updateRoi(id: $id, input: $input) { id groupLabel }
+    }`
+  const input = (groupLabel: string | null) => ({ name: 'A', geojson: JSON.stringify(triangle('A')), groupLabel })
+
+  it('trims the label and accepts 64 characters', async() => {
+    const dataset = await createTestDataset()
+    const label = 'x'.repeat(64)
+
+    const created = await doQuery(createRoiQuery, { datasetId: dataset.id, input: input(`  ${label} `) })
+    expect(created.groupLabel).toBe(label)
+    const updated = await doQuery(updateRoiQuery, { id: created.id, input: input('  Tumor ') })
+    expect(updated.groupLabel).toBe('Tumor')
+    expect((await doQuery(updateRoiQuery, { id: created.id, input: input('   ') })).groupLabel).toBeNull()
+  })
+
+  it('rejects a label longer than 64 characters on create and on update', async() => {
+    const dataset = await createTestDataset()
+    const tooLong = 'x'.repeat(65)
+
+    await expect(doQuery(createRoiQuery, { datasetId: dataset.id, input: input(tooLong) })).rejects
+      .toThrowError(/group name is longer than 64 characters/)
+    expect(await testEntityManager.count(Roi, { where: { datasetId: dataset.id } })).toBe(0)
+
+    const created = await doQuery(createRoiQuery, { datasetId: dataset.id, input: input('Tumor') })
+    await expect(doQuery(updateRoiQuery, { id: created.id, input: input(tooLong) })).rejects
+      .toThrowError(/group name is longer than 64 characters/)
+    expect((await testEntityManager.findOneOrFail(Roi, created.id)).groupLabel).toBe('Tumor')
   })
 })

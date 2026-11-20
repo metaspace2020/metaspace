@@ -23,6 +23,7 @@ import {
   resolveComparison,
   roiColorFields,
   roisForDisplay,
+  syncClosedOutlines,
   toSaveFields,
 } from '../lib/roiGroups'
 import RoiGroupPanel, { renderColorPicker, renderEyeIcon } from './RoiGroupPanel'
@@ -555,6 +556,14 @@ export default defineComponent({
         roi: roisForDisplay(getRoisForStore(state.rois), state.groups, state.groupMode, channels),
       })
     }
+
+    // The image viewer closes an outline on the store's array (addRoiCoordinate in AnnotationView); in group view that
+    // array is a copy of state.rois, so the closed state is copied back for Save, Export and the comparison
+    const storedRois = (): any[] => store.state.roiInfo?.[props.annotation?.dataset?.id] || []
+    watch(
+      () => storedRois().map((roi: any) => roi.isDrawing),
+      () => syncClosedOutlines(state.rois, storedRois())
+    )
 
     const addRoi = (e: any) => {
       e.stopPropagation()

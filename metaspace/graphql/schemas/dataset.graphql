@@ -505,6 +505,13 @@ type DiffRoiResult {
   annotation: Annotation!
 }
 
+type DiffRoiResultSet {
+  groupLabel: String
+  referenceLabel: String
+  roiIds: [ID!]!
+  referenceRoiIds: [ID!]
+}
+
 input DiffRoiFilter {
   minAuc: Float
   absLfc: Float
@@ -568,11 +575,11 @@ type Query {
 
   initialPeak(datasetId: String!, mz: Float): InitialPeak
 
-  # roiId omitted means the whole dataset (only offered when wholeDatasetAvailable).
   meanSpectrum(datasetId: String!, roiId: ID): MeanSpectrum
   meanSpectrumAvailability(datasetId: String!): MeanSpectrumAvailability
 
   diffRoiResults(datasetId: String!, filter: DiffRoiFilter = {}, annotationFilter: AnnotationFilter = {}): [DiffRoiResult!]!
+  diffRoiResultSets(datasetId: String!): [DiffRoiResultSet!]!
 
   rois(datasetId: String!, isDefault: Boolean): [Roi!]!
   roi(id: ID!): Roi

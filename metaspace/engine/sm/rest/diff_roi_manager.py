@@ -1,6 +1,7 @@
 from io import BytesIO
 import logging
 import json
+from typing import Iterator
 
 import numpy as np
 from PIL import Image, ImageDraw
@@ -15,6 +16,19 @@ from sm.engine.utils.dataset_image_data import get_ppm, get_tic_image
 from sm.engine.utils.ion_images import iter_ion_image_chunks, postprocess_ion_image_chunk
 
 logger = logging.getLogger(__name__)
+
+# A chunk is post-processed and pixel-sampled a few rows at a time so the NumPy temporaries
+# stay cache-sized. Both steps are per row or per element, so the values do not depend on
+# the block size (unlike the ROI means, which stay one product over the whole chunk).
+POSTPROCESS_BLOCK_BYTES = 8 * 1024 * 1024
+AUC_BLOCK_ROWS = 64
+
+
+def _row_blocks(n_rows: int, step: int) -> Iterator[slice]:
+    """Consecutive row slices of ``step`` rows covering ``n_rows``."""
+    step = max(1, step)
+    for start in range(0, n_rows, step):
+        yield slice(start, start + step)
 
 
 def build_comparison(roi_masks, labels, names=None):
@@ -82,8 +96,14 @@ def precompute_roi_info(roi_masks):
 
 
 def _compute_chunk_metrics(chunk_data, roi_info, results, row_ann):
-    """log2FC and AUC for the rows of ``chunk_data``; ``row_ann`` maps row -> annotation."""
+    """log2FC and AUC for the rows of ``chunk_data``; ``row_ann`` maps row -> annotation.
+
+    The ROI means stay one matrix-vector product over the whole chunk (their float32
+    rounding depends on it). The AUC only gathers and compares pixels, so it runs in row
+    blocks: the same booleans are averaged, without ``(rows, n_samples)`` temporaries.
+    """
     ln_to_log2 = 1 / np.log(2)
+    n_rows = len(chunk_data)
     for roi_id, info in roi_info.items():
         mean_in = (chunk_data @ info['in_mask_f']) / info['n_in']
         mean_out = (chunk_data @ info['out_mask_f']) / info['n_out']
@@ -92,7 +112,11 @@ def _compute_chunk_metrics(chunk_data, roi_info, results, row_ann):
             member_mean = (chunk_data @ member['mask_f']) / member['n']
             lfc = ((member_mean - mean_out) * ln_to_log2).astype(np.float32)
             results[roi_id]['roi_lfc'][member_id][row_ann] = lfc
-        auc = (chunk_data[:, info['in_samples']] > chunk_data[:, info['out_samples']]).mean(axis=1)
+        in_samples, out_samples = info['in_samples'], info['out_samples']
+        auc = np.empty(n_rows, dtype=np.float64)
+        for block in _row_blocks(n_rows, AUC_BLOCK_ROWS):
+            rows = chunk_data[block]
+            auc[block] = (rows[:, in_samples] > rows[:, out_samples]).mean(axis=1)
         results[roi_id]['log2fc'][row_ann] = log2fc.astype(np.float32)
         results[roi_id]['auc'][row_ann] = auc.astype(np.float32)
 
@@ -118,7 +142,8 @@ def compute_roi_metrics(  # pylint: disable=too-many-arguments, too-many-locals
     the next group is read. Peak memory is that buffer plus its partition scratch, whatever
     the number of annotations. Grouping consecutive annotations ``rows`` at a time is the
     same grouping the pre-streaming implementation used, which keeps the float32 ROI means
-    bit-identical for the same ``rows``.
+    bit-identical for the same ``rows``. Post-processing is row-wise, so it is applied to the
+    buffer a row block at a time (in place, same values) to keep its scratch arrays small.
     """
     n_ann = len(mz_lo)
     results = {
@@ -133,10 +158,17 @@ def compute_roi_metrics(  # pylint: disable=too-many-arguments, too-many-locals
         for roi_id, info in roi_info.items()
     }
     chunks = iter_ion_image_chunks(arrays, mz_lo, mz_hi, chunk_bytes, n_pixels, rows)
+    block_rows = POSTPROCESS_BLOCK_BYTES // (max(1, n_pixels) * np.dtype(np.float32).itemsize)
     for group_start, group_end, chunk in chunks:
-        postprocess_ion_image_chunk(
-            chunk, tic_flat, tic_nonzero, hotspot_percentile, tic_normalize, log_transform_tic
-        )
+        for block in _row_blocks(len(chunk), block_rows):
+            postprocess_ion_image_chunk(
+                chunk[block],
+                tic_flat,
+                tic_nonzero,
+                hotspot_percentile,
+                tic_normalize,
+                log_transform_tic,
+            )
         _compute_chunk_metrics(chunk, roi_info, results, np.arange(group_start, group_end))
     return results
 
@@ -332,16 +364,20 @@ class DiffROIData:
         )
         merged = merged.dropna(subset=['annotation_id'])
 
-        merged = merged.astype(object).where(merged.notna(), None)
+        def nan_to_none(col):
+            return col.astype(object).where(col.notna(), None)
+
+        # Iterating a Series yields Python scalars, so only the NaN -> NULL columns need
+        # converting; the labels already hold None.
         rows = list(
             zip(
                 merged['annotation_id'].astype(int),
                 merged['roi_id'].astype(int),
-                merged['log2fc'],
-                merged['auc'],
+                nan_to_none(merged['log2fc']),
+                nan_to_none(merged['auc']),
                 merged['group_label'],
                 merged['reference_label'],
-                merged['roi_lfc'],
+                nan_to_none(merged['roi_lfc']),
             )
         )
 
@@ -351,10 +387,12 @@ class DiffROIData:
                 params=([int(i) for i in scope_roi_ids],),
             )
             if rows:
-                self._db.insert(
+                # Multi-row VALUES pages (psycopg2 execute_values) instead of one statement
+                # per row; same rows, same transaction as the DELETE.
+                self._db.alter_many(
                     'INSERT INTO diff_roi '
                     '(annotation_id, roi_id, lfc, auc, group_label, reference_label, roi_lfc) '
-                    'VALUES (%s, %s, %s, %s, %s, %s, %s)',
+                    'VALUES %s',
                     rows=rows,
                 )
 
@@ -396,12 +434,15 @@ class DiffROIManager:
         all_info = precompute_roi_info(comparison['group_masks'])
         roi_info = {key: all_info[key] for key in comparison['targets']}
         for key, info in roi_info.items():
+            # A lone member's LFC is the group's log2fc: not computed, stored as NULL
+            member_ids = comparison['members'][key]
             info['members'] = {
                 roi_id: {
                     'mask_f': diff_data['roi_masks'][roi_id].ravel().astype(np.float32),
                     'n': diff_data['roi_masks'][roi_id].sum(),
                 }
-                for roi_id in comparison['members'][key]
+                for roi_id in member_ids
+                if len(member_ids) > 1
             }
             effective_samples = min(n_pixel_samples, info['n_in'] * info['n_out'])
             info['in_samples'] = np.random.choice(
@@ -442,7 +483,7 @@ class DiffROIManager:
                 roi_df['auc'] = metrics['auc']
                 roi_df['group_label'] = comparison['labels'][key]
                 roi_df['reference_label'] = comparison['reference_label']
-                roi_df['roi_lfc'] = metrics['roi_lfc'][roi_id]
+                roi_df['roi_lfc'] = metrics['roi_lfc'].get(roi_id, np.nan)
                 dfs.append(roi_df)
 
         return pd.concat(dfs, ignore_index=True)

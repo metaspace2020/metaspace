@@ -1,12 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import {
   alignGroupChannels,
+  comparisonFromResults,
   deriveGroups,
   displayColor,
   formatConsistency,
   groupNameError,
   hasSavedGroups,
   hexToRgb,
+  isGroupedRun,
   nextGroupChannel,
   nextGroupName,
   normalizeRgb,
@@ -17,9 +19,11 @@ import {
   rgbToHex,
   roiColorFields,
   roisForDisplay,
+  syncClosedOutlines,
   toColorValue,
   toSaveFields,
 } from './roiGroups'
+import { roisToFeatureCollection } from './roiGeoJson'
 
 const CHANNELS = ['magenta', 'green', 'blue', 'red', 'yellow', 'cyan', 'orange', 'violet', 'white']
 const CHANNEL_RGB: Record<string, string> = {
@@ -572,5 +576,166 @@ describe('hex conversion at the colour-picker boundary', () => {
       expect(toColorValue(hexToRgb(hex), PALETTE)).toBe(name)
     })
     expect(toColorValue(hexToRgb('#8000FF'), PALETTE)).toBe('violet')
+  })
+})
+
+describe('drawing a ROI in group view', () => {
+  const panelRoi = (id: string, groupLabel: string, isDrawing: boolean) => ({
+    id,
+    name: `roi-${id}`,
+    groupLabel,
+    channel: 'green',
+    rgb: 'rgb(0, 255, 0)',
+    color: 'rgba(0, 255, 0, 0.4)',
+    strokeColor: 'rgba(0, 255, 0, 0)',
+    visible: true,
+    allVisible: true,
+    isDrawing,
+    coordinates: [
+      { x: 1, y: 1 },
+      { x: 5, y: 1 },
+      { x: 5, y: 5 },
+    ],
+  })
+  const groups = [{ name: 'A', channel: 'magenta' }]
+
+  /** What addRoiCoordinate (AnnotationView) does to the store's array when the outline is closed. */
+  const closeLastOutline = (stored: Array<{ isDrawing?: boolean }>) => {
+    stored[stored.length - 1] = { ...stored[stored.length - 1], isDrawing: false }
+  }
+
+  it('ends with a closed ROI that Save, Export and the comparison include', () => {
+    const panel = [panelRoi('1', 'A', false), panelRoi('2', 'A', false), panelRoi('3', '', true)]
+    const stored = roisForDisplay(panel, groups, true, CHANNEL_RGB)
+    expect(stored).not.toBe(panel) // group view commits a copy, so the viewer's change does not reach the panel
+
+    closeLastOutline(stored)
+    syncClosedOutlines(panel, stored)
+
+    expect(panel[2].isDrawing).toBe(false)
+    // Save keeps the ROIs that pass this check (handleSave in RoiSettings); Export uses roisToFeatureCollection
+    expect(panel.filter((roi) => !roi.isDrawing && roi.coordinates.length > 0)).toHaveLength(3)
+    expect(roisToFeatureCollection(panel, { datasetId: 'ds' }).features.map((f) => f.properties.name)).toEqual([
+      'roi-1',
+      'roi-2',
+      'roi-3',
+    ])
+  })
+
+  it('also closes a ROI that was given a group while being drawn', () => {
+    const panel = [panelRoi('1', 'A', false), panelRoi('2', 'A', true)]
+    const stored = roisForDisplay(panel, groups, true, CHANNEL_RGB)
+    expect(stored[1]).not.toBe(panel[1])
+
+    closeLastOutline(stored)
+    syncClosedOutlines(panel, stored)
+
+    expect(panel[1].isDrawing).toBe(false)
+  })
+
+  it('leaves an outline that is still open alone', () => {
+    const panel = [panelRoi('1', 'A', false), panelRoi('2', '', true)]
+    syncClosedOutlines(panel, roisForDisplay(panel, groups, true, CHANNEL_RGB))
+    expect(panel[1].isDrawing).toBe(true)
+  })
+})
+
+describe('comparisonFromResults', () => {
+  const set = (
+    groupLabel: string | null,
+    roiIds: string[],
+    referenceLabel: string | null = null,
+    referenceRoiIds: string[] | null = null
+  ) => ({ groupLabel, referenceLabel, roiIds, referenceRoiIds })
+  const current = (id: string, groupLabel: string | null = null) => ({ id, name: `roi-${id}`, groupLabel })
+
+  it('isGroupedRun is true only when a set covers several ROIs or has a reference group', () => {
+    expect(isGroupedRun([])).toBe(false)
+    expect(isGroupedRun([set(null, ['1']), set(null, ['2'])])).toBe(false)
+    expect(isGroupedRun([set('A', ['1', '2'])])).toBe(true)
+    expect(isGroupedRun([set('A', ['1'], 'B')])).toBe(true)
+  })
+
+  it('a plain run lists and shows the ROIs that have results, whatever was saved on them afterwards', () => {
+    // Saved with the group view on and no groups: every ROI is excluded and unlabelled, but the results remain
+    const saved = ['1', '2', '3'].map((id) => ({ ...current(id), includeInDiff: false }))
+    const result = comparisonFromResults([set(null, ['2']), set(null, ['1'])], saved)
+    expect(result.grouped).toBe(false)
+    expect(result.targets).toEqual([
+      { id: 1, name: 'roi-1' },
+      { id: 2, name: 'roi-2' },
+    ])
+    // the overlay and the legend show exactly the listed ROIs, each under its own name
+    expect(Array.from(result.roiLabels.entries())).toEqual([
+      ['1', ''],
+      ['2', ''],
+    ])
+  })
+
+  it('a groups-vs-rest run has one option per group and shows every member under its group', () => {
+    const result = comparisonFromResults(
+      [set('B', ['3']), set('A', ['2', '1'])],
+      [current('1'), current('2'), current('3'), current('4')]
+    )
+    expect(result.grouped).toBe(true)
+    expect(result.targets).toEqual([
+      { id: 1, name: 'A' },
+      { id: 3, name: 'B' },
+    ])
+    expect(Array.from(result.roiLabels.entries())).toEqual([
+      ['2', 'A'],
+      ['1', 'A'],
+      ['3', 'B'],
+    ])
+  })
+
+  it('a two-group run has a single "A vs B" option and shows both groups', () => {
+    const result = comparisonFromResults(
+      [set('A', ['1', '2'], 'B', ['3'])],
+      [current('1', 'A'), current('2', 'A'), current('3', 'B'), current('4')]
+    )
+    expect(result.grouped).toBe(true)
+    expect(result.targets).toEqual([{ id: 1, name: 'A vs B' }])
+    expect(Array.from(result.roiLabels.entries())).toEqual([
+      ['1', 'A'],
+      ['2', 'A'],
+      ['3', 'B'],
+    ])
+  })
+
+  it('a two-group run draws the reference members of the run even after ROIs were relabelled', () => {
+    // After the run ROI 3 left group B and ROI 4 joined it: the results are still A (1, 2) vs B (3)
+    const result = comparisonFromResults(
+      [set('A', ['1', '2'], 'B', ['3'])],
+      [current('1', 'A'), current('2', 'A'), current('3', 'C'), current('4', 'B')]
+    )
+    expect(Array.from(result.roiLabels.entries())).toEqual([
+      ['1', 'A'],
+      ['2', 'A'],
+      ['3', 'B'],
+    ])
+  })
+
+  it('falls back to the current labels when the reference members were not recorded', () => {
+    const result = comparisonFromResults(
+      [set('A', ['1', '2'], 'B', null)],
+      [current('1', 'A'), current('2', 'A'), current('3', ' B '), current('4')]
+    )
+    expect(Array.from(result.roiLabels.entries())).toEqual([
+      ['1', 'A'],
+      ['2', 'A'],
+      ['3', 'B'],
+    ])
+  })
+
+  it('ignores a reference ROI that no longer exists', () => {
+    const result = comparisonFromResults(
+      [set('A', ['1'], 'B', ['3', '9'])],
+      [current('1', 'A'), current('3', 'B'), current('4', 'B')]
+    )
+    expect(Array.from(result.roiLabels.entries())).toEqual([
+      ['1', 'A'],
+      ['3', 'B'],
+    ])
   })
 })

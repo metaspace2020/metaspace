@@ -426,6 +426,9 @@ export class DiffRoi {
   @Column({ type: 'real', nullable: true })
   roiLfc: number | null;
 
+  @Column({ type: 'bigint', array: true, nullable: true })
+  comparisonRoiIds: string[] | null;
+
   @ManyToOne(() => Annotation, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'annotation_id' })
   annotation: Annotation;

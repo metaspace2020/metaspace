@@ -490,6 +490,17 @@ export const updateSegmentationMutation = gql`
   }
 `
 
+export const diffRoiResultSetsQuery = gql`
+  query ($datasetId: String!) {
+    diffRoiResultSets(datasetId: $datasetId) {
+      groupLabel
+      referenceLabel
+      roiIds
+      referenceRoiIds
+    }
+  }
+`
+
 export const diffRoiResultsQuery = gql`
   query ($datasetId: String!, $filter: DiffRoiFilter = {}, $annotationFilter: AnnotationFilter = {}) {
     diffRoiResults(datasetId: $datasetId, filter: $filter, annotationFilter: $annotationFilter) {
@@ -539,7 +550,6 @@ export const diffRoiResultsQuery = gql`
         }
         dataset {
           id
-          acquisitionGeometry
         }
       }
     }

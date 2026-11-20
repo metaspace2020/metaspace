@@ -71,6 +71,35 @@ export const expectedRowKeys = (rows: ExpectedDiffRow[]): Set<string> =>
 export const sameRowSets = (a: Set<string>, b: Set<string>): boolean =>
   a.size === b.size && Array.from(a).every(key => b.has(key))
 
+/** One distinct (roi, group, reference, stored ROI set) combination of the existing `diff_roi` rows. */
+export interface ExistingDiffRow extends ExpectedDiffRow {
+  /** Included ROI ids of the run that wrote the row; null for rows written before the column existed. */
+  comparisonRoiIds: string[] | null
+}
+
+/**
+ * Whether the existing `diff_roi` rows are the result of exactly this comparison: same scored rows
+ * (ROI, group, reference) and same included ROIs. The reference group of a two-group run has no rows,
+ * so its membership is only visible through the stored ROI set.
+ *
+ * @param existing - Distinct existing rows of the ROIs in scope
+ * @param comparison - The comparison about to run
+ * @returns true when recalculating would reproduce the stored results
+ *
+ * @example
+ * isSameComparison(distinctRows, resolveComparison(scopeRois)) // => true: skip the engine call
+ */
+export const isSameComparison = (existing: ExistingDiffRow[], comparison: ResolvedComparison): boolean => {
+  if (!sameRowSets(expectedRowKeys(existing), expectedRowKeys(comparison.expectedRows))) {
+    return false
+  }
+  const included = new Set(comparison.includedRoiIds.map(String))
+  return existing.every(row => (row.comparisonRoiIds == null
+    // Legacy rows: in vs_rest every included ROI has rows, so the row check above already covers the set
+    ? comparison.mode === 'vs_rest'
+    : sameRowSets(new Set(row.comparisonRoiIds.map(String)), included)))
+}
+
 export const roiToGraphql = (roi: any) => ({
   id: roi.id,
   datasetId: roi.datasetId,
@@ -114,4 +143,61 @@ export const collapseDiffRows = <T extends DiffRowLike>(rows: T[]): CollapsedDif
       : null
     return { members, nRois: members.length, nConcordant }
   })
+}
+
+/** A result set of a differential analysis: one plain ROI, or one target group. */
+export interface DiffRoiResultSet {
+  /** Group label; null when the set is a single ungrouped ROI. */
+  groupLabel: string | null
+  /** Reference group label; non-null only for a two-group run. */
+  referenceLabel: string | null
+  /** ROIs that have rows in this set, ascending. */
+  roiIds: string[]
+  /** Reference group members of a two-group run, ascending; null otherwise or when the run did not store its ROIs. */
+  referenceRoiIds: string[] | null
+}
+
+/** Ascending order for bigint ids held as decimal strings, without losing precision. */
+const compareRoiIds = (a: string, b: string): number =>
+  a.length - b.length || (a < b ? -1 : a > b ? 1 : 0)
+
+/**
+ * Groups the distinct (roi, group, reference, stored ROI set) combinations of `diff_roi` into result
+ * sets, with the same key as {@link collapseDiffRows}: the group label when present, otherwise the ROI.
+ *
+ * @param rows - Distinct existing rows of the ROIs in scope
+ * @returns The result sets, ordered by their smallest ROI id
+ *
+ * @example
+ * diffRoiResultSets([
+ *   { roiId: '1', groupLabel: 'A', referenceLabel: 'B', comparisonRoiIds: ['1', '2', '3'] },
+ *   { roiId: '2', groupLabel: 'A', referenceLabel: 'B', comparisonRoiIds: ['1', '2', '3'] },
+ * ]) // => [{ groupLabel: 'A', referenceLabel: 'B', roiIds: ['1', '2'], referenceRoiIds: ['3'] }]
+ */
+export const diffRoiResultSets = (rows: ExistingDiffRow[]): DiffRoiResultSet[] => {
+  const byKey = new Map<string, ExistingDiffRow[]>()
+  rows.forEach((row) => {
+    const key = row.groupLabel ?? `roi:${row.roiId}`
+    const members = byKey.get(key)
+    if (members) {
+      members.push(row)
+    } else {
+      byKey.set(key, [row])
+    }
+  })
+
+  return Array.from(byKey.values()).map((members) => {
+    const roiIds = Array.from(new Set(members.map(row => String(row.roiId)))).sort(compareRoiIds)
+    const referenceLabel = members.map(row => row.referenceLabel).find(label => label != null) ?? null
+    const comparisonRoiIds = members.map(row => row.comparisonRoiIds).find(ids => ids != null) ?? null
+    const targets = new Set(roiIds)
+    return {
+      groupLabel: members[0].groupLabel ?? null,
+      referenceLabel,
+      roiIds,
+      referenceRoiIds: referenceLabel != null && comparisonRoiIds != null
+        ? Array.from(new Set(comparisonRoiIds.map(String))).filter(id => !targets.has(id)).sort(compareRoiIds)
+        : null,
+    }
+  }).sort((a, b) => compareRoiIds(a.roiIds[0], b.roiIds[0]))
 }
