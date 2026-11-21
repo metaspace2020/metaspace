@@ -1,4 +1,4 @@
-import { computed, defineComponent, reactive, onMounted } from 'vue'
+import { computed, defineComponent, reactive, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { useQuery } from '@vue/apollo-composable'
@@ -16,13 +16,15 @@ import { cloneDeep, uniqBy } from 'lodash-es'
 
 import { ElCollapse, ElCollapseItem, ElIcon, ElTooltip } from '../../../lib/element-plus'
 import { Loading, QuestionFilled, ArrowLeft } from '@element-plus/icons-vue'
-import { diffRoiResultsQuery } from '../../../api/dataset'
+import { diffRoiResultsQuery, diffRoiResultSetsQuery } from '../../../api/dataset'
 import { DatasetDiffTable } from './DatasetDiffTable'
 import { DatasetDiffVolcanoPlot } from './DatasetDiffVolcanoPlot'
 import { DatasetDiffHeatmap } from './DatasetDiffHeatmap'
 import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
+import { comparisonFromResults, deriveGroups, DiffRoiResultSet, roisForDisplay } from '../../../lib/roiGroups'
+import { channels } from '../../../lib/getColorScale'
 import { parseFormulaAndCharge } from '../../../lib/formulaParser'
 import SimpleIonImageViewer from '../imzml/SimpleIonImageViewer'
 import { userProfileQuery, UserProfileQuery } from '../../../api/user'
@@ -91,10 +93,27 @@ export default defineComponent({
       },
     })
 
-    const { onResult: handleRoisLoad } = useQuery<any>(getRoisQuery, {
-      datasetId: datasetId.value,
-      userId: currentUser.value?.id,
-    })
+    // Results and ROIs change when the analysis is regenerated from the annotations page: never show them from cache
+    const { result: roisResult } = useQuery<any>(
+      getRoisQuery,
+      {
+        datasetId: datasetId.value,
+        userId: currentUser.value?.id,
+      },
+      { fetchPolicy: 'network-only' }
+    )
+
+    // The stored result sets, whatever the page filters are: what the stored results compare
+    const { result: resultSetsResult } = useQuery<{ diffRoiResultSets: DiffRoiResultSet[] }>(
+      diffRoiResultSetsQuery,
+      { datasetId: datasetId.value },
+      { fetchPolicy: 'network-only' }
+    )
+    const comparison = computed(() =>
+      roisResult.value?.rois && resultSetsResult.value?.diffRoiResultSets
+        ? comparisonFromResults(resultSetsResult.value.diffRoiResultSets, roisResult.value.rois)
+        : null
+    )
 
     onMounted(() => {
       setTimeout(() => {
@@ -170,12 +189,14 @@ export default defineComponent({
       }
     })
 
-    handleRoisLoad(async (result) => {
-      if (result?.data?.rois) {
-        const rois = result.data.rois.map((roi: any) => ({
-          id: parseInt(roi.id),
-          name: roi.name,
-        }))
+    // The filter options, the image overlay and the legend all come from the results (comparisonFromResults)
+    watch(
+      comparison,
+      (comparison) => {
+        if (!comparison) {
+          return
+        }
+        const rois = comparison.targets
         // Set ROI options in the store's filterLists
         const currentFilterLists = store.state.filterLists || {}
         store.commit('setFilterLists', {
@@ -192,53 +213,68 @@ export default defineComponent({
 
         // Store ROI display data for image viewer
         if (datasetId.value) {
-          const roiDisplayData = result.data.rois.map((roi: any) => {
-            const geojson = roi.geojson ? JSON.parse(roi.geojson) : null
+          const roiEntries = roisResult.value.rois
+            .filter((roi: any) => comparison.roiLabels.has(String(roi.id)))
+            .map((roi: any) => {
+              const geojson = roi.geojson ? JSON.parse(roi.geojson) : null
 
-            // Convert GeoJSON coordinates to the format expected by the renderer
-            let coordinates: any[] = []
-            if (
-              geojson &&
-              geojson.geometry &&
-              geojson.geometry.coordinates &&
-              geojson.geometry.coordinates.length > 0
-            ) {
-              // Handle different GeoJSON geometry types
-              if (geojson.geometry.type === 'Polygon' && geojson.geometry.coordinates[0]) {
-                coordinates = geojson.geometry.coordinates[0].map((coord: number[]) => ({
-                  x: coord[0],
-                  y: coord[1],
-                  isEndPoint: false,
-                }))
-                // Mark the last point as end point to close the polygon
-                if (coordinates.length > 0) {
-                  coordinates[coordinates.length - 1].isEndPoint = true
+              // Convert GeoJSON coordinates to the format expected by the renderer
+              let coordinates: any[] = []
+              if (
+                geojson &&
+                geojson.geometry &&
+                geojson.geometry.coordinates &&
+                geojson.geometry.coordinates.length > 0
+              ) {
+                // Handle different GeoJSON geometry types
+                if (geojson.geometry.type === 'Polygon' && geojson.geometry.coordinates[0]) {
+                  coordinates = geojson.geometry.coordinates[0].map((coord: number[]) => ({
+                    x: coord[0],
+                    y: coord[1],
+                    isEndPoint: false,
+                  }))
+                  // Mark the last point as end point to close the polygon
+                  if (coordinates.length > 0) {
+                    coordinates[coordinates.length - 1].isEndPoint = true
+                  }
                 }
               }
-            }
 
-            return {
-              id: parseInt(roi.id),
-              name: roi.name,
-              coordinates: coordinates,
-              visible: true,
-              strokeColor: geojson?.properties?.stroke,
-              color: geojson?.properties?.color,
-              rgb: geojson?.properties?.rgb,
-              isDrawing: false,
-              allVisible: true,
-            }
-          })
+              return {
+                id: parseInt(roi.id),
+                name: roi.name,
+                groupLabel: comparison.roiLabels.get(String(roi.id)),
+                groupChannel: geojson?.properties?.groupChannel as string | undefined,
+                coordinates: coordinates,
+                visible: true,
+                strokeColor: geojson?.properties?.stroke,
+                color: geojson?.properties?.color,
+                rgb: geojson?.properties?.rgb,
+                isDrawing: false,
+                allVisible: true,
+              }
+            })
+          const roiDisplayData = roisForDisplay(
+            roiEntries,
+            deriveGroups(roiEntries, Object.keys(channels), channels),
+            comparison.grouped,
+            channels
+          )
           store.commit('setRoiInfo', { key: datasetId.value, roi: roiDisplayData })
         }
-      }
-    })
+      },
+      { immediate: true }
+    )
 
-    const { result: diffRoiResult } = useQuery<any>(diffRoiResultsQuery, {
-      datasetId: datasetId.value,
-      filter: computed(() => ({ ...store.getters.gqlRoiFilter, topNAnnotations: state.topNAnnotations })),
-      annotationFilter: computed(() => store.getters.gqlAnnotationFilter),
-    })
+    const { result: diffRoiResult } = useQuery<any>(
+      diffRoiResultsQuery,
+      {
+        datasetId: datasetId.value,
+        filter: computed(() => ({ ...store.getters.gqlRoiFilter, topNAnnotations: state.topNAnnotations })),
+        annotationFilter: computed(() => store.getters.gqlAnnotationFilter),
+      },
+      { fetchPolicy: 'network-only' }
+    )
     const diffData = computed(() => diffRoiResult.value?.diffRoiResults)
 
     // const dataset = computed(() => (datasetResult.value != null ? datasetResult.value.dataset : null))
@@ -328,6 +364,7 @@ export default defineComponent({
               data={diffData.value}
               currentAnnotation={state.selectedAnnotation}
               isLoading={!diffData.value}
+              isGrouped={!!comparison.value?.grouped}
               onRowChange={handleRowChange}
             />
           )}
@@ -335,23 +372,53 @@ export default defineComponent({
       )
     }
 
+    const legendGroups = computed(() => {
+      const groups = new Map<string, { key: string; label: string; count: number; color: string }>()
+      roiInfo.value.forEach((roi: any) => {
+        const key = roi.groupLabel ? `label:${roi.groupLabel}` : `roi:${roi.id}`
+        const group = groups.get(key)
+        if (group) {
+          group.count += 1
+        } else {
+          groups.set(key, {
+            key,
+            label: roi.groupLabel || roi.name,
+            count: 1,
+            // a group shows its solid colour; a plain ROI its own fill, as before groups existed
+            color: (roi.groupLabel && roi.rgb) || roi.color || roi.strokeColor || '#666666',
+          })
+        }
+      })
+      return Array.from(groups.values())
+    })
+
+    const comparisonTitle = computed(() => {
+      const first = diffData.value?.[0]
+      if (!first || !comparison.value?.grouped) {
+        return null
+      }
+      return first.referenceLabel ? `${first.groupLabel} vs ${first.referenceLabel}` : 'Each group vs the rest'
+    })
+
     const renderRoiLegend = () => {
-      if (!roiInfo.value || roiInfo.value.length === 0) {
+      if (legendGroups.value.length === 0) {
         return null
       }
 
       return (
         <div class="roi-legend mt-3 w-full">
           <div class="flex flex-wrap gap-2 w-full justify-center items-center">
-            {roiInfo.value.map((roi: any) => (
-              <div key={roi.id} class="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded text-xs">
+            {legendGroups.value.map((group) => (
+              <div key={group.key} class="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded text-xs">
                 <div
                   class="w-3 h-3 rounded border border-gray-300"
                   style={{
-                    backgroundColor: roi.color || roi.strokeColor || '#666666',
+                    backgroundColor: group.color,
                   }}
                 ></div>
-                <span class="text-gray-700">{roi.name}</span>
+                <span class="text-gray-700">
+                  {group.count > 1 ? `${group.label} (${group.count} ROIs)` : group.label}
+                </span>
               </div>
             ))}
           </div>
@@ -577,6 +644,9 @@ export default defineComponent({
             </div>
           </div>
 
+          {comparisonTitle.value && (
+            <div class="w-full text-sm font-medium text-gray-700 mt-2">Comparison: {comparisonTitle.value}</div>
+          )}
           <div class="flex w-full flex-wrap flex-row">
             {renderRoiTableWrapper()}
             {renderAnnotationInfoWrapper()}

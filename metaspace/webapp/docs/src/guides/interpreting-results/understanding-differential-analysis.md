@@ -8,6 +8,8 @@ Only available for METASPACE Pro users.
 
 For each annotated ion, METASPACE computes two metrics that together quantify how its spatial distribution differs between the focal ROI and all other regions combined: **log₂ fold change** (the ratio of mean intensities between the focal ROI and all others) and **AUC** (the area under the ROC curve, measuring how consistently the ion is higher in the focal ROI across all pixel pairs). These metrics are used instead of p-values because pixels in imaging MS data are spatially autocorrelated: neighbouring pixels share signal and are not independent observations, making standard statistical tests unreliable. The AUC metric was inspired by the effect size approach described in the [OSCA single-cell analysis book](https://bioconductor.org/books/3.13/OSCA.basic/marker-detection.html#effect-sizes-for-pairwise-comparisons), adapted from the scran R package.
 
+When ROIs are grouped, the pixels of all ROIs in a group are pooled before the metrics are computed. Large ROIs therefore weigh more than small ones within a group, and a single large ROI can dominate the group result. The **Consistency** column (described below) shows whether the member ROIs agree.
+
 ## Where to find it
 
 Once the analysis completes, you are redirected to a dedicated results page. The page contains four interconnected components: a ranked results table, a LogFC x AUC plot, a heatmap, and an ion image viewer.
@@ -27,6 +29,10 @@ The two metrics measure different things and can sometimes point in different di
 - **AUC** answers: _how consistently higher is it?_ An AUC of 1 means every pixel in the focal ROI outranks every pixel in the comparison. AUC of 0.5 means no discriminative power. Values below 0.5 indicate the ion is consistently lower in the focal ROI.
 
 For a confident hit, you want both to agree: high fold change and high AUC. When they disagree, read the combination: a high fold change with low AUC often means a few bright pixels in the ROI are driving the average rather than a genuine region-wide enrichment. A high AUC with modest fold change suggests a consistent but subtle enrichment spread across many pixels.
+
+The **Group** column shows the group label, or the ROI name for an ROI without a group. The page header shows what was compared: "A vs B" when two groups were compared, or "Each group vs the rest" otherwise.
+
+The **Consistency** column appears for groups with more than one ROI. "3/4 ROIs" means that three of the four member ROIs change in the same direction as the pooled result. Each ROI is compared against the same comparison pixels as the group. A dash means the group has only one ROI. A high fold change with low consistency suggests that one ROI is driving the pooled result.
 
 ### The LogFC x AUC plot
 

@@ -6,8 +6,10 @@ as the original run (annotation index order, ``rows`` per chunk). With a differe
 ``rows`` the results agree to float32 precision only.
 """
 import numpy as np
+import pytest
 
 from sm.engine.tests.fakes import InMemoryArrays
+from sm.rest import diff_roi_manager
 from sm.rest.diff_roi_manager import (
     compute_roi_metrics,
     postprocess_ion_image_chunk,
@@ -100,6 +102,27 @@ def test_same_grouping_as_original_run_is_bit_identical():
     for roi_id in roi_info:
         np.testing.assert_array_equal(results[roi_id]['log2fc'], expected[roi_id]['log2fc'])
         np.testing.assert_array_equal(results[roi_id]['auc'], expected[roi_id]['auc'])
+
+
+@pytest.mark.parametrize('postprocess_rows, auc_rows', [(1, 1), (2, 3), (3, 2), (7, 64)])
+def test_row_block_size_does_not_change_a_single_bit(monkeypatch, postprocess_rows, auc_rows):
+    # 400 pixels of float32 per row: the 7-row chunk is post-processed and sampled in pieces
+    monkeypatch.setattr(diff_roi_manager, 'POSTPROCESS_BLOCK_BYTES', postprocess_rows * 400 * 4)
+    monkeypatch.setattr(diff_roi_manager, 'AUC_BLOCK_ROWS', auc_rows)
+
+    expected, results, roi_info = _run(rows=7)
+
+    for roi_id in roi_info:
+        np.testing.assert_array_equal(results[roi_id]['log2fc'], expected[roi_id]['log2fc'])
+        np.testing.assert_array_equal(results[roi_id]['auc'], expected[roi_id]['auc'])
+
+
+def test_row_blocks_cover_every_row_once():
+    blocks = list(diff_roi_manager._row_blocks(7, 3))  # pylint: disable=protected-access
+    assert [list(range(7))[block] for block in blocks] == [[0, 1, 2], [3, 4, 5], [6]]
+    assert list(diff_roi_manager._row_blocks(0, 3)) == []  # pylint: disable=protected-access
+    # a row wider than the block budget still gets processed, one row at a time
+    assert len(list(diff_roi_manager._row_blocks(2, 0))) == 2  # pylint: disable=protected-access
 
 
 def test_smaller_groups_agree_to_float32_precision():
