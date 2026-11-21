@@ -255,6 +255,11 @@ export default defineComponent({
     const hasDiffResults = computed(() => !!hasDiffResultsResult.value?.hasDiffRoiResults)
 
     onRoisResult((result) => {
+      // A refetch on a cache-and-network query first replays the cached list from before the save (empty on a
+      // dataset's first save), which would blank the list until the network answer lands
+      if (result?.loading && state.isUpdatingRoi) {
+        return
+      }
       if (result && result.data && result.data.rois) {
         // Track original ROI IDs from server
         state.originalRoiIds = new Set(result.data.rois.map((roi: any) => roi.id).filter((id: string) => id))
