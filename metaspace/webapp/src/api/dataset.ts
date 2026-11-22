@@ -247,6 +247,8 @@ export const getRoisQuery = gql`
       name
       isDefault
       geojson
+      groupLabel
+      includeInDiff
     }
   }
 `
@@ -298,6 +300,8 @@ export const getRoiQuery = gql`
       name
       isDefault
       geojson
+      groupLabel
+      includeInDiff
     }
   }
 `
@@ -400,6 +404,8 @@ export const createRoiMutation = gql`
       name
       isDefault
       geojson
+      groupLabel
+      includeInDiff
     }
   }
 `
@@ -413,6 +419,8 @@ export const updateRoiMutation = gql`
       name
       isDefault
       geojson
+      groupLabel
+      includeInDiff
     }
   }
 `
@@ -482,6 +490,17 @@ export const updateSegmentationMutation = gql`
   }
 `
 
+export const diffRoiResultSetsQuery = gql`
+  query ($datasetId: String!) {
+    diffRoiResultSets(datasetId: $datasetId) {
+      groupLabel
+      referenceLabel
+      roiIds
+      referenceRoiIds
+    }
+  }
+`
+
 export const diffRoiResultsQuery = gql`
   query ($datasetId: String!, $filter: DiffRoiFilter = {}, $annotationFilter: AnnotationFilter = {}) {
     diffRoiResults(datasetId: $datasetId, filter: $filter, annotationFilter: $annotationFilter) {
@@ -492,9 +511,16 @@ export const diffRoiResultsQuery = gql`
         name
         isDefault
         geojson
+        groupLabel
+        includeInDiff
       }
       lfc
       auc
+      groupLabel
+      referenceLabel
+      roiIds
+      nRois
+      nConcordant
       annotation {
         id
         ion
@@ -524,7 +550,6 @@ export const diffRoiResultsQuery = gql`
         }
         dataset {
           id
-          acquisitionGeometry
         }
       }
     }

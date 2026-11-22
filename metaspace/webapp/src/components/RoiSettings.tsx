@@ -13,7 +13,21 @@ import {
   ElTooltip,
 } from '../lib/element-plus'
 import * as FileSaver from 'file-saver'
-import ChannelSelector from '../modules/ImageViewer/ChannelSelector.vue'
+import {
+  RoiGroup,
+  alignGroupChannels,
+  deriveGroups,
+  hasSavedGroups,
+  nextGroupChannel,
+  relabelGroup,
+  resolveComparison,
+  roiColorFields,
+  roisForDisplay,
+  syncClosedOutlines,
+  toSaveFields,
+} from '../lib/roiGroups'
+import RoiGroupPanel, { renderColorPicker, renderEyeIcon } from './RoiGroupPanel'
+import RoiSectionHeader from './RoiSectionHeader'
 import './RoiSettings.scss'
 import { annotationListQuery } from '../api/annotation'
 import {
@@ -28,6 +42,7 @@ import {
   msAcqGeometryQuery,
 } from '../api/dataset'
 import config from '../lib/config'
+import { channels } from '../lib/getColorScale'
 import { loadPngFromUrl, processIonImage } from '../lib/ionImageRendering'
 import isInsidePolygon from '../lib/isInsidePolygon'
 import safeJsonParse from '../lib/safeJsonParse'
@@ -35,16 +50,23 @@ import { RoiFeature, roiToFeature, roisToFeatureCollection, toVertex } from '../
 import StatefulIcon from '../components/StatefulIcon.vue'
 import reportError from '../lib/reportError'
 import { defineAsyncComponent } from 'vue'
-import { Loading, DataLine, Download, Upload, Plus, Refresh, TopRight } from '@element-plus/icons-vue'
+import {
+  Loading,
+  DataLine,
+  Delete,
+  Download,
+  Edit,
+  Upload,
+  Plus,
+  Refresh,
+  TopRight,
+  Files,
+} from '@element-plus/icons-vue'
 import { formatCsvTextArray } from '../lib/formatCsvRow'
 import { normalizationFileSuffix } from '../lib/normalization'
 import { useRouter } from 'vue-router'
 import { UserProfileQuery, userProfileQuery } from '@/api/user'
 import { isPlanLimitError, notifyPlanLimitReached } from '../lib/planLimits'
-
-const VisibleIcon = defineAsyncComponent(() => import('../assets/inline/refactoring-ui/icon-view-visible.svg'))
-
-const HiddenIcon = defineAsyncComponent(() => import('../assets/inline/refactoring-ui/icon-view-hidden.svg'))
 
 const RoiIcon = defineAsyncComponent(() => import('../assets/inline/roi-icon.svg'))
 
@@ -66,18 +88,11 @@ interface RoiSettingsState {
   rois: any[]
   isLoadingRois: boolean
   originalRoiIds: Set<string>
-}
-
-const channels: any = {
-  magenta: 'rgb(255, 0, 255)',
-  green: 'rgb(0, 255, 0)',
-  blue: 'rgb(0, 0, 255)',
-  red: 'rgb(255, 0, 0)',
-  yellow: 'rgb(255, 255, 0)',
-  cyan: 'rgb(0, 255, 255)',
-  orange: 'rgb(255, 128, 0)',
-  violet: 'rgb(128, 0, 255)',
-  white: 'rgb(255, 255, 255)',
+  groupMode: boolean
+  groups: RoiGroup[]
+  roiListCollapsed: boolean
+  assignCollapsed: boolean
+  groupListCollapsed: boolean
 }
 
 const CHUNK_SIZE = 1000
@@ -87,6 +102,12 @@ const MAX_IMPORT_FILE_BYTES = 15000000
 
 /** Multi-line text for ElNotification, which otherwise collapses newlines. */
 const preLine = (text: string) => h('div', { style: { whiteSpace: 'pre-line' } }, text)
+
+/**
+ * Cap on the scrollable middle of the panel (between the header icons and the footer). Single source for both the
+ * CSS max-height (inline style on .roi-body) and the height-animation target.
+ */
+const BODY_MAX_HEIGHT = 480
 
 const newTempId = () => `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
@@ -104,6 +125,9 @@ export default defineComponent({
     const { mutate: deleteRoi } = useMutation(deleteRoiMutation)
     const { mutate: compareROIs } = useMutation(compareROIsMutation)
 
+    // Dataset whose saved groups last decided the initial group mode (see onRoisResult)
+    let groupModeDatasetId: string | null = null
+
     const popover = ref<any>(null)
     const fileInput = ref<HTMLInputElement | null>(null)
     const state = reactive<RoiSettingsState>({
@@ -118,6 +142,11 @@ export default defineComponent({
       rois: [],
       isLoadingRois: false,
       originalRoiIds: new Set(),
+      groupMode: false,
+      groups: [],
+      roiListCollapsed: false,
+      assignCollapsed: false,
+      groupListCollapsed: false,
     })
 
     const canEdit = computed(() => props.annotation?.dataset?.canEdit)
@@ -226,6 +255,11 @@ export default defineComponent({
     const hasDiffResults = computed(() => !!hasDiffResultsResult.value?.hasDiffRoiResults)
 
     onRoisResult((result) => {
+      // A refetch on a cache-and-network query first replays the cached list from before the save (empty on a
+      // dataset's first save), which would blank the list until the network answer lands
+      if (result?.loading && state.isUpdatingRoi) {
+        return
+      }
       if (result && result.data && result.data.rois) {
         // Track original ROI IDs from server
         state.originalRoiIds = new Set(result.data.rois.map((roi: any) => roi.id).filter((id: string) => id))
@@ -265,15 +299,28 @@ export default defineComponent({
             edit: false,
             isDrawing: false,
             userId: roi.userId,
+            groupLabel: roi.groupLabel ?? props.group ?? '',
+            groupChannel: props.groupChannel,
             canUpdate: roi.userId === currentUser.value?.id || canEdit.value,
           }
 
           return roiData
         })
 
+        // Group mode starts on when any ROI was saved with a group (the column, not the GeoJSON property).
+        // Only decided on the first result per dataset, so a refetch after Save never resets the user's choice.
+        if (groupModeDatasetId !== props.annotation.dataset.id) {
+          groupModeDatasetId = props.annotation.dataset.id
+          state.groupMode = hasSavedGroups(result.data.rois)
+        }
+        // Keep groups the user created that no saved ROI uses yet (a save refetches and re-runs this handler).
+        const loadedGroups = deriveGroups(state.rois, Object.keys(channels), channels)
+        state.groups = [...loadedGroups, ...state.groups.filter((g) => !loadedGroups.some((l) => l.name === g.name))]
+        state.rois = alignGroupChannels(state.rois, state.groups)
+
         // Sync with Vuex store so ion image viewer can access ROI data
         // But respect the current visibility state - if ROI settings are hidden, hide all ROIs
-        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
+        commitRois()
 
         // Only set ROI visibility if it's currently false and we have ROIs
         // This preserves user's visibility preference when navigating between datasets
@@ -284,7 +331,7 @@ export default defineComponent({
           if (hasVisibleRois) {
             store.commit('toggleRoiVisibility', true)
             // Update the store with visible ROIs since we're now making them visible
-            store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
+            commitRois()
           }
         }
       }
@@ -295,9 +342,61 @@ export default defineComponent({
     })
 
     onUnmounted(() => {
+      bodyObserver?.disconnect()
+      if (bodyTimer) {
+        clearTimeout(bodyTimer)
+      }
       store.commit('toggleRoiVisibility', false)
       window.removeEventListener('resize', resizeHandler)
     })
+
+    // Animated height of the scrollable region that swaps between plain ROI rows and the group panel.
+    // bodyHeight stays null (auto, still capped by the CSS max-height) until the first non-empty measurement, so
+    // mounting never animates. It follows the inner content's height capped at BODY_MAX_HEIGHT; beyond that the
+    // region scrolls. Nothing in it floats any more (the colour menu and the group select are teleported).
+    const bodyHeight = ref<number | null>(null)
+    const bodyAnimating = ref(false)
+    let bodyObserver: ResizeObserver | null = null
+    let bodyTimer: ReturnType<typeof setTimeout> | null = null
+
+    const startBodyAnimation = () => {
+      bodyAnimating.value = true
+      if (bodyTimer) {
+        clearTimeout(bodyTimer)
+      }
+      bodyTimer = setTimeout(() => {
+        bodyAnimating.value = false
+        bodyTimer = null
+        resizeHandler()
+      }, 220)
+    }
+
+    let bodyEl: HTMLElement | null = null
+    const setBodyInner = (el: unknown) => {
+      if (el === bodyEl && (el === null || bodyObserver !== null)) {
+        return // function refs are re-invoked on every render; keep the observer already attached
+      }
+      bodyEl = el instanceof HTMLElement ? el : null
+      bodyObserver?.disconnect()
+      bodyObserver = null
+      if (!(el instanceof HTMLElement) || typeof ResizeObserver === 'undefined') {
+        return
+      }
+      bodyObserver = new ResizeObserver(() => {
+        const contentHeight = Math.ceil(el.getBoundingClientRect().height)
+        if (contentHeight === 0) {
+          // hidden popover: drop the explicit height so reopening does not animate from 0
+          bodyHeight.value = null
+          return
+        }
+        const height = Math.min(contentHeight, BODY_MAX_HEIGHT)
+        if (bodyHeight.value != null && bodyHeight.value !== height) {
+          startBodyAnimation()
+        }
+        bodyHeight.value = height
+      })
+      bodyObserver.observe(el)
+    }
 
     const resizeHandler = () => {
       if (popover.value && !state.updatingPopper && typeof popover.value.updatePopper === 'function') {
@@ -328,6 +427,9 @@ export default defineComponent({
           // Clear ROI data for the previous dataset but preserve visibility state
           state.rois = []
           state.originalRoiIds = new Set()
+          state.groups = []
+          state.groupMode = false
+          groupModeDatasetId = null
         }
 
         // When switching to a new dataset, ensure ROI data in store reflects current visibility state
@@ -348,7 +450,7 @@ export default defineComponent({
             store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: [] })
           } else if (state.rois.length > 0) {
             // When ROI settings are shown and we have ROI data, restore it to the store
-            store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
+            commitRois()
           } else {
             // If ROI settings are shown but we don't have ROI data yet, try to refetch
             if (roiQueryOptions.enabled) {
@@ -432,6 +534,10 @@ export default defineComponent({
       return state.rois.findIndex((roi: any) => roi.id === roiId || roi.tempId === roiId)
     }
 
+    /** Colours of the non-removed ROIs (rgb, else the stored channel): new group colours avoid them. */
+    const activeRoiColors = (): string[] =>
+      state.rois.filter((roi) => !roi.removed).map((roi) => roi.rgb || roi.channel)
+
     // Helper function to get stable ROI identifier
     const getRoiId = (roi: any) => {
       return roi.id || roi.tempId
@@ -447,6 +553,22 @@ export default defineComponent({
             allVisible: false,
           }))
     }
+
+    /** Pushes the panel ROIs to the store; in group mode grouped ROIs are drawn in their group's colour. */
+    const commitRois = () => {
+      store.commit('setRoiInfo', {
+        key: props.annotation.dataset.id,
+        roi: roisForDisplay(getRoisForStore(state.rois), state.groups, state.groupMode, channels),
+      })
+    }
+
+    // The image viewer closes an outline on the store's array (addRoiCoordinate in AnnotationView); in group view that
+    // array is a copy of state.rois, so the closed state is copied back for Save, Export and the comparison
+    const storedRois = (): any[] => store.state.roiInfo?.[props.annotation?.dataset?.id] || []
+    watch(
+      () => storedRois().map((roi: any) => roi.isDrawing),
+      () => syncClosedOutlines(state.rois, storedRois())
+    )
 
     const addRoi = (e: any) => {
       e.stopPropagation()
@@ -468,12 +590,13 @@ export default defineComponent({
         edit: false,
         isDrawing: true,
         isDefault: false,
+        groupLabel: '',
         canUpdate: true,
       }
 
       state.rois.push(newRoi)
       // Respect current visibility state when adding new ROI
-      store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
+      commitRois()
     }
 
     const toggleAllHidden = (e: any = undefined, visible: boolean | any = undefined) => {
@@ -492,7 +615,7 @@ export default defineComponent({
       }))
 
       // When hiding ROI settings, ensure ROIs are not displayed on the ion image
-      store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
+      commitRois()
     }
 
     const handleSave = async (navigate: boolean = false) => {
@@ -534,6 +657,7 @@ export default defineComponent({
               name: roi.name,
               isDefault: roi.isDefault || false,
               geojson: JSON.stringify(roiToFeature(roi)),
+              ...toSaveFields(roi, state.groupMode),
             }
 
             if (roi.id && !roi.isLegacy && roi.canUpdate) {
@@ -580,12 +704,17 @@ export default defineComponent({
       if (imageBounds.value == null) {
         return
       }
-      const featureCollection = roisToFeatureCollection(getRoi(), {
-        datasetId: props.annotation?.dataset?.id,
-        datasetName: props.annotation?.dataset?.name,
-        imageWidth: imageBounds.value.width,
-        imageHeight: imageBounds.value.height,
-      })
+      // Group assignments go into the file only while the group view is on (Save always keeps them)
+      const featureCollection = roisToFeatureCollection(
+        getRoi(),
+        {
+          datasetId: props.annotation?.dataset?.id,
+          datasetName: props.annotation?.dataset?.name,
+          imageWidth: imageBounds.value.width,
+          imageHeight: imageBounds.value.height,
+        },
+        { includeGroups: state.groupMode }
+      )
       // An outline that has not been closed yet (click back on its first point) is not a region, so it is
       // skipped here exactly as Save skips it; say so instead of silently leaving it out.
       const stillDrawing = getRoi().filter((roi: any) => !roi.removed && roi.isDrawing)
@@ -613,7 +742,10 @@ export default defineComponent({
       fileInput.value?.click()
     }
 
-    /** Turns a server-normalised GeoJSON Feature (from validateRoiGeoJson) into an unsaved panel ROI. */
+    /**
+     * Turns a server-normalised GeoJSON Feature (from validateRoiGeoJson) into an unsaved panel ROI. Imported ROIs are
+     * always ungrouped: the server drops `group` / `groupChannel` from imported features.
+     */
     const featureToRoi = (feature: RoiFeature) => {
       // The server has already filled in channel/rgb/color/strokeColor and normalised the ring.
       const featureProps = feature.properties
@@ -633,6 +765,7 @@ export default defineComponent({
         allVisible: true,
         edit: false,
         isDrawing: false,
+        groupLabel: '',
         canUpdate: true,
       }
     }
@@ -684,7 +817,7 @@ export default defineComponent({
         // Like drawn ROIs, imported ones live in the panel until the user clicks Save.
         const imported = (validation.features || []).map((featureJson: string) => featureToRoi(JSON.parse(featureJson)))
         state.rois = [...state.rois, ...imported]
-        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
+        commitRois()
 
         const warningMessages = (validation.warnings || []).map((issue: any) => issue.message)
         if (warningMessages.length > 0) {
@@ -754,6 +887,80 @@ export default defineComponent({
       }
     }
 
+    const trimmedLabel = (roi: any): string => (roi.groupLabel || '').trim()
+
+    // An empty section has no chevron, so whatever collapsed it cannot be undone from the caption: when the first ROI
+    // (or the first group) appears, open its sections so the new row is visible
+    watch(
+      () => (state.rois || []).filter((roi: any) => !roi.removed).length,
+      (count, previous) => {
+        if (previous === 0 && count > 0) {
+          state.roiListCollapsed = false
+          state.assignCollapsed = false
+        }
+      }
+    )
+    watch(
+      () => state.groups.length,
+      (count, previous) => {
+        if (previous === 0 && count > 0) {
+          state.groupListCollapsed = false
+        }
+      }
+    )
+
+    const toggleGroupMode = () => {
+      state.groupMode = !state.groupMode
+      commitRois()
+    }
+
+    const assignGroup = (roiKey: string, name: string) => {
+      const roiIndex = findRoiIndexById(roiKey)
+      if (roiIndex !== -1) {
+        const group = state.groups.find((g) => g.name === name)
+        state.rois[roiIndex].groupLabel = group ? group.name : ''
+        state.rois[roiIndex].groupChannel = group ? group.channel : ''
+        state.rois = [...state.rois]
+        commitRois()
+      }
+    }
+
+    const createGroup = (name: string) => {
+      const roiColors = activeRoiColors()
+      state.groups = [
+        ...state.groups,
+        { name, channel: nextGroupChannel(state.groups, Object.keys(channels), roiColors, channels) },
+      ]
+      commitRois()
+    }
+
+    const renameGroup = (from: string, to: string) => {
+      state.groups = state.groups.map((g) => (g.name === from ? { ...g, name: to } : g))
+      state.rois = relabelGroup(state.rois, from, to)
+      commitRois()
+    }
+
+    const recolorGroup = (name: string, channel: string) => {
+      state.groups = state.groups.map((g) => (g.name === name ? { ...g, channel } : g))
+      state.rois = state.rois.map((roi) => (trimmedLabel(roi) === name ? { ...roi, groupChannel: channel } : roi))
+      commitRois()
+    }
+
+    const removeGroup = (name: string) => {
+      state.rois = relabelGroup(state.rois, name, '').map((roi) =>
+        !trimmedLabel(roi) && roi.groupChannel ? { ...roi, groupChannel: '' } : roi
+      )
+      state.groups = state.groups.filter((g) => g.name !== name)
+      commitRois()
+    }
+
+    const toggleGroupVisible = (name: string) => {
+      const members = state.rois.filter((roi) => !roi.removed && trimmedLabel(roi) === name)
+      const visible = !members.some((roi) => roi.visible)
+      state.rois = state.rois.map((roi) => (!roi.removed && trimmedLabel(roi) === name ? { ...roi, visible } : roi))
+      commitRois()
+    }
+
     const handleNameEdit = (value: any, roiId: string) => {
       const roiIndex = findRoiIndexById(roiId)
       if (roiIndex !== -1) {
@@ -761,7 +968,7 @@ export default defineComponent({
         // Create a new array to trigger reactivity
         state.rois = [...state.rois]
         // Respect current visibility state
-        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
+        commitRois()
       }
     }
 
@@ -772,7 +979,7 @@ export default defineComponent({
         // Create a new array to trigger reactivity
         state.rois = [...state.rois]
         // Respect current visibility state
-        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
+        commitRois()
       }
     }
 
@@ -783,7 +990,7 @@ export default defineComponent({
         // Create a new array to trigger reactivity
         state.rois = [...state.rois]
         // Respect current visibility state
-        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
+        commitRois()
       }
     }
 
@@ -795,21 +1002,20 @@ export default defineComponent({
         // Create a new array to trigger reactivity
         state.rois = [...state.rois]
         // Respect current visibility state
-        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
+        commitRois()
       }
     }
 
-    const changeRoi = (channel: any, roiId: string) => {
+    /** `value` is the picked colour: a palette name or an `rgb(...)` string. */
+    const changeRoi = (value: string, roiId: string) => {
       const roiIndex = findRoiIndexById(roiId)
-      if (roiIndex !== -1) {
-        state.rois[roiIndex].channel = channel
-        state.rois[roiIndex].rgb = channels[channel]
-        state.rois[roiIndex].strokeColor = channels[channel].replace('rgb', 'rgba').replace(')', ', 0)')
-        state.rois[roiIndex].color = channels[channel].replace('rgb', 'rgba').replace(')', ', 0.4)')
+      const fields = roiColorFields(value, channels)
+      if (roiIndex !== -1 && fields) {
+        Object.assign(state.rois[roiIndex], fields)
         // Create a new array to trigger reactivity
         state.rois = [...state.rois]
         // Respect current visibility state
-        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
+        commitRois()
       }
     }
 
@@ -860,13 +1066,17 @@ export default defineComponent({
       const roiInfo = (state.rois || []).filter((roi: any) => !roi.removed)
 
       const isLoggedIn = !!currentUser.value?.id
-      const canRunDiffAnalysis = isLoggedIn && roiInfo.length >= 2
+      const comparison = resolveComparison(roiInfo, state.groupMode)
+      const canRunDiffAnalysis = isLoggedIn && comparison != null
       const showDiffDropdown = isLoggedIn && hasDiffResults.value
+      const compareLabel = state.groupMode ? 'Compare groups' : 'Compare ROIs'
       const diffAnalysisTooltip = !isLoggedIn
-        ? 'Please log in to perform differential analysis among the ROIs.'
-        : roiInfo.length < 2
-        ? 'At least two ROIs are needed to perform differential analysis.'
-        : 'Click to perform differential analysis among the ROIs.'
+        ? `Log in to compare ${state.groupMode ? 'groups' : 'ROIs'}.`
+        : comparison == null
+        ? state.groupMode
+          ? 'Compare groups needs at least two groups that each contain an ROI.'
+          : 'Compare ROIs needs at least two ROIs.'
+        : compareLabel
       const importTooltip = isLoggedIn ? 'Import ROIs from a GeoJSON file.' : 'Please log in to import ROIs.'
       const canExport = roiInfo.length > 0 && imageBounds.value != null
       const exportTooltip =
@@ -901,7 +1111,7 @@ export default defineComponent({
                           <ElDropdownItem command="view" icon={TopRight}>
                             View results
                           </ElDropdownItem>
-                          <ElDropdownItem command="regenerate" icon={Refresh} disabled={roiInfo.length < 2}>
+                          <ElDropdownItem command="regenerate" icon={Refresh} disabled={comparison == null}>
                             Regenerate analysis
                           </ElDropdownItem>
                         </ElDropdownMenu>
@@ -909,7 +1119,7 @@ export default defineComponent({
                     }}
                   >
                     {/* Results exist: clicking opens the view/regenerate choice */}
-                    <ElButton class="button-reset roi-diff-icon has-results">
+                    <ElButton class="button-reset roi-diff-icon has-results" aria-label={compareLabel}>
                       <ElIcon size={20}>
                         <DataLine />
                       </ElIcon>
@@ -920,6 +1130,7 @@ export default defineComponent({
                 {!state.isLoadingDA && !showDiffDropdown && (
                   <ElButton
                     class="button-reset roi-diff-icon"
+                    aria-label={compareLabel}
                     onClick={handleDiffAnalysis}
                     disabled={!canRunDiffAnalysis}
                   >
@@ -939,6 +1150,26 @@ export default defineComponent({
             </ElTooltip>
 
             <div class="flex flex-row flex-wrap justify-end items-center">
+              <ElTooltip
+                popperClass="roi-save-tooltip"
+                content={
+                  state.groupMode
+                    ? 'Hide groups and compare single ROIs.'
+                    : 'Group ROIs to compare groups of regions instead of single ROIs.'
+                }
+                placement="top"
+              >
+                <ElButton
+                  class={`button-reset roi-group-toggle ${state.groupMode ? 'active' : ''}`}
+                  aria-label="Groups"
+                  aria-pressed={state.groupMode}
+                  onClick={toggleGroupMode}
+                >
+                  <ElIcon size={16}>
+                    <Files />
+                  </ElIcon>
+                </ElButton>
+              </ElTooltip>
               {roiInfo.length > 0 && !state.isDownloading && (
                 <ElTooltip
                   popperClass="roi-save-tooltip"
@@ -975,7 +1206,7 @@ export default defineComponent({
                   </ElButton>
                 )}
                 {state.isUpdatingRoi && (
-                  <div class="button-reset roi-download-icon">
+                  <div class="button-reset roi-save-icon-wrapper">
                     <ElIcon class="is-loading">
                       <Loading />
                     </ElIcon>
@@ -984,46 +1215,107 @@ export default defineComponent({
               </ElTooltip>
             </div>
           </div>
-          {roiInfo.map((roi: any) => {
-            const roiId = getRoiId(roi)
-            return (
-              <div key={`roi-${roiId}`} class="roi-item relative">
-                <div class="flex w-full justify-between items-center w-28">
-                  {!roi.edit && (
-                    <span class="roi-label" style={{ color: roi.channel }}>
-                      {roi.name}
-                    </span>
-                  )}
-                  {roi.edit && (
-                    <ElInput
-                      class="roi-label"
-                      size="small"
-                      modelValue={roi.name}
-                      onChange={() => toggleEdit(roiId)}
-                      onInput={(value: any) => {
-                        handleNameEdit(value, roiId)
-                      }}
-                    />
-                  )}
-                  <div class="flex justify-center items-center">
-                    <ElButton class="button-reset h-5" icon="Edit" onClick={() => toggleEdit(roiId)} />
-                    <ElButton class="button-reset h-5" onClick={() => toggleHidden(roiId)}>
-                      {roi.visible && <VisibleIcon class="fill-current w-5 h-5 text-gray-800" />}{' '}
-                      {!roi.visible && <HiddenIcon class="fill-current w-5 h-5 text-gray-800" />}
-                    </ElButton>
-                  </div>
-                </div>
-                <div class="roi-channels">
-                  <ChannelSelector
-                    class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end"
-                    value={roi.channel} // @ts-ignore
-                    onRemove={() => removeRoi(roiId)}
-                    onInput={(value: any) => changeRoi(value, roiId)}
-                  />
-                </div>
-              </div>
-            )
-          })}
+          <div
+            class={`roi-body ${bodyAnimating.value ? 'animating' : ''}`}
+            style={{
+              maxHeight: `${BODY_MAX_HEIGHT}px`,
+              height: bodyHeight.value != null ? `${bodyHeight.value}px` : undefined,
+            }}
+          >
+            <div ref={setBodyInner} class="roi-body-inner w-full min-w-0">
+              {!state.groupMode && (
+                <RoiSectionHeader
+                  title="Dataset ROIs"
+                  count={roiInfo.length}
+                  collapsed={state.roiListCollapsed}
+                  collapsible={roiInfo.length > 0}
+                  onToggle={() => (state.roiListCollapsed = !state.roiListCollapsed)}
+                />
+              )}
+              {/* Shown even if the list was collapsed when its last ROI went: the caption has no chevron now */}
+              {!state.groupMode && roiInfo.length === 0 && (
+                <div class="roi-empty">No ROIs yet. Click Add ROI to draw one.</div>
+              )}
+              {!state.groupMode &&
+                !state.roiListCollapsed &&
+                roiInfo.map((roi: any) => {
+                  const roiId = getRoiId(roi)
+                  return (
+                    <div key={`roi-${roiId}`} class="roi-item">
+                      {renderColorPicker(roi.rgb, `Colour of ${roi.name}`, (value) => changeRoi(value, roiId))}
+                      {!roi.edit && (
+                        <span class="roi-label" title={roi.name}>
+                          {roi.name}
+                        </span>
+                      )}
+                      {roi.edit && (
+                        <ElInput
+                          class="roi-label"
+                          size="small"
+                          modelValue={roi.name}
+                          onChange={() => toggleEdit(roiId)}
+                          onInput={(value: any) => {
+                            handleNameEdit(value, roiId)
+                          }}
+                        />
+                      )}
+                      <div class="roi-actions">
+                        <ElButton
+                          class="button-reset roi-action-btn roi-eye-btn"
+                          aria-label={roi.visible ? 'Hide ROI' : 'Show ROI'}
+                          title={roi.visible ? 'Hide ROI' : 'Show ROI'}
+                          onClick={() => toggleHidden(roiId)}
+                        >
+                          {renderEyeIcon(!!roi.visible)}
+                        </ElButton>
+                        <ElButton
+                          class="button-reset roi-action-btn roi-edit-btn"
+                          aria-label="Rename ROI"
+                          title="Rename ROI"
+                          onClick={() => toggleEdit(roiId)}
+                        >
+                          <ElIcon size={16}>
+                            <Edit />
+                          </ElIcon>
+                        </ElButton>
+                        <ElButton
+                          class="button-reset roi-action-btn roi-remove-btn"
+                          aria-label="Remove ROI"
+                          title="Remove ROI"
+                          onClick={() => removeRoi(roiId)}
+                        >
+                          <ElIcon size={16}>
+                            <Delete />
+                          </ElIcon>
+                        </ElButton>
+                      </div>
+                    </div>
+                  )
+                })}
+              {state.groupMode && (
+                <RoiGroupPanel
+                  rois={roiInfo.map((roi) => ({
+                    key: getRoiId(roi),
+                    name: roi.name,
+                    channel: roi.rgb || roi.channel,
+                    groupLabel: trimmedLabel(roi),
+                    visible: !!roi.visible,
+                  }))}
+                  groups={state.groups}
+                  assignCollapsed={state.assignCollapsed}
+                  groupListCollapsed={state.groupListCollapsed}
+                  onToggleAssign={() => (state.assignCollapsed = !state.assignCollapsed)}
+                  onToggleGroupList={() => (state.groupListCollapsed = !state.groupListCollapsed)}
+                  onAssign={assignGroup}
+                  onCreate={createGroup}
+                  onRename={renameGroup}
+                  onRecolor={recolorGroup}
+                  onRemove={removeGroup}
+                  onToggleVisible={toggleGroupVisible}
+                />
+              )}
+            </div>
+          </div>
           <input
             ref={fileInput}
             type="file"

@@ -78,7 +78,7 @@ export const DatasetDiffHeatmap = defineComponent({
       const roiGroups: { [key: string]: HeatmapDataPoint[] } = {}
 
       rawData.forEach((item) => {
-        const roiName = item.roi?.name || 'Unknown ROI'
+        const roiName = item.groupLabel || item.roi?.name || 'Unknown group'
         if (!roiGroups[roiName]) {
           roiGroups[roiName] = []
         }

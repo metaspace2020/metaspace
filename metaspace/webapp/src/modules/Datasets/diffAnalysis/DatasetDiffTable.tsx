@@ -1,9 +1,10 @@
 import { computed, defineComponent, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { formatConsistency } from '../../../lib/roiGroups'
 import './DatasetDiffTable.scss'
 import { ElTable, ElTableColumn, ElPagination, ElButton, ElPopover, ElIcon } from '../../../lib/element-plus'
 import ProgressButton from '../../Annotations/ProgressButton.vue'
 import AnnotationTableMolName from '../../Annotations/AnnotationTableMolName.vue'
-import { findIndex, orderBy } from 'lodash-es'
+import { findIndex, omit, orderBy } from 'lodash-es'
 import * as FileSaver from 'file-saver'
 import formatCsvRow, { formatCsvTextArray } from '../../../lib/formatCsvRow'
 import { getLocalStorage, setLocalStorage } from '../../../lib/localStorage'
@@ -23,6 +24,8 @@ interface DatasetDiffTableState {
   exportProgress: number
   columns: any
 }
+
+const groupName = (row: any): string => row?.groupLabel || row?.roi?.name || ''
 
 const KEY_TO_ACTION = {
   ArrowUp: 'up',
@@ -51,6 +54,11 @@ const DIFF_TABLE_COLUMNS = {
   roiName: {
     label: 'ROI name',
     src: 'roiName',
+    selected: true,
+  },
+  consistency: {
+    label: 'Consistency',
+    src: 'consistency',
     selected: true,
   },
   lfc: {
@@ -90,6 +98,44 @@ const DIFF_TABLE_COLUMNS = {
   },
 }
 
+/**
+ * Columns of a run. A plain (per-ROI) run has the original columns; the "Group" wording and the "Consistency" column
+ * are for grouped runs only.
+ */
+export const diffTableColumns = (columns: Record<string, any>, isGrouped: boolean): Record<string, any> =>
+  isGrouped ? { ...columns, roiName: { ...columns.roiName, label: 'Group' } } : omit(columns, 'consistency')
+
+/** CSV export header: a plain run keeps the original layout. */
+export const diffCsvHeader = (isGrouped: boolean): string[] => [
+  'Annotation',
+  ...(isGrouped ? ['Group', 'Consistency'] : ['ROI Name']),
+  'LFC',
+  'AUC',
+  'm/z',
+  'Adduct',
+  'FDR',
+  'MSM',
+  'Molecules',
+]
+
+/** CSV export cells of a result row, matching diffCsvHeader. */
+export const diffCsvCells = (row: any, isGrouped: boolean): any[] => {
+  const { annotation, roi, lfc, auc } = row
+  return [
+    annotation?.sumFormula || '',
+    ...(isGrouped
+      ? [row.groupLabel || roi?.name || '', formatConsistency(row.nRois, row.nConcordant)]
+      : [roi?.name || '']),
+    lfc || '',
+    auc || '',
+    annotation?.mz || '',
+    annotation?.adduct || '',
+    annotation?.fdrLevel || '',
+    annotation?.msmScore || '',
+    formatCsvTextArray(annotation?.possibleCompounds?.map((m: any) => m.name) || []),
+  ]
+}
+
 export const DatasetDiffTable = defineComponent({
   name: 'DatasetDiffTable',
   props: {
@@ -104,6 +150,11 @@ export const DatasetDiffTable = defineComponent({
     currentAnnotation: {
       type: Object,
       default: null,
+    },
+    /** The results are for groups of ROIs (see isGroupedRun); false shows the plain per-ROI layout. */
+    isGrouped: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ['rowChange'],
@@ -123,6 +174,8 @@ export const DatasetDiffTable = defineComponent({
       exportProgress: 0,
       columns: DIFF_TABLE_COLUMNS,
     })
+
+    const columns = computed(() => diffTableColumns(state.columns, props.isGrouped))
 
     const onKeyUp = (event: any) => {
       const shouldMoveFocus = document.activeElement?.closest('input,select,textarea') == null
@@ -283,9 +336,7 @@ export const DatasetDiffTable = defineComponent({
 
     const handleSortRoiName = (order: string) => {
       state.processedData = computed(() =>
-        props.data
-          .slice()
-          .sort((a, b) => (order === 'ascending' ? 1 : -1) * (a.roi?.name || '').localeCompare(b.roi?.name || ''))
+        props.data.slice().sort((a, b) => (order === 'ascending' ? 1 : -1) * groupName(a).localeCompare(groupName(b)))
       )
     }
 
@@ -526,7 +577,7 @@ export const DatasetDiffTable = defineComponent({
     }
 
     const isColSelected = (src: string) => {
-      return state.columns[src]?.selected
+      return columns.value[src]?.selected
     }
 
     const renderLFCHeader = () => {
@@ -578,8 +629,10 @@ export const DatasetDiffTable = defineComponent({
     }
 
     const formatRoiName = (row: any) => {
-      return row.roi?.name || '—'
+      return groupName(row) || '—'
     }
+
+    const formatRowConsistency = (row: any) => formatConsistency(row.nRois, row.nConcordant)
 
     const formatLFC = (row: any) => {
       return row.lfc?.toFixed(2) || '—'
@@ -631,30 +684,11 @@ export const DatasetDiffTable = defineComponent({
       const dateStr = moment().format('YYYY-MM-DD HH:mm:ss')
       let csv = `# Generated at ${dateStr}.\n` + `# URL: ${window.location.href}\n`
 
-      const columns = ['Annotation', 'ROI Name', 'LFC', 'AUC', 'm/z', 'Adduct', 'FDR', 'MSM', 'Molecules']
-
-      csv += formatCsvRow(columns)
-
-      function formatRow(row: any) {
-        const { annotation, roi, lfc, auc } = row
-        const cells = [
-          annotation?.sumFormula || '',
-          roi?.name || '',
-          lfc || '',
-          auc || '',
-          annotation?.mz || '',
-          annotation?.adduct || '',
-          annotation?.fdrLevel || '',
-          annotation?.msmScore || '',
-          formatCsvTextArray(annotation?.possibleCompounds?.map((m: any) => m.name) || []),
-        ]
-
-        return formatCsvRow(cells)
-      }
+      csv += formatCsvRow(diffCsvHeader(props.isGrouped))
 
       state.isExporting = true
 
-      csv += props.data.map(formatRow).join('')
+      csv += props.data.map((row: any) => formatCsvRow(diffCsvCells(row, props.isGrouped))).join('')
 
       if (state.isExporting) {
         state.isExporting = false
@@ -710,7 +744,7 @@ export const DatasetDiffTable = defineComponent({
               <ElTableColumn
                 key="annotation"
                 property="annotation"
-                label={state.columns.annotation?.label}
+                label={columns.value.annotation?.label}
                 sortable={'custom'}
                 minWidth="120"
                 formatter={(row: any) => formatAnnotation(row)}
@@ -720,17 +754,26 @@ export const DatasetDiffTable = defineComponent({
               <ElTableColumn
                 key="roiName"
                 property="roiName"
-                label={state.columns.roiName?.label}
+                label={columns.value.roiName?.label}
                 sortable={'custom'}
                 minWidth="100"
                 formatter={(row: any) => formatRoiName(row)}
+              />
+            )}
+            {isColSelected('consistency') && (
+              <ElTableColumn
+                key="consistency"
+                property="consistency"
+                label={columns.value.consistency?.label}
+                minWidth="100"
+                formatter={(row: any) => formatRowConsistency(row)}
               />
             )}
             {isColSelected('lfc') && (
               <ElTableColumn
                 key="lfc"
                 property="lfc"
-                label={state.columns.lfc?.label}
+                label={columns.value.lfc?.label}
                 sortable="custom"
                 minWidth="80"
                 v-slots={{
@@ -743,7 +786,7 @@ export const DatasetDiffTable = defineComponent({
               <ElTableColumn
                 key="auc"
                 property="auc"
-                label={state.columns.auc?.label}
+                label={columns.value.auc?.label}
                 sortable="custom"
                 minWidth="120"
                 v-slots={{
@@ -756,7 +799,7 @@ export const DatasetDiffTable = defineComponent({
               <ElTableColumn
                 key="mz"
                 property="mz"
-                label={state.columns.mz?.label}
+                label={columns.value.mz?.label}
                 sortable="custom"
                 minWidth="80"
                 formatter={(row: any) => formatMZ(row)}
@@ -766,7 +809,7 @@ export const DatasetDiffTable = defineComponent({
               <ElTableColumn
                 key="adduct"
                 property="adduct"
-                label={state.columns.adduct?.label}
+                label={columns.value.adduct?.label}
                 sortable={'custom'}
                 minWidth="80"
                 formatter={(row: any) => formatAdduct(row)}
@@ -776,7 +819,7 @@ export const DatasetDiffTable = defineComponent({
               <ElTableColumn
                 key="fdrLevel"
                 property="fdrLevel"
-                label={state.columns.fdrLevel?.label}
+                label={columns.value.fdrLevel?.label}
                 class="fdr-cell"
                 sortable="custom"
                 minWidth="80"
@@ -787,7 +830,7 @@ export const DatasetDiffTable = defineComponent({
               <ElTableColumn
                 key="msmScore"
                 property="msmScore"
-                label={state.columns.msmScore?.label}
+                label={columns.value.msmScore?.label}
                 sortable="custom"
                 minWidth="80"
                 formatter={(row: any) => formatMSM(row)}
@@ -797,7 +840,7 @@ export const DatasetDiffTable = defineComponent({
               <ElTableColumn
                 key="molecules"
                 property="molecules"
-                label={state.columns.molecules?.label}
+                label={columns.value.molecules?.label}
                 sortable="false"
                 minWidth="120"
                 showOverflowTooltip
@@ -845,7 +888,7 @@ export const DatasetDiffTable = defineComponent({
                   default: () => (
                     <div>
                       <div class="cursor-pointer select-none">
-                        {Object.values(state.columns).map((column: any) => {
+                        {Object.values(columns.value).map((column: any) => {
                           return (
                             <div
                               onClick={() => {

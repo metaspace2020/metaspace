@@ -23,6 +23,8 @@ export interface PanelRoiLike {
   strokeColor: string
   visible: boolean
   allVisible: boolean
+  groupLabel?: string | null
+  groupChannel?: string
   /** `{x, y}` objects normally; legacy rows may hold `[x, y]` pairs or drop a 0-valued axis. */
   coordinates: Array<Partial<RoiVertex> | number[]>
   isDrawing?: boolean
@@ -43,6 +45,8 @@ export interface RoiFeatureProperties {
   'stroke-opacity': number
   fill: string
   'fill-opacity': number
+  group?: string
+  groupChannel?: string
 }
 
 export interface RoiFeature {
@@ -75,7 +79,15 @@ export function toVertex(c: Partial<RoiVertex> | number[]): RoiVertex {
   return { x: c.x ?? 0, y: c.y ?? 0 }
 }
 
-export function roiToFeature(roi: PanelRoiLike): RoiFeature {
+export interface RoiFeatureOptions {
+  /**
+   * Write `group` / `groupChannel` for grouped ROIs. Default true: Save always keeps the assignments, so they survive
+   * turning the group view off; the GeoJSON export passes whether the group view is on.
+   */
+  includeGroups?: boolean
+}
+
+export function roiToFeature(roi: PanelRoiLike, { includeGroups = true }: RoiFeatureOptions = {}): RoiFeature {
   const coordinates = (roi.coordinates || []).map(toVertex)
   const ring = coordinates.map((c) => [c.x, c.y])
   const isClosed = ring.length > 0 && ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1]
@@ -97,6 +109,9 @@ export function roiToFeature(roi: PanelRoiLike): RoiFeature {
       'stroke-opacity': 0,
       fill: roi.rgb,
       'fill-opacity': 0.4,
+      ...(includeGroups && roi.groupLabel && roi.groupLabel.trim()
+        ? { group: roi.groupLabel.trim(), ...(roi.groupChannel ? { groupChannel: roi.groupChannel } : {}) }
+        : {}),
     },
     geometry: {
       type: 'Polygon',
@@ -105,10 +120,14 @@ export function roiToFeature(roi: PanelRoiLike): RoiFeature {
   }
 }
 
-export function roisToFeatureCollection(rois: PanelRoiLike[], meta: RoiFeatureCollectionMeta): RoiFeatureCollection {
+export function roisToFeatureCollection(
+  rois: PanelRoiLike[],
+  meta: RoiFeatureCollectionMeta,
+  options: RoiFeatureOptions = {}
+): RoiFeatureCollection {
   const features = (rois || [])
     .filter((roi) => !roi.isDrawing && !roi.removed && (roi.coordinates || []).length > 0)
-    .map(roiToFeature)
+    .map((roi) => roiToFeature(roi, options))
 
   return {
     type: 'FeatureCollection',
