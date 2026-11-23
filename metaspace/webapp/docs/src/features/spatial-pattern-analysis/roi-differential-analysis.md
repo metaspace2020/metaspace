@@ -10,6 +10,21 @@ ROI Differential Analysis identifies which metabolites and lipids are enriched o
 
 For each annotated ion, the analysis computes two effect-size metrics: **log₂ fold change**, which quantifies the magnitude of the intensity difference, and **AUC** (area under the ROC curve), which reflects how well the ion discriminates between the focal ROI and all other regions. Formal p-values are intentionally omitted: the spatial autocorrelation inherent in imaging MS data inflates false-positive rates when standard statistical tests are applied at the pixel level.
 
+## Grouping ROIs
+
+By default every ROI is compared against all the other ROIs combined. To compare groups of ROIs instead, click the **group** button in the ROI panel header (next to the download icon) to show the group view.
+
+- **Create groups:** in the group view, add a group, then pick each ROI's group from its dropdown. Choose **No group** to take an ROI out of its group. You can rename, recolour, hide or remove a group.
+- **Group view on:** ROIs in the same group are pooled into one region (for example, all infiltrated tumor regions) and drawn in the group's colour on the ion image. Each group is compared against all other groups combined. An ROI with no group is left out of the analysis, so you can exclude an ROI without deleting it.
+- **Exactly two groups:** you get a single comparison, "first vs second", where positive values mean higher in the first group. The first group is the one that comes first alphabetically.
+- **Group view off:** every ROI is compared against all other ROIs combined, as described above.
+
+At least two groups with ROIs must exist to run the analysis in the group view (at least two ROIs when it is off). To compare two groups out of three or more, move the ROIs of the other groups to **No group** and run the analysis again. Only the latest run is kept.
+
+The list of ROIs and each section of the group view (the group of each ROI, and the list of groups) can be collapsed with the arrows in the panel, to leave more of the ion image visible.
+
+Groups are saved with the ROIs. They are written to the GeoJSON export when the group view is on, and are not restored when a GeoJSON file is imported: imported ROIs have no group.
+
 ## When to use it
 
 - When you want to identify the molecular signature of a tissue region relative to its surroundings (for example, tumor core vs. the rest of the tissue).

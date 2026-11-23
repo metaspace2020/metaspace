@@ -15,6 +15,7 @@ from sm.engine.daemons.lithops import LithopsDaemon
 from sm.engine.daemons.update import SMUpdateDaemon
 from sm.engine.dataset import DatasetStatus
 from sm.engine.db import DB
+from sm.engine.errors import CostLimitError
 from sm.engine.es_export import ESExporter
 from sm.engine.queue import (
     SM_DS_STATUS,
@@ -371,3 +372,60 @@ def test_lithops_daemon_failure_marks_ds_failed(
 
     assert status == DatasetStatus.FAILED
     assert annotate_lithops_mock.call_count == 2
+
+
+@patch.object(DatasetManager, '_send_email')
+@patch.object(DatasetManager, 'post_to_slack')
+@patch('sm.engine.daemons.lithops.os.kill')  # daemon suicides for supervisor restart; disarm it
+@patch.object(DatasetManager, 'annotate_lithops', side_effect=CostLimitError(12.3, 10))
+def test_cost_limit_fails_dataset_without_retry(
+    annotate_lithops_mock,
+    os_kill_mock,
+    post_to_slack_mock,
+    send_email_mock,
+    # fixtures
+    test_db,
+    reset_queues,
+    metadata,
+    ds_config,
+    queue_pub,
+    local_sm_config,
+    sm_index,
+):
+    db = DB()
+    es = ESExporter(db, local_sm_config)
+    manager = make_manager(db, es, local_sm_config)
+
+    ds = create_test_ds(name=test_ds_name, config=ds_config, status=DatasetStatus.QUEUED, es=es)
+    queue_pub.publish(
+        {
+            'ds_id': ds.id,
+            'ds_name': test_ds_name,
+            'action': DaemonAction.ANNOTATE,
+            'email': 'user@example.com',
+        }
+    )
+
+    daemon = LithopsDaemon(manager, lit_qdesc=SM_LITHOPS, upd_qdesc=SM_UPDATE)
+    daemon.start()
+    deadline = time.time() + 45
+    status = None
+    while time.time() < deadline:
+        status = db.select_one('SELECT status FROM dataset WHERE id = %s', params=(ds.id,))[0]
+        if status == DatasetStatus.FAILED:
+            break
+        time.sleep(0.5)
+    time.sleep(3)  # give a (wrongly) republished retry message time to be consumed
+    daemon.stop()
+
+    assert status == DatasetStatus.FAILED
+    # LimitError branch: no retry, so the annotation ran exactly once
+    assert annotate_lithops_mock.call_count == 1
+    slack_texts = [c.args[1] for c in post_to_slack_mock.call_args_list]
+    assert not any('retrying' in t for t in slack_texts)
+    failure_texts = [t for t in slack_texts if 'failed' in t]
+    assert any('$12.30' in t and '$10.00' in t for t in failure_texts), slack_texts
+    assert send_email_mock.call_count == 1
+    email_body = send_email_mock.call_args.args[2]
+    assert 'Processing was stopped because the dataset exceeded the processing limit.' in email_body
+    assert 'imzML' not in email_body and '$' not in email_body

@@ -91,6 +91,7 @@
     "aws_s3": {
       "storage_bucket": "{{ sm_lithops_s3_bucket_temp }}"
     },
+    "max_cost_usd": 10,
     "sm_storage": {
 {#
 Each entry in this block is an array of [Bucket name, Prefix]

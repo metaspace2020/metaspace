@@ -10,7 +10,7 @@ from datetime import datetime
 from itertools import chain
 from threading import Thread, current_thread
 from traceback import format_tb
-from typing import List, Callable, TypeVar, Iterable, Sequence, Dict, Optional
+from typing import List, Callable, TypeVar, Iterable, Sequence, Dict, Optional, Tuple
 
 import lithops
 import numpy as np
@@ -19,6 +19,15 @@ from lithops.future import ResponseFuture
 from lithops.storage import Storage
 from lithops.executors import StandaloneExecutor
 
+from sm.engine.annotation_lithops.cost_cap import (
+    WATCHDOG_INTERVAL,
+    CostGuard,
+    build_guard,
+    estimate_attempt,
+    is_running,
+    start_cancel_watcher,
+)
+from sm.engine.errors import CostLimitError
 from sm.engine.utils.perf_profile import SubtaskProfiler, Profiler, NullProfiler
 
 logger = logging.getLogger('engine.lithops-wrapper')
@@ -38,7 +47,9 @@ class LithopsStalledException(Exception):
     pass
 
 
-def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
+def _build_wrapper_func(
+    func: Callable[..., TRet], cancel: Optional[Tuple[str, str]] = None
+) -> Callable[..., TRet]:
     def wrapper_func(*args, **kwargs):
         def finalize_perf():
             if len(subtask_perf.entries) > 0 and 'finished' not in subtask_perf.entries:
@@ -54,6 +65,16 @@ def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
         if has_perf_arg:
             kwargs['perf'] = subtask_perf
 
+        if cancel is not None:
+            storage = kwargs.get('storage')
+            if not func_has_storage_arg:
+                kwargs.pop('storage', None)
+            if storage is not None:
+                try:
+                    start_cancel_watcher(storage, cancel[0], cancel[1])
+                except Exception:  # pylint: disable=broad-except
+                    logger.error('Failed to start cancel watcher', exc_info=True)
+
         try:
             result = func(*args, **kwargs)
             return result, finalize_perf()
@@ -63,7 +84,16 @@ def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
 
     sig = inspect.signature(func)
     has_perf_arg = 'perf' in sig.parameters
-    newsig = sig.replace(parameters=[p for p in sig.parameters.values() if p.name != 'perf'])
+    func_has_storage_arg = 'storage' in sig.parameters
+    params = [p for p in sig.parameters.values() if p.name != 'perf']
+    if cancel is not None and not func_has_storage_arg:
+        # Lithops injects `storage` into functions that declare it
+        storage_param = inspect.Parameter('storage', inspect.Parameter.KEYWORD_ONLY, default=None)
+        if params and params[-1].kind == inspect.Parameter.VAR_KEYWORD:
+            params.insert(len(params) - 1, storage_param)
+        else:
+            params.append(storage_param)
+    newsig = sig.replace(parameters=params)
     wrapper_func.__signature__ = newsig  # type: ignore # https://github.com/python/mypy/issues/5958
     wrapper_func.__name__ = func.__name__
 
@@ -179,7 +209,13 @@ class Executor:
         to the result data.
     """
 
-    def __init__(self, lithops_config: Dict, perf: Profiler = None, debug_run_locally=False):
+    def __init__(
+        self,
+        lithops_config: Dict,
+        perf: Profiler = None,
+        debug_run_locally=False,
+        ds_id: Optional[str] = None,
+    ):
         self.debug_run_locally = debug_run_locally
         self.is_hybrid = False
         if debug_run_locally:
@@ -202,6 +238,99 @@ class Executor:
         self._include_modules = lithops_config['lithops'].get('include_modules', [])
         self._execution_timeout = lithops_config['lithops'].get('execution_timeout', 7200) + 60
         self._perf = perf or NullProfiler()
+        self._cost_guard: Optional[CostGuard] = None
+        if self.is_hybrid and not debug_run_locally:
+            self._cost_guard = build_guard(lithops_config, self.storage, ds_id)
+
+    def _begin_attempt(
+        self, func, wrapper_func, guard: Optional[CostGuard]
+    ) -> Tuple[Callable, Optional[str]]:
+        """Check the budget and build the wrapper for one attempt; only CostLimitError raises."""
+        if guard is None:
+            return wrapper_func, None
+        try:
+            cancel_key = guard.new_attempt()  # first, so the saved record lists the key
+            try:
+                guard.check(force_sync=True)
+            except CostLimitError as exc:
+                logger.warning(
+                    f'{func.__name__} not started: estimated cost ${exc.spent:.2f} already '
+                    f'exceeds the limit of ${exc.limit:.2f}'
+                )
+                raise
+            return _build_wrapper_func(func, cancel=(self.storage.bucket, cancel_key)), cancel_key
+        except CostLimitError:
+            raise
+        except Exception:  # pylint: disable=broad-except
+            logger.error('Cost guard failed before dispatch, running without it', exc_info=True)
+            return wrapper_func, None
+
+    def finish_cost_tracking(self) -> None:
+        """Mark this run as successfully finished in the cost ledger; no-op without a guard."""
+        if self._cost_guard is None:
+            return
+        try:
+            self._cost_guard.finish_run()
+        except Exception:  # pylint: disable=broad-except
+            logger.error('Failed to finish cost tracking', exc_info=True)
+
+    @staticmethod
+    def _end_attempt(guard, cost, exc, cancel_key, futures, runtime_memory):
+        """Record a finished attempt in the guard; never raises."""
+        if guard is None:
+            return
+        try:
+            n_running = sum(1 for f in (futures or []) if is_running(f))
+            guard.finish_attempt(
+                cost,
+                # a CostLimitError trip has already written the cancel markers
+                failed=exc is not None and not isinstance(exc, CostLimitError),
+                cancel_key=cancel_key,
+                n_running=n_running,
+                runtime_memory=runtime_memory,
+            )
+        except Exception:  # pylint: disable=broad-except
+            logger.error('Failed to record attempt cost', exc_info=True)
+
+    def _record_failed_attempt(
+        self, func_name, start_time, attempt, runtime_memory, futures, exc
+    ) -> Tuple[List[int], List]:
+        """Save the perf entry of a failed attempt; return failed indexes and activation ids."""
+        failed_idxs = [i for i, f in enumerate(futures or []) if f.error]
+        # pylint: disable=unsubscriptable-object # (because futures is Optional)
+        failed_activation_ids = [futures[i].activation_id for i in failed_idxs] if futures else []
+
+        self._perf.record_entry(
+            func_name,
+            start_time,
+            datetime.now(),
+            error=exception_to_json_obj(exc),
+            attempt=attempt,
+            runtime_memory=runtime_memory,
+            failed_activation_ids=failed_activation_ids,
+            request_ids=[
+                f.activation_id for f in (futures or [])
+            ],  # pylint: disable=not-an-iterable
+        )
+        return failed_idxs, failed_activation_ids
+
+    def _run_attempt(
+        self,
+        func,
+        plain_wrapper_func,
+        func_args,
+        runtime_memory,
+        debug_run_locally,
+        lithops_kwargs,
+        guard: Optional[CostGuard],
+    ):
+        """Run one attempt under the cost guard; return (futures, return_vals, exception)."""
+        wrapper_func, cancel_key = self._begin_attempt(func, plain_wrapper_func, guard)
+        futures, return_vals, exc, cost = self._dispatch_map(
+            wrapper_func, func_args, runtime_memory, debug_run_locally, lithops_kwargs, guard
+        )
+        self._end_attempt(guard, cost, exc, cancel_key, futures, runtime_memory)
+        return futures, return_vals, exc
 
     def map(
         self,
@@ -227,7 +356,8 @@ class Executor:
         if include_modules is not None:
             lithops_kwargs['include_modules'] = [*self._include_modules, *include_modules]
 
-        wrapper_func = _build_wrapper_func(func)
+        guard = None if debug_run_locally else self._cost_guard
+        plain_wrapper_func = _build_wrapper_func(func)
         func_name = func.__name__
         attempt = 1
 
@@ -238,8 +368,14 @@ class Executor:
                 f'executor.map({func_name}, {len(func_args)} items, {runtime_memory}MB, '
                 f'attempt {attempt})'
             )
-            futures, return_vals, exc = self._dispatch_map(
-                wrapper_func, func_args, runtime_memory, debug_run_locally, lithops_kwargs
+            futures, return_vals, exc = self._run_attempt(
+                func,
+                plain_wrapper_func,
+                func_args,
+                runtime_memory,
+                debug_run_locally,
+                lithops_kwargs,
+                guard,
             )
 
             if exc is None:
@@ -262,25 +398,15 @@ class Executor:
 
                 return [result for result, subtask_perf in return_vals]
 
-            # failed futures
-            failed_idxs = [i for i, f in enumerate(futures or []) if f.error]
-            # pylint: disable=unsubscriptable-object # (because futures is Optional)
-            failed_activation_ids = (
-                [futures[i].activation_id for i in failed_idxs] if futures else []
+            assert exc is not None  # the attempt failed; narrows `exc` for pylint
+
+            failed_idxs, failed_activation_ids = self._record_failed_attempt(
+                func_name, start_time, attempt, runtime_memory, futures, exc
             )
 
-            self._perf.record_entry(
-                func_name,
-                start_time,
-                datetime.now(),
-                error=exception_to_json_obj(exc),
-                attempt=attempt,
-                runtime_memory=runtime_memory,
-                failed_activation_ids=failed_activation_ids,
-                request_ids=[
-                    f.activation_id for f in (futures or [])
-                ],  # pylint: disable=not-an-iterable
-            )
+            if isinstance(exc, CostLimitError):
+                logger.error(f'{func_name} stopped by the cost limit: {exc}')
+                raise exc
 
             if (
                 isinstance(exc, (MemoryError, TimeoutError, OSError))
@@ -310,12 +436,66 @@ class Executor:
                 )
                 raise exc
 
+    @staticmethod
+    def _watch_attempt(thread, executor, timeout, guard, get_state, runtime_memory):
+        """Wait for the attempt thread; return its stall/cost-limit exception, if any.
+
+        ``get_state()`` returns ``(futures, started_at)``; ``started_at`` is None until billing
+        starts (EC2: once the VM mutex is held), and the live cost is 0 until then.
+        """
+        interval = WATCHDOG_INTERVAL
+        deadline = time.monotonic() + timeout
+        while thread.is_alive():
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return LithopsStalledException()
+            thread.join(min(interval, remaining))
+            if guard is None or not thread.is_alive():
+                continue
+            try:
+                futures, started_at = get_state()
+                live_cost = 0.0
+                if started_at is not None:
+                    is_standalone = executor.config['lithops']['mode'] == 'standalone'
+                    live_cost = estimate_attempt(
+                        futures, runtime_memory, started_at, time.time(), is_standalone
+                    )
+                guard.check(live_cost)
+            except CostLimitError as exc:
+                try:
+                    executor.invoker.stop()
+                except Exception:  # pylint: disable=broad-except
+                    logger.error('Failed to stop the invoker after a cost trip', exc_info=True)
+                return exc
+            except Exception:  # pylint: disable=broad-except
+                logger.error('Cost check failed, ignoring', exc_info=True)
+        return None
+
+    @staticmethod
+    def _final_cost(futures, runtime_memory, started_at, executor) -> float:
+        """Estimated cost of a finished attempt; 0 if it cannot be computed."""
+        try:
+            if started_at is None:
+                return 0.0
+            is_standalone = executor.config['lithops']['mode'] == 'standalone'
+            return estimate_attempt(futures, runtime_memory, started_at, time.time(), is_standalone)
+        except Exception:  # pylint: disable=broad-except
+            logger.error('Failed to estimate attempt cost', exc_info=True)
+            return 0.0
+
     def _dispatch_map(
-        self, wrapper_func, func_args, runtime_memory, debug_run_locally, lithops_kwargs
+        self,
+        wrapper_func,
+        func_args,
+        runtime_memory,
+        debug_run_locally,
+        lithops_kwargs,
+        guard: Optional[CostGuard] = None,
     ):
         futures = None
         return_vals = None
         exception = None
+        cost = 0.0
         if self.debug_run_locally or debug_run_locally:
             try:
                 func_kwargs = {}
@@ -326,6 +506,8 @@ class Executor:
                 exception = exc
         else:
             # Run in another thread so that stalls can be detected & handled
+            started = [None]  # set by run() when billing starts
+
             def run():
                 nonlocal futures, return_vals, exception
                 try:
@@ -345,6 +527,7 @@ class Executor:
                             from sm.engine.utils.db_mutex import DBMutex
 
                             stack.enter_context(DBMutex().lock('vm', self._execution_timeout))
+                        started[0] = time.time()  # billing starts once the VM mutex is held
                         futures = executor.map(
                             wrapper_func, func_args, runtime_memory=runtime_memory, **lithops_kwargs
                         )
@@ -361,11 +544,27 @@ class Executor:
             executor = self._select_executor(runtime_memory)
             thread = Thread(target=run, name=f'{current_thread().name}-ex', daemon=True)
             thread.start()
-            thread.join(self._execution_timeout)
-            if thread.is_alive():  # If timed out
-                exception = LithopsStalledException()
+            watch_exc = self._watch_attempt(
+                thread,
+                executor,
+                self._execution_timeout,
+                guard,
+                lambda: (futures, started[0]),
+                runtime_memory,
+            )
+            # The worker thread may still be running after a stall or trip and can still assign
+            # the shared cells: snapshot them, and never write the watchdog result into them.
+            futures_snapshot, return_vals_snapshot = futures, return_vals
+            if guard is not None:
+                cost = self._final_cost(futures_snapshot, runtime_memory, started[0], executor)
+            return (
+                futures_snapshot,
+                return_vals_snapshot,
+                watch_exc if watch_exc is not None else exception,
+                cost,
+            )
 
-        return futures, return_vals, exception
+        return futures, return_vals, exception, cost
 
     def _select_executor(self, runtime_memory):
         valid_executors = [

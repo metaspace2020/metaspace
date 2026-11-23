@@ -10,6 +10,7 @@ from sklearn.cluster import KMeans
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.config import SMConfig
 from sm.engine.dataset import Dataset
+from sm.engine.errors import CostLimitError
 from sm.engine import image_storage
 
 ISO_IMAGE_SEL = (
@@ -265,5 +266,7 @@ def generate_ion_thumbnail_lithops(
         if existing_thumb_id:
             image_storage.delete_image(image_storage.THUMB, ds.id, existing_thumb_id)
 
+    except CostLimitError:
+        raise
     except Exception:
         logger.error('Error generating ion thumbnail image', exc_info=True)

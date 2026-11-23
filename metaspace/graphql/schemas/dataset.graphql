@@ -459,6 +459,8 @@ type Roi {
   name: String!
   isDefault: Boolean!
   geojson: String!  # JSON string representation of GeoJSON
+  groupLabel: String
+  includeInDiff: Boolean!
 }
 
 type MeanSpectrum {
@@ -495,7 +497,19 @@ type DiffRoiResult {
   roi: Roi!
   lfc: Float!
   auc: Float!
+  groupLabel: String!
+  referenceLabel: String
+  roiIds: [ID!]!
+  nRois: Int!
+  nConcordant: Int
   annotation: Annotation!
+}
+
+type DiffRoiResultSet {
+  groupLabel: String
+  referenceLabel: String
+  roiIds: [ID!]!
+  referenceRoiIds: [ID!]
 }
 
 input DiffRoiFilter {
@@ -510,6 +524,8 @@ input RoiInput {
   name: String!
   isDefault: Boolean! = false
   geojson: String!
+  groupLabel: String
+  includeInDiff: Boolean! = true
 }
 
 type RoiValidationIssue {
@@ -559,11 +575,11 @@ type Query {
 
   initialPeak(datasetId: String!, mz: Float): InitialPeak
 
-  # roiId omitted means the whole dataset (only offered when wholeDatasetAvailable).
   meanSpectrum(datasetId: String!, roiId: ID): MeanSpectrum
   meanSpectrumAvailability(datasetId: String!): MeanSpectrumAvailability
 
   diffRoiResults(datasetId: String!, filter: DiffRoiFilter = {}, annotationFilter: AnnotationFilter = {}): [DiffRoiResult!]!
+  diffRoiResultSets(datasetId: String!): [DiffRoiResultSet!]!
 
   rois(datasetId: String!, isDefault: Boolean): [Roi!]!
   roi(id: ID!): Roi

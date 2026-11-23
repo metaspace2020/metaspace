@@ -44,6 +44,16 @@ describe('roiToFeature', () => {
   })
 })
 
+describe('roiToFeature groupChannel', () => {
+  it('writes groupChannel only when the ROI has a group label', () => {
+    const grouped = roiToFeature({ ...roi, groupLabel: 'A', groupChannel: 'cyan' })
+    expect(grouped.properties.group).toBe('A')
+    expect(grouped.properties.groupChannel).toBe('cyan')
+    const ungrouped = roiToFeature({ ...roi, groupLabel: ' ', groupChannel: 'cyan' })
+    expect(ungrouped.properties).not.toHaveProperty('groupChannel')
+  })
+})
+
 describe('roisToFeatureCollection', () => {
   it('wraps ROIs into a FeatureCollection with metadata, skipping in-progress/removed ROIs', () => {
     const fc = roisToFeatureCollection(
@@ -59,5 +69,34 @@ describe('roisToFeatureCollection', () => {
     })
     expect(fc.features).toHaveLength(1)
     expect(fc.features[0].properties.name).toBe('ROI 1')
+  })
+
+  const grouped = { ...roi, groupLabel: 'A', groupChannel: 'cyan' }
+
+  it('writes group and groupChannel by default (the Save path) and with includeGroups: true', () => {
+    const byDefault = roisToFeatureCollection([grouped], { datasetId: 'ds1' })
+    const explicit = roisToFeatureCollection([grouped], { datasetId: 'ds1' }, { includeGroups: true })
+    ;[byDefault, explicit].forEach((fc) =>
+      expect(fc.features[0].properties).toMatchObject({ name: 'ROI 1', group: 'A', groupChannel: 'cyan' })
+    )
+  })
+
+  it('leaves group and groupChannel out with includeGroups: false (export with the group view off)', () => {
+    const fc = roisToFeatureCollection([grouped, roi], { datasetId: 'ds1' }, { includeGroups: false })
+    expect(fc.features).toHaveLength(2)
+    fc.features.forEach((feature) => {
+      expect(feature.properties).not.toHaveProperty('group')
+      expect(feature.properties).not.toHaveProperty('groupChannel')
+    })
+  })
+})
+
+describe('roiToFeature includeGroups', () => {
+  it('keeps the group fields by default and drops them with includeGroups: false', () => {
+    const grouped = { ...roi, groupLabel: 'A', groupChannel: 'cyan' }
+    expect(roiToFeature(grouped).properties).toMatchObject({ group: 'A', groupChannel: 'cyan' })
+    const plain = roiToFeature(grouped, { includeGroups: false }).properties
+    expect(plain).not.toHaveProperty('group')
+    expect(plain).not.toHaveProperty('groupChannel')
   })
 })

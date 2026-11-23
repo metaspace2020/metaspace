@@ -29,6 +29,7 @@ import {
 } from '../operation/segmentationJobs'
 import normalizeLegacyRoiFeature from '../operation/normalizeLegacyRoiFeature'
 import parseRoiGeoJson, { getDatasetImageBounds } from '../operation/roiGeoJson'
+import { collapseDiffRows, diffRoiResultSets, ExistingDiffRow, roiToGraphql } from '../operation/roiGroups'
 import { smApiJsonPost, smApiJsonGet } from '../../../utils/smApi/smApiCall'
 import { smApiDatasetRequest } from '../../../utils'
 import { uniq } from 'lodash'
@@ -73,6 +74,35 @@ const resolveDatasetScopeRole = async(ctx: Context, dsId: string) => {
     }
   }
   return scopeRole
+}
+
+/**
+ * Builds the scope of the `diff_roi` rows the caller sees for a dataset: the rows of their own ROIs
+ * if they have any, otherwise those of the dataset's default ROIs. Dataset access is checked by the caller.
+ *
+ * @param ctx - Request context (entity manager and current user)
+ * @param datasetId - Dataset whose differential analysis rows are wanted
+ * @returns A factory of fresh query builders over `diffRoi` joined to `roi`, already restricted to the scope
+ *
+ * @example
+ * const scopedDiffRows = await diffRowsScope(ctx, datasetId)
+ * const count = await scopedDiffRows().getCount()
+ */
+const diffRowsScope = async(ctx: Context, datasetId: string) => {
+  const userId = ctx.user?.id
+  const userRoisCount = await ctx.entityManager.createQueryBuilder(Roi, 'roi')
+    .where('roi.datasetId = :datasetId', { datasetId })
+    .andWhere('roi.userId = :userId', { userId })
+    .getCount()
+
+  return () => {
+    const scoped = ctx.entityManager.createQueryBuilder(DiffRoi, 'diffRoi')
+      .innerJoin('diffRoi.roi', 'roi')
+      .where('roi.datasetId = :datasetId', { datasetId })
+    return userRoisCount > 0
+      ? scoped.andWhere('roi.userId = :userId', { userId })
+      : scoped.andWhere('roi.isDefault = true')
+  }
 }
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
@@ -437,23 +467,15 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
   },
   async diffRoiResults(source: any, { datasetId, filter = {}, annotationFilter }: any, ctx: Context) {
     if (await esDatasetByID(datasetId, ctx.user)) {
-      const userId = ctx.user?.id
-      const userRoisCount = await ctx.entityManager.createQueryBuilder(Roi, 'roi')
-        .where('roi.datasetId = :datasetId', { datasetId })
-        .andWhere('roi.userId = :userId', { userId })
-        .getCount()
+      const scopedDiffRows = await diffRowsScope(ctx, datasetId)
 
-      let qb = ctx.entityManager.createQueryBuilder(DiffRoi, 'diffRoi')
-        .leftJoinAndSelect('diffRoi.roi', 'roi')
-        .where('roi.datasetId = :datasetId', { datasetId })
+      // geojson is left out here (one copy per annotation row) and loaded once per ROI below
+      let qb = scopedDiffRows().addSelect([
+        'roi.id', 'roi.datasetId', 'roi.userId', 'roi.name', 'roi.isDefault', 'roi.groupLabel', 'roi.includeInDiff',
+      ])
 
-      if (userRoisCount > 0) {
-        qb = qb.andWhere('roi.userId = :userId', { userId })
-      } else {
-        qb = qb.andWhere('roi.isDefault = true')
-      }
-
-      // Apply DiffRoi-specific filters at database level
+      // Apply DiffRoi-specific filters at database level. Member rows of a group share lfc, auc and
+      // groupLabel, so every condition below keeps or drops a group as a whole and the collapse stays exact.
       if (filter.minAuc !== undefined) {
         qb = qb.andWhere('diffRoi.auc >= :minAuc', { minAuc: filter.minAuc })
       }
@@ -464,44 +486,55 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         qb = qb.andWhere('ABS(diffRoi.lfc) <= :absLfc', { absLfc: filter.absLfc })
       }
       if (filter.roiId) {
-        qb = qb.andWhere('roi.id = :roiId', { roiId: filter.roiId })
+        // A grouped ROI stands for its group: include the other members' rows as well
+        const roiRow = await scopedDiffRows()
+          .select('diffRoi.groupLabel', 'groupLabel')
+          .andWhere('diffRoi.roiId = :roiId', { roiId: filter.roiId })
+          .limit(1)
+          .getRawOne()
+        qb = roiRow?.groupLabel != null
+          ? qb.andWhere('diffRoi.groupLabel = :roiGroupLabel', { roiGroupLabel: roiRow.groupLabel })
+          : qb.andWhere('diffRoi.roiId = :roiId', { roiId: filter.roiId })
       }
       if (filter.roiName) {
-        qb = qb.andWhere('roi.name ILIKE :roiName', { roiName: `%${filter.roiName}%` })
+        qb = qb.andWhere('COALESCE(diffRoi.groupLabel, roi.name) ILIKE :roiName', { roiName: `%${filter.roiName}%` })
+      }
+      qb = qb.orderBy('roi.id', 'ASC')
+      const diffRows = await qb.getMany()
+
+      const groupedRows = collapseDiffRows(diffRows as any[])
+      const shownRoiIds = uniq(groupedRows.map(group => group.members[0].roiId))
+      const geojsonByRoiId = new Map<string, any>()
+      if (shownRoiIds.length > 0) {
+        const shownRois = await ctx.entityManager.createQueryBuilder(Roi, 'roi')
+          .select(['roi.id', 'roi.geojson'])
+          .where('roi.id IN (:...shownRoiIds)', { shownRoiIds })
+          .getMany()
+        shownRois.forEach(roi => geojsonByRoiId.set(String(roi.id), roi.geojson))
       }
 
-      const diffRois = await qb.getMany()
-
-      // Get unique annotation IDs and build ES filter
-      const ionIds = uniq(diffRois.map((diffRoi: any) => `${datasetId}_${diffRoi.annotationId}`)).join('|')
-
-      // Build Elasticsearch filter combining annotationId and annotation filters
+      const ionIds = uniq(groupedRows.map(group => `${datasetId}_${group.members[0].annotationId}`)).join('|')
       const esFilter = { annotationId: ionIds, ...annotationFilter }
-
       const annotations = await esSearchResults({ filter: esFilter, limit: 10000 }, 'annotation', ctx.user)
 
-      // Create a map for quick annotation lookup
       const annotationMap = new Map()
       annotations.forEach((ann: any) => {
         annotationMap.set(ann._id, unpackAnnotation(ann))
       })
 
-      // Map diffRois to results with annotations
-      const filteredResults = diffRois.map((diffRoi: any) => {
-        const annotationId = `${datasetId}_${diffRoi.annotationId}`
-        const annotation = annotationMap.get(annotationId)
+      const filteredResults = groupedRows.map(({ members, nRois, nConcordant }: any) => {
+        const first = members[0]
+        const annotation = annotationMap.get(`${datasetId}_${first.annotationId}`)
 
         return {
-          roi: {
-            id: diffRoi.roi.id,
-            datasetId: diffRoi.roi.datasetId,
-            userId: diffRoi.roi.userId,
-            name: diffRoi.roi.name,
-            isDefault: diffRoi.roi.isDefault,
-            geojson: JSON.stringify(diffRoi.roi.geojson),
-          },
-          lfc: diffRoi.lfc,
-          auc: diffRoi.auc,
+          roi: roiToGraphql({ ...first.roi, geojson: geojsonByRoiId.get(String(first.roiId)) }),
+          lfc: first.lfc,
+          auc: first.auc,
+          groupLabel: first.groupLabel ?? first.roi.name,
+          referenceLabel: first.referenceLabel,
+          roiIds: members.map((m: any) => m.roiId),
+          nRois,
+          nConcordant,
           annotation,
         }
       }).filter((result: any) => result.annotation) // Filter out results without annotations
@@ -525,6 +558,21 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       return filteredResults
     }
     return []
+  },
+
+  async diffRoiResultSets(source: any, { datasetId }: any, ctx: Context) {
+    if (!await esDatasetByID(datasetId, ctx.user)) {
+      return []
+    }
+    // Distinct combinations only: a run stores one row per annotation and ROI, all with the same values
+    const rows: ExistingDiffRow[] = await (await diffRowsScope(ctx, datasetId))()
+      .select('diffRoi.roiId', 'roiId')
+      .addSelect('diffRoi.groupLabel', 'groupLabel')
+      .addSelect('diffRoi.referenceLabel', 'referenceLabel')
+      .addSelect('diffRoi.comparisonRoiIds', 'comparisonRoiIds')
+      .distinct(true)
+      .getRawMany()
+    return diffRoiResultSets(rows)
   },
 
   async rois(source: any, { datasetId }: any, ctx: Context) {
@@ -577,14 +625,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
                 })
               )
               const saved = await ctx.entityManager.save(toSave)
-              return saved.map((roi: any) => ({
-                id: roi.id,
-                datasetId: roi.datasetId,
-                userId: roi.userId,
-                name: roi.name,
-                isDefault: roi.isDefault,
-                geojson: JSON.stringify(roi.geojson),
-              }))
+              return saved.map((roi: any) => (roiToGraphql(roi)))
             }
 
             return legacyFeatures.map((feature: any, index: number) => ({
@@ -594,18 +635,13 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
               name: legacyName(feature, index),
               isDefault: false,
               geojson: JSON.stringify(normalizeLegacyRoiFeature(feature)),
+              groupLabel: null,
+              includeInDiff: true,
             }))
           }
         }
 
-        return rois.map((roi: any) => ({
-          id: roi.id,
-          datasetId: roi.datasetId,
-          userId: roi.userId,
-          name: roi.name,
-          isDefault: roi.isDefault,
-          geojson: JSON.stringify(roi.geojson),
-        }))
+        return rois.map((roi: any) => (roiToGraphql(roi)))
       }
       return []
     } catch (error) {
@@ -619,14 +655,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     if (roi) {
       // Check if user has access to the dataset
       if (await esDatasetByID(roi.datasetId, ctx.user)) {
-        return {
-          id: roi.id,
-          datasetId: roi.datasetId,
-          userId: roi.userId,
-          name: roi.name,
-          isDefault: roi.isDefault,
-          geojson: JSON.stringify(roi.geojson),
-        }
+        return roiToGraphql(roi)
       }
     }
     return null

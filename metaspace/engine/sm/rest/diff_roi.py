@@ -47,6 +47,8 @@ def compare_rois(diff_roi_man, params):
     :param diff_roi_man: DiffROIManager
     :param params: {
         ds_id
+        roi_ids
+        scope_roi_ids
         TIC_normalize
         log_transform_tic
         chunk_size
@@ -57,6 +59,8 @@ def compare_rois(diff_roi_man, params):
     start = time.time()
     comp_roi_result = diff_roi_man.run_diff_roi(
         ds_id=ds_id,
+        roi_ids=params['roi_ids'],
+        scope_roi_ids=params.get('scope_roi_ids'),
         tic_normalize=params.get('TIC_normalize', True),
         log_transform_tic=params.get('log_transform_tic', True),
         chunk_size=params.get('chunk_size', 100),
@@ -64,7 +68,8 @@ def compare_rois(diff_roi_man, params):
     )
     logger.info(f'Completed diff ROI in {round(time.time() - start, 2)} sec')
 
-    diff_roi_man.save_diff_roi_results(ds_id, comp_roi_result)
+    scope = params.get('scope_roi_ids') or params['roi_ids']
+    diff_roi_man.save_diff_roi_results(ds_id, comp_roi_result, scope)
     logger.info(f'Saved diff ROI results for dataset {ds_id}')
 
     return {'status': 'success'}
