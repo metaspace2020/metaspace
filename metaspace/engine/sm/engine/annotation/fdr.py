@@ -89,7 +89,8 @@ def score_to_fdr_map(
         cumulative_targets = cumulative_targets + 1
         cumulative_decoys = cumulative_decoys + 1
 
-    fdrs = cumulative_decoys / decoy_ratio / cumulative_targets
+    weighted_decoys = cumulative_decoys / decoy_ratio
+    fdrs = weighted_decoys / (cumulative_targets + weighted_decoys)
     fdrs[cumulative_targets == 0] = 1  # Fix NaNs when decoys come before targets
 
     if monotonic:
