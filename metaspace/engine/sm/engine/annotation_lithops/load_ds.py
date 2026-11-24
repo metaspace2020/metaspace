@@ -19,6 +19,13 @@ from sm.engine.utils.perf_profile import SubtaskProfiler
 logger = logging.getLogger('annotation-pipeline')
 
 
+BROWSER_ARRAY_FILES = ['mzs.npy', 'ints.npy', 'sp_idxs.npy']
+BROWSER_FILES = [*BROWSER_ARRAY_FILES, 'mz_index.npy', 'portable_spectrum_reader.pickle']
+BROWSER_UPLOAD_THREADS = 4
+MULTIPART_THRESHOLD_MB = 64
+BROWSER_BYTES_PER_PEAK = 4
+
+
 def _load_spectra(storage, imzml_reader):
     # Pre-allocate lists of mz & int arrays
     mz_arrays = [np.array([], dtype=imzml_reader.mz_precision)] * imzml_reader.n_spectra
@@ -115,36 +122,40 @@ def _upload_imzml_browser_files(
     imzml_reader: LithopsImzMLReader,
     browser_storage: Storage,
     uuid: str,
-) -> None:
-    """Save imzML browser files on the object storage"""
+) -> bool:
+    """Save imzML browser files on the object storage.
 
-    def upload_file(data: np.array, key: str) -> CloudObject:
-        bytes_data = data.astype('f').tobytes()
-        size_bytes = len(bytes_data)
+    Returns True if the upload was skipped because a complete set was already there.
+    """
+    # The files are a pure function of the .ibd/.imzML behind this per-session uuid, so an
+    # existing set is never stale; S3 PUTs are atomic, so a partial upload fails this check.
+    existing = set(browser_storage.list_keys(browser_storage.bucket, f'{uuid}/'))
+    if all(f'{uuid}/{name}' in existing for name in BROWSER_FILES):
+        logger.info(f'imzML browser files for {uuid} already exist, skipping upload')
+        return True
 
-        if size_bytes < 5 * 1024 ** 3:
-            return browser_storage.put_cloudobject(bytes_data, key=key)
+    def upload_file(data: np.array, key: str, pool: ThreadPoolExecutor) -> CloudObject:
+        if len(data) * BROWSER_BYTES_PER_PEAK < MULTIPART_THRESHOLD_MB * 2 ** 20:
+            return browser_storage.put_cloudobject(data.astype('f').tobytes(), key=key)
 
-        return multipart_upload_cobj(browser_storage, bytes_data, key=key)
-
-    # Convert large precision types to float32 if needed
-    if mzs.itemsize > 4:
-        mzs = mzs.astype('f')
-    if ints.itemsize > 4:
-        ints = ints.astype('f')
+        return multipart_upload_cobj(browser_storage, data, key=key, dtype='f', pool=pool)
 
     # there was no point in saving `sp_idxs` like float, it was a mistake
     # due to the thousands of files stored on S3, we cannot now store this array as np.int32 now
-    keys = [f'{uuid}/{k}' for k in ['mzs.npy', 'ints.npy', 'sp_idxs.npy']]
-    with ThreadPoolExecutor(3) as executor:
-        cobjs = list(executor.map(upload_file, [mzs, ints, sp_idxs], keys))
+    keys = [f'{uuid}/{k}' for k in BROWSER_ARRAY_FILES]
+
+    # One shared pool, and the files go through it one at a time: three files each with
+    # their own pool would put 3x the parts in flight, well past the throughput optimum.
+    with ThreadPoolExecutor(BROWSER_UPLOAD_THREADS) as pool:
+        cobjs = [upload_file(*args, pool) for args in zip([mzs, ints, sp_idxs], keys)]
 
     chunk_records_number = 1024
-    mz_index = mzs[::chunk_records_number]
+    mz_index = mzs[::chunk_records_number].astype('f')
     cobjs.append(browser_storage.put_cloudobject(mz_index.tobytes(), key=f'{uuid}/mz_index.npy'))
 
     key = f'{uuid}/portable_spectrum_reader.pickle'
     cobjs.append(save_cobj(browser_storage, imzml_reader.imzml_reader, key=key))
+    return False
 
 
 def _load_ds(
@@ -174,8 +185,8 @@ def _load_ds(
 
     logger.info('Uploading imzml browser files')
     browser_storage, uuid = _prepare_storage_imzml_browser_files(imzml_cobject, conf)
-    _upload_imzml_browser_files(mzs, ints, sp_idxs, imzml_reader, browser_storage, uuid)
-    perf.record_entry('uploaded imzml browser files')
+    skipped = _upload_imzml_browser_files(mzs, ints, sp_idxs, imzml_reader, browser_storage, uuid)
+    perf.record_entry('uploaded imzml browser files', skipped=skipped)
 
     logger.info('Uploading segments')
     ds_segms_cobjs, ds_segments_bounds, ds_segm_lens = _upload_segments(
