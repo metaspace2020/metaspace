@@ -79,7 +79,7 @@ $pro-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .pro-section {
-  padding: clamp(72px, 9vw, 120px) 0;
+  padding: clamp(72px, 9vw, 104px) 0;
 
   &--tint {
     background: $pro-surface;
@@ -111,20 +111,82 @@ $pro-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 // stays visible on narrow viewports and scrolls horizontally rather than
 // collapsing. 120px clears the pair with a little breathing room, so this
 // deliberately carries no breakpoint - an offset that shrank on mobile
-// would tuck each section heading underneath the nav.
+// would tuck each section heading underneath the nav. With campaign banners
+// stuck above the nav, ProPage sets --pro-campaign-offset to their height
+// (0 / unset otherwise), and every offset below grows by it.
 #plans,
 #analysis,
+#claim,
 #privacy,
 #procurement,
 #docs,
 #faq {
-  scroll-margin-top: 120px;
+  scroll-margin-top: calc(120px + var(--pro-campaign-offset, 0px));
+}
+
+// --- campaign banners -----------------------------------------------------
+// Plain flow content above the section nav. From 768px the block sticks
+// directly under the site header and the nav sticks under it (see
+// --pro-campaign-offset); below that the banners scroll away with the page.
+// The z-index is above the page content and the nav, far below the site
+// header (2001) and its dropdown menus.
+.pro-campaign-banners {
+  @media (min-width: 768px) {
+    position: sticky;
+    top: 64px;
+    z-index: 901;
+  }
+}
+
+.pro-campaign-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 14px;
+  padding: 10px 16px;
+  background: #101820;
+  color: #ffffff;
+  font-size: 15px;
+  line-height: 1.4;
+  text-align: center;
+  margin-top: -10px;
+
+  &--slate {
+    background: #24303d;
+  }
+
+  &__label {
+    font-family: $pro-mono;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: #ffab3f;
+  }
+
+  &__text {
+    color: #ffffff;
+  }
+
+  .pro-campaign-banner__link,
+  .pro-campaign-banner__link:hover {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    color: #ffab3f;
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .pro-campaign-banner__link:hover {
+    text-decoration: underline;
+  }
 }
 
 // --- sticky section tab bar --------------------------------------------
 .pro-section-nav {
   position: sticky;
-  top: 64px;
+  top: calc(64px + var(--pro-campaign-offset, 0px));
   z-index: 900;
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(6px);
@@ -1117,5 +1179,674 @@ $pro-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   .pro-page * {
     transition: none !important;
     animation: none !important;
+  }
+}
+
+// --- Black Friday (plans section) ---------------------------------------
+.pro-campaign-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+
+  &__text {
+    flex: 1 1 520px;
+    min-width: 0;
+  }
+}
+
+.pro-campaign-callout {
+  flex: 0 1 440px;
+  background: $pro-ink;
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 22px 24px;
+
+  // Beside the heading: start level with the title, below the "Plans" eyebrow.
+  @media (min-width: 1160px) {
+    margin-top: 40px;
+  }
+
+  &__label {
+    margin: 0 0 10px;
+    font-family: $pro-mono;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: #ffab3f;
+  }
+
+  &__title {
+    margin: 0 0 8px;
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: #ffffff;
+  }
+
+  &__body {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.55;
+    color: #c3ccd5;
+  }
+}
+
+.pro-campaign-footnote {
+  font-family: $pro-mono;
+}
+
+.pro-card__was,
+.pro-datapack__was {
+  font-family: $pro-mono;
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0;
+  margin-left: 10px;
+  color: #5b6875;
+  text-decoration: line-through;
+}
+
+.pro-datapack__was {
+  font-size: 14px;
+  margin-left: 0;
+}
+
+.pro-card__coupon {
+  margin-top: 20px;
+}
+
+// With a coupon the divider moves below the coupon box: blurb, coupon, line, bullets.
+.pro-card--coupon {
+  .pro-card__blurb {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .pro-card__coupon {
+    margin-top: 16px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid $pro-line;
+  }
+}
+
+.pro-strip__coupon,
+.pro-datapack__coupon {
+  flex: 0 1 380px;
+  min-width: min(260px, 100%);
+}
+
+// One row on desktop: text, coupon, button. Below 900px the items wrap and stack.
+// The "Need more volume?" link of the Max strip sits on its own line under the row, bottom right.
+.pro-strip--coupon {
+  row-gap: 12px;
+}
+
+.pro-strip__more {
+  flex: 0 0 100%;
+  text-align: right;
+}
+
+@media (min-width: 900px) {
+  .pro-datapack--coupon {
+    flex-wrap: nowrap;
+
+    .pro-datapack__body {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    .pro-datapack__coupon {
+      flex: 0 0 300px;
+    }
+  }
+
+  .pro-strip--coupon {
+    .pro-strip__body {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    .pro-strip__coupon {
+      flex: 0 0 300px;
+    }
+
+    .pro-strip__actions {
+      flex: 0 0 auto;
+    }
+  }
+}
+
+// Campaign buttons keep a 44px touch target.
+.pro-btn--campaign {
+  min-height: 44px;
+}
+
+.pro-coupon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  // Text never runs under the button: where both cannot share a row, the button drops below.
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 10px 10px 12px;
+  background: #fff7ea;
+  border: 1.5px dashed #101820;
+  border-radius: 8px;
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1 1 auto;
+    min-width: max-content;
+  }
+
+  &__label {
+    font-family: $pro-mono;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0;
+    white-space: nowrap;
+    color: #a55d00;
+  }
+
+  &__code {
+    font-family: $pro-mono;
+    font-size: 18px;
+    font-weight: 700;
+    color: #101820;
+    overflow-wrap: anywhere;
+  }
+
+  &__copy {
+    flex: 0 0 auto;
+    // Wide enough for "Copied", so the box does not shift when the label changes.
+    min-width: 64px;
+    min-height: 44px;
+    padding: 0 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #101820;
+    background: #ffffff;
+    border: 1.5px solid #101820;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 3px solid #ff950c;
+      outline-offset: 2px;
+    }
+  }
+}
+
+// --- Cyber Monday claim section ------------------------------------------
+.pro-claim {
+  position: relative;
+
+  &__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    gap: clamp(24px, 3vw, 40px);
+    align-items: start;
+  }
+
+  &__offer {
+    min-width: 0;
+  }
+
+  &__title {
+    color: #ffffff;
+    max-width: 17ch;
+  }
+
+  .pro-claim__eyebrow {
+    color: #ffab3f;
+  }
+
+  &__lede {
+    margin: 0 0 28px;
+    font-size: 19px;
+    line-height: 1.6;
+    color: #c3ccd5;
+  }
+
+  &__features {
+    list-style: none;
+    margin: 0 0 28px;
+    padding: 0;
+    display: grid;
+    gap: 16px;
+
+    li {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      color: #ffab3f;
+    }
+
+    div {
+      display: flex;
+      flex-direction: column;
+      color: #aeb9c4;
+      font-size: 16px;
+      line-height: 1.45;
+    }
+
+    b {
+      color: #ffffff;
+      font-weight: 500;
+      font-size: 17px;
+    }
+
+    svg {
+      flex: 0 0 auto;
+      margin-top: 3px;
+    }
+  }
+
+  &__facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  &__fact {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 18px;
+    border: 1px solid #33414f;
+    border-radius: 10px;
+
+    span {
+      font-family: $pro-mono;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      color: #aeb9c4;
+    }
+
+    b {
+      font-size: 19px;
+      font-weight: 500;
+      color: #ffffff;
+    }
+
+    &--wide {
+      grid-column: 1 / -1;
+    }
+  }
+
+  &__closing {
+    margin: 28px 0 0;
+    font-size: 16px;
+    line-height: 1.65;
+    color: #aeb9c4;
+  }
+
+  &__card {
+    min-width: 0;
+    background: #ffffff;
+    color: #3d4a57;
+    border-radius: 12px;
+    padding: clamp(16px, 2vw, 24px);
+    font-size: 14px;
+    line-height: 1.5;
+
+    &--sent p {
+      margin: 0 0 12px;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    // Replaces the form, which is taller: the component sets a start and an end height and this eases between them.
+    &--sent {
+      box-sizing: border-box;
+      overflow: hidden;
+      transition: height 0.2s ease;
+
+      @media (prefers-reduced-motion: reduce) {
+        transition: none;
+      }
+    }
+  }
+
+  &__card-title {
+    margin: 0 0 6px;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #101820;
+
+    &:focus {
+      outline: none;
+    }
+
+    &:focus-visible {
+      outline: 3px solid #ff950c;
+      outline-offset: 4px;
+    }
+  }
+
+  &__intro {
+    margin: 0 0 18px;
+    font-size: 12px;
+    color: #3d4a57;
+  }
+
+  // Fields in a row stretch to the same height and sit on the bottom edge, so a label that wraps in one
+  // column does not push its input below its neighbour's.
+  &__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 20px;
+    align-items: stretch;
+
+    .pro-claim__field {
+      justify-content: flex-end;
+    }
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 18px;
+    min-width: 0;
+
+    label {
+      font-weight: 500;
+      color: #101820;
+    }
+
+    input,
+    select {
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 46px;
+      padding: 0 14px;
+      font: inherit;
+      font-size: 15px;
+      color: #101820;
+      background: #ffffff;
+      border: 1px solid #8794a1;
+      border-radius: 6px;
+
+      &:focus-visible {
+        outline: 3px solid #ff950c;
+        outline-offset: 1px;
+      }
+
+      &[aria-invalid='true'] {
+        border-color: #b42318;
+      }
+    }
+  }
+
+  &__optional {
+    font-weight: 400;
+    color: #5b6875;
+  }
+
+  &__help {
+    margin: 0;
+    font-size: 12px;
+    color: #5b6875;
+
+    a {
+      color: #a55d00;
+    }
+  }
+
+  &__divider {
+    height: 1px;
+    margin: 6px 0 18px;
+    background: #e2e8ed;
+  }
+
+  &__section-label {
+    margin: 0 0 6px;
+    font-family: $pro-mono;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: #a55d00;
+
+    + .pro-claim__help {
+      margin-bottom: 18px;
+    }
+  }
+
+  &__fieldset {
+    margin: 0 0 18px;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+
+    legend {
+      padding: 0;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #101820;
+    }
+  }
+
+  &__checks {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 20px;
+  }
+
+  &__check {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    min-height: 44px;
+    margin: 0;
+    cursor: pointer;
+
+    input {
+      flex: 0 0 auto;
+      width: 22px;
+      height: 22px;
+      margin: 0;
+      accent-color: #101820;
+
+      &:focus-visible {
+        outline: 3px solid #ff950c;
+        outline-offset: 2px;
+      }
+    }
+
+    a {
+      color: #a55d00;
+    }
+  }
+
+  // The message line is always there (hidden while empty), so validation never moves the form.
+  &__error {
+    margin: 0;
+    font-size: 11px;
+    line-height: 14px;
+    min-height: 14px;
+    color: #b42318;
+
+    &--empty {
+      visibility: hidden;
+    }
+  }
+
+  // A field with a message line: the line takes the place of most of the bottom margin.
+  &__field--checked {
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+
+  &__form-error {
+    margin: 18px 0 0;
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #b42318;
+    background: #fef3f2;
+    border: 1px solid #b42318;
+    border-radius: 6px;
+  }
+
+  .pro-btn {
+    box-sizing: border-box;
+    min-height: 46px;
+  }
+
+  .pro-btn--block {
+    width: 100%;
+    margin-top: 22px;
+  }
+
+  .pro-btn[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &__fine {
+    margin: 12px 0 0;
+    text-align: center;
+    font-size: 12px;
+    color: #5b6875;
+  }
+
+  // Honeypot: clipped off-screen rather than display:none, which some bots skip.
+  &__trap {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  &__tick {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: #101820;
+    color: #ffab3f;
+  }
+
+  &__sent-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+
+    .pro-claim__card-title {
+      margin: 0;
+    }
+  }
+
+  &__steps {
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 0;
+    display: grid;
+    gap: 14px;
+
+    li {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    strong {
+      display: block;
+      font-weight: 600;
+      color: #101820;
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #3d4a57;
+    }
+  }
+
+  &__step-number {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid #101820;
+    border-radius: 50%;
+    font-family: $pro-mono;
+    font-size: 13px;
+    font-weight: 600;
+    color: #101820;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 22px 0;
+
+    // Side by side on desktop (wraps on phones): tighter padding so both fit the card.
+    .pro-btn {
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 14px 8px;
+      white-space: nowrap;
+
+      @media (max-width: 600px) {
+        flex-basis: 100%;
+      }
+    }
+  }
+
+  // The global `.pro-page a` colour would otherwise win over the accent button's ink text.
+  a.pro-btn--accent,
+  a.pro-btn--accent:hover,
+  a.pro-btn--ghost,
+  a.pro-btn--ghost:hover {
+    color: $pro-ink;
+  }
+
+  &__ends {
+    padding: 14px 18px;
+    background: #fff7ea;
+    border: 1.5px dashed #101820;
+    border-radius: 8px;
+
+    span {
+      font-family: $pro-mono;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      color: #a55d00;
+    }
+
+    p {
+      margin: 4px 0 0;
+      font-size: 17px;
+    }
+  }
+
+  @media (max-width: 900px) {
+    &__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    &__row,
+    &__checks,
+    &__facts {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 }

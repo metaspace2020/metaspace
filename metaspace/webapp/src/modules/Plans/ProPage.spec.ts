@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ref, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import { useQuery } from '@vue/apollo-composable'
@@ -18,9 +18,11 @@ import {
   trackProPeriodChange,
 } from '../../lib/gtag'
 import ProPlans from './sections/ProPlans'
+import config from '../../lib/config'
 
 vi.mock('@vue/apollo-composable', () => ({
   useQuery: vi.fn(),
+  useMutation: vi.fn(() => ({ mutate: vi.fn() })),
   useSubscription: vi.fn(() => ({ onResult: vi.fn() })),
   DefaultApolloClient: vi.fn(),
 }))
@@ -67,6 +69,7 @@ const plans = [
 // how DatasetActionsDropdown.spec.ts stubs multiple co-mounted queries.
 let allPlans = plans
 let currentUser: { id: string } | null = { id: 'u1' }
+let activeSubscription: { planId: string } | null = null
 
 const mockQueryResult = (data: Record<string, any>, loading = false) => ({
   result: ref(data),
@@ -78,12 +81,13 @@ beforeEach(() => {
   vi.clearAllMocks()
   allPlans = plans
   currentUser = { id: 'u1' }
+  activeSubscription = null
   ;(useQuery as any).mockImplementation((query: any) => {
     if (query === getPlansQuery) {
       return mockQueryResult({ allPlans })
     }
     if (query === getActiveUserSubscriptionQuery) {
-      return mockQueryResult({ activeUserSubscription: null })
+      return mockQueryResult({ activeUserSubscription: activeSubscription })
     }
     if (query === currentUserIdQuery) {
       return mockQueryResult({ currentUser })
@@ -154,6 +158,314 @@ describe('ProPage', () => {
     await wrapper.find('[data-test="subscribe-advanced"]').trigger('click')
     expect(pushSpy).toHaveBeenCalledWith('/payment?planId=p2')
     pushSpy.mockRestore()
+  })
+})
+
+describe('ProPage campaigns', () => {
+  const mountPage = () =>
+    mount(ProPage, {
+      global: {
+        plugins: [store, router],
+        stubs: { ElRadioGroup: true, ElRadioButton: true, ElSkeleton: true, ElSkeletonItem: true },
+      },
+    })
+
+  const twoTermPlan = (id: string, name: string, tier: string, order: number, y1: number, y2: number) => ({
+    id,
+    tier,
+    name,
+    description: '',
+    isActive: true,
+    isDefault: false,
+    displayOrder: order,
+    pricingOptions: [
+      { id: `${id}-y1`, periodMonths: 12, priceCents: y1, displayName: '1 year', isActive: true, displayOrder: 1 },
+      { id: `${id}-y2`, periodMonths: 24, priceCents: y2, displayName: '2 years', isActive: true, displayOrder: 2 },
+    ],
+    planRules: [],
+  })
+
+  const packPlan = {
+    id: 'pack',
+    type: 'pack',
+    tier: 'standard',
+    name: 'Dataset pack',
+    description: '',
+    isActive: true,
+    isDefault: false,
+    displayOrder: 10,
+    pricingOptions: [
+      { id: 'pack-6m', periodMonths: 6, priceCents: 34900, displayName: '6 months', isActive: true, displayOrder: 0 },
+    ],
+    planRules: [],
+  }
+
+  const setToday = (iso: string) => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(iso))
+  }
+
+  const pushOnClick = async (wrapper: ReturnType<typeof mountPage>, selector: string) => {
+    const pushSpy = vi.spyOn(router, 'push').mockResolvedValue(undefined as any)
+    await wrapper.find(selector).trigger('click')
+    const url = pushSpy.mock.calls[0]?.[0]
+    pushSpy.mockRestore()
+    return url
+  }
+
+  beforeEach(() => {
+    allPlans = [
+      plans[0],
+      twoTermPlan('p1', 'Low', 'low', 1, 99900, 189900),
+      twoTermPlan('p2', 'Medium', 'medium', 2, 299900, 539900),
+      packPlan,
+    ] as any
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('shows no campaign before Black Friday and checks out without a coupon', async () => {
+    setToday('2026-11-26T12:00:00Z')
+    const wrapper = mountPage()
+    await nextTick()
+    expect(wrapper.find('.pro-campaign-banner').exists()).toBe(false)
+    expect(wrapper.find('.pro-coupon').exists()).toBe(false)
+    expect(wrapper.find('#claim').exists()).toBe(false)
+    expect(wrapper.findComponent(ProPlans).props('blackFriday')).toBeNull()
+    expect(await pushOnClick(wrapper, '[data-test="subscribe-advanced"]')).toBe('/payment?planId=p2')
+  })
+
+  it('shows the Black Friday banner and codes from the 27th', async () => {
+    setToday('2026-11-28T12:00:00Z')
+    const wrapper = mountPage()
+    await nextTick()
+    expect(wrapper.findAll('.pro-campaign-banner')).toHaveLength(1)
+    expect(wrapper.find('#claim').exists()).toBe(false)
+    expect(wrapper.find('.pro-coupon').exists()).toBe(true)
+    expect(wrapper.findComponent(ProPlans).props('blackFriday')).toMatchObject({ headlinePercent: 50 })
+  })
+
+  it('carries the plan code and its pricing option to checkout while Black Friday is live', async () => {
+    setToday('2026-11-28T12:00:00Z')
+    const wrapper = mountPage()
+    await nextTick()
+    expect(await pushOnClick(wrapper, '[data-test="subscribe-essential"]')).toBe(
+      '/payment?planId=p1&pricingId=p1-y1&coupon=ESSENTIALPROMO1'
+    )
+    expect(await pushOnClick(wrapper, '[data-test="buy-dataset-pack"]')).toBe(
+      '/payment?planId=pack&pricingId=pack-6m&coupon=PACKPROMO6'
+    )
+  })
+
+  it('carries the two-year code and pricing option when the two-year term is selected', async () => {
+    setToday('2026-11-28T12:00:00Z')
+    const wrapper = mountPage()
+    await nextTick()
+    wrapper.findComponent(ProPlans).vm.$emit('period', '2 years')
+    await nextTick()
+    expect(await pushOnClick(wrapper, '[data-test="subscribe-essential"]')).toBe(
+      '/payment?planId=p1&pricingId=p1-y2&coupon=ESSENTIALPROMO2'
+    )
+  })
+
+  it('checks out without a coupon on the plan the visitor already has', async () => {
+    setToday('2026-11-28T12:00:00Z')
+    activeSubscription = { planId: 'p1' }
+    const wrapper = mountPage()
+    await nextTick()
+    const pushSpy = vi.spyOn(router, 'push').mockResolvedValue(undefined as any)
+    wrapper.findComponent(ProPlans).vm.$emit('subscribe', 'p1')
+    expect(pushSpy).toHaveBeenCalledWith('/payment?planId=p1')
+    pushSpy.mockRestore()
+  })
+
+  it('checks out without a coupon on a term that has no codes', async () => {
+    setToday('2026-11-28T12:00:00Z')
+    allPlans = [
+      plans[0],
+      {
+        ...twoTermPlan('es', 'Essential', 'essential', 1, 99900, 189900),
+        pricingOptions: [
+          { id: 'es-m', periodMonths: 1, priceCents: 9900, displayName: 'Monthly', isActive: true, displayOrder: 0 },
+          { id: 'es-y', periodMonths: 12, priceCents: 99900, displayName: 'Annual', isActive: true, displayOrder: 1 },
+        ],
+      },
+    ] as any
+    const wrapper = mountPage()
+    await nextTick()
+    wrapper.findComponent(ProPlans).vm.$emit('period', 'Monthly')
+    await nextTick()
+    const pushSpy = vi.spyOn(router, 'push').mockResolvedValue(undefined as any)
+    wrapper.findComponent(ProPlans).vm.$emit('subscribe', 'es')
+    expect(pushSpy).toHaveBeenCalledWith('/payment?planId=es')
+    pushSpy.mockRestore()
+  })
+
+  describe('banner offset', () => {
+    const originalWidth = window.innerWidth
+    const originalRect = Element.prototype.getBoundingClientRect
+    const offsetOf = (wrapper: ReturnType<typeof mountPage>) =>
+      (wrapper.find('.pro-page').element as HTMLElement).style.getPropertyValue('--pro-campaign-offset')
+
+    beforeEach(() => {
+      Element.prototype.getBoundingClientRect = function () {
+        return { height: this.classList.contains('pro-campaign-banners') ? 108 : 0 } as DOMRect
+      }
+    })
+
+    afterEach(() => {
+      window.innerWidth = originalWidth
+      Element.prototype.getBoundingClientRect = originalRect
+    })
+
+    it('is the measured banner height at 768px and wider', async () => {
+      setToday('2026-12-01T12:00:00Z')
+      window.innerWidth = 768
+      const wrapper = mountPage()
+      await nextTick()
+      await nextTick()
+      expect(offsetOf(wrapper)).toBe('108px')
+    })
+
+    it('is not set below 768px', async () => {
+      setToday('2026-12-01T12:00:00Z')
+      window.innerWidth = 767
+      const wrapper = mountPage()
+      await nextTick()
+      await nextTick()
+      expect(offsetOf(wrapper)).toBe('')
+    })
+
+    it('follows a resize across the breakpoint', async () => {
+      setToday('2026-12-01T12:00:00Z')
+      window.innerWidth = 1024
+      const wrapper = mountPage()
+      await nextTick()
+      await nextTick()
+      expect(offsetOf(wrapper)).toBe('108px')
+      window.innerWidth = 500
+      window.dispatchEvent(new Event('resize'))
+      await nextTick()
+      expect(offsetOf(wrapper)).toBe('')
+      wrapper.unmount()
+    })
+
+    it('leaves the page untouched when no campaign is live', async () => {
+      setToday('2026-11-26T12:00:00Z')
+      const wrapper = mountPage()
+      await nextTick()
+      await nextTick()
+      expect(offsetOf(wrapper)).toBe('')
+      expect(wrapper.find('.pro-page').attributes('style')).toBeUndefined()
+    })
+  })
+
+  it('renders both banners before the section nav and the claim section once Cyber Monday starts', async () => {
+    setToday('2026-12-01T12:00:00Z')
+    const wrapper = mountPage()
+    await nextTick()
+    expect(wrapper.findAll('.pro-campaign-banner')).toHaveLength(2)
+    const page = wrapper.find('.pro-page').element
+    expect(page.firstElementChild?.querySelector('.pro-campaign-banner')).not.toBeNull()
+    expect(page.children[1].classList.contains('pro-section-nav')).toBe(true)
+    const html = wrapper.html()
+    expect(wrapper.find('#claim').exists()).toBe(true)
+    expect(html.indexOf('id="claim"')).toBeGreaterThan(html.indexOf('id="analysis"'))
+    expect(html.indexOf('id="claim"')).toBeLessThan(html.indexOf('id="privacy"'))
+  })
+
+  it('keeps the page campaign-free once both campaigns have ended', async () => {
+    setToday('2027-01-01T00:00:00Z')
+    const wrapper = mountPage()
+    await nextTick()
+    expect(wrapper.find('.pro-campaign-banner').exists()).toBe(false)
+    expect(wrapper.find('#claim').exists()).toBe(false)
+  })
+
+  it('renders nothing campaign-related before the mounted hook has set the date', async () => {
+    setToday('2026-12-01T12:00:00Z')
+    const wrapper = mountPage()
+    // The first render is what prerendering and hydration see: `now` is still null.
+    expect(wrapper.find('.pro-campaign-banner').exists()).toBe(false)
+    expect(wrapper.find('#claim').exists()).toBe(false)
+    expect(wrapper.find('.pro-coupon').exists()).toBe(false)
+    await nextTick()
+    expect(wrapper.find('#claim').exists()).toBe(true)
+  })
+
+  it('never says "Black Friday" on 15 Dec: the same codes are shown as the year-end offer', async () => {
+    setToday('2026-12-15T12:00:00Z')
+    const wrapper = mountPage()
+    await nextTick()
+    expect(wrapper.text()).not.toMatch(/black friday/i)
+    expect(wrapper.find('.pro-campaign-banner__label').text()).toBe('YEAR-END OFFER · UNTIL 31\u00a0DEC\u00a02026')
+    expect(wrapper.find('.pro-campaign-banner__text').text()).toBe(
+      'Up to 50% off METASPACE Pro plans until 31\u00a0Dec\u00a02026. Each plan has its own code.'
+    )
+    expect(wrapper.find('[data-test="campaign-callout"]').text()).toContain('YEAR-END OFFER · UNTIL 31 DEC 2026')
+    expect(wrapper.find('.pro-coupon__label').text()).toMatch(/^YEAR-END · \d+% OFF$/)
+    expect(wrapper.find('.pro-campaign-footnote').text()).toContain('Year-end codes are valid until 31 Dec 2026.')
+    expect(wrapper.findComponent(ProPlans).props('blackFriday').codes).toHaveLength(9)
+    expect(wrapper.find('#claim').exists()).toBe(false)
+  })
+
+  describe('?feat=promo preview', () => {
+    const features = config.features as Record<string, boolean>
+    afterEach(() => {
+      features.promo = false
+      features.promo1 = false
+      features.promo2 = false
+    })
+
+    it('shows only Black Friday with promo1', async () => {
+      setToday('2026-11-01T12:00:00Z')
+      features.promo1 = true
+      const wrapper = mountPage()
+      await nextTick()
+      expect(wrapper.findAll('.pro-campaign-banner')).toHaveLength(1)
+      expect(wrapper.find('.pro-campaign-banner__label').text()).toContain('BLACK FRIDAY')
+      expect(wrapper.find('.pro-coupon').exists()).toBe(true)
+      expect(wrapper.find('#claim').exists()).toBe(false)
+    })
+
+    it('shows only Cyber Monday with promo2', async () => {
+      setToday('2026-11-01T12:00:00Z')
+      features.promo2 = true
+      const wrapper = mountPage()
+      await nextTick()
+      expect(wrapper.findAll('.pro-campaign-banner')).toHaveLength(1)
+      expect(wrapper.find('.pro-campaign-banner__label').text()).toBe('CYBER MONDAY')
+      expect(wrapper.find('#claim').exists()).toBe(true)
+      expect(wrapper.find('.pro-coupon').exists()).toBe(false)
+      expect(wrapper.findComponent(ProPlans).props('blackFriday')).toBeNull()
+    })
+
+    it('shows both campaigns before their windows when the promo flag is on', async () => {
+      setToday('2026-11-01T12:00:00Z')
+      config.features.promo = true
+      const wrapper = mountPage()
+      // Nothing campaign-related in the first render, exactly like the prerendered HTML.
+      expect(wrapper.find('.pro-campaign-banner').exists()).toBe(false)
+      expect(wrapper.find('#claim').exists()).toBe(false)
+      await nextTick()
+      expect(wrapper.findAll('.pro-campaign-banner')).toHaveLength(2)
+      expect(wrapper.find('#claim').exists()).toBe(true)
+      expect(wrapper.find('.pro-coupon').exists()).toBe(true)
+      expect(wrapper.findComponent(ProPlans).props('blackFriday')).toMatchObject({ headlinePercent: 50 })
+    })
+
+    it('shows nothing campaign-related before the windows when the flag is off', async () => {
+      setToday('2026-11-01T12:00:00Z')
+      config.features.promo = false
+      const wrapper = mountPage()
+      await nextTick()
+      expect(wrapper.find('.pro-campaign-banner').exists()).toBe(false)
+      expect(wrapper.find('#claim').exists()).toBe(false)
+      expect(wrapper.find('.pro-coupon').exists()).toBe(false)
+      expect(wrapper.findComponent(ProPlans).props('blackFriday')).toBeNull()
+    })
   })
 })
 

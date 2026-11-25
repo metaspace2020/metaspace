@@ -1,7 +1,8 @@
-import { computed, defineComponent, PropType } from 'vue'
+import { computed, defineComponent, PropType, ref } from 'vue'
 import { ElRadioButton, ElRadioGroup, ElSkeleton, ElSkeletonItem } from '../../../lib/element-plus'
 import { RouterLink } from 'vue-router'
 import type { Plan, PricingOption } from '../../../api/plan'
+import type { BlackFridayCampaign, CampaignCode } from '../campaign'
 import { formatPrice, getPeriodDisplayName, getPricingOptionForPeriod, getPriceForPeriod } from '../../../lib/pricing'
 import {
   bulletText,
@@ -14,6 +15,8 @@ import {
   TIER_SPECS,
 } from '../proContent'
 import { scrollToHashSection } from '../scrollToSection'
+import { campaignLabels, couponFor, discountedCents, formatCampaignDate, termForMonths } from '../campaign'
+import ProCouponBox from './ProCouponBox'
 
 const ALL_TIERS: ProTier[] = ['free', 'essential', 'advanced', 'premium', 'max']
 
@@ -50,6 +53,7 @@ export default defineComponent({
     radioValue: { type: String, default: '' },
     activePlanId: { type: String as PropType<string | null>, default: null },
     packPlan: { type: Object as PropType<Plan | null>, default: null },
+    blackFriday: { type: Object as PropType<BlackFridayCampaign | null>, default: null },
   },
   emits: ['subscribe', 'period', 'buyPack'],
   setup(props, { emit }) {
@@ -211,6 +215,62 @@ export default defineComponent({
       return priceCents != null ? `$${groupThousands(formatPrice(priceCents))}` : '$350'
     })
 
+    // --- Black Friday -------------------------------------------------------
+    const copiedCode = ref<string | null>(null)
+
+    const copyCode = async (code: string) => {
+      try {
+        await navigator.clipboard.writeText(code)
+        copiedCode.value = code
+      } catch (e) {
+        // Clipboard unavailable or denied: the code stays visible to copy by hand.
+      }
+    }
+
+    const campaignTerm = computed(() => termForMonths(props.selectedPeriod?.periodMonths))
+
+    /** The code that applies to a tier on the selected term, never on the plan the visitor already has. */
+    const campaignFor = (tier: ProTier): CampaignCode | null =>
+      couponFor(
+        props.blackFriday,
+        tier,
+        campaignTerm.value,
+        byTier.value[tier],
+        !!pricingOptionFor(tier),
+        props.activePlanId
+      )
+
+    const regularCents = (tier: ProTier): number | null => {
+      const plan = byTier.value[tier]
+      return plan && props.selectedPeriod ? getPriceForPeriod(plan, props.selectedPeriod) : null
+    }
+
+    const money = (cents: number): string => groupThousands(formatPrice(cents))
+
+    const campaignPeriodLine = (): string => {
+      const until = props.blackFriday ? ` · until ${formatCampaignDate(props.blackFriday.end, false)}` : ''
+      return `${campaignTerm.value === 'TWO_YEARS' ? 'for two years with code' : 'first year with code'}${until}`
+    }
+
+    const renderCoupon = (code: CampaignCode) => (
+      <ProCouponBox
+        code={code.code}
+        percent={code.percent}
+        label={props.blackFriday ? campaignLabels(props.blackFriday).coupon : undefined}
+        copied={copiedCode.value === code.code}
+        onCopy={copyCode}
+      />
+    )
+
+    const packOptionCents = computed(
+      () => props.packPlan?.pricingOptions?.find((option) => option.isActive)?.priceCents ?? null
+    )
+
+    // The pack code only applies when the pack is sold through checkout.
+    const activePackCode = computed(() =>
+      couponFor(props.blackFriday, 'pack', null, props.packPlan, packOptionCents.value != null, props.activePlanId)
+    )
+
     const renderBullet = (bullet: TierBullet) =>
       bullet.map((segment, index) => {
         const key = `${index}-${segment.text}`
@@ -227,7 +287,7 @@ export default defineComponent({
     // selected billing term: neither when the plan is missing entirely, nor
     // when the plan exists but doesn't offer this period (pricingOptionFor
     // returns null), nor when no period is selected at all.
-    const renderCta = (tier: ProTier, testId: string, block = true) => {
+    const renderCta = (tier: ProTier, testId: string, block = true, code: CampaignCode | null = null) => {
       const plan = byTier.value[tier]
       if (!plan) {
         return null
@@ -250,10 +310,13 @@ export default defineComponent({
           data-test={testId}
           data-cta={`plans-subscribe-${tier}`}
           data-cta-destination="/payment"
-          class={`pro-btn${width} ${highlight ? 'pro-btn--accent' : 'pro-btn--ghost'}`}
+          class={`pro-btn${width} ${highlight ? 'pro-btn--accent' : 'pro-btn--ghost'}${
+            code ? ' pro-btn--campaign' : ''
+          }`}
           onClick={() => emit('subscribe', plan.id)}
         >
           Choose {TIER_SPECS[tier].label}
+          {code && ` · ${code.percent}% off`}
         </button>
       )
     }
@@ -262,11 +325,25 @@ export default defineComponent({
       CARD_TIERS.filter((tier) => byTier.value[tier]).map((tier) => {
         const spec = TIER_SPECS[tier]
         const price = priceFor(tier)
+        const code = campaignFor(tier)
+        const cents = regularCents(tier)
         return (
-          <div class={`pro-card ${spec.highlight ? 'pro-card--highlight' : ''}`} key={tier}>
+          <div
+            class={`pro-card ${spec.highlight ? 'pro-card--highlight' : ''}${code ? ' pro-card--coupon' : ''}`}
+            key={tier}
+          >
             {spec.highlight && <span class="pro-card__badge">MOST CHOSEN</span>}
             <p class="pro-card__tier">{spec.label}</p>
-            {price ? (
+            {price && code && cents != null ? (
+              <>
+                <p class="pro-card__price">
+                  <sup>$</sup>
+                  {money(discountedCents(cents, code.percent))}
+                  <s class="pro-card__was">${price}</s>
+                </p>
+                <p class="pro-card__period">{campaignPeriodLine()}</p>
+              </>
+            ) : price ? (
               <>
                 <p class="pro-card__price">
                   <sup>$</sup>
@@ -281,12 +358,13 @@ export default defineComponent({
               <p class="pro-card__price pro-card__price--unavailable">Not available on this billing term</p>
             ) : null}
             <p class="pro-card__blurb">{spec.blurb}</p>
+            {code && <div class="pro-card__coupon">{renderCoupon(code)}</div>}
             <ul class="pro-card__bullets">
               {spec.bullets.map((bullet) => (
                 <li key={bulletText(bullet)}>{renderBullet(bullet)}</li>
               ))}
             </ul>
-            <div class="pro-card__cta">{renderCta(tier, `subscribe-${tier}`)}</div>
+            <div class="pro-card__cta">{renderCta(tier, `subscribe-${tier}`, true, code)}</div>
           </div>
         )
       })
@@ -296,12 +374,36 @@ export default defineComponent({
         return null
       }
       const price = priceFor('max')
+      const code = campaignFor('max')
+      const cents = regularCents('max')
+      const quoteLink = (
+        <a
+          href="/contact"
+          class={`pro-strip__link${code ? ' pro-strip__more' : ''}`}
+          data-test="request-quote"
+          data-cta="plans-request-quote"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Need more volume? →
+        </a>
+      )
       return (
-        <div class="pro-strip pro-strip--max" data-test="max-strip" style={{ marginTop: '14px' }}>
+        <div
+          class={`pro-strip pro-strip--max${code ? ' pro-strip--coupon' : ''}`}
+          data-test="max-strip"
+          style={{ marginTop: '14px' }}
+        >
           <div class="pro-strip__body">
             <h3 class="pro-h3 pro-strip__heading">
               <span>{TIER_SPECS.max.label}</span>
-              {price ? (
+              {price && code && cents != null ? (
+                <>
+                  <span class="pro-strip__price">${money(discountedCents(cents, code.percent))}</span>
+                  <s class="pro-card__was">${price}</s>
+                  <span class="pro-strip__price-note">{campaignPeriodLine()}</span>
+                </>
+              ) : price ? (
                 <>
                   <span class="pro-strip__price">${price}</span>
                   <span class="pro-strip__price-note">{inlinePeriodNote.value}</span>
@@ -312,22 +414,48 @@ export default defineComponent({
             </h3>
             <p class="pro-strip__copy">{TIER_SPECS.max.blurb}</p>
           </div>
+          {code && <div class="pro-strip__coupon">{renderCoupon(code)}</div>}
           <div class="pro-strip__actions">
-            {renderCta('max', 'subscribe-max', false)}
-            <a
-              href="/contact"
-              class="pro-strip__link"
-              data-test="request-quote"
-              data-cta="plans-request-quote"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Need more volume? →
-            </a>
+            {renderCta('max', 'subscribe-max', false, code)}
+            {!code && quoteLink}
           </div>
+          {code && quoteLink}
         </div>
       )
     }
+
+    const renderHeading = () => (
+      <>
+        <p class="pro-eyebrow pro-eyebrow--accent">Plans</p>
+        <h2 class="pro-h2" style={{ maxWidth: '24ch' }}>
+          Priced by how much private work you do
+        </h2>
+        <p class="pro-lede" style={{ marginBottom: '32px' }}>
+          Every plan includes all downstream analysis tools, unlimited group members and unlimited projects. What
+          changes is how many private datasets you can run them on. Prices exclude VAT and applicable taxes.{' '}
+          <RouterLink to="/split">How Academic and Pro differ →</RouterLink>
+        </p>
+      </>
+    )
+
+    const renderCallout = (bf: BlackFridayCampaign) => (
+      <div class="pro-campaign-callout" data-test="campaign-callout">
+        <p class="pro-campaign-callout__label">
+          {(bf.renamed
+            ? `${campaignLabels(bf).name} · until ${formatCampaignDate(bf.end, true)}`
+            : `${campaignLabels(bf).name} · ${formatCampaignDate(bf.start, false)} – ${formatCampaignDate(
+                bf.end,
+                true
+              )}`
+          ).toUpperCase()}
+        </p>
+        <h3 class="pro-campaign-callout__title">Up to {bf.headlinePercent}% off your first year</h3>
+        <p class="pro-campaign-callout__body">
+          Copy the code on your plan, or just choose the plan — the code is applied at checkout. Two-year terms have
+          their own codes: switch to 2 years to see them.
+        </p>
+      </div>
+    )
 
     const renderTable = () => (
       <div class="pro-table-wrap">
@@ -373,15 +501,14 @@ export default defineComponent({
     return () => (
       <section id="plans" class="pro-section pro-section--tint">
         <div class="pro-shell">
-          <p class="pro-eyebrow pro-eyebrow--accent">Plans</p>
-          <h2 class="pro-h2" style={{ maxWidth: '24ch' }}>
-            Priced by how much private work you do
-          </h2>
-          <p class="pro-lede" style={{ marginBottom: '32px' }}>
-            Every plan includes all downstream analysis tools, unlimited group members and unlimited projects. What
-            changes is how many private datasets you can run them on. Prices exclude VAT and applicable taxes.{' '}
-            <RouterLink to="/split">How Academic and Pro differ →</RouterLink>
-          </p>
+          {props.blackFriday ? (
+            <div class="pro-campaign-head">
+              <div class="pro-campaign-head__text">{renderHeading()}</div>
+              {renderCallout(props.blackFriday)}
+            </div>
+          ) : (
+            renderHeading()
+          )}
 
           <div class="pro-billing-toggle">
             {props.loading ? (
@@ -454,33 +581,62 @@ export default defineComponent({
             <div class="pro-cards">{renderCards()}</div>
           )}
 
-          <p class="pro-note" style={{ marginTop: '14px' }}>
-            {lockNote.value}
-          </p>
+          {props.blackFriday ? (
+            <p class="pro-note pro-campaign-footnote" style={{ marginTop: '14px' }}>
+              {campaignLabels(props.blackFriday).codes} are valid until{' '}
+              {formatCampaignDate(props.blackFriday.end, true)}. Each plan has one code for a yearly term and another
+              for a two-year term; the discount applies to that first term. Annual terms renew at the price published on
+              the day of renewal.
+            </p>
+          ) : (
+            <p class="pro-note" style={{ marginTop: '14px' }}>
+              {lockNote.value}
+            </p>
+          )}
+          {props.blackFriday && (
+            <p class="sr-only" aria-live="polite">
+              {copiedCode.value ? `Code ${copiedCode.value} copied` : ''}
+            </p>
+          )}
 
           {!props.loading && renderMaxStrip()}
 
           {PRO_FLAGS.datasetPack && (
-            <div class="pro-datapack" style={{ marginTop: '14px' }}>
+            <div
+              class={`pro-datapack${activePackCode.value ? ' pro-datapack--coupon' : ''}`}
+              style={{ marginTop: '14px' }}
+            >
               <div class="pro-datapack__body">
                 <p class="pro-datapack__title">
-                  Dataset pack — no subscription <span class="pro-datapack__price">{packPriceText.value}</span>
+                  Dataset pack — no subscription{' '}
+                  {activePackCode.value && packOptionCents.value != null ? (
+                    <>
+                      <span class="pro-datapack__price">
+                        ${money(discountedCents(packOptionCents.value, activePackCode.value.percent))}
+                      </span>{' '}
+                      <s class="pro-datapack__was">{packPriceText.value}</s>
+                    </>
+                  ) : (
+                    <span class="pro-datapack__price">{packPriceText.value}</span>
+                  )}
                 </p>
                 <p class="pro-datapack__copy">
                   10 private datasets, valid 6 months from purchase, all downstream analysis tools included. One-off
                   payment — nothing renews.
                 </p>
               </div>
+              {activePackCode.value && <div class="pro-datapack__coupon">{renderCoupon(activePackCode.value)}</div>}
               {props.packPlan ? (
                 <button
                   type="button"
-                  class="pro-btn pro-btn--ghost pro-btn--sm"
+                  class={`pro-btn pro-btn--ghost pro-btn--sm${activePackCode.value ? ' pro-btn--campaign' : ''}`}
                   data-test="buy-dataset-pack"
                   data-cta="plans-buy-pack"
                   data-cta-destination="/payment"
                   onClick={() => emit('buyPack', props.packPlan!.id)}
                 >
                   Buy a pack
+                  {activePackCode.value && ` · ${activePackCode.value.percent}% off`}
                 </button>
               ) : (
                 <a

@@ -209,4 +209,18 @@ describe('ProFeatures', () => {
     expect(steps[1].classes()).not.toContain('pro-rail__step--accent')
     expect(steps[2].classes()).toContain('pro-rail__step--accent')
   })
+
+  it('renders the afterAnalysis slot between #analysis and #privacy, and nothing without it', () => {
+    expect(mount(ProFeatures).find('[data-test="slot"]').exists()).toBe(false)
+    const wrapper = mount(ProFeatures, {
+      slots: { afterAnalysis: '<section data-test="slot">campaign</section>' },
+    })
+    const html = wrapper.html()
+    const analysis = html.indexOf('id="analysis"')
+    const slot = html.indexOf('data-test="slot"')
+    const privacy = html.indexOf('id="privacy"')
+    expect(analysis).toBeGreaterThan(-1)
+    expect(slot).toBeGreaterThan(analysis)
+    expect(privacy).toBeGreaterThan(slot)
+  })
 })
