@@ -309,7 +309,7 @@ describe('ProCyberMondayClaim', () => {
     expect(mutate).toHaveBeenCalledWith({
       email: 'ADA@example.org',
       name: 'ADA@example.org',
-      category: 'pro',
+      category: 'pro_claim',
       message: buildClaimMessage({
         organisation: 'EMBL',
         role: 'postdoc',

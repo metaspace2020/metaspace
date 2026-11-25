@@ -168,7 +168,7 @@ export default defineComponent({
           email: form.email.trim(),
           // The contact mutation needs a name and the form has no name field: use the account name, else the email.
           name: escapeHtml(userName.value.trim() || form.email.trim()),
-          category: 'pro',
+          category: 'pro_claim',
           message: buildClaimMessage(form),
         })
         await showSent()

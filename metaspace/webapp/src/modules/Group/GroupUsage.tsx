@@ -118,6 +118,19 @@ export default defineComponent({
       }
     }
 
+    const formatMoney = (cents: number, currency?: string) =>
+      `${currency ? `${currency.toUpperCase()} ` : ''}$${((cents || 0) / 100).toFixed(2)}`
+
+    const getDiscountCents = (row: {
+      couponApplied?: boolean
+      originalAmountCents?: number
+      finalAmountCents?: number
+      discountAmountCents?: number
+    }) => {
+      if (!row.couponApplied) return 0
+      return row.discountAmountCents || Math.max((row.originalAmountCents || 0) - (row.finalAmountCents || 0), 0)
+    }
+
     const getStatusColor = (subscription: Subscription) => {
       if (!subscription.isActive) return 'danger'
       if (subscription.cancelledAt) return 'warning'
@@ -409,42 +422,43 @@ export default defineComponent({
                     <h3 class="section-title">Payment history</h3>
                     {subscription.transactions && subscription.transactions.length > 0 ? (
                       <el-table data={subscription.transactions} style={{ width: '100%' }}>
-                        <el-table-column prop="transactionDate" label="Date" width="150">
+                        <el-table-column prop="transactionDate" label="Date" min-width="180">
                           {{
                             default: ({ row }: { row: any }) => (
-                              <span>{formatDate(row.transactionDate || row.createdAt)}</span>
+                              <span class="whitespace-nowrap">{formatDate(row.transactionDate || row.createdAt)}</span>
                             ),
                           }}
                         </el-table-column>
 
-                        <el-table-column prop="originalAmountCents" label="Amount paid" width="140">
+                        <el-table-column prop="finalAmountCents" label="Amount paid" min-width="170">
                           {{
                             default: ({ row }: { row: any }) => (
-                              <span
-                                class={`original-amount ${
-                                  row.couponApplied && row.originalAmountCents !== row.finalAmountCents
-                                    ? 'discounted'
-                                    : ''
-                                }`}
-                              >
-                                {row.currency?.toUpperCase()} ${(row.finalAmountCents / 100).toFixed(2)}
-                              </span>
+                              <div class="payment-amount">
+                                <span class="amount-paid">{formatMoney(row.finalAmountCents, row.currency)}</span>
+                                {getDiscountCents(row) > 0 && (
+                                  <span class="original-amount discounted">
+                                    {formatMoney(row.originalAmountCents, row.currency)}
+                                  </span>
+                                )}
+                              </div>
                             ),
                           }}
                         </el-table-column>
-                        <el-table-column prop="couponApplied" label="Discount" width="100">
+                        <el-table-column prop="couponApplied" label="Discount" min-width="220">
                           {{
                             default: ({ row }: { row: any }) =>
                               row.couponApplied ? (
-                                <el-tag type="success" size="small">
-                                  {row.couponName || 'Applied'}
-                                </el-tag>
+                                <div class="payment-discount">
+                                  <el-tag type="success" size="small">
+                                    {row.couponName || 'Applied'}
+                                  </el-tag>
+                                </div>
                               ) : (
                                 <span>-</span>
                               ),
                           }}
                         </el-table-column>
-                        <el-table-column prop="status" label="Status" width="100">
+                        <el-table-column prop="status" label="Status" width="120">
                           {{
                             default: ({ row }: { row: any }) => (
                               <el-tag
