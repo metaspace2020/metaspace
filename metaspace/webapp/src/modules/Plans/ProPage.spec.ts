@@ -377,7 +377,7 @@ describe('ProPage campaigns', () => {
   })
 
   it('keeps the page campaign-free once both campaigns have ended', async () => {
-    setToday('2027-01-01T00:00:00Z')
+    setToday('2027-01-02T12:00:00Z')
     const wrapper = mountPage()
     await nextTick()
     expect(wrapper.find('.pro-campaign-banner').exists()).toBe(false)

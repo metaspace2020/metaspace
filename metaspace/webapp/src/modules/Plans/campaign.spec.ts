@@ -59,9 +59,10 @@ describe('campaign helpers', () => {
     expect(packCode(null)).toBeNull()
   })
 
-  it('formats dates in UTC', () => {
+  it('formats the calendar date as written', () => {
     expect(formatCampaignDate('2026-12-31T23:59:59Z', false)).toBe('31 Dec')
     expect(formatCampaignDate('2026-12-31T23:59:59Z', true)).toBe('31 Dec 2026')
+    expect(formatCampaignDate('2026-11-27T00:00:00', false)).toBe('27 Nov')
   })
 
   it('keeps the claim options ordered', () => {
@@ -106,22 +107,23 @@ describe('campaign helpers', () => {
 })
 
 describe('getActiveCampaigns', () => {
+  // Times without `Z` are the visitor's local time, like the campaign dates.
   const at = (iso: string) => getActiveCampaigns(new Date(iso))
 
   it('has neither campaign before Black Friday', () => {
-    expect(at('2026-11-26T12:00:00Z')).toEqual({ blackFriday: null, cyberMonday: null })
+    expect(at('2026-11-26T12:00:00')).toEqual({ blackFriday: null, cyberMonday: null })
   })
 
   it('has only Black Friday with its nine codes before Cyber Monday', () => {
-    const active = at('2026-11-28T12:00:00Z')
+    const active = at('2026-11-28T12:00:00')
     expect(active.blackFriday).toMatchObject({ start: CAMPAIGNS.blackFriday.start, end: CAMPAIGNS.blackFriday.end })
     expect(active.blackFriday?.codes).toHaveLength(9)
     expect(active.cyberMonday).toBeNull()
   })
 
   it('shows the campaign as Black Friday until 13 Dec and as the year-end offer from 14 Dec', () => {
-    const before = at('2026-12-13T23:59:59Z').blackFriday!
-    const after = at('2026-12-14T00:00:00Z').blackFriday!
+    const before = at('2026-12-13T23:59:59').blackFriday!
+    const after = at('2026-12-14T00:00:00').blackFriday!
     expect(before.renamed).toBe(false)
     expect(campaignLabels(before)).toEqual({
       name: 'Black Friday',
@@ -143,28 +145,29 @@ describe('getActiveCampaigns', () => {
   })
 
   it('has both while the windows overlap', () => {
-    const active = at('2026-12-01T12:00:00Z')
+    const active = at('2026-12-01T12:00:00')
     expect(active.blackFriday).not.toBeNull()
     expect(active.cyberMonday).toBe(CAMPAIGNS.cyberMonday)
   })
 
   it('has only Black Friday after Cyber Monday closes', () => {
-    const active = at('2026-12-14T00:00:00Z')
+    const active = at('2026-12-14T00:00:00')
     expect(active.blackFriday).not.toBeNull()
     expect(active.cyberMonday).toBeNull()
   })
 
   it('has neither once both have ended', () => {
-    expect(at('2027-01-01T00:00:00Z')).toEqual({ blackFriday: null, cyberMonday: null })
+    expect(at('2027-01-01T00:00:00')).toEqual({ blackFriday: null, cyberMonday: null })
   })
 
   it('includes the start and end instants', () => {
-    expect(at('2026-11-27T00:00:00Z').blackFriday).not.toBeNull()
-    expect(at('2026-11-26T23:59:59Z').blackFriday).toBeNull()
-    expect(at('2026-12-31T23:59:59Z').blackFriday).not.toBeNull()
-    expect(at('2026-12-31T23:59:59.001Z').blackFriday).toBeNull()
-    expect(at('2026-11-30T00:00:00Z').cyberMonday).not.toBeNull()
-    expect(at('2026-12-13T23:59:59Z').cyberMonday).not.toBeNull()
+    expect(at('2026-11-27T00:00:00').blackFriday).not.toBeNull()
+    expect(at('2026-11-26T23:59:59').blackFriday).toBeNull()
+    expect(at('2026-12-31T23:59:59').blackFriday).not.toBeNull()
+    expect(at('2026-12-31T23:59:59.001').blackFriday).toBeNull()
+    expect(at('2026-11-30T00:00:00').cyberMonday).not.toBeNull()
+    expect(at('2026-11-29T23:59:59').cyberMonday).toBeNull()
+    expect(at('2026-12-13T23:59:59').cyberMonday).not.toBeNull()
   })
 })
 

@@ -46,16 +46,18 @@ export interface CyberMondayCampaign {
   activationTurnaroundDays: number | null
 }
 
-/** One-off seasonal campaigns, hardcoded: only the Pro page reads them. Dates are inclusive and in UTC. */
+/** One-off seasonal campaigns, hardcoded: only the Pro page reads them. Dates are inclusive and in
+ * the visitor's own time zone (no `Z`): each campaign starts at midnight and ends at the end of the day, wherever they are.
+ */
 export const CAMPAIGNS: {
   blackFriday: BlackFridayCampaign & { renameAt: string }
   cyberMonday: CyberMondayCampaign
 } = {
   blackFriday: {
-    start: '2026-11-27T00:00:00Z',
-    end: '2026-12-31T23:59:59Z',
+    start: '2026-11-27T00:00:00',
+    end: '2026-12-31T23:59:59',
     // From this moment the campaign is displayed as the "Year-end offer"; nothing else about it changes.
-    renameAt: '2026-12-14T00:00:00Z',
+    renameAt: '2026-12-14T00:00:00',
     headlinePercent: 50,
     codes: [
       { tier: 'essential', term: 'YEARLY', code: 'ESSENTIALPROMO1', percent: 50 },
@@ -70,8 +72,8 @@ export const CAMPAIGNS: {
     ],
   },
   cyberMonday: {
-    start: '2026-11-30T00:00:00Z',
-    end: '2026-12-13T23:59:59Z',
+    start: '2026-11-30T00:00:00',
+    end: '2026-12-13T23:59:59',
     passDays: 30,
     activationTurnaroundDays: null,
   },
@@ -173,11 +175,11 @@ export const discountedCents = (priceCents: number, percent: number): number =>
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-/** "31 Dec" or "31 Dec 2026", in UTC. */
+/** "31 Dec" or "31 Dec 2026": the calendar date as written in `iso`, whatever the time zone. */
 export const formatCampaignDate = (iso: string, withYear: boolean): string => {
-  const date = new Date(iso)
-  const text = `${date.getUTCDate()} ${MONTHS[date.getUTCMonth()]}`
-  return withYear ? `${text} ${date.getUTCFullYear()}` : text
+  const [year, month, day] = iso.slice(0, 10).split('-').map(Number)
+  const text = `${day} ${MONTHS[month - 1]}`
+  return withYear ? `${text} ${year}` : text
 }
 
 export interface ClaimMessageForm {
