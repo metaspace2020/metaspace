@@ -77,8 +77,16 @@ const mockQueryResult = (data: Record<string, any>, loading = false) => ({
   onResult: vi.fn(),
 })
 
+const setToday = (iso: string) => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(iso))
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
+  // The page reads the clock to decide whether a campaign is live. Pin it before any campaign so the
+  // tests do not depend on the day they run; the campaign tests set their own date.
+  setToday('2026-11-01T12:00:00Z')
   allPlans = plans
   currentUser = { id: 'u1' }
   activeSubscription = null
@@ -103,6 +111,10 @@ beforeEach(() => {
     }
     return mockQueryResult({})
   })
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 describe('ProPage', () => {
@@ -200,11 +212,6 @@ describe('ProPage campaigns', () => {
     planRules: [],
   }
 
-  const setToday = (iso: string) => {
-    vi.useFakeTimers({ toFake: ['Date'] })
-    vi.setSystemTime(new Date(iso))
-  }
-
   const pushOnClick = async (wrapper: ReturnType<typeof mountPage>, selector: string) => {
     const pushSpy = vi.spyOn(router, 'push').mockResolvedValue(undefined as any)
     await wrapper.find(selector).trigger('click')
@@ -220,10 +227,6 @@ describe('ProPage campaigns', () => {
       twoTermPlan('p2', 'Medium', 'medium', 2, 299900, 539900),
       packPlan,
     ] as any
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
   })
 
   it('shows no campaign before Black Friday and checks out without a coupon', async () => {
