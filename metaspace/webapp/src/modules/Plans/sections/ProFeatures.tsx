@@ -84,7 +84,7 @@ const PRIVACY = [
 
 export default defineComponent({
   name: 'ProFeatures',
-  setup() {
+  setup(_props, { slots }) {
     return () => (
       <>
         <section class="pro-section pro-section--tight pro-section--tint" data-cta-section="intro">
@@ -179,6 +179,8 @@ export default defineComponent({
             </p>
           </div>
         </section>
+
+        {slots.afterAnalysis?.()}
 
         <section id="privacy" class="pro-section pro-section--tint">
           <div class="pro-shell">

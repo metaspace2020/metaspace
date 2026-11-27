@@ -127,15 +127,33 @@ METASPACE Team`
   logger.info(`Invitation email sent to ${email} by ${invitedBy}`)
 }
 
+// What the claimant of the Pro page's free month gets back, instead of the contact form's confirmation.
+const PRO_CLAIM_CONFIRMATION = {
+  subject: 'Your METASPACE Pro free month claim',
+  text:
+`Thank you for claiming your free month of METASPACE Pro downstream analysis.
+
+We have received your claim. Each pass is activated by hand, so there is nothing more for you to do right now. \
+We will email you as soon as it is switched on, and your free month starts on the day of activation, not today.
+
+METASPACE team`,
+}
+
 export const sendContactEmail = (email: string, name: string, category: string, message: string) => {
   const subject = `METASPACE contact [${category}]`
   let text = ''
   let recipients = [config.contact.email]
   let ccs = [config.contact.email]
+  let confirmation
   if (category === 'scientific') {
     text =
 `The user ${name} with email ${email} has sent a scientific support message with message ${message}.`
     recipients = [config.contact.sci_email]
+  } else if (category === 'pro_claim') {
+    text =
+`The user ${name} with email ${email} has claimed the METASPACE Pro free month with message ${message}.`
+    recipients = [config.contact.tech_email]
+    confirmation = PRO_CLAIM_CONFIRMATION
   } else if (category === 'software' || category === 'bug' || category === 'feature' || category === 'pro') {
     text =
 `The user ${name} with email ${email} has sent a ${category} support message with message ${message}.`
@@ -146,6 +164,6 @@ export const sendContactEmail = (email: string, name: string, category: string, 
     ccs = []
   }
 
-  sendRecipientsEmail(recipients, ccs, subject, text, email)
+  sendRecipientsEmail(recipients, ccs, subject, text, email, confirmation)
   logger.info(`Sent contact email to ${recipients.join(', ')}`)
 }

@@ -544,8 +544,8 @@ export default defineComponent({
       () => availablePeriods.value,
       (newPeriods) => {
         if (newPeriods.length > 0 && !state.selectedPeriod) {
-          // Default to the first available period (usually monthly)
-          state.selectedPeriod = newPeriods[0]
+          // Default to the period named in the URL, else the first available one (usually monthly)
+          state.selectedPeriod = newPeriods.find((period) => period.id === route.query.pricingId) || newPeriods[0]
         } else if (newPeriods.length > 0 && state.selectedPeriod) {
           // Update the selected period with fresh data (important for VAT updates)
           const currentSelectedId = state.selectedPeriod.id
@@ -715,6 +715,21 @@ export default defineComponent({
       state.coupon.error = null
       state.coupon.validationResult = null
     }
+
+    // A code in the URL (?coupon=) is applied once, when the plan and its pricing option have loaded.
+    let urlCouponApplied = false
+    watch(
+      [() => plan.value, () => state.selectedPricingOption],
+      ([loadedPlan, option]) => {
+        const code = route.query.coupon
+        if (!urlCouponApplied && typeof code === 'string' && code && loadedPlan && option) {
+          urlCouponApplied = true
+          state.coupon.code = code
+          applyCoupon()
+        }
+      },
+      { immediate: true }
+    )
 
     const openModal = (title: string, url: string) => {
       // Save current scroll position

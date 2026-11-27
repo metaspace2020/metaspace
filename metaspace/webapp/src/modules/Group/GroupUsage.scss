@@ -117,16 +117,42 @@
     font-size: 14px;
   }
   
+  .payment-amount,
+  .payment-discount {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    line-height: 1.4;
+  }
+
+  .amount-paid {
+    font-weight: 600;
+    color: #303133;
+    white-space: nowrap;
+  }
+
   .original-amount {
     color: #909399;
-    font-size: 13px;
-    
-    // Show strikethrough if different from final amount
+    font-size: 12px;
+    white-space: nowrap;
+
+    // The pre-discount price, shown under the amount actually paid
     &.discounted {
       text-decoration: line-through;
     }
   }
-  
+
+  .payment-discount .el-tag {
+    max-width: 100%;
+    height: auto;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.4;
+    padding-top: 2px;
+    padding-bottom: 2px;
+  }
+
   .user-email {
     color: #606266;
     font-size: 13px;

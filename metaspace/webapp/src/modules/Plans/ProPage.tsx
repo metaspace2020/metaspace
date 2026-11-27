@@ -1,4 +1,4 @@
-import { computed, defineComponent, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
+import { computed, defineComponent, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { useQuery } from '@vue/apollo-composable'
@@ -7,7 +7,7 @@ import { getActiveUserSubscriptionQuery } from '../../api/subscription'
 import { countUsersQuery, currentUserIdQuery } from '../../api/user'
 import { countDatasetsQuery } from '../../api/dataset'
 import { countPublicationsQuery } from '../../api/group'
-import { getAvailablePeriods, getPriceForPeriod } from '../../lib/pricing'
+import { getAvailablePeriods, getPriceForPeriod, getPricingOptionForPeriod } from '../../lib/pricing'
 import {
   trackBeginCheckout,
   trackPlansPageView,
@@ -15,6 +15,11 @@ import {
   trackProFaqOpen,
   trackProPeriodChange,
 } from '../../lib/gtag'
+import config from '../../lib/config'
+import { blackFridayAt, CAMPAIGNS, couponFor, getActiveCampaigns, termForMonths } from './campaign'
+import { resolveTier } from './proContent'
+import ProCyberMondayClaim from './sections/ProCyberMondayClaim'
+import ProCampaignBanner from './sections/ProCampaignBanner'
 import ProHero from './sections/ProHero'
 import ProSectionNav from './sections/ProSectionNav'
 import ProFeatures from './sections/ProFeatures'
@@ -36,6 +41,21 @@ export default defineComponent({
 
     const { result: plansResult, loading: plansLoading } = useQuery<AllPlansData>(getPlansQuery)
     const plans = computed(() => plansResult.value?.allPlans || [])
+
+    // The page is prerendered: `now` stays null until mounted, so the static HTML never contains a campaign.
+    const now = ref<Date | null>(null)
+    // Preview before the dates: `?feat=promo` shows both campaigns, `promo1` Black Friday only, `promo2` Cyber Monday only.
+    const preview = reactive({ blackFriday: false, cyberMonday: false })
+    const campaigns = computed(() => {
+      if (!now.value) {
+        return { blackFriday: null, cyberMonday: null }
+      }
+      const live = getActiveCampaigns(now.value)
+      return {
+        blackFriday: live.blackFriday || (preview.blackFriday ? blackFridayAt(now.value) : null),
+        cyberMonday: live.cyberMonday || (preview.cyberMonday ? CAMPAIGNS.cyberMonday : null),
+      }
+    })
 
     const { result: subscriptionsResult, loading: subscriptionLoading } = useQuery<any>(
       getActiveUserSubscriptionQuery,
@@ -78,9 +98,26 @@ export default defineComponent({
       { immediate: true }
     )
 
+    // From 768px the banners stick under the site header; the section nav and the scroll offsets then clear
+    // their measured height. Below that, or with no banner, the offset is 0 and the page is as it always was.
+    const pageEl = ref<HTMLElement | null>(null)
+    const campaignOffset = ref(0)
+    const measureBanners = () => {
+      const banners = pageEl.value?.querySelector('.pro-campaign-banners')
+      campaignOffset.value =
+        banners && window.innerWidth >= 768 ? Math.round(banners.getBoundingClientRect().height) : 0
+    }
+
     onMounted(() => {
       store.commit('setThemeVariant', 'pro')
+      const features = config.features as Record<string, boolean>
+      preview.blackFriday = !!(features.promo || features.promo1)
+      preview.cyberMonday = !!(features.promo || features.promo2)
+      now.value = new Date()
+      window.addEventListener('resize', measureBanners)
     })
+
+    watch(campaigns, measureBanners, { flush: 'post' })
 
     let plansViewTracked = false
     watch(
@@ -113,6 +150,7 @@ export default defineComponent({
     }
 
     onBeforeUnmount(() => {
+      window.removeEventListener('resize', measureBanners)
       store.commit('setThemeVariant', activeSubscription.value ? 'pro' : 'default')
     })
 
@@ -125,6 +163,12 @@ export default defineComponent({
       trackProPeriodChange({ billingPeriod: displayName, loggedIn: loggedIn.value })
     }
 
+    /** `/payment?planId=<id>`, plus the pricing option and Black Friday code when the clicked plan shows one. */
+    const checkoutUrl = (planId: string, pricingId?: string, code?: string): string =>
+      code && pricingId
+        ? `/payment?planId=${planId}&pricingId=${pricingId}&coupon=${encodeURIComponent(code)}`
+        : `/payment?planId=${planId}`
+
     const onSubscribe = (planId: string) => {
       const plan = plans.value.find((p) => p.id === planId)
       trackBeginCheckout({
@@ -134,7 +178,19 @@ export default defineComponent({
         billingPeriod: state.selectedPeriod?.displayName || 'unknown',
         loggedIn: loggedIn.value,
       })
-      router.push(`/payment?planId=${planId}`)
+      const pricingOption = plan && state.selectedPeriod ? getPricingOptionForPeriod(plan, state.selectedPeriod) : null
+      const tier = plan ? resolveTier(plan) : null
+      const code = tier
+        ? couponFor(
+            campaigns.value.blackFriday,
+            tier,
+            termForMonths(state.selectedPeriod?.periodMonths),
+            plan,
+            !!pricingOption,
+            activeSubscription.value?.planId || null
+          )
+        : null
+      router.push(checkoutUrl(planId, pricingOption?.id, code?.code))
     }
 
     const onBuyPack = (planId: string) => {
@@ -146,11 +202,25 @@ export default defineComponent({
         billingPeriod: pricing?.displayName || 'one-time',
         loggedIn: loggedIn.value,
       })
-      router.push(`/payment?planId=${planId}`)
+      const code = couponFor(
+        campaigns.value.blackFriday,
+        'pack',
+        null,
+        packPlan.value,
+        !!pricing,
+        activeSubscription.value?.planId || null
+      )
+      router.push(checkoutUrl(planId, pricing?.id, code?.code))
     }
 
     return () => (
-      <div class="pro-page" onClick={onCtaClick}>
+      <div
+        class="pro-page"
+        ref={pageEl}
+        style={campaignOffset.value ? { '--pro-campaign-offset': `${campaignOffset.value}px` } : undefined}
+        onClick={onCtaClick}
+      >
+        <ProCampaignBanner blackFriday={campaigns.value.blackFriday} cyberMonday={campaigns.value.cyberMonday} />
         <ProSectionNav />
 
         <ProHero
@@ -158,7 +228,17 @@ export default defineComponent({
           datasetCount={datasetCount.value}
           publicationCount={publicationCount.value}
         />
-        <ProFeatures />
+        <ProFeatures>
+          {{
+            afterAnalysis: () =>
+              campaigns.value.cyberMonday ? (
+                <ProCyberMondayClaim
+                  cyberMonday={campaigns.value.cyberMonday}
+                  blackFriday={campaigns.value.blackFriday}
+                />
+              ) : null,
+          }}
+        </ProFeatures>
         <ProDocs />
         <ProPlans
           plans={plans.value}
@@ -168,6 +248,7 @@ export default defineComponent({
           radioValue={state.radioValue}
           activePlanId={activeSubscription.value?.planId || null}
           packPlan={packPlan.value}
+          blackFriday={campaigns.value.blackFriday}
           onSubscribe={onSubscribe}
           onBuyPack={onBuyPack}
           onPeriod={onPeriod}

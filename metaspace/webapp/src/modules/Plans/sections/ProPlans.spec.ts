@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import ProPlans, { groupThousands } from './ProPlans'
 import type { Plan, PricingOption } from '../../../api/plan'
+import type { BlackFridayCampaign } from '../campaign'
 
 const period: PricingOption = {
   id: 'y1',
@@ -698,5 +699,205 @@ describe('groupThousands', () => {
     expect(groupThousands('2999.50')).toBe('2,999.50')
     expect(groupThousands('2999.50')).not.toBe('2,9,9,9.50')
     expect(groupThousands('1000000.99')).toBe('1,000,000.99')
+  })
+})
+
+describe('ProPlans Black Friday', () => {
+  const twoYears: PricingOption = {
+    id: 'y2',
+    periodMonths: 24,
+    priceCents: 0,
+    displayName: '2 years',
+    isActive: true,
+    displayOrder: 2,
+  }
+  const monthly: PricingOption = {
+    id: 'm1',
+    periodMonths: 1,
+    priceCents: 0,
+    displayName: 'Monthly',
+    isActive: true,
+    displayOrder: 0,
+  }
+  const twoYearCents: Record<string, number> = { p1: 189900, p2: 549900, p3: 899900, p4: 1799900 }
+  const bfPlans = plans.map((plan) =>
+    twoYearCents[plan.id]
+      ? ({
+          ...plan,
+          pricingOptions: [...plan.pricingOptions, { ...twoYears, priceCents: twoYearCents[plan.id] }],
+        } as Plan)
+      : plan
+  )
+  const packPlan = {
+    id: 'pack1',
+    type: 'pack',
+    tier: 'standard',
+    name: 'Dataset pack',
+    isActive: true,
+    displayOrder: 10,
+    pricingOptions: [
+      { id: 'pp6', periodMonths: 6, priceCents: 34900, displayName: '6 months', isActive: true, displayOrder: 0 },
+    ],
+  } as unknown as Plan
+
+  const blackFriday: BlackFridayCampaign = {
+    start: '2026-11-27T00:00:00Z',
+    end: '2026-12-31T23:59:59Z',
+    headlinePercent: 50,
+    codes: [
+      { tier: 'essential', term: 'YEARLY', code: 'ESSENTIALPROMO1', percent: 50 },
+      { tier: 'advanced', term: 'YEARLY', code: 'ADVANCEDPROMO1', percent: 40 },
+      { tier: 'premium', term: 'YEARLY', code: 'PREMIUMPROMO1', percent: 35 },
+      { tier: 'max', term: 'YEARLY', code: 'MAXPROMO1', percent: 30 },
+      { tier: 'essential', term: 'TWO_YEARS', code: 'ESSENTIALPROMO2', percent: 40 },
+      { tier: 'advanced', term: 'TWO_YEARS', code: 'ADVANCEDPROMO2', percent: 30 },
+      { tier: 'premium', term: 'TWO_YEARS', code: 'PREMIUMPROMO2', percent: 25 },
+      { tier: 'max', term: 'TWO_YEARS', code: 'MAXPROMO2', percent: 20 },
+      { tier: null, term: 'DATASET_PACK', code: 'PACKPROMO6', percent: 15 },
+    ],
+  }
+
+  const mountBf = (overrides = {}) =>
+    mountPlans({
+      plans: bfPlans,
+      packPlan,
+      blackFriday,
+      availablePeriods: [monthly, period, twoYears],
+      ...overrides,
+    })
+
+  const card = (wrapper: ReturnType<typeof mountPlans>, label: string) =>
+    wrapper.findAll('.pro-card').find((c) => c.find('.pro-card__tier').text() === label)!
+
+  const withClipboard = (writeText: unknown) => {
+    Object.defineProperty(navigator, 'clipboard', { value: writeText ? { writeText } : undefined, configurable: true })
+  }
+
+  afterEach(() => {
+    withClipboard(undefined)
+    vi.restoreAllMocks()
+  })
+
+  it('renders without any campaign element when blackFriday is null', () => {
+    const wrapper = mountPlans({ blackFriday: null })
+    expect(wrapper.find('.pro-coupon').exists()).toBe(false)
+    expect(wrapper.find('.pro-campaign-callout').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Annual terms renew at the price published on the day of renewal.')
+  })
+
+  it('shows the yearly discount, struck price, code and button on a card and the Max strip', () => {
+    const wrapper = mountBf()
+    const essential = card(wrapper, 'Essential')
+    expect(essential.find('.pro-card__price').text()).toContain('499.50')
+    expect(essential.find('.pro-card__was').text()).toContain('999')
+    expect(essential.find('.pro-card__period').text()).toBe('first year with code · until 31 Dec')
+    expect(essential.find('.pro-coupon__code').text()).toBe('ESSENTIALPROMO1')
+    expect(essential.find('[data-test="subscribe-essential"]').text()).toBe('Choose Essential · 50% off')
+    const max = wrapper.find('[data-test="max-strip"]')
+    expect(max.find('.pro-strip__price').text()).toContain('6,999.30')
+    expect(max.find('.pro-strip__price-note').text()).toBe('first year with code · until 31 Dec')
+    expect(max.find('[data-test="subscribe-max"]').text()).toBe('Choose Max · 30% off')
+    expect(max.find('.pro-coupon__code').text()).toBe('MAXPROMO1')
+  })
+
+  it('takes the end date on the cards from the campaign data', () => {
+    const wrapper = mountBf({ blackFriday: { ...blackFriday, end: '2026-12-20T23:59:59Z' } })
+    expect(card(wrapper, 'Advanced').find('.pro-card__period').text()).toBe('first year with code · until 20 Dec')
+  })
+
+  it('moves "Need more volume?" out of the button column to its own line when a code shows', () => {
+    const wrapper = mountBf()
+    const strip = wrapper.find('[data-test="max-strip"]')
+    const link = strip.find('[data-test="request-quote"]')
+    expect(link.text()).toBe('Need more volume? →')
+    expect(strip.find('.pro-strip__actions [data-test="request-quote"]').exists()).toBe(false)
+    expect(strip.find('.pro-strip__actions [data-test="subscribe-max"]').exists()).toBe(true)
+    expect(strip.element.lastElementChild).toBe(link.element)
+    expect(link.classes()).toContain('pro-strip__more')
+  })
+
+  it('keeps the link under the button on the Max strip when no code shows', () => {
+    const wrapper = mountBf({ blackFriday: null })
+    const strip = wrapper.find('[data-test="max-strip"]')
+    expect(strip.find('.pro-strip__actions [data-test="request-quote"]').exists()).toBe(true)
+    expect(strip.find('.pro-strip__more').exists()).toBe(false)
+  })
+
+  it('switches to the two-year codes and prices', () => {
+    const wrapper = mountBf({ selectedPeriod: twoYears, radioValue: '2 years' })
+    const essential = card(wrapper, 'Essential')
+    expect(essential.find('.pro-coupon__code').text()).toBe('ESSENTIALPROMO2')
+    expect(essential.find('[data-test="subscribe-essential"]').text()).toBe('Choose Essential · 40% off')
+    expect(essential.find('.pro-card__period').text()).toBe('for two years with code · until 31 Dec')
+    expect(essential.find('.pro-card__price').text()).toContain('1,139.40')
+    expect(wrapper.find('[data-test="max-strip"] .pro-strip__price-note').text()).toBe(
+      'for two years with code · until 31 Dec'
+    )
+  })
+
+  it('renders regularly, without coupons, on a monthly period', () => {
+    const wrapper = mountBf({ selectedPeriod: monthly, radioValue: 'Monthly' })
+    // Only the pack keeps its code: it is not tied to a billing term.
+    expect(wrapper.findAll('.pro-coupon')).toHaveLength(1)
+    expect(wrapper.find('.pro-datapack .pro-coupon').exists()).toBe(true)
+    expect(wrapper.find('.pro-card__was').exists()).toBe(false)
+  })
+
+  it('discounts the dataset pack in both toggle states', () => {
+    ;[{ selectedPeriod: period }, { selectedPeriod: twoYears, radioValue: '2 years' }].forEach((props) => {
+      const wrapper = mountBf(props)
+      const pack = wrapper.find('.pro-datapack')
+      expect(pack.find('.pro-coupon__code').text()).toBe('PACKPROMO6')
+      expect(pack.find('[data-test="buy-dataset-pack"]').text()).toBe('Buy a pack · 15% off')
+      expect(pack.text()).toContain('296.65')
+      expect(pack.find('.pro-datapack__was').text()).toContain('349')
+    })
+  })
+
+  it('shows no coupon on the active plan', () => {
+    const wrapper = mountBf({ activePlanId: 'p2' })
+    const advanced = card(wrapper, 'Advanced')
+    expect(advanced.find('.pro-coupon').exists()).toBe(false)
+    expect(advanced.text()).toContain('Already enjoying the benefits!')
+  })
+
+  it('renders the callout and the Black Friday footnote instead of the lock note', () => {
+    const wrapper = mountBf()
+    const callout = wrapper.find('.pro-campaign-callout')
+    expect(callout.text()).toContain('BLACK FRIDAY · 27 NOV – 31 DEC 2026')
+    expect(callout.text()).toContain('Up to 50% off your first year')
+    expect(callout.text()).toContain(
+      'Copy the code on your plan, or just choose the plan — the code is applied at checkout. ' +
+        'Two-year terms have their own codes: switch to 2 years to see them.'
+    )
+    expect(wrapper.text()).toContain('Black Friday codes are valid until 31 Dec 2026.')
+    expect(wrapper.text()).not.toContain('holds today')
+  })
+
+  it('moves the Copied state between boxes and announces it', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    withClipboard(writeText)
+    const wrapper = mountBf()
+    const buttons = () => wrapper.findAll('[data-test="coupon-copy"]')
+    await buttons()[1].trigger('click')
+    await flushPromises()
+    expect(writeText).toHaveBeenCalledWith('ADVANCEDPROMO1')
+    expect(buttons().map((b) => b.text())).toEqual(['Copy', 'Copied', 'Copy', 'Copy', 'Copy'])
+    expect(wrapper.find('[aria-live="polite"]').text()).toBe('Code ADVANCEDPROMO1 copied')
+    await buttons()[0].trigger('click')
+    await flushPromises()
+    expect(buttons().map((b) => b.text())).toEqual(['Copied', 'Copy', 'Copy', 'Copy', 'Copy'])
+  })
+
+  it('does not show Copied when the clipboard write is rejected or unavailable', async () => {
+    withClipboard(vi.fn().mockRejectedValue(new Error('denied')))
+    const wrapper = mountBf()
+    await wrapper.find('[data-test="coupon-copy"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).not.toContain('Copied')
+    withClipboard(undefined)
+    await wrapper.find('[data-test="coupon-copy"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).not.toContain('Copied')
   })
 })
